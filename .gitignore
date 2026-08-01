@@ -1,0 +1,63 @@
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# ── Virtual environment ───────────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── uv ────────────────────────────────────────────────────────────────────
+# Keep uv.lock committed (deterministic installs)
+# but ignore the build cache
+.uv/
+
+# ── Secrets & local config ────────────────────────────────────────────────
+.env
+.env.local
+*.pem
+*.key
+
+# ── Data directories (large / generated at runtime) ──────────────────────
+data/qdrant/
+data/models/
+data/user_uploads/
+data/base_textbooks/
+data/*.db
+data/test_*.db
+
+# ── Test artefacts ─────────────────────────────────────────────────────────
+tests/data/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Logs ─────────────────────────────────────────────────────────────────
+/tmp/streamlit.log
+*.log
+
+# ── OS ────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Claude Code workspace ─────────────────────────────────────────────────
+.claude/
+
+# ── Streamlit ─────────────────────────────────────────────────────────────
+.streamlit/secrets.toml
+
+# ── Jupyter ───────────────────────────────────────────────────────────────
+.ipynb_checkpoints/

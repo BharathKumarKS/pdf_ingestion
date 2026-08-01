@@ -1,0 +1,49 @@
+"""Pytest fixtures shared across all Phase 1 tests."""
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+import pytest
+
+# ── Make src importable ────────────────────────────────────────────────────
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+# Force stub embedder + in-memory Qdrant for all tests unless overridden
+os.environ.setdefault("USE_STUB_EMBEDDER", "true")
+os.environ.setdefault("QDRANT_IN_MEMORY", "true")
+os.environ.setdefault("SQLITE_URL", "sqlite:///./data/test_synapse.db")
+
+
+@pytest.fixture(autouse=True)
+def reset_db_singletons():
+    """Tear down cached DB clients between tests to avoid state leakage."""
+    from src.core.database import reset_singletons
+    reset_singletons()
+    yield
+    reset_singletons()
+
+
+@pytest.fixture(scope="session")
+def sample_pdf(tmp_path_factory) -> Path:
+    """Create a sample physics PDF once per test session."""
+    out_dir = tmp_path_factory.mktemp("pdfs")
+    out_path = out_dir / "sample_physics.pdf"
+
+    # Import and call create_test_pdf
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from scripts.create_test_pdf import create_test_pdf
+    create_test_pdf(str(out_path))
+    return out_path
+
+
+@pytest.fixture
+def settings():
+    from src.core.config import Settings
+    return Settings(
+        use_stub_embedder=True,
+        qdrant_in_memory=True,
+        sqlite_url="sqlite:///./data/test_synapse.db",
+        debug=False,
+    )
