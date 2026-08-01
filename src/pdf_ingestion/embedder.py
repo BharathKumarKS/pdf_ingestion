@@ -65,6 +65,7 @@ class JinaEmbedder:
     def __init__(self, settings: Settings | None = None) -> None:
         self._cfg = settings or get_settings()
         self._model = None
+        self._supports_late_chunking: bool | None = None  # probed once after load
 
     def _load(self) -> None:
         if self._model is not None:
@@ -82,7 +83,16 @@ class JinaEmbedder:
             cache_folder=self._cfg.model_cache_dir,
         )
         self._model.eval()
-        logger.info("Jina v3 loaded — dim={}", self._cfg.embedding_dim)
+
+        # Probe once whether the underlying module exposes .encode()
+        # so we never retry-and-fail on every context window
+        underlying = self._model._first_module()
+        self._supports_late_chunking = callable(getattr(underlying, "encode", None))
+        logger.info(
+            "Jina v3 loaded — dim={}, native late-chunking={}",
+            self._cfg.embedding_dim,
+            self._supports_late_chunking,
+        )
 
     @property
     def model_name(self) -> str:
@@ -154,30 +164,27 @@ class JinaEmbedder:
         """
         Encode via Jina v3.
 
-        sentence-transformers 5.x validates kwargs strictly and blocks
-        `late_chunking`.  We bypass this by calling the underlying Jina
-        module's own encode() directly when late_chunking is requested.
-        Falls back to standard ST encode if that path fails.
+        If the underlying model exposes .encode() with late_chunking support
+        (probed once at load time), use it for true context-aware embeddings.
+        Otherwise fall back to standard sentence-transformers encode — which
+        still produces high-quality embeddings, just without cross-chunk context.
         """
         import torch
 
         arr: np.ndarray | None = None
 
-        # ── Path 1: late chunking via underlying Jina model ───────────────
-        if late_chunking and len(texts) > 1:
+        # ── Path 1: native late chunking (probed at load time) ────────────
+        if late_chunking and len(texts) > 1 and self._supports_late_chunking:
             try:
                 underlying = self._model._first_module()
                 with torch.no_grad():
-                    out = underlying.encode(
-                        texts, task=task, late_chunking=True
-                    )
+                    out = underlying.encode(texts, task=task, late_chunking=True)
                 arr = np.array(out, dtype=np.float32)
-                logger.debug("Late chunking via underlying model succeeded")
             except Exception as exc:
-                logger.debug("Underlying late-chunking failed ({}), falling back", exc)
+                logger.debug("Native late-chunking encode failed: {}", exc)
                 arr = None
 
-        # ── Path 2: standard ST encode (no late_chunking kwarg) ──────────
+        # ── Path 2: standard ST encode ────────────────────────────────────
         if arr is None:
             try:
                 with torch.no_grad():
@@ -189,7 +196,7 @@ class JinaEmbedder:
                     )
                 arr = np.array(out, dtype=np.float32)
             except Exception as exc:
-                logger.error("Encoding failed entirely: {}. Using zero vectors.", exc)
+                logger.error("Encoding failed: {}. Using zero vectors.", exc)
                 arr = np.zeros((len(texts), self._cfg.embedding_dim), dtype=np.float32)
 
         # L2-normalise for cosine similarity in Qdrant
