@@ -1,4 +1,4 @@
-"""Docling-based PDF parser with memory-safe page iteration."""
+"""Docling-based PDF parser with memory-safe page iteration and GPU support."""
 from __future__ import annotations
 
 import uuid
@@ -10,7 +10,7 @@ import torch
 from loguru import logger
 
 
-# ── Data contracts ────────────────────────────────────────────────────────
+# -- Data contracts ------------------------------------------------------------
 
 @dataclass
 class PageContent:
@@ -27,24 +27,30 @@ class ParsedDocument:
     pages: list[PageContent]
     page_count: int
     char_count: int
-    # Metadata extracted from the doc structure
     title: Optional[str] = None
     subject: Optional[str] = None
 
 
-# ── Parser ────────────────────────────────────────────────────────────────
+# -- Parser --------------------------------------------------------------------
 
 class PDFParser:
     """
     Wraps Docling DocumentConverter.
     - Preserves heading hierarchy and table content.
+    - GPU-accelerated when use_gpu=True (requires docling>=2.x with CUDA).
     - Memory-safe: clears CUDA cache after each document on GPU systems.
     - Falls back to plain text extraction on Docling error.
     """
 
-    def __init__(self, do_ocr: bool = False, do_table_structure: bool = True) -> None:
+    def __init__(
+        self,
+        do_ocr: bool = False,
+        do_table_structure: bool = True,
+        use_gpu: bool = False,
+    ) -> None:
         self._do_ocr = do_ocr
         self._do_table_structure = do_table_structure
+        self._use_gpu = use_gpu
         self._converter = None  # lazy-loaded
 
     def _get_converter(self):
@@ -57,12 +63,32 @@ class PDFParser:
             opts.do_ocr = self._do_ocr
             opts.do_table_structure = self._do_table_structure
 
+            if self._use_gpu and torch.cuda.is_available():
+                try:
+                    from docling.datamodel.pipeline_options import (
+                        AcceleratorDevice,
+                        AcceleratorOptions,
+                    )
+                    opts.accelerator_options = AcceleratorOptions(
+                        device=AcceleratorDevice.CUDA,
+                        num_threads=4,
+                    )
+                    logger.info("Docling: GPU acceleration enabled (CUDA)")
+                except ImportError:
+                    logger.warning(
+                        "Docling AcceleratorOptions not available -- falling back to CPU"
+                    )
+
             self._converter = DocumentConverter(
                 format_options={
                     InputFormat.PDF: PdfFormatOption(pipeline_options=opts)
                 }
             )
-            logger.info("Docling DocumentConverter initialised (OCR={})", self._do_ocr)
+            logger.info(
+                "Docling DocumentConverter initialised (OCR={}, GPU={})",
+                self._do_ocr,
+                self._use_gpu and torch.cuda.is_available(),
+            )
         return self._converter
 
     def parse(self, pdf_path: str | Path) -> ParsedDocument:
@@ -104,7 +130,7 @@ class PDFParser:
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-    # ── Internals ─────────────────────────────────────────────────────────
+    # -- Internals -------------------------------------------------------------
 
     def _extract_pages(self, doc, page_count: int, full_text: str) -> list[PageContent]:
         """
@@ -131,7 +157,6 @@ class PDFParser:
                 if texts
             ]
         except Exception:
-            # Even split fallback
             lines = full_text.splitlines()
             chunk_size = max(1, len(lines) // max(page_count, 1))
             pages = []
@@ -152,7 +177,7 @@ class PDFParser:
 
     @staticmethod
     def _fallback_parse(path: Path, document_id: str) -> ParsedDocument:
-        """Plain-text extraction when Docling fails — keeps pipeline alive."""
+        """Plain-text extraction when Docling fails -- keeps pipeline alive."""
         try:
             import pdfplumber
             with pdfplumber.open(str(path)) as pdf:
@@ -170,7 +195,6 @@ class PDFParser:
                     char_count=len(full_text),
                 )
         except Exception:
-            # Last resort: read raw bytes and decode
             raw = path.read_bytes()
             text = raw.decode("utf-8", errors="ignore")
             return ParsedDocument(

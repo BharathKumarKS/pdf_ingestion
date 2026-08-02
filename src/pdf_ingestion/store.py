@@ -351,7 +351,7 @@ def ingest_pdf(
     from src.pdf_ingestion.parser import PDFParser
 
     cfg      = settings or get_settings()
-    parser   = PDFParser()
+    parser   = PDFParser(use_gpu=cfg.use_gpu)
     chunker  = SemanticChunker(settings=cfg)
     embedder = get_embedder(settings=cfg)
     store    = DocumentStore(settings=cfg)

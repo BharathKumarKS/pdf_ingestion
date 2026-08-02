@@ -14,10 +14,10 @@ from sqlmodel import Field, Session, SQLModel, create_engine
 from src.core.config import Settings, get_settings
 
 
-# ── Phase 1: Relational tables ─────────────────────────────────────────────
+# -- Phase 1: Relational tables ------------------------------------------------
 
 class Document(SQLModel, table=True):
-    """One ingested PDF — base textbook or user upload."""
+    """One ingested PDF -- base textbook or user upload."""
     __tablename__ = "documents"
     __table_args__ = {"extend_existing": True}
 
@@ -60,7 +60,7 @@ class Chunk(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
-# ── Phase 2: Derivative artifact tables ───────────────────────────────────
+# -- Phase 2: Derivative artifact tables ---------------------------------------
 
 class Card(SQLModel, table=True):
     """
@@ -89,8 +89,8 @@ class Card(SQLModel, table=True):
 class RaptorNode(SQLModel, table=True):
     """
     RAPTOR hierarchical summary node.
-    level=1 → cluster summaries of leaf chunks
-    level=2 → meta-summary (root)
+    level=1 -> cluster summaries of leaf chunks
+    level=2 -> meta-summary (root)
     """
     __tablename__ = "raptor_nodes"
     __table_args__ = {"extend_existing": True}
@@ -112,7 +112,7 @@ class RaptorNode(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
-# ── SQLite engine factory ──────────────────────────────────────────────────
+# -- SQLite engine factory -----------------------------------------------------
 
 _engine = None
 
@@ -138,7 +138,7 @@ def get_session(settings: Settings | None = None):
         yield session
 
 
-# ── Qdrant client factory ──────────────────────────────────────────────────
+# -- Qdrant client factory -----------------------------------------------------
 
 _qdrant: QdrantClient | None = None
 
@@ -147,14 +147,26 @@ def get_qdrant(settings: Settings | None = None) -> QdrantClient:
     global _qdrant
     if _qdrant is None:
         cfg = settings or get_settings()
+
         if cfg.qdrant_in_memory:
             _qdrant = QdrantClient(":memory:")
-            logger.info("Qdrant: in-memory mode")
+            logger.info("Qdrant: in-memory mode (tests)")
+
+        elif cfg.qdrant_url:
+            # Remote cluster — Support Vectors / Qdrant Cloud
+            kwargs = {"url": cfg.qdrant_url}
+            if cfg.qdrant_api_key:
+                kwargs["api_key"] = cfg.qdrant_api_key
+            _qdrant = QdrantClient(**kwargs)
+            logger.info("Qdrant: remote cluster '{}'", cfg.qdrant_url)
+
         else:
+            # Local file-based persistence (no Docker needed)
             from pathlib import Path
             Path(cfg.qdrant_local_path).mkdir(parents=True, exist_ok=True)
             _qdrant = QdrantClient(path=cfg.qdrant_local_path)
             logger.info("Qdrant: local path '{}'", cfg.qdrant_local_path)
+
         _ensure_collection(_qdrant, cfg)
     return _qdrant
 
@@ -186,7 +198,7 @@ def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
 
 
 def reset_singletons() -> None:
-    """Test helper — tear down cached singletons between test runs."""
+    """Test helper -- tear down cached singletons between test runs."""
     global _engine, _qdrant
     _engine = None
     _qdrant = None

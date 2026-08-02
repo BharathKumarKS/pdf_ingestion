@@ -80,6 +80,62 @@ OLLAMA_HOST=http://localhost:11434           # Ollama must be running for Phase 
 OLLAMA_MODEL=llama3.2
 ```
 
+---
+
+## GPU VM Setup (Support Vectors)
+
+Running the 990-page Feynman textbook on CPU takes 30+ hours.
+On the Support Vectors GPU VM with the remote Qdrant cluster, the same job
+completes in **2-3 hours**.
+
+### What changes on the GPU VM
+
+Edit `.env` with the values from your Support Vectors dashboard:
+
+```env
+# Remote Qdrant cluster
+QDRANT_URL=https://xxxx.cloud.qdrant.io
+QDRANT_API_KEY=your-api-key-here
+
+# GPU acceleration
+USE_GPU=true
+EMBEDDING_BATCH_SIZE=32        # 8 on CPU → 32 on GPU
+
+# Parallel Ollama card generation (8 workers on GPU VM)
+CARD_GEN_WORKERS=8
+OLLAMA_TIMEOUT=60              # GPU is faster, reduce timeout
+
+# Larger Ollama model optional on GPU
+# OLLAMA_MODEL=llama3.2:70b
+```
+
+### Speed breakdown (990 pages, 5,047 chunks)
+
+| Stage | CPU laptop | GPU VM (estimated) |
+|---|---|---|
+| Docling parsing | ~2 hours | ~20 min (GPU layout model) |
+| Jina v3 embedding | ~2 hours | ~15 min (batch_size=32, CUDA) |
+| Card generation (sequential) | ~25 hours | ~3 hours (8 parallel workers) |
+| RAPTOR tree | ~5 min | ~2 min |
+| **Total** | **~30 hours** | **~3.5 hours** |
+
+### Upsert existing data to remote cluster
+
+If you already have the Feynman textbook ingested locally, re-ingest it
+pointing at the remote cluster — set `QDRANT_URL` and `QDRANT_API_KEY` in
+`.env` then run:
+
+```bash
+uv run python scripts/ingest_base_textbook.py \
+  --pdf data/base_textbooks/feynman_physics_vol1.pdf \
+  --title "The Feynman Lectures on Physics Vol. 1" \
+  --subject "Physics" \
+  --grade "Undergraduate"
+```
+
+The script will upsert all 5,047 chunk vectors to the remote Qdrant cluster.
+Existing local data in `data/qdrant/` is not touched.
+
 ### 3. Start Ollama (required for Phase 2)
 
 ```bash

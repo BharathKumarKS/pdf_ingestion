@@ -10,7 +10,7 @@ from src.core.config import Settings, get_settings
 from src.pdf_ingestion.chunker import TextChunk
 
 
-# ── Data contract ─────────────────────────────────────────────────────────
+# -- Data contract -------------------------------------------------------------
 
 @dataclass
 class EmbeddedChunk:
@@ -19,15 +19,15 @@ class EmbeddedChunk:
     model_name: str
 
 
-# ── Stub (fast unit tests, no model download) ─────────────────────────────
+# -- Stub (fast unit tests, no model download) ---------------------------------
 
 class StubEmbedder:
-    """Deterministic random vectors — zero model download, used in tests."""
+    """Deterministic random vectors -- zero model download, used in tests."""
 
     def __init__(self, dim: int = 1024) -> None:
         self.dim = dim
         self.model_name = "stub"
-        logger.warning("StubEmbedder active — embeddings are random vectors")
+        logger.warning("StubEmbedder active -- embeddings are random vectors")
 
     def embed_chunks(self, chunks: list[TextChunk]) -> list[EmbeddedChunk]:
         rng = np.random.default_rng(seed=42)
@@ -44,27 +44,32 @@ class StubEmbedder:
         return vec / (np.linalg.norm(vec) + 1e-9)
 
 
-# ── Jina v3 embedder via sentence-transformers ────────────────────────────
+# -- Jina v3 embedder via sentence-transformers --------------------------------
 
 class JinaEmbedder:
     """
     Wraps jinaai/jina-embeddings-v3 via sentence-transformers.
 
+    GPU acceleration:
+        Set USE_GPU=true in .env to run on CUDA. The model is loaded onto the
+        GPU device and EMBEDDING_BATCH_SIZE should be increased (32-64 on GPU).
+
     Late chunking:
-        All chunks from the same document context window are passed to the
-        model together with late_chunking=True.  The model encodes the
-        concatenated sequence then returns one mean-pooled vector *per chunk*
-        — each vector is informed by its neighbours in the same window.
+        All chunks from the same document context window are passed together
+        with late_chunking=True. The model encodes the concatenated sequence
+        and returns one mean-pooled vector per chunk, each informed by its
+        neighbours in the same window.
 
     Long documents:
-        A 1,000-page textbook exceeds the 8,192-token limit.  We partition
-        chunks into contiguous windows ≤ max_context_tokens and apply late
+        A 1,000-page textbook exceeds the 8,192-token limit. We partition
+        chunks into contiguous windows <= max_context_tokens and apply late
         chunking within each window independently.
     """
 
     def __init__(self, settings: Settings | None = None) -> None:
         self._cfg = settings or get_settings()
         self._model = None
+        self._device: str = "cuda" if self._cfg.use_gpu else "cpu"
         self._supports_late_chunking: bool | None = None  # probed once after load
 
     def _load(self) -> None:
@@ -76,20 +81,26 @@ class JinaEmbedder:
         os.makedirs(self._cfg.model_cache_dir, exist_ok=True)
         os.environ.setdefault("HF_HOME", self._cfg.model_cache_dir)
 
-        logger.info("Loading Jina v3 via sentence-transformers '{}'…", self._cfg.embedding_model)
+        logger.info(
+            "Loading Jina v3 via sentence-transformers '{}' on device={}...",
+            self._cfg.embedding_model,
+            self._device,
+        )
         self._model = SentenceTransformer(
             self._cfg.embedding_model,
             trust_remote_code=True,
             cache_folder=self._cfg.model_cache_dir,
+            device=self._device,
         )
         self._model.eval()
 
-        # Probe once whether the underlying module exposes .encode()
-        # so we never retry-and-fail on every context window
+        # Probe once whether the underlying module exposes .encode() with
+        # late_chunking support, so we never retry-and-fail per window.
         underlying = self._model._first_module()
         self._supports_late_chunking = callable(getattr(underlying, "encode", None))
         logger.info(
-            "Jina v3 loaded — dim={}, native late-chunking={}",
+            "Jina v3 loaded -- device={}, dim={}, native late-chunking={}",
+            self._device,
             self._cfg.embedding_dim,
             self._supports_late_chunking,
         )
@@ -98,7 +109,7 @@ class JinaEmbedder:
     def model_name(self) -> str:
         return self._cfg.embedding_model
 
-    # ── Public API ────────────────────────────────────────────────────────
+    # -- Public API ------------------------------------------------------------
 
     def embed_chunks(self, chunks: list[TextChunk]) -> list[EmbeddedChunk]:
         """
@@ -120,7 +131,8 @@ class JinaEmbedder:
                     EmbeddedChunk(chunk=chunk, embedding=vec, model_name=self.model_name)
                 )
 
-        logger.success("Embedded {} chunks via Jina v3 late chunking", len(results))
+        logger.success("Embedded {} chunks via Jina v3 late chunking (device={})",
+                       len(results), self._device)
         return results
 
     def embed_query(self, text: str) -> np.ndarray:
@@ -129,11 +141,11 @@ class JinaEmbedder:
         vecs = self._encode_late([text], task="retrieval.query", late_chunking=False)
         return vecs[0]
 
-    # ── Internals ─────────────────────────────────────────────────────────
+    # -- Internals -------------------------------------------------------------
 
     def _build_windows(self, chunks: list[TextChunk]) -> list[list[TextChunk]]:
         """
-        Partition chunks into windows whose token sum ≤ max_context_tokens.
+        Partition chunks into windows whose token sum <= max_context_tokens.
         Preserves document order so late-chunking context is meaningful.
         """
         windows: list[list[TextChunk]] = []
@@ -162,18 +174,18 @@ class JinaEmbedder:
         late_chunking: bool = True,
     ) -> list[np.ndarray]:
         """
-        Encode via Jina v3.
+        Encode via Jina v3 with GPU support and configurable batch size.
 
         If the underlying model exposes .encode() with late_chunking support
-        (probed once at load time), use it for true context-aware embeddings.
-        Otherwise fall back to standard sentence-transformers encode — which
-        still produces high-quality embeddings, just without cross-chunk context.
+        (probed once at load time), use it for context-aware embeddings.
+        Otherwise falls back to standard sentence-transformers encode.
         """
         import torch
 
         arr: np.ndarray | None = None
+        batch_size = self._cfg.embedding_batch_size
 
-        # ── Path 1: native late chunking (probed at load time) ────────────
+        # Path 1: native late chunking (probed at load time)
         if late_chunking and len(texts) > 1 and self._supports_late_chunking:
             try:
                 underlying = self._model._first_module()
@@ -184,13 +196,14 @@ class JinaEmbedder:
                 logger.debug("Native late-chunking encode failed: {}", exc)
                 arr = None
 
-        # ── Path 2: standard ST encode ────────────────────────────────────
+        # Path 2: standard ST encode (with GPU-aware batch size)
         if arr is None:
             try:
                 with torch.no_grad():
                     out = self._model.encode(
                         texts,
                         task=task,
+                        batch_size=batch_size,
                         show_progress_bar=False,
                         convert_to_numpy=True,
                     )
@@ -204,7 +217,7 @@ class JinaEmbedder:
         return list(arr / norms)
 
 
-# ── Factory ───────────────────────────────────────────────────────────────
+# -- Factory -------------------------------------------------------------------
 
 def get_embedder(settings: Settings | None = None) -> StubEmbedder | JinaEmbedder:
     cfg = settings or get_settings()
