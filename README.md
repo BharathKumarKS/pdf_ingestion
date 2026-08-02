@@ -88,25 +88,71 @@ Running the 990-page Feynman textbook on CPU takes 30+ hours.
 On the Support Vectors GPU VM with the remote Qdrant cluster, the same job
 completes in **2-3 hours**.
 
-### What changes on the GPU VM
+### Step 1 — Copy and edit `.env`
 
-Edit `.env` with the values from your Support Vectors dashboard:
+```bash
+cp .env.example .env
+nano .env   # or use any editor
+```
+
+Fill in these values from your Support Vectors dashboard (leave all others as-is):
+
+| Key | Where to get it | Example |
+|---|---|---|
+| `QDRANT_URL` | Support Vectors Qdrant dashboard → Cluster URL | `https://abc123.cloud.qdrant.io` |
+| `QDRANT_API_KEY` | Support Vectors Qdrant dashboard → API Keys | `sv-xxxxxxxxxxxx` |
+| `USE_GPU` | Set to `true` on the GPU VM | `true` |
+| `EMBEDDING_BATCH_SIZE` | Increase for GPU | `32` |
+| `CARD_GEN_WORKERS` | Parallel Ollama threads | `8` |
+
+Your `.env` on the GPU VM should look like:
 
 ```env
-# Remote Qdrant cluster
-QDRANT_URL=https://xxxx.cloud.qdrant.io
-QDRANT_API_KEY=your-api-key-here
+# Remote Qdrant cluster (Support Vectors)
+QDRANT_URL=https://your-cluster-url.cloud.qdrant.io
+QDRANT_API_KEY=your-api-key-from-dashboard
 
 # GPU acceleration
 USE_GPU=true
-EMBEDDING_BATCH_SIZE=32        # 8 on CPU → 32 on GPU
+EMBEDDING_BATCH_SIZE=32
 
-# Parallel Ollama card generation (8 workers on GPU VM)
+# Parallel Ollama card generation
 CARD_GEN_WORKERS=8
-OLLAMA_TIMEOUT=60              # GPU is faster, reduce timeout
+OLLAMA_TIMEOUT=60
+```
 
-# Larger Ollama model optional on GPU
-# OLLAMA_MODEL=llama3.2:70b
+> **Note:** The Qdrant collection is **never deleted**. If it already exists in
+> the remote cluster the pipeline will reuse it and upsert new vectors alongside
+> existing ones. Safe to re-run.
+
+### Step 2 — Install Ollama and pull the model
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+ollama serve &
+ollama pull llama3.2
+```
+
+### Step 3 — Ingest the base textbook
+
+```bash
+uv run python scripts/ingest_base_textbook.py \
+  --pdf data/base_textbooks/feynman_physics_vol1.pdf \
+  --title "The Feynman Lectures on Physics Vol. 1" \
+  --subject "Physics" \
+  --grade "Undergraduate"
+```
+
+### Step 4 — Generate cards + RAPTOR tree
+
+```bash
+uv run python scripts/run_phase2.py --tenant global
+```
+
+### Step 5 — Launch the app
+
+```bash
+uv run streamlit run src/frontend/streamlit_app.py
 ```
 
 ### Speed breakdown (990 pages, 5,047 chunks)

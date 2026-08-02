@@ -86,12 +86,17 @@ class JinaEmbedder:
             self._cfg.embedding_model,
             self._device,
         )
-        self._model = SentenceTransformer(
-            self._cfg.embedding_model,
-            trust_remote_code=True,
-            cache_folder=self._cfg.model_cache_dir,
-            device=self._device,
-        )
+        # Do NOT pass device="cpu" — Jina v3 uses LoRA meta tensors that break
+        # when SentenceTransformer calls .to("cpu") explicitly. Let it auto-detect
+        # on CPU. Only specify device for CUDA to move to the GPU.
+        st_kwargs: dict = {
+            "trust_remote_code": True,
+            "cache_folder": self._cfg.model_cache_dir,
+        }
+        if self._device == "cuda":
+            st_kwargs["device"] = "cuda"
+
+        self._model = SentenceTransformer(self._cfg.embedding_model, **st_kwargs)
         self._model.eval()
 
         # Probe once whether the underlying module exposes .encode() with
