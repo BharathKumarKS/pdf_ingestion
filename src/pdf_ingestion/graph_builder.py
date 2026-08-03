@@ -197,7 +197,7 @@ class GraphBuilder:
             "Extracting concepts for {} chunks with {} parallel workers…",
             len(chunks), workers,
         )
-        chunk_concepts: dict[str, list[dict]] = {}   # cid → list of concept dicts
+        chunk_concepts: dict[str, dict] = {}   # cid → {"concepts": [...], "prerequisites": [...]}
         failed = 0
 
         with ThreadPoolExecutor(max_workers=workers) as executor:
@@ -217,7 +217,7 @@ class GraphBuilder:
                         logger.debug("Concept extraction progress: {}/{}", done, len(chunks))
                 except Exception as exc:
                     failed += 1
-                    chunk_concepts[cid] = []
+                    chunk_concepts[cid] = {"concepts": [], "prerequisites": []}
                     logger.warning("Concept extraction failed for chunk {} ({})", cid[:8], exc)
 
         logger.success(
@@ -277,8 +277,10 @@ class GraphBuilder:
                 edge_count += 2
 
                 # Concept nodes + edges (using pre-extracted results)
-                concepts      = chunk_concepts.get(cid, [])
-                concept_names = [c["name"] for c in concepts]
+                extracted     = chunk_concepts.get(cid, {"concepts": [], "prerequisites": []})
+                concepts      = extracted.get("concepts", [])
+                prerequisites = extracted.get("prerequisites", [])
+                concept_names = [c["name"] for c in concepts if isinstance(c, dict) and "name" in c]
 
                 for concept in concepts:
                     session.run(
@@ -305,8 +307,8 @@ class GraphBuilder:
                         )
                         edge_count += 1
 
-                # Prerequisite edges
-                for dep_pair in _extract_prerequisites(concepts):
+                # Prerequisite edges from the top-level "prerequisites" key
+                for dep_pair in prerequisites:
                     if len(dep_pair) == 2:
                         session.run(
                             "MATCH (ka:Concept {name: $a}), (kb:Concept {name: $b}) "
@@ -402,10 +404,13 @@ class GraphBuilder:
             resp.raise_for_status()
             raw = resp.json().get("response", "{}")
             data = json.loads(raw)
-            return data.get("concepts", [])
+            return {
+                "concepts":      data.get("concepts", []),
+                "prerequisites": data.get("prerequisites", []),
+            }
         except Exception as exc:
             logger.debug("Concept extraction failed ({}), skipping chunk concepts", exc)
-            return []
+            return {"concepts": [], "prerequisites": []}
 
     def _extract_query_concepts(self, query_text: str) -> list[str]:
         cfg = self._cfg

@@ -229,7 +229,11 @@ class OllamaCardGenerator:
                 block = {}
             title   = str(block.get("title",   f"{ct.value.capitalize()} -- chunk {chunk.chunk_index}"))
             content = str(block.get("content", ""))
-            answer  = str(block.get("answer", "")) if ct == CardType.QUESTION else None
+            if ct == CardType.QUESTION:
+                raw_answer = str(block.get("answer", "")).strip()
+                answer = raw_answer if raw_answer else None
+            else:
+                answer = None
 
             cards.append(
                 GeneratedCard(
@@ -240,7 +244,7 @@ class OllamaCardGenerator:
                     card_type=ct.value,
                     title=title,
                     content=content or f"[empty {ct.value}]",
-                    answer=answer or (None if ct != CardType.QUESTION else ""),
+                    answer=answer,
                 )
             )
         return cards

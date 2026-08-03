@@ -105,7 +105,8 @@ class SemanticChunker:
                         token_count=prev.token_count + token_count,
                         page_number=prev.page_number,
                     )
-                continue
+                    continue
+                # No previous chunk: promote the micro-chunk rather than drop it
 
             char_start = getattr(rc, "start_index", 0)
             char_end   = getattr(rc, "end_index",   char_start + len(text))
@@ -146,7 +147,7 @@ class SemanticChunker:
             pos = full_text.find(page.text[:100], cursor)
             if pos != -1:
                 page_map[pos] = page.page_number
-                cursor = pos
+                cursor = pos + max(len(page.text[:100]), 1)
         return page_map
 
 

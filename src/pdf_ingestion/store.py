@@ -144,15 +144,23 @@ class DocumentStore:
     ) -> list[dict]:
         """
         Semantic search with multi-tenant scoping.
-        source_type=None → Hybrid (user docs + global baseline)
+        source_type=None → Hybrid (user docs + global baseline), chunks only.
+        RAPTOR summary vectors in the same collection are always excluded here;
+        they are fetched separately via search_raptor().
         """
+        _NOT_RAPTOR = FieldCondition(
+            key="source_type", match=MatchValue(value="raptor_summary")
+        )
         if source_type is None:
-            filter_ = Filter(should=[
-                Filter(must=[FieldCondition(key="tenant_id",
-                             match=MatchValue(value=tenant_id))]),
-                Filter(must=[FieldCondition(key="tenant_id",
-                             match=MatchValue(value=self._cfg.global_tenant_id))]),
-            ])
+            filter_ = Filter(
+                must_not=[_NOT_RAPTOR],
+                should=[
+                    Filter(must=[FieldCondition(key="tenant_id",
+                                 match=MatchValue(value=tenant_id))]),
+                    Filter(must=[FieldCondition(key="tenant_id",
+                                 match=MatchValue(value=self._cfg.global_tenant_id))]),
+                ],
+            )
         else:
             must = [FieldCondition(key="source_type", match=MatchValue(value=source_type))]
             if source_type == "base_textbook":
@@ -163,6 +171,40 @@ class DocumentStore:
                             match=MatchValue(value=tenant_id)))
             filter_ = Filter(must=must)
 
+        response = self._qdrant.query_points(
+            collection_name=self._cfg.qdrant_collection,
+            query=query_vector.tolist(),
+            query_filter=filter_,
+            limit=limit,
+            with_payload=True,
+        )
+        return [{"score": h.score, **h.payload} for h in response.points]
+
+    def search_raptor(
+        self,
+        query_vector: np.ndarray,
+        tenant_id: str,
+        source_type_filter: Optional[str] = None,
+        limit: int = 2,
+    ) -> list[dict]:
+        """Fetch RAPTOR cluster-summary vectors, respecting study-mode filter."""
+        raptor_must = [FieldCondition(
+            key="source_type", match=MatchValue(value="raptor_summary")
+        )]
+        if source_type_filter == "user_upload":
+            filter_ = Filter(must=raptor_must + [
+                FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id))
+            ])
+        else:
+            filter_ = Filter(
+                must=raptor_must,
+                should=[
+                    Filter(must=[FieldCondition(key="tenant_id",
+                                 match=MatchValue(value=tenant_id))]),
+                    Filter(must=[FieldCondition(key="tenant_id",
+                                 match=MatchValue(value=self._cfg.global_tenant_id))]),
+                ],
+            )
         response = self._qdrant.query_points(
             collection_name=self._cfg.qdrant_collection,
             query=query_vector.tolist(),

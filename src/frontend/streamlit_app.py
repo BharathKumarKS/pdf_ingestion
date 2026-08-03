@@ -299,30 +299,12 @@ with tab_search:
 
                 raptor_results = []
                 if also_raptor:
-                    from qdrant_client.models import FieldCondition, Filter, MatchValue
-                    # Respect study-mode: include global RAPTOR + user's own if hybrid
-                    raptor_must = [FieldCondition(
-                        key="source_type", match=MatchValue(value="raptor_summary")
-                    )]
-                    if source_type_filter == "user_upload":
-                        raptor_filter = Filter(must=raptor_must + [
-                            FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id))
-                        ])
-                    else:
-                        raptor_filter = Filter(must=raptor_must, should=[
-                            Filter(must=[FieldCondition(key="tenant_id",
-                                         match=MatchValue(value=tenant_id))]),
-                            Filter(must=[FieldCondition(key="tenant_id",
-                                         match=MatchValue(value=cfg.global_tenant_id))]),
-                        ])
-                    rr = s._qdrant.query_points(
-                        collection_name=cfg.qdrant_collection,
-                        query=q_vec.tolist(),
-                        query_filter=raptor_filter,
+                    raptor_results = s.search_raptor(
+                        query_vector=q_vec,
+                        tenant_id=tenant_id,
+                        source_type_filter=source_type_filter,
                         limit=2,
-                        with_payload=True,
                     )
-                    raptor_results = [{"score": h.score, **h.payload} for h in rr.points]
 
                 graph_results = []
                 if also_graph:
@@ -564,12 +546,18 @@ with tab_visual:
         "similar pages in the knowledge base using ColPali late-interaction search."
     )
 
-    # Check if any documents have visual embeddings ready
+    # Check if any documents have visual embeddings ready for the current study mode
     try:
         store    = DocumentStore(cfg)
         all_docs = store.list_documents()
-        ready_docs   = [d for d in all_docs if d.colpali_status == "ready"]
-        pending_docs = [d for d in all_docs if d.colpali_status in ("processing", "pending")]
+        # Scope to docs actually searchable under the current study-mode setting
+        if source_type_filter == "user_upload":
+            searchable = [d for d in all_docs if d.tenant_id == tenant_id]
+        else:
+            searchable = [d for d in all_docs
+                          if d.tenant_id in (tenant_id, cfg.global_tenant_id)]
+        ready_docs   = [d for d in searchable if d.colpali_status == "ready"]
+        pending_docs = [d for d in searchable if d.colpali_status in ("processing", "pending")]
     except Exception:
         ready_docs = []
         pending_docs = []
@@ -625,21 +613,20 @@ with tab_visual:
                         cols = st.columns(min(3, len(results)))
                         for i, r in enumerate(results):
                             col = cols[i % 3]
-                            with col:
-                                try:
-                                    img_bytes = image_store.get(r["image_key"])
-                                    col.image(img_bytes, use_container_width=True)
-                                except Exception:
-                                    col.info("Image unavailable")
+                            try:
+                                img_bytes = image_store.get(r["image_key"])
+                                col.image(img_bytes, use_container_width=True)
+                            except Exception:
+                                col.info("Image unavailable")
+                            col.caption(
+                                f"Page {r.get('page_number', '?')}  ·  "
+                                f"score {r['score']:.3f}"
+                            )
+                            if is_admin:
                                 col.caption(
-                                    f"Page {r.get('page_number', '?')}  ·  "
-                                    f"score {r['score']:.3f}"
+                                    f"doc: `{r.get('document_id','?')[:12]}…`  "
+                                    f"key: `{r.get('image_key','?')}`"
                                 )
-                                if is_admin:
-                                    col.caption(
-                                        f"doc: `{r.get('document_id','?')[:12]}…`  "
-                                        f"key: `{r.get('image_key','?')}`"
-                                    )
 
                 except Exception as e:
                     st.error(f"Visual search error: {e}")

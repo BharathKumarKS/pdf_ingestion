@@ -120,32 +120,32 @@ class RaptorBuilder:
                 break
 
             prev_nodes = current_nodes
-            level_embeddings = np.array(
-                [nd.embedding for nd in prev_nodes if nd.embedding is not None],
-                dtype=np.float32,
-            )
-            if len(level_embeddings) < 2:
+            # Filter in parallel so texts/ids/embeddings stay aligned
+            valid_prev = [nd for nd in prev_nodes if nd.embedding is not None]
+            if len(valid_prev) < 2:
                 break
+            level_embeddings = np.array(
+                [nd.embedding for nd in valid_prev], dtype=np.float32
+            )
 
             current_nodes = self._build_level(
                 document_id=document_id,
                 tenant_id=tenant_id,
                 is_global_baseline=is_global_baseline,
-                texts=[nd.summary for nd in prev_nodes],
-                ids=[nd.node_id for nd in prev_nodes],
+                texts=[nd.summary  for nd in valid_prev],
+                ids=[nd.node_id    for nd in valid_prev],
                 embeddings=level_embeddings,
                 level=level,
                 parent_id=None,
             )
 
-            # Wire parent_id: each previous node maps to the new node whose
-            # child_ids list contains it.
+            # Wire parent_id using child_ids from the new nodes
             node_id_to_parent: dict[str, str] = {}
             for new_node in current_nodes:
                 for child_id in new_node.child_ids:
                     node_id_to_parent[child_id] = new_node.node_id
 
-            for prev_node in prev_nodes:
+            for prev_node in valid_prev:
                 prev_node.parent_id = node_id_to_parent.get(prev_node.node_id)
 
             all_nodes.extend(current_nodes)
