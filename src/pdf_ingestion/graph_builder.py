@@ -12,10 +12,17 @@ GraphRAG retrieval flow
 2. Cypher: find Chunk nodes that MENTION those concepts.
 3. Walk RELATES_TO / PREREQUISITE_OF edges to surface adjacent chunks.
 4. Return ranked chunk IDs + the concept path that connected them.
+
+Parallelism
+-----------
+build_graph() extracts concepts for all chunks in parallel (ThreadPoolExecutor,
+CONCEPT_GEN_WORKERS threads) before writing to Memgraph. Ollama calls are
+IO-bound so threads provide real concurrency — same pattern as card_generator.py.
 """
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -171,9 +178,12 @@ class GraphBuilder:
         doc_subject: str = "",
     ) -> dict:
         """
-        Create Document → Page → Chunk structural nodes, then extract
-        Concept nodes per chunk and wire MENTIONS / RELATES_TO / PREREQUISITE_OF.
-        Returns a summary of nodes and edges created.
+        Two-phase build:
+          Phase A — extract concepts for all chunks in parallel (Ollama, IO-bound).
+          Phase B — write all nodes + edges to Memgraph (sequential Cypher).
+
+        Separating the phases means CONCEPT_GEN_WORKERS threads can saturate
+        Ollama while Memgraph writes stay single-session and conflict-free.
         """
         try:
             driver = self._get_driver()
@@ -181,6 +191,41 @@ class GraphBuilder:
             logger.warning("Memgraph unavailable ({}), skipping graph build", exc)
             return {"document_nodes": 0, "chunk_nodes": 0, "concept_nodes": 0, "edges": 0}
 
+        # ── Phase A: parallel concept extraction ──────────────────────────────
+        workers = self._cfg.concept_gen_workers
+        logger.info(
+            "Extracting concepts for {} chunks with {} parallel workers…",
+            len(chunks), workers,
+        )
+        chunk_concepts: dict[str, list[dict]] = {}   # cid → list of concept dicts
+        failed = 0
+
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            future_to_cid = {
+                executor.submit(
+                    self._extract_concepts,
+                    chunk.text,
+                ): getattr(chunk, "id", None) or getattr(chunk, "chunk_id", None)
+                for chunk in chunks
+            }
+            for future in as_completed(future_to_cid):
+                cid = future_to_cid[future]
+                try:
+                    chunk_concepts[cid] = future.result()
+                    done = len(chunk_concepts)
+                    if done % 500 == 0:
+                        logger.debug("Concept extraction progress: {}/{}", done, len(chunks))
+                except Exception as exc:
+                    failed += 1
+                    chunk_concepts[cid] = []
+                    logger.warning("Concept extraction failed for chunk {} ({})", cid[:8], exc)
+
+        logger.success(
+            "Concept extraction done: {} chunks, {} failed",
+            len(chunks), failed,
+        )
+
+        # ── Phase B: write structural nodes + concept graph to Memgraph ───────
         concept_node_count = 0
         edge_count = 0
 
@@ -194,7 +239,7 @@ class GraphBuilder:
 
             pages_seen: set[int] = set()
             for chunk in chunks:
-                cid    = getattr(chunk, "id", None) or getattr(chunk, "chunk_id", None)
+                cid     = getattr(chunk, "id", None) or getattr(chunk, "chunk_id", None)
                 page_no = chunk.page_number or 0
 
                 # Page node (once per page)
@@ -231,14 +276,13 @@ class GraphBuilder:
                 )
                 edge_count += 2
 
-                # Concept extraction
-                concepts = self._extract_concepts(chunk.text)
+                # Concept nodes + edges (using pre-extracted results)
+                concepts      = chunk_concepts.get(cid, [])
                 concept_names = [c["name"] for c in concepts]
 
                 for concept in concepts:
                     session.run(
-                        "MERGE (k:Concept {name: $name}) "
-                        "SET k.type=$type",
+                        "MERGE (k:Concept {name: $name}) SET k.type=$type",
                         name=concept["name"], type=concept.get("type", "definition"),
                     )
                     session.run(
@@ -277,9 +321,9 @@ class GraphBuilder:
         )
         return {
             "document_nodes": 1,
-            "chunk_nodes": len(chunks),
-            "concept_nodes": concept_node_count,
-            "edges": edge_count,
+            "chunk_nodes":    len(chunks),
+            "concept_nodes":  concept_node_count,
+            "edges":          edge_count,
         }
 
     def graph_search(

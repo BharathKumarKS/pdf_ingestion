@@ -86,6 +86,7 @@ class Settings(BaseSettings):
     memgraph_user: str = "memgraph"
     memgraph_password: str = "synapse"
     use_stub_graph: bool = False
+    concept_gen_workers: int = 4         # parallel Ollama threads for concept extraction
 
     api_port: int = 8000
 
