@@ -1,0 +1,163 @@
+[
+  {
+    "id": "vec-001",
+    "query": "What is the formula for kinetic energy?",
+    "expected_route": "vector",
+    "why": "Single-concept factual lookup — a direct passage contains the formula KE = ½mv²",
+    "example_answer_hint": "KE = ½mv², where m is mass and v is velocity"
+  },
+  {
+    "id": "vec-002",
+    "query": "Define Newton's first law of motion",
+    "expected_route": "vector",
+    "why": "Precise definition query — the exact text of the law lives in one chunk",
+    "example_answer_hint": "An object at rest stays at rest, and an object in motion stays in motion, unless acted on by an external force"
+  },
+  {
+    "id": "vec-003",
+    "query": "What is the value of Planck's constant?",
+    "expected_route": "vector",
+    "why": "Numerical constant lookup — single fact, high embedding similarity to the passage mentioning h = 6.626 × 10⁻³⁴ J·s",
+    "example_answer_hint": "h = 6.626 × 10⁻³⁴ J·s (joule-seconds)"
+  },
+  {
+    "id": "vec-004",
+    "query": "What does Feynman say about the principle of least action?",
+    "expected_route": "vector",
+    "why": "Author-attributed targeted retrieval — the passage mentioning Feynman + least action will have high cosine similarity",
+    "example_answer_hint": "The path taken by a particle is the one for which the action (integral of L dt) is stationary"
+  },
+  {
+    "id": "vec-005",
+    "query": "What is the difference between elastic and inelastic collisions?",
+    "expected_route": "vector",
+    "why": "Comparison query with clear keyword anchors — the chunk defining both terms will rank top",
+    "example_answer_hint": "Elastic: kinetic energy conserved; Inelastic: kinetic energy not conserved but momentum is"
+  },
+  {
+    "id": "raptor-001",
+    "query": "Give me an overview of how classical mechanics breaks down at atomic scales",
+    "expected_route": "raptor",
+    "why": "Cross-chapter synthesis — no single chunk covers this; RAPTOR L2 meta-summary spans classical and quantum chapters",
+    "example_answer_hint": "Classical mechanics fails to explain quantised energy levels, wave-particle duality, and the uncertainty principle observed at atomic scales"
+  },
+  {
+    "id": "raptor-002",
+    "query": "Summarize the key themes in the chapter on conservation laws",
+    "expected_route": "raptor",
+    "why": "Chapter-level summarization — RAPTOR L1 cluster summaries aggregate all conservation-law chunks",
+    "example_answer_hint": "Conservation of energy, momentum, and angular momentum; their connection to symmetries via Noether's theorem"
+  },
+  {
+    "id": "raptor-003",
+    "query": "How does Feynman build up the concept of energy from mechanics to thermodynamics?",
+    "expected_route": "raptor",
+    "why": "Multi-chapter narrative — spans kinetic, potential, thermal, and internal energy across many chunks; only RAPTOR L2 captures the arc",
+    "example_answer_hint": "Mechanical energy → work-energy theorem → heat as random kinetic energy → internal energy → first law of thermodynamics"
+  },
+  {
+    "id": "raptor-004",
+    "query": "What are the main ideas connecting electricity and magnetism?",
+    "expected_route": "raptor",
+    "why": "Topic synthesis spanning the entire electromagnetism unit — RAPTOR cluster summaries cover Coulomb, Faraday, Maxwell in one view",
+    "example_answer_hint": "Changing magnetic fields induce electric fields (Faraday), changing electric fields create magnetic fields (Maxwell displacement current), unifying as electromagnetic waves"
+  },
+  {
+    "id": "raptor-005",
+    "query": "How does the textbook introduce probability into physics?",
+    "expected_route": "raptor",
+    "why": "Abstract theme spanning statistical mechanics and quantum chapters — no single chunk, RAPTOR meta-summary synthesises the progression",
+    "example_answer_hint": "Classical probability in statistical mechanics (Boltzmann distributions) → inherent probability in quantum mechanics (Born rule)"
+  },
+  {
+    "id": "graph-001",
+    "query": "Why does a satellite stay in orbit?",
+    "expected_route": "graphrag",
+    "why": "Multi-hop reasoning: orbital mechanics PREREQUISITE_OF centripetal force PREREQUISITE_OF Newton's 2nd law — vector search alone misses the chain",
+    "example_answer_hint": "Gravity provides the centripetal force (F = mv²/r) that continuously deflects the satellite's inertia sideways, balancing its tendency to fly off in a straight line"
+  },
+  {
+    "id": "graph-002",
+    "query": "What should I understand before learning about Maxwell's equations?",
+    "expected_route": "graphrag",
+    "why": "Prerequisite chain traversal: Maxwell's equations ← electric fields ← Coulomb's law ← charge; graph finds the dependency chain",
+    "example_answer_hint": "Electric fields, magnetic fields, Gauss's law, Faraday's law, and vector calculus (divergence, curl)"
+  },
+  {
+    "id": "graph-003",
+    "query": "How is simple harmonic motion related to wave propagation?",
+    "expected_route": "graphrag",
+    "why": "RELATES_TO multi-hop: SHM ↔ oscillation ↔ wave equation ↔ wave propagation — each connection is in a different chunk",
+    "example_answer_hint": "Each point in a wave undergoes SHM; the wave equation emerges from applying Newton's 2nd law to coupled oscillators"
+  },
+  {
+    "id": "graph-004",
+    "query": "How do conservation laws appear across different areas of physics?",
+    "expected_route": "graphrag",
+    "why": "Cross-domain concept linking: 'conservation law' RELATES_TO energy, momentum, charge, lepton number — graph traversal surfaces all domains",
+    "example_answer_hint": "Conservation of energy (thermodynamics, mechanics), momentum (collisions), angular momentum (rotation), charge (electromagnetism) — all connected to symmetries"
+  },
+  {
+    "id": "graph-005",
+    "query": "Explain quantum tunnelling in terms of concepts I've already seen in classical physics",
+    "expected_route": "graphrag",
+    "why": "Cross-domain concept bridge: tunnelling ← wave function ← wave-particle duality ← classical waves — PREREQUISITE_OF chain spanning classical→quantum",
+    "example_answer_hint": "Classical waves pass through barriers via evanescent fields (like sound through a wall); in QM the wave function decays exponentially inside the barrier but has non-zero probability on the other side"
+  },
+  {
+    "id": "graph-006",
+    "query": "What concepts connect thermodynamics and statistical mechanics?",
+    "expected_route": "graphrag",
+    "why": "Bridging concept search: entropy RELATES_TO Boltzmann distribution RELATES_TO temperature — graph hop surfaces both domains' chunks",
+    "example_answer_hint": "Entropy (S = k ln W), Boltzmann distribution, temperature as average kinetic energy, and the partition function"
+  },
+  {
+    "id": "colpali-001",
+    "query": "Show me the diagram of the double-slit experiment",
+    "expected_route": "colpali",
+    "why": "Visual search for a specific experimental diagram — the text doesn't describe the layout; only the page image contains the figure",
+    "example_answer_hint": "Page showing two slits with incoming waves and an interference pattern on the screen"
+  },
+  {
+    "id": "colpali-002",
+    "query": "Find the page with the force-body diagram for an inclined plane",
+    "expected_route": "colpali",
+    "why": "Force diagrams are visual; the text only says 'as shown in the figure'. ColPali patch embeddings encode the arrow layout and labels",
+    "example_answer_hint": "Page showing a block on an inclined plane with mg, N, and friction force arrows"
+  },
+  {
+    "id": "colpali-003",
+    "query": "Which page shows the sinusoidal wave illustration?",
+    "expected_route": "colpali",
+    "why": "The waveform shape is a visual concept — ColPali encodes the periodic curve's visual structure in its patch embeddings",
+    "example_answer_hint": "Page with a sinusoidal curve, labelled wavelength (λ) and amplitude (A)"
+  },
+  {
+    "id": "colpali-004",
+    "query": "Find the table comparing wavelengths of different electromagnetic radiation types",
+    "expected_route": "colpali",
+    "why": "Tabular data is visual layout — ColPali detects the grid structure and spectral labels better than text embeddings detect table prose",
+    "example_answer_hint": "Page with a spectrum table: radio → microwave → infrared → visible → UV → X-ray → gamma, with wavelength ranges"
+  },
+  {
+    "id": "colpali-005",
+    "query": "Show me the diagram explaining the photoelectric effect",
+    "expected_route": "colpali",
+    "why": "The photoelectric effect diagram (photon hitting metal, electrons ejecting) is a canonical physics figure only retrievable visually",
+    "example_answer_hint": "Page showing photons striking a metal surface and electrons being emitted above the threshold frequency"
+  },
+  {
+    "id": "colpali-006",
+    "query": "Which page has the graph showing how pressure varies with volume in an ideal gas?",
+    "expected_route": "colpali",
+    "why": "P-V isothermal curves are visual mathematical plots — the shape of the hyperbola is only encoded in the image patches",
+    "example_answer_hint": "Page with P-V isothermal curves (PV = nRT hyperbolas) for multiple temperatures"
+  },
+  {
+    "id": "colpali-007",
+    "query": "Find the circuit diagram showing a capacitor and resistor in series",
+    "expected_route": "colpali",
+    "why": "Circuit diagrams use standardized symbols (capacitor plates, resistor zigzag) that ColPali's visual patches encode but text cannot",
+    "example_answer_hint": "Page with an RC series circuit diagram: battery, switch, resistor (R), and capacitor (C) in a loop"
+  }
+]

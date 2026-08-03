@@ -42,6 +42,16 @@ dependencies = [
     # Clustering (RAPTOR tree) — umap-learn is optional, GMM falls back to raw embeddings
     "scikit-learn>=1.5",
 
+    # Phase 3 — ColPali visual embeddings
+    "colpali-engine>=0.3.1",
+    "Pillow>=10.4",
+
+    # Phase 3 — Memgraph / Neo4j Bolt driver
+    "neo4j>=5.20",
+
+    # Phase 3 — MinIO SDK (used when IMAGE_STORE_BACKEND=minio)
+    "minio>=7.2",
+
     # Utilities
     "loguru>=0.7",
     "rich>=13.7",

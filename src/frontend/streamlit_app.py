@@ -1,4 +1,4 @@
-"""Streamlit frontend — Phase 1 + Phase 2.
+"""Streamlit frontend — Phase 1 + Phase 2 + Phase 3.
 
 URL param ?admin=true unlocks the Teacher/Admin view.
 Default (no param) shows the Student view.
@@ -6,6 +6,7 @@ Default (no param) shows the Student view.
 from __future__ import annotations
 
 import sys
+import threading
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -13,7 +14,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import streamlit as st
 
 from src.core.config import get_settings
-from src.pdf_ingestion.store import DocumentStore, generate_phase2_artifacts, ingest_pdf
+from src.pdf_ingestion.store import (
+    DocumentStore,
+    generate_phase2_artifacts,
+    generate_phase3_artifacts,
+    ingest_pdf,
+)
 
 # ── Page config ───────────────────────────────────────────────────────────
 st.set_page_config(
@@ -55,6 +61,14 @@ def _source_label(r: dict) -> str:
     page_str = f" · page {page}" if page else ""
     return f"*{title}*{page_str}"
 
+def _colpali_status_badge(status: str) -> str:
+    return {
+        "ready":      "✅ Visual ready",
+        "processing": "⏳ Visual processing…",
+        "failed":     "❌ Visual failed",
+        "pending":    "🕐 Visual pending",
+    }.get(status, status)
+
 
 # ── Sidebar ───────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -86,12 +100,12 @@ with st.sidebar:
         )
         source_type_filter = None if "Textbook" in source_choice else "user_upload"
     else:
-        source_type_filter = None   # hybrid (KB only until user uploads)
+        source_type_filter = None
         st.caption("Upload your notes in **Upload PDF** to enable personalised study mode.")
 
     st.divider()
 
-    # ── KB status (admin gets counts, student gets simple status) ─────────
+    # ── KB status ─────────────────────────────────────────────────────────
     st.subheader("Knowledge base")
     try:
         global_docs = store.list_documents(tenant_id=cfg.global_tenant_id)
@@ -104,6 +118,7 @@ with st.sidebar:
                 c1, c2 = st.columns(2)
                 c1.metric("Cards",        len(cards))
                 c2.metric("RAPTOR nodes", len(nodes))
+                st.caption(_colpali_status_badge(doc.colpali_status))
                 if not cards:
                     if st.button("⚡ Generate Phase 2 artifacts", use_container_width=True):
                         with st.spinner("Running…"):
@@ -119,21 +134,26 @@ with st.sidebar:
 
 # ── Build tab list depending on role ──────────────────────────────────────
 if is_admin:
-    tab_upload, tab_search, tab_cards, tab_raptor, tab_status = st.tabs([
+    (tab_upload, tab_search, tab_cards,
+     tab_raptor, tab_visual, tab_graph, tab_status) = st.tabs([
         "📄 Upload PDF",
         "🔍 Ask a Question",
         "🃏 Learning Cards",
         "🌲 RAPTOR Tree",
+        "🖼️ Visual Search",
+        "🕸️ Concept Graph",
         "📊 Admin Status",
     ])
 else:
-    tab_upload, tab_search, tab_cards = st.tabs([
+    tab_upload, tab_search, tab_cards, tab_visual, tab_graph = st.tabs([
         "📄 Upload PDF",
         "🔍 Ask a Question",
         "🃏 Learning Cards",
+        "🖼️ Visual Search",
+        "🕸️ Concept Graph",
     ])
-    tab_raptor  = None
-    tab_status  = None
+    tab_raptor = None
+    tab_status = None
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -184,6 +204,9 @@ with tab_upload:
                     extra_meta={"subject": subject, "difficulty": difficulty},
                     settings=cfg,
                 )
+                doc_id   = result["document_id"]
+                pdf_path = str(tmp)
+
                 if is_admin:
                     st.success(
                         f"✅ Ingested — {result['chunk_count']} chunks, "
@@ -197,17 +220,30 @@ with tab_upload:
                         f"{result['chunk_count']} searchable sections."
                     )
                     st.info(
-                        "Switch to **Ask a Question** and change your study mode "
-                        "to include your notes.", icon="💡"
+                        "Visual search and concept graph are being prepared in the background. "
+                        "Text search is available right now!",
+                        icon="💡",
                     )
 
                 if is_admin:
                     with st.spinner("Generating learning cards & RAPTOR summaries…"):
-                        p2 = generate_phase2_artifacts(result["document_id"], cfg)
+                        p2 = generate_phase2_artifacts(doc_id, cfg)
                         st.success(
                             f"⚡ {p2['cards_generated']} cards, "
                             f"{p2['raptor_nodes']} RAPTOR nodes (levels {p2['raptor_levels']})"
                         )
+
+                # ── Phase 3: fire background thread ───────────────────────
+                # For base textbooks run_phase3.py is the preferred path;
+                # for user uploads we kick off async so upload returns fast.
+                thread = threading.Thread(
+                    target=generate_phase3_artifacts,
+                    kwargs={"document_id": doc_id, "pdf_path": pdf_path, "settings": cfg},
+                    daemon=True,
+                )
+                thread.start()
+                st.info("🔄 Visual embeddings + concept graph are being built in the background.", icon="🖼️")
+
             except Exception as e:
                 st.error(f"Failed: {e}")
 
@@ -227,9 +263,12 @@ with tab_search:
         )
 
     if is_admin:
-        also_raptor = st.checkbox("Include RAPTOR summaries", value=True)
+        col_a, col_b = st.columns(2)
+        also_raptor = col_a.checkbox("Include RAPTOR summaries", value=True)
+        also_graph  = col_b.checkbox("Include Concept Graph (GraphRAG)", value=True)
     else:
-        also_raptor = True   # always include for students, invisibly
+        also_raptor = True
+        also_graph  = True
 
     query = st.text_area(
         "Your question",
@@ -268,7 +307,20 @@ with tab_search:
                     )
                     raptor_results = [{"score": h.score, **h.payload} for h in rr.points]
 
-                if not chunk_results and not raptor_results:
+                graph_results = []
+                if also_graph:
+                    try:
+                        from src.pdf_ingestion.graph_builder import get_graph_builder
+                        graph = get_graph_builder(cfg)
+                        graph_results = graph.graph_search(
+                            query_text=query,
+                            tenant_id=tenant_id,
+                            limit=3,
+                        )
+                    except Exception:
+                        graph_results = []
+
+                if not chunk_results and not raptor_results and not graph_results:
                     st.info("No results found — try rephrasing your question.")
                 else:
                     # ── RAPTOR summaries ─────────────────────────────────
@@ -283,6 +335,16 @@ with tab_search:
                                         f"score={r['score']:.3f} · "
                                         f"cluster {r.get('cluster_id','?')}"
                                     )
+                        st.divider()
+
+                    # ── GraphRAG results ──────────────────────────────────
+                    if graph_results:
+                        st.subheader("🕸️ Concept-Connected Passages")
+                        for gr in graph_results:
+                            with st.container(border=True):
+                                concepts = " → ".join(gr.get("concept_path", []))
+                                st.caption(f"Concepts: {concepts}  |  hops: {gr.get('hop_distance', '?')}")
+                                st.markdown(gr.get("text_preview", ""))
                         st.divider()
 
                     # ── Chunk results ─────────────────────────────────────
@@ -353,7 +415,7 @@ with tab_cards:
                 format_func=lambda x: f"{CARD_ICONS[x]} {x.capitalize()}",
             )
 
-            cards   = store.get_cards(sel_doc_id)
+            cards    = store.get_cards(sel_doc_id)
             filtered = [c for c in cards if c.card_type in sel_types]
 
             if is_admin:
@@ -460,7 +522,168 @@ if tab_raptor is not None:
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# TAB 5 — Admin Status  (admin only)
+# TAB 5 — Visual Search (Phase 3)
+# ══════════════════════════════════════════════════════════════════════════
+with tab_visual:
+    st.header("🖼️ Visual Search")
+    st.caption(
+        "Upload an image (a diagram, figure, or photo of a page) to find the most "
+        "similar pages in the knowledge base using ColPali late-interaction search."
+    )
+
+    # Check if any documents have visual embeddings ready
+    try:
+        store    = DocumentStore(cfg)
+        all_docs = store.list_documents()
+        ready_docs   = [d for d in all_docs if d.colpali_status == "ready"]
+        pending_docs = [d for d in all_docs if d.colpali_status in ("processing", "pending")]
+    except Exception:
+        ready_docs = []
+        pending_docs = []
+
+    if pending_docs:
+        st.info(
+            f"⏳ Visual embeddings are being generated for "
+            f"{len(pending_docs)} document(s). Text search is available now — "
+            "come back shortly for visual search.",
+            icon="🔄",
+        )
+
+    if not ready_docs:
+        st.warning(
+            "No documents have visual embeddings yet. "
+            "Run `scripts/run_phase3.py --tenant global` for the base textbook, "
+            "or upload a PDF — visual embeddings will be generated automatically.",
+            icon="💡",
+        )
+    else:
+        query_image_file = st.file_uploader(
+            "Upload a query image (PNG, JPG)",
+            type=["png", "jpg", "jpeg"],
+            key="visual_query",
+        )
+        n_results = st.slider("Results to show", 1, 10, 5)
+
+        if query_image_file and st.button("Search by Image", type="primary"):
+            with st.spinner("Embedding query image and searching…"):
+                try:
+                    from PIL import Image
+                    import io
+                    from src.pdf_ingestion.colpali_embedder import get_colpali_embedder
+                    from src.pdf_ingestion.image_store import get_image_store
+
+                    query_image = Image.open(io.BytesIO(query_image_file.read()))
+                    colpali     = get_colpali_embedder(cfg)
+                    q_patches   = colpali.embed_query_image(query_image)
+
+                    s       = DocumentStore(cfg)
+                    results = s.visual_search(
+                        query_patches=q_patches,
+                        tenant_id=tenant_id,
+                        limit=n_results,
+                    )
+
+                    if not results:
+                        st.info("No visual matches found.")
+                    else:
+                        image_store = get_image_store(cfg)
+                        st.subheader(f"Top {len(results)} matching pages")
+                        cols = st.columns(min(3, len(results)))
+                        for i, r in enumerate(results):
+                            col = cols[i % 3]
+                            with col:
+                                try:
+                                    img_bytes = image_store.get(r["image_key"])
+                                    col.image(img_bytes, use_container_width=True)
+                                except Exception:
+                                    col.info("Image unavailable")
+                                col.caption(
+                                    f"Page {r.get('page_number', '?')}  ·  "
+                                    f"score {r['score']:.3f}"
+                                )
+                                if is_admin:
+                                    col.caption(
+                                        f"doc: `{r.get('document_id','?')[:12]}…`  "
+                                        f"key: `{r.get('image_key','?')}`"
+                                    )
+
+                except Exception as e:
+                    st.error(f"Visual search error: {e}")
+
+        st.divider()
+        st.caption(
+            f"**{len(ready_docs)}** document(s) indexed for visual search.  "
+            "ColPali encodes visual structure, layout, diagrams, and equations."
+        )
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# TAB 6 — Concept Graph / GraphRAG (Phase 3)
+# ══════════════════════════════════════════════════════════════════════════
+with tab_graph:
+    st.header("🕸️ Concept Graph Search")
+    st.caption(
+        "GraphRAG finds passages connected through concept relationships — "
+        "multi-hop reasoning that vector search alone misses. "
+        "Requires Memgraph (`docker compose --profile phase3 up`)."
+    )
+
+    graph_query = st.text_input(
+        "Ask a concept-reasoning question",
+        placeholder="e.g. Why does a satellite stay in orbit?",
+    )
+
+    if is_admin:
+        hop_limit = st.slider("Max concept hops", 1, 3, 2)
+        show_concepts = st.checkbox("Show concept paths", value=True)
+    else:
+        hop_limit = 2
+        show_concepts = False
+
+    if st.button("Graph Search", type="primary") and graph_query.strip():
+        with st.spinner("Traversing concept graph…"):
+            try:
+                from src.pdf_ingestion.graph_builder import get_graph_builder
+                from src.pdf_ingestion.store import DocumentStore as DS
+                graph = get_graph_builder(cfg)
+                results = graph.graph_search(
+                    query_text=graph_query,
+                    tenant_id=tenant_id,
+                    limit=6,
+                )
+
+                if not results:
+                    st.info(
+                        "No concept-graph results found. This may mean:\n"
+                        "- Memgraph is not running (`docker compose --profile phase3 up`)\n"
+                        "- Phase 3 graph hasn't been built yet for this document\n"
+                        "- The query concepts don't match extracted concept nodes"
+                    )
+                else:
+                    st.subheader(f"Found {len(results)} concept-connected passage(s)")
+                    for i, r in enumerate(results, 1):
+                        with st.container(border=True):
+                            if show_concepts or not is_admin:
+                                concepts = " → ".join(r.get("concept_path", []))
+                                st.caption(f"🔗 Concept path: **{concepts}**  |  hops: {r.get('hop_distance', '?')}")
+                            st.markdown(r.get("text_preview", ""))
+                            if is_admin:
+                                st.caption(f"chunk_id: `{r.get('chunk_id','?')}`")
+
+            except Exception as e:
+                st.error(f"Graph search error: {e}")
+
+    with st.expander("💡 Example questions that benefit from GraphRAG"):
+        st.markdown("""
+- *Why does a satellite stay in orbit?* — needs Newton's 2nd law → centripetal force → orbital mechanics chain
+- *What should I know before studying Maxwell's equations?* — prerequisite concept traversal
+- *How is simple harmonic motion related to wave propagation?* — RELATES_TO multi-hop
+- *How do conservation laws appear across different areas of physics?* — cross-chapter concept linking
+        """)
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# TAB 7 — Admin Status  (admin only)
 # ══════════════════════════════════════════════════════════════════════════
 if tab_status is not None:
     with tab_status:
@@ -475,13 +698,16 @@ if tab_status is not None:
             t_chunks = sum(d.chunk_count for d in all_docs)
             t_cards  = sum(len(store.get_cards(d.id)) for d in all_docs)
             t_raptor = sum(len(store.get_raptor_tree(d.id)) for d in all_docs)
+            t_visual = sum(len(store.get_page_images(d.id)) for d in all_docs)
+            visual_ready = sum(1 for d in all_docs if d.colpali_status == "ready")
 
-            c1, c2, c3, c4, c5 = st.columns(5)
-            c1.metric("Base textbooks", len(base_d))
-            c2.metric("User PDFs",      len(user_d))
-            c3.metric("Total chunks",   f"{t_chunks:,}")
-            c4.metric("Cards (Ph.2)",   f"{t_cards:,}")
-            c5.metric("RAPTOR nodes",   f"{t_raptor:,}")
+            c1, c2, c3, c4, c5, c6 = st.columns(6)
+            c1.metric("Base textbooks",  len(base_d))
+            c2.metric("User PDFs",       len(user_d))
+            c3.metric("Total chunks",    f"{t_chunks:,}")
+            c4.metric("Cards (Ph.2)",    f"{t_cards:,}")
+            c5.metric("RAPTOR nodes",    f"{t_raptor:,}")
+            c6.metric("Visual pages",    f"{t_visual:,}")
 
             st.divider()
             if all_docs:
@@ -490,17 +716,20 @@ if tab_status is not None:
                 for d in all_docs:
                     n_cards  = len(store.get_cards(d.id))
                     n_raptor = len(store.get_raptor_tree(d.id))
+                    n_visual = len(store.get_page_images(d.id))
                     rows.append({
-                        "Filename":     d.filename,
-                        "Tenant":       d.tenant_id,
-                        "Type":         d.source_type,
-                        "Pages":        d.page_count,
-                        "Chunks":       d.chunk_count,
-                        "Cards":        n_cards,
-                        "RAPTOR":       n_raptor,
-                        "Phase 2":      "✅" if n_cards > 0 else "⏳",
-                        "Embedding":    d.embedding_version,
-                        "Created":      str(d.created_at)[:19],
+                        "Filename":        d.filename,
+                        "Tenant":          d.tenant_id,
+                        "Type":            d.source_type,
+                        "Pages":           d.page_count,
+                        "Chunks":          d.chunk_count,
+                        "Cards":           n_cards,
+                        "RAPTOR":          n_raptor,
+                        "Phase 2":         "✅" if n_cards > 0 else "⏳",
+                        "Visual Pages":    n_visual,
+                        "Visual Status":   _colpali_status_badge(d.colpali_status),
+                        "Embedding":       d.embedding_version,
+                        "Created":         str(d.created_at)[:19],
                     })
                 st.dataframe(pd.DataFrame(rows), use_container_width=True)
             else:

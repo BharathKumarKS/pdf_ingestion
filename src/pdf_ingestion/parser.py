@@ -17,6 +17,7 @@ class PageContent:
     page_number: int
     text: str
     tables: list[str] = field(default_factory=list)
+    image_bytes: Optional[bytes] = None   # PNG bytes; populated when rasterize_pages=True
 
 
 @dataclass
@@ -47,10 +48,12 @@ class PDFParser:
         do_ocr: bool = False,
         do_table_structure: bool = True,
         use_gpu: bool = False,
+        rasterize_pages: bool = False,
     ) -> None:
         self._do_ocr = do_ocr
         self._do_table_structure = do_table_structure
         self._use_gpu = use_gpu
+        self._rasterize_pages = rasterize_pages
         self._converter = None  # lazy-loaded
 
     def _get_converter(self):
@@ -62,6 +65,8 @@ class PDFParser:
             opts = PdfPipelineOptions()
             opts.do_ocr = self._do_ocr
             opts.do_table_structure = self._do_table_structure
+            if self._rasterize_pages:
+                opts.generate_page_images = True
 
             if self._use_gpu and torch.cuda.is_available():
                 try:
@@ -136,6 +141,7 @@ class PDFParser:
         """
         Build per-page text by inspecting element provenance.
         Falls back to splitting full_text evenly if provenance is unavailable.
+        When rasterize_pages=True, attaches PNG bytes to each PageContent.
         """
         try:
             page_buckets: dict[int, list[str]] = {i: [] for i in range(1, page_count + 1)}
@@ -151,19 +157,43 @@ class PDFParser:
                 else:
                     page_buckets[1].append(text)
 
-            return [
-                PageContent(page_number=pg, text="\n".join(texts))
-                for pg, texts in sorted(page_buckets.items())
-                if texts
-            ]
+            pages = []
+            for pg, texts in sorted(page_buckets.items()):
+                if not texts:
+                    continue
+                image_bytes = self._rasterize_page(doc, pg) if self._rasterize_pages else None
+                pages.append(PageContent(
+                    page_number=pg,
+                    text="\n".join(texts),
+                    image_bytes=image_bytes,
+                ))
+            return pages
         except Exception:
             lines = full_text.splitlines()
             chunk_size = max(1, len(lines) // max(page_count, 1))
             pages = []
             for i in range(page_count):
                 segment = "\n".join(lines[i * chunk_size : (i + 1) * chunk_size])
-                pages.append(PageContent(page_number=i + 1, text=segment))
+                image_bytes = self._rasterize_page(doc, i + 1) if self._rasterize_pages else None
+                pages.append(PageContent(page_number=i + 1, text=segment, image_bytes=image_bytes))
             return pages
+
+    def _rasterize_page(self, doc, page_no: int) -> Optional[bytes]:
+        """Extract PNG bytes for one page from a Docling document."""
+        import io
+        try:
+            page = doc.pages.get(page_no)
+            if page is None:
+                return None
+            pil_image = page.image.pil_image if hasattr(page, "image") and page.image else None
+            if pil_image is None:
+                return None
+            buf = io.BytesIO()
+            pil_image.save(buf, format="PNG")
+            return buf.getvalue()
+        except Exception as exc:
+            logger.debug("Could not rasterize page {} ({})", page_no, exc)
+            return None
 
     def _extract_title(self, doc) -> Optional[str]:
         try:

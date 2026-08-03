@@ -98,8 +98,10 @@ class RaptorBuilder:
 
         logger.info("Building RAPTOR tree for doc {} ({} chunks)", document_id, n)
 
+        max_levels = self._cfg.raptor_max_levels
+
         # ── Level 1: cluster leaf chunks ──────────────────────────────────
-        level1_nodes = self._build_level(
+        current_nodes = self._build_level(
             document_id=document_id,
             tenant_id=tenant_id,
             is_global_baseline=is_global_baseline,
@@ -110,35 +112,48 @@ class RaptorBuilder:
             parent_id=None,
         )
 
-        all_nodes: list[RaptorNodeData] = list(level1_nodes)
+        all_nodes: list[RaptorNodeData] = list(current_nodes)
 
-        # ── Level 2: meta-summary when we have multiple level-1 nodes ─────
-        if len(level1_nodes) >= self._cfg.raptor_min_cluster_size:
-            l2_embeddings = np.array(
-                [n.embedding for n in level1_nodes if n.embedding is not None]
+        # ── Higher levels: keep building until max_levels or too few nodes ─
+        for level in range(2, max_levels + 1):
+            if len(current_nodes) < self._cfg.raptor_min_cluster_size:
+                break
+
+            prev_nodes = current_nodes
+            level_embeddings = np.array(
+                [nd.embedding for nd in prev_nodes if nd.embedding is not None],
+                dtype=np.float32,
             )
-            if len(l2_embeddings) >= 2:
-                level2_nodes = self._build_level(
-                    document_id=document_id,
-                    tenant_id=tenant_id,
-                    is_global_baseline=is_global_baseline,
-                    texts=[n.summary for n in level1_nodes],
-                    ids=[n.node_id for n in level1_nodes],
-                    embeddings=l2_embeddings,
-                    level=2,
-                    parent_id=None,
-                )
-                # Wire up parent_id on level-1 nodes
-                if level2_nodes:
-                    root_id = level2_nodes[0].node_id
-                    for node in level1_nodes:
-                        node.parent_id = root_id
-                all_nodes.extend(level2_nodes)
+            if len(level_embeddings) < 2:
+                break
+
+            current_nodes = self._build_level(
+                document_id=document_id,
+                tenant_id=tenant_id,
+                is_global_baseline=is_global_baseline,
+                texts=[nd.summary for nd in prev_nodes],
+                ids=[nd.node_id for nd in prev_nodes],
+                embeddings=level_embeddings,
+                level=level,
+                parent_id=None,
+            )
+
+            # Wire parent_id: each previous node maps to the new node whose
+            # child_ids list contains it.
+            node_id_to_parent: dict[str, str] = {}
+            for new_node in current_nodes:
+                for child_id in new_node.child_ids:
+                    node_id_to_parent[child_id] = new_node.node_id
+
+            for prev_node in prev_nodes:
+                prev_node.parent_id = node_id_to_parent.get(prev_node.node_id)
+
+            all_nodes.extend(current_nodes)
 
         logger.success(
             "RAPTOR tree built: {} nodes (levels {})",
             len(all_nodes),
-            sorted({n.level for n in all_nodes}),
+            sorted({nd.level for nd in all_nodes}),
         )
         return all_nodes
 

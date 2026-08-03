@@ -7,7 +7,13 @@ from typing import Optional
 
 from loguru import logger
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PayloadSchemaType, VectorParams
+from qdrant_client.models import (
+    Distance,
+    MultiVectorConfig,
+    MultiVectorComparator,
+    PayloadSchemaType,
+    VectorParams,
+)
 from sqlalchemy import Column, ForeignKey, String
 from sqlmodel import Field, Session, SQLModel, create_engine
 
@@ -34,6 +40,7 @@ class Document(SQLModel, table=True):
     page_count: int = 0
     chunk_count: int = 0
     embedding_version: str = "jina-v3"
+    colpali_status: str = Field(default="pending", index=True)  # pending|processing|ready|failed
     version: int = Field(default=1)
     is_active: bool = Field(default=True, index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -112,6 +119,24 @@ class RaptorNode(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+# -- Phase 3: Visual + Graph tables --------------------------------------------
+
+class PageImage(SQLModel, table=True):
+    """One rasterized page image per PDF page."""
+    __tablename__ = "page_images"
+    __table_args__ = {"extend_existing": True}
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    document_id: str = Field(foreign_key="documents.id", index=True)
+    page_number: int = Field(index=True)
+    image_key: str                           # path or object key in image store
+    width: int = 0
+    height: int = 0
+    colpali_point_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    is_active: bool = Field(default=True, index=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 # -- SQLite engine factory -----------------------------------------------------
 
 _engine = None
@@ -127,7 +152,15 @@ def get_engine(settings: Settings | None = None):
             connect_args={"check_same_thread": False},
             echo=cfg.debug,
         )
-        SQLModel.metadata.create_all(_engine)
+        try:
+            SQLModel.metadata.create_all(_engine)
+        except Exception as exc:
+            # Indexes for existing tables may already exist when the same
+            # DB file is reused across test runs. Safe to ignore.
+            if "already exists" in str(exc).lower():
+                logger.debug("DB schema already present, skipping: {}", exc)
+            else:
+                raise
         logger.info("SQLite engine ready: {}", cfg.sqlite_url)
     return _engine
 
@@ -153,7 +186,6 @@ def get_qdrant(settings: Settings | None = None) -> QdrantClient:
             logger.info("Qdrant: in-memory mode (tests)")
 
         elif cfg.qdrant_url:
-            # Remote cluster — Support Vectors / Qdrant Cloud
             kwargs = {"url": cfg.qdrant_url}
             if cfg.qdrant_api_key:
                 kwargs["api_key"] = cfg.qdrant_api_key
@@ -161,13 +193,13 @@ def get_qdrant(settings: Settings | None = None) -> QdrantClient:
             logger.info("Qdrant: remote cluster '{}'", cfg.qdrant_url)
 
         else:
-            # Local file-based persistence (no Docker needed)
             from pathlib import Path
             Path(cfg.qdrant_local_path).mkdir(parents=True, exist_ok=True)
             _qdrant = QdrantClient(path=cfg.qdrant_local_path)
             logger.info("Qdrant: local path '{}'", cfg.qdrant_local_path)
 
         _ensure_collection(_qdrant, cfg)
+        _ensure_colpali_collection(_qdrant, cfg)
     return _qdrant
 
 
@@ -197,8 +229,71 @@ def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
             pass
 
 
+def _ensure_colpali_collection(client: QdrantClient, cfg: Settings) -> None:
+    """Create the ColPali multi-vector collection for visual search."""
+    existing = {c.name for c in client.get_collections().collections}
+    if cfg.colpali_collection not in existing:
+        client.create_collection(
+            collection_name=cfg.colpali_collection,
+            vectors_config={
+                "colpali": VectorParams(
+                    size=cfg.colpali_patch_dim,
+                    distance=Distance.COSINE,
+                    multivector_config=MultiVectorConfig(
+                        comparator=MultiVectorComparator.MAX_SIM
+                    ),
+                )
+            },
+        )
+        logger.info("Created Qdrant ColPali collection '{}'", cfg.colpali_collection)
+
+    for field, schema in (
+        ("tenant_id",   PayloadSchemaType.KEYWORD),
+        ("document_id", PayloadSchemaType.KEYWORD),
+        ("page_number", PayloadSchemaType.INTEGER),
+    ):
+        try:
+            client.create_payload_index(
+                collection_name=cfg.colpali_collection,
+                field_name=field,
+                field_schema=schema,
+            )
+        except Exception:
+            pass
+
+
+# -- Memgraph (Neo4j Bolt) factory ---------------------------------------------
+
+_memgraph = None
+
+
+def get_memgraph(settings: Settings | None = None):
+    """Return a neo4j Driver connected to Memgraph via Bolt."""
+    global _memgraph
+    if _memgraph is None:
+        cfg = settings or get_settings()
+        try:
+            from neo4j import GraphDatabase
+            uri = f"bolt://{cfg.memgraph_host}:{cfg.memgraph_port}"
+            _memgraph = GraphDatabase.driver(
+                uri,
+                auth=(cfg.memgraph_user, cfg.memgraph_password),
+            )
+            logger.info("Memgraph: connected at {}", uri)
+        except Exception as exc:
+            logger.warning("Memgraph unavailable ({})", exc)
+            _memgraph = None
+    return _memgraph
+
+
 def reset_singletons() -> None:
     """Test helper -- tear down cached singletons between test runs."""
-    global _engine, _qdrant
+    global _engine, _qdrant, _memgraph
+    if _memgraph is not None:
+        try:
+            _memgraph.close()
+        except Exception:
+            pass
     _engine = None
     _qdrant = None
+    _memgraph = None

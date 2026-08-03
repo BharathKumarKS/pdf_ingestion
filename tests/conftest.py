@@ -12,7 +12,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 # Force stub embedder + in-memory Qdrant for all tests unless overridden
 os.environ.setdefault("USE_STUB_EMBEDDER", "true")
-os.environ.setdefault("QDRANT_IN_MEMORY", "true")
+os.environ.setdefault("USE_STUB_LLM",      "true")
+os.environ.setdefault("USE_STUB_COLPALI",  "true")
+os.environ.setdefault("USE_STUB_GRAPH",    "true")
+os.environ.setdefault("QDRANT_IN_MEMORY",  "true")
 os.environ.setdefault("SQLITE_URL", "sqlite:///./data/test_synapse.db")
 
 
@@ -43,6 +46,9 @@ def settings():
     from src.core.config import Settings
     return Settings(
         use_stub_embedder=True,
+        use_stub_llm=True,
+        use_stub_colpali=True,
+        use_stub_graph=True,
         qdrant_in_memory=True,
         sqlite_url="sqlite:///./data/test_synapse.db",
         debug=False,

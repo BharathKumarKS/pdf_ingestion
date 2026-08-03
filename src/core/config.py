@@ -66,6 +66,27 @@ class Settings(BaseSettings):
     raptor_max_levels: int = 3
     raptor_min_cluster_size: int = 2     # minimum chunks per cluster
 
+    # Phase 3 — ColPali visual embeddings
+    colpali_model: str = "vidore/colpali-v1.2"
+    colpali_collection: str = "visual_knowledge_base"
+    colpali_patch_dim: int = 128
+    use_stub_colpali: bool = False
+    page_images_dir: str = "./data/page_images"
+    image_store_backend: str = "local"   # "local" | "minio"
+
+    # Phase 3 — MinIO (active when image_store_backend="minio")
+    minio_endpoint: str = "http://localhost:9000"
+    minio_access_key: str = "synapse"
+    minio_secret_key: str = "synapse123"
+    minio_bucket: str = "page-images"
+
+    # Phase 3 — Memgraph
+    memgraph_host: str = "localhost"
+    memgraph_port: int = 7687
+    memgraph_user: str = "memgraph"
+    memgraph_password: str = "synapse"
+    use_stub_graph: bool = False
+
     api_port: int = 8000
 
     def ensure_dirs(self) -> None:
@@ -74,6 +95,7 @@ class Settings(BaseSettings):
             self.model_cache_dir,
             self.upload_dir,
             self.base_textbook_dir,
+            self.page_images_dir,
             "data",
         ):
             Path(path_str).mkdir(parents=True, exist_ok=True)

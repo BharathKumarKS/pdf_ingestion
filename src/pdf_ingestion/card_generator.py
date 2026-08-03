@@ -256,10 +256,18 @@ class OllamaCardGenerator:
                 inner = m.group(1)
                 title_m   = re.search(r'"title"\s*:\s*"([^"]+)"', inner)
                 content_m = re.search(r'"content"\s*:\s*"([^"]+)"', inner)
-                result[ct.value] = {
+                entry: dict = {
                     "title":   title_m.group(1)   if title_m   else ct.value,
                     "content": content_m.group(1) if content_m else "",
                 }
+                if ct == CardType.QUESTION:
+                    answer_m = re.search(r'"answer"\s*:\s*"([^"]+)"', inner)
+                    entry["answer"] = answer_m.group(1) if answer_m else ""
+                    if not answer_m:
+                        logger.warning(
+                            "Could not extract 'answer' from partial JSON for question card"
+                        )
+                result[ct.value] = entry
         return result
 
 
