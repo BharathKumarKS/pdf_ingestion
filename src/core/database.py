@@ -186,13 +186,21 @@ def get_qdrant(settings: Settings | None = None) -> QdrantClient:
             logger.info("Qdrant: in-memory mode (tests)")
 
         elif cfg.qdrant_url:
+            # Remote cloud (Qdrant Cloud, Support Vectors, etc.)
+            # Also works for self-hosted: set QDRANT_URL=http://host:port
             kwargs = {"url": cfg.qdrant_url}
             if cfg.qdrant_api_key:
                 kwargs["api_key"] = cfg.qdrant_api_key
             _qdrant = QdrantClient(**kwargs)
-            logger.info("Qdrant: remote cluster '{}'", cfg.qdrant_url)
+            logger.info("Qdrant: server at '{}'", cfg.qdrant_url)
+
+        elif cfg.qdrant_host and cfg.qdrant_host != "localhost":
+            # Self-hosted via explicit QDRANT_HOST + QDRANT_PORT
+            _qdrant = QdrantClient(host=cfg.qdrant_host, port=cfg.qdrant_port)
+            logger.info("Qdrant: server at {}:{}", cfg.qdrant_host, cfg.qdrant_port)
 
         else:
+            # Local file-based persistence (no server needed for dev)
             from pathlib import Path
             Path(cfg.qdrant_local_path).mkdir(parents=True, exist_ok=True)
             _qdrant = QdrantClient(path=cfg.qdrant_local_path)
