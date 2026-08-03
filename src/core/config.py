@@ -53,11 +53,23 @@ class Settings(BaseSettings):
     upload_dir: str = "./data/user_uploads"
     base_textbook_dir: str = "./data/base_textbooks"
 
-    # Ollama / LLM
+    # LLM — Ollama (default) or OpenAI-compatible cluster
+    # Set LLM_BACKEND="openai" to use any OpenAI-compatible API instead of Ollama.
+    # All card generation, RAPTOR summaries, and concept extraction use this.
+    llm_backend: str = "ollama"            # "ollama" | "openai"
+
+    # Ollama settings (used when llm_backend="ollama")
     ollama_host: str = "http://localhost:11434"
     ollama_model: str = "llama3.2"
     ollama_timeout: int = 120            # seconds per generation call
-    use_stub_llm: bool = False           # True -> skip Ollama in unit tests
+
+    # OpenAI-compatible settings (used when llm_backend="openai")
+    # Works with vLLM, LiteLLM, Together AI, Anyscale, Azure OpenAI, etc.
+    openai_api_base: str = "http://localhost:8000"   # cluster endpoint
+    openai_api_key: str = "none"                      # "none" if no auth required
+    openai_model: str = "meta-llama/Llama-3.2-8B-Instruct"
+
+    use_stub_llm: bool = False           # True -> skip all LLM calls in unit tests
 
     # Card generation parallelism
     card_gen_workers: int = 4            # parallel Ollama threads for card generation

@@ -31,7 +31,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
-import httpx
 from loguru import logger
 
 from src.core.config import Settings, get_settings
@@ -143,7 +142,7 @@ class OllamaCardGenerator:
 
     def generate_cards_for_chunk(self, chunk: TextChunk) -> list[GeneratedCard]:
         prompt = _PROMPT_TMPL.format(text=chunk.text.strip())
-        raw_json = self._call_ollama(prompt)
+        raw_json = self._call_llm(prompt)
         return self._parse_response(raw_json, chunk)
 
     def generate_cards_for_chunks(
@@ -195,22 +194,17 @@ class OllamaCardGenerator:
 
     # -- Internals -------------------------------------------------------------
 
-    def _call_ollama(self, prompt: str) -> str:
-        url = f"{self._cfg.ollama_host}/api/generate"
-        payload = {
-            "model":  self._cfg.ollama_model,
-            "prompt": prompt,
-            "system": _SYSTEM,
-            "stream": False,
-            "format": "json",
-            "options": {"temperature": 0.3, "top_p": 0.9},
-        }
-        try:
-            resp = httpx.post(url, json=payload, timeout=self._cfg.ollama_timeout)
-            resp.raise_for_status()
-            return resp.json().get("response", "{}")
-        except Exception as exc:
-            raise RuntimeError(f"Ollama call failed: {exc}") from exc
+    def _call_llm(self, prompt: str) -> str:
+        from src.core.llm import call_llm
+        raw = call_llm(
+            prompt=prompt,
+            system=_SYSTEM,
+            settings=self._cfg,
+            json_mode=True,
+        )
+        if not raw:
+            raise RuntimeError("LLM returned empty response")
+        return raw
 
     def _parse_response(
         self, raw: str, chunk: TextChunk

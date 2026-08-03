@@ -26,7 +26,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Optional
 
-import httpx
 from loguru import logger
 
 from src.core.config import Settings, get_settings
@@ -386,24 +385,12 @@ class GraphBuilder:
 
     # -- LLM helpers -----------------------------------------------------------
 
-    def _extract_concepts(self, chunk_text: str) -> list[dict]:
-        cfg = self._cfg
+    def _extract_concepts(self, chunk_text: str) -> dict:
+        from src.core.llm import call_llm
         prompt = _CONCEPT_PROMPT.format(text=chunk_text[:2000])
         try:
-            resp = httpx.post(
-                f"{cfg.ollama_host}/api/generate",
-                json={
-                    "model": cfg.ollama_model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "format": "json",
-                    "options": {"temperature": 0.1},
-                },
-                timeout=cfg.ollama_timeout,
-            )
-            resp.raise_for_status()
-            raw = resp.json().get("response", "{}")
-            data = json.loads(raw)
+            raw  = call_llm(prompt=prompt, settings=self._cfg, json_mode=True)
+            data = json.loads(raw) if raw else {}
             return {
                 "concepts":      data.get("concepts", []),
                 "prerequisites": data.get("prerequisites", []),
@@ -413,23 +400,12 @@ class GraphBuilder:
             return {"concepts": [], "prerequisites": []}
 
     def _extract_query_concepts(self, query_text: str) -> list[str]:
-        cfg = self._cfg
+        from src.core.llm import call_llm
         prompt = _QUERY_CONCEPT_PROMPT.format(question=query_text)
         try:
-            resp = httpx.post(
-                f"{cfg.ollama_host}/api/generate",
-                json={
-                    "model": cfg.ollama_model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "format": "json",
-                    "options": {"temperature": 0.1},
-                },
-                timeout=30,
-            )
-            resp.raise_for_status()
-            raw = resp.json().get("response", "{}")
-            data = json.loads(raw)
+            raw  = call_llm(prompt=prompt, settings=self._cfg,
+                            timeout=30, json_mode=True)
+            data = json.loads(raw) if raw else {}
             return data.get("concepts", [])
         except Exception:
             return []

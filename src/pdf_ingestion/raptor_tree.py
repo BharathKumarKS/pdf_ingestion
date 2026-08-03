@@ -239,31 +239,17 @@ class RaptorBuilder:
         return gmm.fit_predict(X).tolist()
 
     def _summarise(self, texts: list[str]) -> str:
-        """Call Ollama/Llama 3.2 to summarise a cluster of texts."""
+        """Summarise a cluster of texts via the configured LLM backend."""
         cfg = self._cfg
         if cfg.use_stub_llm:
-            return f"[stub summary] " + " | ".join(t[:40] for t in texts[:3])
+            return "[stub summary] " + " | ".join(t[:40] for t in texts[:3])
 
+        from src.core.llm import call_llm
         passages = "\n\n---\n\n".join(texts)
-        prompt = _SUM_PROMPT.format(passages=passages[:6000])  # guard token limit
+        prompt   = _SUM_PROMPT.format(passages=passages[:6000])
 
-        import httpx
-        try:
-            resp = httpx.post(
-                f"{cfg.ollama_host}/api/generate",
-                json={
-                    "model":  cfg.ollama_model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.2},
-                },
-                timeout=cfg.ollama_timeout,
-            )
-            resp.raise_for_status()
-            return resp.json().get("response", "").strip() or " ".join(texts[:2])
-        except Exception as exc:
-            logger.warning("Ollama summary failed ({}), using truncated text", exc)
-            return " ".join(texts)[:500]
+        result = call_llm(prompt=prompt, settings=cfg)
+        return result.strip() or " ".join(texts[:2][:500])
 
     def _embed(self, text: str) -> Optional[np.ndarray]:
         """Embed a summary using Jina v3 (or return None in stub mode)."""
