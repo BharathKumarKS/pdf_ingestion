@@ -173,7 +173,8 @@ Fill in these values from your Support Vectors dashboard (leave all others as-is
 | `QDRANT_API_KEY` | Support Vectors Qdrant dashboard → API Keys | `sv-xxxxxxxxxxxx` |
 | `USE_GPU` | Set to `true` on the GPU VM | `true` |
 | `EMBEDDING_BATCH_SIZE` | Increase for GPU | `32` |
-| `CARD_GEN_WORKERS` | Parallel Ollama threads | `8` |
+| `CARD_GEN_WORKERS` | Parallel Ollama threads for card generation | `8` |
+| `CONCEPT_GEN_WORKERS` | Parallel Ollama threads for concept extraction (Phase 3) | `8` |
 
 Your `.env` on the GPU VM should look like:
 
@@ -186,8 +187,9 @@ QDRANT_API_KEY=your-api-key-from-dashboard
 USE_GPU=true
 EMBEDDING_BATCH_SIZE=32
 
-# Parallel Ollama card generation
+# Parallel Ollama workers (card generation + concept extraction)
 CARD_GEN_WORKERS=8
+CONCEPT_GEN_WORKERS=8
 OLLAMA_TIMEOUT=60
 ```
 
