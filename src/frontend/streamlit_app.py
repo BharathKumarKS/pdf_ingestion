@@ -85,7 +85,12 @@ with st.sidebar:
     # ── Source toggle ─────────────────────────────────────────────────────
     st.subheader("Study mode")
     try:
-        store      = DocumentStore(cfg)
+        store = DocumentStore(cfg)
+    except Exception as e:
+        st.error(f"Database unavailable: {e}")
+        st.stop()
+
+    try:
         user_docs  = store.list_documents(tenant_id=tenant_id)
         has_upload = len(user_docs) > 0
     except Exception:
@@ -295,13 +300,25 @@ with tab_search:
                 raptor_results = []
                 if also_raptor:
                     from qdrant_client.models import FieldCondition, Filter, MatchValue
+                    # Respect study-mode: include global RAPTOR + user's own if hybrid
+                    raptor_must = [FieldCondition(
+                        key="source_type", match=MatchValue(value="raptor_summary")
+                    )]
+                    if source_type_filter == "user_upload":
+                        raptor_filter = Filter(must=raptor_must + [
+                            FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id))
+                        ])
+                    else:
+                        raptor_filter = Filter(must=raptor_must, should=[
+                            Filter(must=[FieldCondition(key="tenant_id",
+                                         match=MatchValue(value=tenant_id))]),
+                            Filter(must=[FieldCondition(key="tenant_id",
+                                         match=MatchValue(value=cfg.global_tenant_id))]),
+                        ])
                     rr = s._qdrant.query_points(
                         collection_name=cfg.qdrant_collection,
                         query=q_vec.tolist(),
-                        query_filter=Filter(must=[
-                            FieldCondition(key="source_type",
-                                          match=MatchValue(value="raptor_summary")),
-                        ]),
+                        query_filter=raptor_filter,
                         limit=2,
                         with_payload=True,
                     )
@@ -389,8 +406,24 @@ with tab_cards:
 
     try:
         store    = DocumentStore(cfg)
-        all_docs = store.list_documents()
-        docs_with_cards = [(d, store.get_cards(d.id)) for d in all_docs if store.get_cards(d.id)]
+        # Show only the current user's docs + global baseline (not other users')
+        all_docs = (
+            store.list_documents()
+            if is_admin
+            else store.list_documents(tenant_id=tenant_id) +
+                 store.list_documents(tenant_id=cfg.global_tenant_id)
+        )
+        # Deduplicate (global docs appear once even if listed under both queries)
+        seen_ids: set = set()
+        unique_docs = []
+        for d in all_docs:
+            if d.id not in seen_ids:
+                seen_ids.add(d.id)
+                unique_docs.append(d)
+        all_docs = unique_docs
+
+        cards_map  = {d.id: store.get_cards(d.id) for d in all_docs}
+        docs_with_cards = [(d, cards_map[d.id]) for d in all_docs if cards_map[d.id]]
 
         if not docs_with_cards:
             st.info(
@@ -415,7 +448,7 @@ with tab_cards:
                 format_func=lambda x: f"{CARD_ICONS[x]} {x.capitalize()}",
             )
 
-            cards    = store.get_cards(sel_doc_id)
+            cards    = cards_map.get(sel_doc_id, [])
             filtered = [c for c in cards if c.card_type in sel_types]
 
             if is_admin:
@@ -463,10 +496,8 @@ if tab_raptor is not None:
         try:
             store    = DocumentStore(cfg)
             all_docs = store.list_documents()
-            docs_with_raptor = [
-                (d, store.get_raptor_tree(d.id))
-                for d in all_docs if store.get_raptor_tree(d.id)
-            ]
+            raptor_map = {d.id: store.get_raptor_tree(d.id) for d in all_docs}
+            docs_with_raptor = [(d, raptor_map[d.id]) for d in all_docs if raptor_map[d.id]]
             if not docs_with_raptor:
                 st.info("No RAPTOR nodes yet. Run Phase 2 from the sidebar.", icon="💡")
             else:
@@ -476,7 +507,7 @@ if tab_raptor is not None:
                     options=list(doc_labels.keys()),
                     format_func=lambda x: doc_labels[x],
                 )
-                nodes = store.get_raptor_tree(sel)
+                nodes = raptor_map.get(sel, [])
                 l1    = [n for n in nodes if n.level == 1]
                 l2    = [n for n in nodes if n.level == 2]
 
@@ -488,10 +519,10 @@ if tab_raptor is not None:
 
                 if l2:
                     st.subheader("Level 2 — Root meta-summary")
+                    import json as _json
                     for n in l2:
                         with st.container(border=True):
                             st.markdown(n.summary)
-                            import json as _json
                             child_count = len(_json.loads(n.child_ids_json))
                             st.caption(
                                 f"Cluster {n.cluster_id} · "
@@ -500,7 +531,6 @@ if tab_raptor is not None:
                             )
 
                 st.subheader("Level 1 — Cluster summaries")
-                import json as _json
                 for n in l1:
                     child_ids = _json.loads(n.child_ids_json)
                     with st.expander(
@@ -580,6 +610,7 @@ with tab_visual:
                     results = s.visual_search(
                         query_patches=q_patches,
                         tenant_id=tenant_id,
+                        source_type=source_type_filter,
                         limit=n_results,
                     )
 
@@ -634,17 +665,14 @@ with tab_graph:
     )
 
     if is_admin:
-        hop_limit = st.slider("Max concept hops", 1, 3, 2)
         show_concepts = st.checkbox("Show concept paths", value=True)
     else:
-        hop_limit = 2
         show_concepts = False
 
     if st.button("Graph Search", type="primary") and graph_query.strip():
         with st.spinner("Traversing concept graph…"):
             try:
                 from src.pdf_ingestion.graph_builder import get_graph_builder
-                from src.pdf_ingestion.store import DocumentStore as DS
                 graph = get_graph_builder(cfg)
                 results = graph.graph_search(
                     query_text=graph_query,
@@ -695,11 +723,16 @@ if tab_status is not None:
             all_docs = store.list_documents()
             base_d   = [d for d in all_docs if d.source_type == "base_textbook"]
             user_d   = [d for d in all_docs if d.source_type == "user_upload"]
+
+            # Pre-fetch all per-doc counts once to avoid duplicate queries
+            cards_count  = {d.id: len(store.get_cards(d.id))       for d in all_docs}
+            raptor_count = {d.id: len(store.get_raptor_tree(d.id))  for d in all_docs}
+            visual_count = {d.id: len(store.get_page_images(d.id))  for d in all_docs}
+
             t_chunks = sum(d.chunk_count for d in all_docs)
-            t_cards  = sum(len(store.get_cards(d.id)) for d in all_docs)
-            t_raptor = sum(len(store.get_raptor_tree(d.id)) for d in all_docs)
-            t_visual = sum(len(store.get_page_images(d.id)) for d in all_docs)
-            visual_ready = sum(1 for d in all_docs if d.colpali_status == "ready")
+            t_cards  = sum(cards_count.values())
+            t_raptor = sum(raptor_count.values())
+            t_visual = sum(visual_count.values())
 
             c1, c2, c3, c4, c5, c6 = st.columns(6)
             c1.metric("Base textbooks",  len(base_d))
@@ -714,9 +747,9 @@ if tab_status is not None:
                 import pandas as pd
                 rows = []
                 for d in all_docs:
-                    n_cards  = len(store.get_cards(d.id))
-                    n_raptor = len(store.get_raptor_tree(d.id))
-                    n_visual = len(store.get_page_images(d.id))
+                    n_cards  = cards_count[d.id]
+                    n_raptor = raptor_count[d.id]
+                    n_visual = visual_count[d.id]
                     rows.append({
                         "Filename":        d.filename,
                         "Tenant":          d.tenant_id,

@@ -476,15 +476,32 @@ class DocumentStore:
         self,
         query_patches: "np.ndarray",
         tenant_id: str,
+        source_type: Optional[str] = None,
         limit: int = 5,
     ) -> list[dict]:
-        """MaxSim late-interaction search against the ColPali collection."""
+        """MaxSim late-interaction search against the ColPali collection.
+
+        source_type=None  → hybrid (user docs + global baseline)
+        source_type='user_upload' → user docs only
+        source_type='base_textbook' → global baseline only
+        """
         from qdrant_client.models import FieldCondition, Filter, MatchValue
-        filter_ = Filter(should=[
-            Filter(must=[FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id))]),
-            Filter(must=[FieldCondition(key="tenant_id",
-                         match=MatchValue(value=self._cfg.global_tenant_id))]),
-        ])
+        if source_type == "user_upload":
+            filter_ = Filter(must=[
+                FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id)),
+            ])
+        elif source_type == "base_textbook":
+            filter_ = Filter(must=[
+                FieldCondition(key="tenant_id",
+                               match=MatchValue(value=self._cfg.global_tenant_id)),
+            ])
+        else:
+            filter_ = Filter(should=[
+                Filter(must=[FieldCondition(key="tenant_id",
+                             match=MatchValue(value=tenant_id))]),
+                Filter(must=[FieldCondition(key="tenant_id",
+                             match=MatchValue(value=self._cfg.global_tenant_id))]),
+            ])
         try:
             response = self._qdrant.query_points(
                 collection_name=self._cfg.colpali_collection,
