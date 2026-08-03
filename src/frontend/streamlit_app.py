@@ -510,23 +510,26 @@ if tab_raptor is not None:
                 nodes = raptor_map.get(sel, [])
                 l1    = [n for n in nodes if n.level == 1]
                 l2    = [n for n in nodes if n.level == 2]
+                l3    = [n for n in nodes if n.level == 3]
+                root  = l3 or l2   # l3 is root when max_levels=3; l2 otherwise
 
                 c1, c2, c3 = st.columns(3)
-                c1.metric("Level-1 (cluster)",  len(l1))
-                c2.metric("Level-2 (root)",     len(l2))
-                c3.metric("Total nodes",         len(nodes))
+                c1.metric("Cluster summaries (L1)", len(l1))
+                c2.metric("Upper summaries (L2+)",  len(l2) + len(l3))
+                c3.metric("Total nodes",             len(nodes))
                 st.divider()
 
-                if l2:
-                    st.subheader("Level 2 — Root meta-summary")
-                    import json as _json
-                    for n in l2:
+                import json as _json   # imported once, used in both L2 and L1 sections
+
+                if root:
+                    st.subheader("Root summaries")
+                    for n in root:
                         with st.container(border=True):
                             st.markdown(n.summary)
                             child_count = len(_json.loads(n.child_ids_json))
                             st.caption(
-                                f"Cluster {n.cluster_id} · "
-                                f"summarises {child_count} level-1 nodes · "
+                                f"Level {n.level} · cluster {n.cluster_id} · "
+                                f"summarises {child_count} child nodes · "
                                 f"v{n.version}"
                             )
 
@@ -606,7 +609,7 @@ with tab_visual:
                     colpali     = get_colpali_embedder(cfg)
                     q_patches   = colpali.embed_query_image(query_image)
 
-                    s       = DocumentStore(cfg)
+                    s       = store
                     results = s.visual_search(
                         query_patches=q_patches,
                         tenant_id=tenant_id,
