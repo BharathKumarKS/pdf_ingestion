@@ -32,6 +32,7 @@ class Document(SQLModel, table=True):
     source_type: str = Field(index=True)        # "base_textbook" | "user_upload"
     is_global_baseline: bool = Field(default=False, index=True)
     filename: str
+    source_path: Optional[str] = None          # full path at ingest time; used by Phase 3 to locate PDF
     title: Optional[str] = None
     subject: Optional[str] = None
     grade_level: Optional[str] = None
@@ -142,6 +143,26 @@ class PageImage(SQLModel, table=True):
 _engine = None
 
 
+def _migrate_add_columns(engine) -> None:
+    """Add columns introduced after the initial schema without breaking existing DBs."""
+    migrations = [
+        ("documents", "colpali_status", "TEXT DEFAULT 'pending'"),
+        ("documents", "source_path",    "TEXT"),
+    ]
+    with engine.connect() as conn:
+        for table, column, col_type in migrations:
+            try:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"
+                    )
+                )
+                conn.commit()
+                logger.debug("Migration: added {}.{}", table, column)
+            except Exception:
+                pass  # column already exists
+
+
 def get_engine(settings: Settings | None = None):
     global _engine
     if _engine is None:
@@ -161,6 +182,10 @@ def get_engine(settings: Settings | None = None):
                 logger.debug("DB schema already present, skipping: {}", exc)
             else:
                 raise
+        # Add columns that were introduced after initial schema creation.
+        # SQLite does not support ALTER TABLE ADD COLUMN IF NOT EXISTS, so
+        # we catch the "duplicate column" error and continue.
+        _migrate_add_columns(_engine)
         logger.info("SQLite engine ready: {}", cfg.sqlite_url)
     return _engine
 

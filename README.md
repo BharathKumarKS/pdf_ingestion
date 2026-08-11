@@ -134,13 +134,37 @@ Generates: **7 pedagogical cards per chunk** (summary, definition, example, misc
 ### 7. Generate Phase 3 artifacts (ColPali + Memgraph)
 
 ```bash
+# Process all documents for a tenant (PDF path auto-detected from ingest record)
+uv run python scripts/run_phase3.py --tenant global
+
+# Or target one specific document by its ID
+uv run python scripts/run_phase3.py --doc-id <uuid>
+
+# Override the PDF path explicitly (useful if the file was moved)
 uv run python scripts/run_phase3.py --tenant global \
   --pdf data/base_textbooks/your_textbook.pdf
+
+# Re-run from scratch even if already processed (e.g. after clearing Memgraph)
+uv run python scripts/run_phase3.py --tenant global --force
 ```
 
-Generates: **ColPali patch vectors** for every page (stored in `visual_knowledge_base` Qdrant collection) + **concept graph** in Memgraph (Document → Chunk → Concept nodes with MENTIONS / RELATES_TO / PREREQUISITE_OF edges).
+**What gets generated:**
+- **ColPali patch vectors** — every PDF page rasterized and embedded as a matrix of patch vectors, stored in the `visual_knowledge_base` Qdrant collection. Enables image-level semantic search.
+- **Concept graph in Memgraph** — Document → Chunk → Concept nodes with MENTIONS / RELATES_TO / PREREQUISITE_OF edges. Enables multi-hop GraphRAG retrieval.
 
-> ColPali model (`vidore/colpali-v1.2`) downloads ~5 GB on first run.
+**Smart resume** — if you re-run after a partial failure, Phase 3 automatically skips what's already done:
+- ColPali is skipped if `PageImage` records already exist for the document in SQLite.
+- Memgraph is skipped if the `Document` node already exists in the graph.
+- Use `--force` to re-process everything from scratch.
+
+**Tuning for local machines (low RAM):**
+```env
+# In .env — reduce pages loaded into memory at once
+COLPALI_PAGE_BATCH_SIZE=2   # default is 4; drop to 2 if you hit OOM
+```
+
+> ColPali model (`vidore/colpali-v1.2`) downloads ~5 GB on first run and is cached to `MODEL_CACHE_DIR`.
+> Memgraph must be running before Phase 3 starts. Skip Memgraph with `USE_STUB_GRAPH=true` if Docker is unavailable.
 
 ### 8. Launch the app
 
@@ -220,8 +244,12 @@ uv run python scripts/run_phase2.py --tenant global
 ### Step 5 — Generate ColPali + concept graph
 
 ```bash
-uv run python scripts/run_phase3.py --tenant global \
-  --pdf data/base_textbooks/feynman_physics_vol1.pdf
+# PDF path is auto-detected from the ingest record — no --pdf needed
+uv run python scripts/run_phase3.py --tenant global
+
+# If Phase 3 was interrupted, re-running resumes automatically (skips what's done)
+# Use --force to start over completely
+uv run python scripts/run_phase3.py --tenant global --force
 ```
 
 ### Step 6 — Launch the app

@@ -314,6 +314,7 @@ with tab_search:
                         graph_results = graph.graph_search(
                             query_text=query,
                             tenant_id=tenant_id,
+                            query_vector=q_vec,
                             limit=3,
                         )
                     except Exception:
@@ -662,11 +663,14 @@ with tab_graph:
     if st.button("Graph Search", type="primary") and graph_query.strip():
         with st.spinner("Traversing concept graph…"):
             try:
+                from src.pdf_ingestion.embedder import get_embedder
                 from src.pdf_ingestion.graph_builder import get_graph_builder
-                graph = get_graph_builder(cfg)
+                gq_vec = get_embedder(cfg).embed_query(graph_query)
+                graph  = get_graph_builder(cfg)
                 results = graph.graph_search(
                     query_text=graph_query,
                     tenant_id=tenant_id,
+                    query_vector=gq_vec,
                     limit=6,
                 )
 

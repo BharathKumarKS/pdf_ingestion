@@ -81,6 +81,7 @@ class DocumentStore:
             source_type=source_type,
             is_global_baseline=is_global_baseline,
             filename=parsed_doc.filename,
+            source_path=meta.get("source_path"),
             title=parsed_doc.title or meta.get("title"),
             subject=meta.get("subject"),
             grade_level=meta.get("grade_level"),
@@ -579,6 +580,8 @@ def ingest_pdf(
     settings: Settings | None = None,
 ) -> dict:
     """Parse → chunk → embed → store. Returns summary dict."""
+    from pathlib import Path
+
     from src.pdf_ingestion.chunker import SemanticChunker
     from src.pdf_ingestion.embedder import get_embedder
     from src.pdf_ingestion.parser import PDFParser
@@ -607,7 +610,7 @@ def ingest_pdf(
         tenant_id=tenant_id,
         source_type=source_type,
         is_global_baseline=is_global_baseline,
-        extra_meta=extra_meta,
+        extra_meta={**(extra_meta or {}), "source_path": str(Path(pdf_path).resolve())},
     )
     return {
         "document_id": doc_id,
@@ -696,6 +699,7 @@ def generate_phase3_artifacts(
     document_id: str,
     pdf_path: str | None = None,
     settings: Settings | None = None,
+    force: bool = False,
 ) -> dict:
     """
     Generate ColPali visual embeddings + Memgraph concept graph for an
@@ -704,12 +708,16 @@ def generate_phase3_artifacts(
     pdf_path is required for rasterizing page images. When omitted the
     function attempts to locate the PDF automatically under the configured
     upload/textbook directories.
+
+    If force=False (default), ColPali is skipped when PageImage records
+    already exist for the document, and Memgraph is skipped when the
+    Document node already exists in the graph.
     """
     from pathlib import Path
     from sqlmodel import Session as S
 
     from src.pdf_ingestion.colpali_embedder import get_colpali_embedder
-    from src.pdf_ingestion.graph_builder import get_graph_builder
+    from src.pdf_ingestion.graph_builder import GraphBuilder, get_graph_builder
     from src.pdf_ingestion.parser import PDFParser
 
     cfg = settings or get_settings()
@@ -722,18 +730,39 @@ def generate_phase3_artifacts(
 
     store.update_colpali_status(document_id, "processing")
 
-    try:
-        # ── Locate the PDF if path not provided ───────────────────────────
-        if pdf_path is None:
+    import io
+    from PIL import Image
+
+    # ── Locate the PDF if path not provided ───────────────────────────────
+    if pdf_path is None:
+        # 1. Use the path recorded at ingest time (most reliable)
+        if doc.source_path and Path(doc.source_path).exists():
+            pdf_path = doc.source_path
+        else:
+            # 2. Fall back: search configured dirs by filename
             for base in (cfg.base_textbook_dir, cfg.upload_dir):
                 candidate = Path(base) / doc.filename
                 if candidate.exists():
                     pdf_path = str(candidate)
                     break
+        if pdf_path is None:
+            logger.warning(
+                "PDF not found for doc {} (filename='{}', source_path='{}') — skipping visual embeddings",
+                document_id, doc.filename, doc.source_path,
+            )
 
-        # ── ColPali: rasterize → embed → store ────────────────────────────
-        n_visual = 0
-        if pdf_path and Path(pdf_path).exists():
+    # ── ColPali: rasterize → embed in batches → store ─────────────────────
+    n_visual = 0
+    colpali_error: str | None = None
+    try:
+        existing_page_images = store.get_page_images(document_id)
+        if existing_page_images and not force:
+            n_visual = len(existing_page_images)
+            logger.info(
+                "ColPali: skipping — {} page images already stored for doc {} (use force=True to re-run)",
+                n_visual, document_id,
+            )
+        elif pdf_path:
             parser = PDFParser(use_gpu=cfg.use_gpu, rasterize_pages=True)
             parsed = parser.parse(pdf_path)
 
@@ -746,51 +775,87 @@ def generate_phase3_artifacts(
                 )
 
                 colpali = get_colpali_embedder(cfg)
-                # Load PIL images from stored bytes for embedding
-                from PIL import Image
-                import io
-                pil_images = [
-                    Image.open(io.BytesIO(p.image_bytes)) for p in pages_with_images
-                ]
-                patch_matrices = colpali.embed_pages(pil_images)
-
-                n_visual = store.save_colpali_embeddings(
-                    page_image_records=page_records,
-                    patch_matrices=patch_matrices,
-                    tenant_id=doc.tenant_id,
-                    is_global_baseline=doc.is_global_baseline,
-                    source_type=doc.source_type,
+                batch_size = cfg.colpali_page_batch_size
+                logger.info(
+                    "ColPali: embedding {} pages in batches of {}",
+                    len(pages_with_images), batch_size,
                 )
-        else:
-            logger.warning(
-                "PDF not found for doc {} — skipping visual embeddings", document_id
-            )
+                for i in range(0, len(pages_with_images), batch_size):
+                    batch_pages   = pages_with_images[i : i + batch_size]
+                    batch_records = page_records[i : i + batch_size]
+                    pil_images    = [Image.open(io.BytesIO(p.image_bytes)) for p in batch_pages]
+                    patch_matrices = colpali.embed_pages(pil_images)
+                    n_visual += store.save_colpali_embeddings(
+                        page_image_records=batch_records,
+                        patch_matrices=patch_matrices,
+                        tenant_id=doc.tenant_id,
+                        is_global_baseline=doc.is_global_baseline,
+                        source_type=doc.source_type,
+                    )
+                    del pil_images, patch_matrices  # free RAM between batches
+    except Exception as exc:
+        colpali_error = str(exc)
+        logger.error("ColPali failed for doc {}: {}", document_id, exc)
 
-        # ── Memgraph: build concept graph ─────────────────────────────────
-        chunks_db, _ = store.get_chunks_with_embeddings(document_id)
+    # ── Memgraph: build concept graph ──────────────────────────────────────
+    graph_stats: dict = {}
+    graph_error: str | None = None
+    try:
         graph = get_graph_builder(cfg)
-        graph_stats = graph.build_graph(
-            document_id=document_id,
-            tenant_id=doc.tenant_id,
-            chunks=chunks_db,
-            doc_title=doc.title or "",
-            doc_subject=doc.subject or "",
+        # Skip if document node already exists in Memgraph and not forcing
+        graph_already_built = (
+            not force
+            and not cfg.use_stub_graph
+            and isinstance(graph, GraphBuilder)
+            and graph.document_exists(document_id)
         )
+        if graph_already_built:
+            logger.info(
+                "Memgraph: skipping — Document node already exists for doc {} (use force=True to re-run)",
+                document_id,
+            )
+            graph_stats = {"skipped": True}
+        else:
+            chunks_db, _ = store.get_chunks_with_embeddings(document_id)
+            logger.info(
+                "Memgraph: building graph for doc '{}' ({} chunks)",
+                doc.filename, len(chunks_db),
+            )
+            graph_stats = graph.build_graph(
+                document_id=document_id,
+                tenant_id=doc.tenant_id,
+                chunks=chunks_db,
+                doc_title=doc.title or "",
+                doc_subject=doc.subject or "",
+            )
+    except Exception as exc:
+        graph_error = str(exc)
+        logger.error("Memgraph failed for doc {}: {}", document_id, exc)
 
-        store.update_colpali_status(document_id, "ready")
+    # ── Final status ───────────────────────────────────────────────────────
+    failed = colpali_error or graph_error
+    status = "failed" if failed else "ready"
+    store.update_colpali_status(document_id, status)
+
+    if not failed:
         logger.success(
             "Phase 3 complete for '{}': {} visual vectors, {} concept nodes",
             doc.filename, n_visual, graph_stats.get("concept_nodes", 0),
         )
-        return {
-            "document_id":    document_id,
-            "filename":       doc.filename,
-            "visual_vectors": n_visual,
-            "graph_stats":    graph_stats,
-            "colpali_status": "ready",
-        }
+    else:
+        logger.warning(
+            "Phase 3 partial/failed for '{}': colpali={} graph={}",
+            doc.filename,
+            "ok" if not colpali_error else f"FAILED({colpali_error[:60]})",
+            "ok" if not graph_error   else f"FAILED({graph_error[:60]})",
+        )
 
-    except Exception as exc:
-        store.update_colpali_status(document_id, "failed")
-        logger.error("Phase 3 failed for doc {}: {}", document_id, exc)
-        raise
+    return {
+        "document_id":    document_id,
+        "filename":       doc.filename,
+        "visual_vectors": n_visual,
+        "graph_stats":    graph_stats,
+        "colpali_status": status,
+        "colpali_error":  colpali_error,
+        "graph_error":    graph_error,
+    }

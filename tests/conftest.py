@@ -23,9 +23,12 @@ os.environ.setdefault("SQLITE_URL", "sqlite:///./data/test_synapse.db")
 def reset_db_singletons():
     """Tear down cached DB clients between tests to avoid state leakage."""
     from src.core.database import reset_singletons
+    from src.pdf_ingestion.graph_builder import reset_graph_builder
     reset_singletons()
+    reset_graph_builder()
     yield
     reset_singletons()
+    reset_graph_builder()
 
 
 @pytest.fixture(scope="session")

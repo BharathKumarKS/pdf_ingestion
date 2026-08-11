@@ -35,6 +35,10 @@ def main() -> None:
     group.add_argument("--tenant", help="Process all documents for this tenant_id")
     group.add_argument("--doc-id", dest="doc_id", help="Process one document by ID")
     parser.add_argument("--pdf", help="Path to the PDF file (required for visual embeddings)")
+    parser.add_argument(
+        "--force", action="store_true",
+        help="Re-run even if ColPali vectors or Memgraph nodes already exist",
+    )
     args = parser.parse_args()
 
     cfg = get_settings()
@@ -62,14 +66,27 @@ def main() -> None:
                 document_id=doc_id,
                 pdf_path=pdf_path,
                 settings=cfg,
+                force=args.force,
             )
             gs = result.get("graph_stats", {})
+            colpali_err = result.get("colpali_error")
+            graph_err   = result.get("graph_error")
+
+            if colpali_err and graph_err:
+                status_cell = f"[red]both failed[/red]"
+            elif colpali_err:
+                status_cell = f"[yellow]colpali failed[/yellow]"
+            elif graph_err:
+                status_cell = f"[yellow]graph failed[/yellow]"
+            else:
+                status_cell = "[green]ready[/green]"
+
             table.add_row(
                 result["filename"],
                 str(result["visual_vectors"]),
                 str(gs.get("concept_nodes", 0)),
                 str(gs.get("edges", 0)),
-                "[green]ready[/green]",
+                status_cell,
             )
         except Exception as exc:
             table.add_row(doc_id[:12] + "…", "—", "—", "—", f"[red]failed: {exc}[/red]")

@@ -8,13 +8,16 @@ Edges:  PART_OF, ON_PAGE, MENTIONS, RELATES_TO, PREREQUISITE_OF
 
 GraphRAG retrieval flow
 -----------------------
-1. Extract concepts from the user query via Llama 3.2.
-2. Cypher: find Chunk nodes that MENTION those concepts.
-3. Walk RELATES_TO / PREREQUISITE_OF edges to surface adjacent chunks.
+1. At query time, embed the user question with Jina v3 (same embedding already
+   computed for vector search — no extra LLM call needed).
+2. Cosine similarity against Concept node embeddings stored in Memgraph
+   (embedded once at build time, reused on every query).
+3. Walk RELATES_TO / PREREQUISITE_OF edges from matching concept nodes to
+   surface Chunk nodes connected by concept relationships.
 4. Return ranked chunk IDs + the concept path that connected them.
 
-Parallelism
------------
+Build-time parallelism
+----------------------
 build_graph() extracts concepts for all chunks in parallel (ThreadPoolExecutor,
 CONCEPT_GEN_WORKERS threads) before writing to Memgraph. Ollama calls are
 IO-bound so threads provide real concurrency — same pattern as card_generator.py.
@@ -26,6 +29,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Optional
 
+import numpy as np
 from loguru import logger
 
 from src.core.config import Settings, get_settings
@@ -111,6 +115,7 @@ class StubGraphBuilder:
         self,
         query_text: str,
         tenant_id: str,
+        query_vector: Optional[np.ndarray] = None,
         limit: int = 5,
     ) -> list[dict]:
         results = []
@@ -123,6 +128,12 @@ class StubGraphBuilder:
                     "text_preview": info["text"][:100],
                 })
         return results
+
+    def document_exists(self, document_id: str) -> bool:
+        return any(
+            info.get("document_id") == document_id
+            for info in self._chunks.values()
+        )
 
     def close(self) -> None:
         pass
@@ -224,7 +235,38 @@ class GraphBuilder:
             len(chunks), failed,
         )
 
-        # ── Phase B: write structural nodes + concept graph to Memgraph ───────
+        # ── Phase A.5: embed unique concept names (once, reused at query time) ─
+        # Collect unique names across all chunks
+        unique_concept_names: list[str] = []
+        seen: set[str] = set()
+        for extracted in chunk_concepts.values():
+            for c in extracted.get("concepts", []):
+                name = c.get("name", "")
+                if name and name not in seen:
+                    unique_concept_names.append(name)
+                    seen.add(name)
+
+        concept_embeddings: dict[str, list[float]] = {}
+        if unique_concept_names and not self._cfg.use_stub_embedder:
+            try:
+                from src.pdf_ingestion.embedder import get_embedder
+                embedder = get_embedder(self._cfg)
+                logger.info(
+                    "Embedding {} unique concept names for graph search…",
+                    len(unique_concept_names),
+                )
+                for name in unique_concept_names:
+                    vec = embedder.embed_query(name)
+                    if vec is not None:
+                        concept_embeddings[name] = vec.tolist()
+                logger.debug(
+                    "Concept embeddings ready: {}/{}",
+                    len(concept_embeddings), len(unique_concept_names),
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Concept embedding failed ({}); graph search will fall back to LLM", exc
+                )
         concept_node_count = 0
         edge_count = 0
 
@@ -257,9 +299,9 @@ class GraphBuilder:
                 # Chunk node
                 session.run(
                     "MERGE (c:Chunk {id: $id}) "
-                    "SET c.text=$text, c.tenant_id=$tenant_id, "
+                    "SET c.chunk_text=$chunk_text, c.tenant_id=$tenant_id, "
                     "c.page_number=$pg, c.document_id=$doc_id",
-                    id=cid, text=chunk.text[:500], tenant_id=tenant_id,
+                    id=cid, chunk_text=chunk.text[:500], tenant_id=tenant_id,
                     pg=page_no, doc_id=document_id,
                 )
                 session.run(
@@ -283,8 +325,11 @@ class GraphBuilder:
 
                 for concept in concepts:
                     session.run(
-                        "MERGE (k:Concept {name: $name}) SET k.type=$type",
-                        name=concept["name"], type=concept.get("type", "definition"),
+                        "MERGE (k:Concept {name: $name}) "
+                        "SET k.type=$type, k.embedding=$embedding",
+                        name=concept["name"],
+                        type=concept.get("type", "definition"),
+                        embedding=concept_embeddings.get(concept["name"]),
                     )
                     session.run(
                         "MATCH (c:Chunk {id: $cid}), (k:Concept {name: $name}) "
@@ -327,24 +372,47 @@ class GraphBuilder:
             "edges":          edge_count,
         }
 
+    def document_exists(self, document_id: str) -> bool:
+        try:
+            with self._get_driver().session() as session:
+                result = session.run(
+                    "MATCH (d:Document {id: $id}) RETURN count(d) AS n",
+                    id=document_id,
+                ).single()
+                return bool(result and result["n"] > 0)
+        except Exception:
+            return False
+
     def graph_search(
         self,
         query_text: str,
         tenant_id: str,
+        query_vector: Optional[np.ndarray] = None,
         limit: int = 5,
     ) -> list[dict]:
         """
-        Extract concepts from query → Cypher hop traversal → ranked chunk IDs.
+        Find chunks via concept graph traversal.
+
+        If query_vector is provided (already computed for vector search) it is
+        used to rank concept nodes by cosine similarity — no LLM call needed.
+        Falls back to LLM concept extraction when query_vector is absent.
+
         Returns list of {chunk_id, concept_path, hop_distance, text_preview}.
         """
-        query_concepts = self._extract_query_concepts(query_text)
-        if not query_concepts:
-            return []
-
         try:
             driver = self._get_driver()
         except Exception as exc:
-            logger.warning("Memgraph graph_search failed ({})", exc)
+            logger.warning("Memgraph graph_search failed to connect: {}", exc)
+            return []
+
+        if query_vector is not None:
+            query_concepts = self._find_concepts_by_embedding(
+                query_vector, tenant_id, driver, top_k=8
+            )
+        else:
+            query_concepts = self._extract_query_concepts(query_text)
+
+        if not query_concepts:
             return []
 
         cypher = """
@@ -354,7 +422,7 @@ class GraphBuilder:
         WHERE c.tenant_id IN [$tenant_id, 'global']
         WITH c, collect(k.name) AS direct_concepts, 0 AS hop
         RETURN c.id AS chunk_id, direct_concepts AS concept_path,
-               hop AS hop_distance, c.text AS text_preview
+               hop AS hop_distance, c.chunk_text AS text_preview
         LIMIT $limit
         """
         try:
@@ -367,7 +435,7 @@ class GraphBuilder:
                 ).data()
             return [
                 {
-                    "chunk_id": r["chunk_id"],
+                    "chunk_id":     r["chunk_id"],
                     "concept_path": r["concept_path"],
                     "hop_distance": r["hop_distance"],
                     "text_preview": (r["text_preview"] or "")[:200],
@@ -375,8 +443,59 @@ class GraphBuilder:
                 for r in records
             ]
         except Exception as exc:
-            logger.warning("Memgraph query failed ({})", exc)
+            logger.warning("Memgraph query failed: {}", exc)
             return []
+
+    def _find_concepts_by_embedding(
+        self,
+        query_vector: np.ndarray,
+        tenant_id: str,
+        driver,
+        top_k: int = 8,
+    ) -> list[str]:
+        """
+        Rank concept nodes by cosine similarity to the query vector.
+        Fetches the top-mentioned concepts for this tenant (capped at 500 to
+        keep the similarity computation fast), then scores them in Python.
+        No LLM call — uses the Jina embedding already computed for vector search.
+        """
+        try:
+            with driver.session() as session:
+                records = session.run(
+                    """
+                    MATCH (c:Chunk)-[:MENTIONS]->(k:Concept)
+                    WHERE c.tenant_id IN [$tenant_id, 'global']
+                      AND k.embedding IS NOT NULL
+                    WITH k, count(c) AS mentions
+                    ORDER BY mentions DESC
+                    LIMIT 500
+                    RETURN k.name AS name, k.embedding AS embedding
+                    """,
+                    tenant_id=tenant_id,
+                ).data()
+        except Exception as exc:
+            logger.warning("Concept embedding fetch failed: {}", exc)
+            return []
+
+        if not records:
+            return []
+
+        q = np.array(query_vector, dtype=np.float32)
+        q = q / (np.linalg.norm(q) + 1e-9)
+
+        scored: list[tuple[str, float]] = []
+        for r in records:
+            emb = r.get("embedding")
+            if not emb:
+                continue
+            v = np.array(emb, dtype=np.float32)
+            v = v / (np.linalg.norm(v) + 1e-9)
+            scored.append((r["name"], float(np.dot(q, v))))
+
+        scored.sort(key=lambda x: -x[1])
+        top = [name for name, _ in scored[:top_k]]
+        logger.debug("Concept embedding search: top={}", top)
+        return top
 
     def close(self) -> None:
         if self._driver:
@@ -412,7 +531,6 @@ class GraphBuilder:
 
 
 def _extract_prerequisites(concepts: list[dict]) -> list[list[str]]:
-    """Pull prerequisite pairs out of the concept list returned by LLM."""
     prereqs = []
     for c in concepts:
         for alias in c.get("aliases", []):
@@ -421,14 +539,31 @@ def _extract_prerequisites(concepts: list[dict]) -> list[list[str]]:
     return prereqs
 
 
-# -- Factory -------------------------------------------------------------------
+# -- Singleton factory ---------------------------------------------------------
+# Avoids re-creating the Bolt connection and re-running ensure_schema() on
+# every search query. Reset with reset_graph_builder() in tests.
+
+_graph_builder_instance: StubGraphBuilder | GraphBuilder | None = None
+
 
 def get_graph_builder(
     settings: Settings | None = None,
 ) -> StubGraphBuilder | GraphBuilder:
-    cfg = settings or get_settings()
-    if cfg.use_stub_graph:
-        return StubGraphBuilder()
-    builder = GraphBuilder(settings=cfg)
-    builder.ensure_schema()
-    return builder
+    global _graph_builder_instance
+    if _graph_builder_instance is None:
+        cfg = settings or get_settings()
+        if cfg.use_stub_graph:
+            _graph_builder_instance = StubGraphBuilder()
+        else:
+            builder = GraphBuilder(settings=cfg)
+            builder.ensure_schema()
+            _graph_builder_instance = builder
+    return _graph_builder_instance
+
+
+def reset_graph_builder() -> None:
+    """Close and clear the singleton — used in tests and after config changes."""
+    global _graph_builder_instance
+    if _graph_builder_instance is not None:
+        _graph_builder_instance.close()
+        _graph_builder_instance = None
