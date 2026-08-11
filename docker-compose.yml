@@ -37,7 +37,7 @@ services:
     profiles: ["phase3"]  # Only started in Phase 3+
 
   minio:
-    image: minio/minio:RELEASE.2024-07-01T01-36-13Z
+    image: minio/minio:latest
     container_name: synapse_minio
     ports:
       - "9000:9000"   # API

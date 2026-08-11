@@ -39,6 +39,10 @@ def main() -> None:
         "--force", action="store_true",
         help="Re-run even if ColPali vectors or Memgraph nodes already exist",
     )
+    parser.add_argument(
+        "--graph-only", action="store_true", dest="graph_only",
+        help="Skip ColPali entirely, only build/rebuild the Memgraph concept graph",
+    )
     args = parser.parse_args()
 
     cfg = get_settings()
@@ -67,6 +71,8 @@ def main() -> None:
                 pdf_path=pdf_path,
                 settings=cfg,
                 force=args.force,
+                skip_colpali=args.graph_only,
+                force_graph=args.graph_only or args.force,
             )
             gs = result.get("graph_stats", {})
             colpali_err = result.get("colpali_error")

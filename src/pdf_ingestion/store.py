@@ -700,6 +700,8 @@ def generate_phase3_artifacts(
     pdf_path: str | None = None,
     settings: Settings | None = None,
     force: bool = False,
+    skip_colpali: bool = False,
+    force_graph: bool = False,
 ) -> dict:
     """
     Generate ColPali visual embeddings + Memgraph concept graph for an
@@ -712,6 +714,9 @@ def generate_phase3_artifacts(
     If force=False (default), ColPali is skipped when PageImage records
     already exist for the document, and Memgraph is skipped when the
     Document node already exists in the graph.
+
+    skip_colpali=True skips ColPali entirely (use when embeddings already done).
+    force_graph=True forces Memgraph rebuild even if Document node exists.
     """
     from pathlib import Path
     from sqlmodel import Session as S
@@ -756,7 +761,10 @@ def generate_phase3_artifacts(
     colpali_error: str | None = None
     try:
         existing_page_images = store.get_page_images(document_id)
-        if existing_page_images and not force:
+        if skip_colpali:
+            n_visual = len(existing_page_images)
+            logger.info("ColPali: skipped via --graph-only ({} existing vectors)", n_visual)
+        elif existing_page_images and not force:
             n_visual = len(existing_page_images)
             logger.info(
                 "ColPali: skipping — {} page images already stored for doc {} (use force=True to re-run)",
@@ -805,6 +813,7 @@ def generate_phase3_artifacts(
         # Skip if document node already exists in Memgraph and not forcing
         graph_already_built = (
             not force
+            and not force_graph
             and not cfg.use_stub_graph
             and isinstance(graph, GraphBuilder)
             and graph.document_exists(document_id)
