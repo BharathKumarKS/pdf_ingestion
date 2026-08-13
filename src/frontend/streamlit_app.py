@@ -296,6 +296,7 @@ with tab_search:
                     tenant_id=tenant_id,
                     source_type=source_type_filter,
                     limit=6,
+                    query_text=query,
                 )
 
                 # ── Intent router: decide which routes to activate ────────

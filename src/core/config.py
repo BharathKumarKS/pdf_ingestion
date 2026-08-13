@@ -74,6 +74,11 @@ class Settings(BaseSettings):
     # Intent router — Phase 4
     intent_router_enabled: bool = True   # False -> use manual route selection (admin checkboxes)
 
+    # SPLADE sparse embedder — Phase 4
+    splade_model: str = "naver/splade-cocondenser-selfdistil"
+    splade_enabled: bool = True          # False -> dense-only search (backward compat)
+    use_stub_splade: bool = False        # True -> skip model download in unit tests
+
     # Card generation parallelism
     card_gen_workers: int = 4            # parallel Ollama threads for card generation
 

@@ -1,4 +1,4 @@
-"""Qdrant + SQLite storage layer — Phase 1 (ingestion) + Phase 2 (cards, RAPTOR) + Phase 3 (ColPali, GraphRAG)."""
+"""Qdrant + SQLite storage layer — Phase 1 (ingestion) + Phase 2 (cards, RAPTOR) + Phase 3 (ColPali, GraphRAG) + Phase 4 (SPLADE hybrid search)."""
 from __future__ import annotations
 
 import json
@@ -117,15 +117,33 @@ class DocumentStore:
 
         logger.info("SQLite: saved doc {} with {} chunks", doc_id, len(embedded_chunks))
 
-        points = [
-            PointStruct(
+        # Encode sparse vectors for hybrid search (if SPLADE enabled)
+        sparse_vecs: list = [None] * len(embedded_chunks)
+        if self._cfg.splade_enabled:
+            try:
+                from src.pdf_ingestion.splade_embedder import get_splade_embedder
+                splade = get_splade_embedder(self._cfg)
+                sparse_vecs = splade.encode_batch([ec.chunk.text for ec in embedded_chunks])
+                logger.debug("SPLADE: encoded {} sparse vectors", len(sparse_vecs))
+            except Exception as exc:
+                logger.warning("SPLADE encoding failed ({}), falling back to dense-only", exc)
+
+        points = []
+        for i, ec in enumerate(embedded_chunks):
+            sv = sparse_vecs[i]
+            if self._cfg.splade_enabled and sv is not None:
+                vector = {
+                    "dense":  ec.embedding.tolist(),
+                    "sparse": sv.to_qdrant(),
+                }
+            else:
+                vector = ec.embedding.tolist()
+            points.append(PointStruct(
                 id=ec.chunk.chunk_id,
-                vector=ec.embedding.tolist(),
+                vector=vector,
                 payload=_build_payload(ec, parsed_doc, tenant_id, source_type,
                                        is_global_baseline, meta),
-            )
-            for ec in embedded_chunks
-        ]
+            ))
         for i in range(0, len(points), 128):
             self._qdrant.upsert(
                 collection_name=self._cfg.qdrant_collection,
@@ -142,12 +160,15 @@ class DocumentStore:
         tenant_id: str,
         source_type: Optional[str] = None,
         limit: int = 10,
+        query_text: str | None = None,
     ) -> list[dict]:
         """
         Semantic search with multi-tenant scoping.
         source_type=None → Hybrid (user docs + global baseline), chunks only.
         RAPTOR summary vectors in the same collection are always excluded here;
         they are fetched separately via search_raptor().
+        When SPLADE is enabled and query_text is provided, uses hybrid
+        dense+sparse RRF search for better keyword+semantic recall.
         """
         _NOT_RAPTOR = FieldCondition(
             key="source_type", match=MatchValue(value="raptor_summary")
@@ -172,13 +193,39 @@ class DocumentStore:
                             match=MatchValue(value=tenant_id)))
             filter_ = Filter(must=must)
 
-        response = self._qdrant.query_points(
-            collection_name=self._cfg.qdrant_collection,
-            query=query_vector.tolist(),
-            query_filter=filter_,
-            limit=limit,
-            with_payload=True,
-        )
+        if self._cfg.splade_enabled and query_text:
+            from qdrant_client.models import Fusion, FusionQuery, Prefetch
+            from src.pdf_ingestion.splade_embedder import get_splade_embedder
+            sparse_vec = get_splade_embedder(self._cfg).encode_sparse(query_text)
+            response = self._qdrant.query_points(
+                collection_name=self._cfg.qdrant_collection,
+                prefetch=[
+                    Prefetch(query=query_vector.tolist(), using="dense", limit=limit * 3),
+                    Prefetch(query=sparse_vec.to_qdrant(), using="sparse", limit=limit * 3),
+                ],
+                query=FusionQuery(fusion=Fusion.RRF),
+                query_filter=filter_,
+                limit=limit,
+                with_payload=True,
+            )
+        elif self._cfg.splade_enabled:
+            # SPLADE enabled but no query text — use named dense vector
+            response = self._qdrant.query_points(
+                collection_name=self._cfg.qdrant_collection,
+                query=query_vector.tolist(),
+                using="dense",
+                query_filter=filter_,
+                limit=limit,
+                with_payload=True,
+            )
+        else:
+            response = self._qdrant.query_points(
+                collection_name=self._cfg.qdrant_collection,
+                query=query_vector.tolist(),
+                query_filter=filter_,
+                limit=limit,
+                with_payload=True,
+            )
         return [{"score": h.score, **h.payload} for h in response.points]
 
     def search_raptor(
@@ -209,6 +256,7 @@ class DocumentStore:
         response = self._qdrant.query_points(
             collection_name=self._cfg.qdrant_collection,
             query=query_vector.tolist(),
+            using="dense" if self._cfg.splade_enabled else None,
             query_filter=filter_,
             limit=limit,
             with_payload=True,
@@ -262,7 +310,13 @@ class DocumentStore:
                 ids=[c.qdrant_point_id for c in chunks],
                 with_vectors=True,
             )
-            id_to_vec = {str(r.id): np.array(r.vector, dtype=np.float32) for r in results}
+            def _extract_dense(vec) -> np.ndarray:
+                # When SPLADE is enabled, vector is a dict {"dense": [...], "sparse": ...}
+                if isinstance(vec, dict):
+                    vec = vec.get("dense", [])
+                return np.array(vec, dtype=np.float32)
+
+            id_to_vec = {str(r.id): _extract_dense(r.vector) for r in results}
             embeddings = np.array(
                 [id_to_vec.get(c.qdrant_point_id, np.zeros(self._cfg.embedding_dim))
                  for c in chunks],
@@ -374,7 +428,7 @@ class DocumentStore:
         points = [
             PointStruct(
                 id=nd.qdrant_point_id,
-                vector=nd.embedding.tolist(),
+                vector={"dense": nd.embedding.tolist()} if self._cfg.splade_enabled else nd.embedding.tolist(),
                 payload={
                     "tenant_id":          nd.tenant_id,
                     "source_type":        "raptor_summary",

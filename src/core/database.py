@@ -12,6 +12,7 @@ from qdrant_client.models import (
     MultiVectorConfig,
     MultiVectorComparator,
     PayloadSchemaType,
+    SparseVectorParams,
     VectorParams,
 )
 from sqlalchemy import Column, ForeignKey, String
@@ -240,11 +241,28 @@ def get_qdrant(settings: Settings | None = None) -> QdrantClient:
 def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
     existing = {c.name for c in client.get_collections().collections}
     if cfg.qdrant_collection not in existing:
-        client.create_collection(
-            collection_name=cfg.qdrant_collection,
-            vectors_config=VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
-        )
-        logger.info("Created Qdrant collection '{}'", cfg.qdrant_collection)
+        if cfg.splade_enabled:
+            # Named dense + sparse vectors for hybrid search
+            client.create_collection(
+                collection_name=cfg.qdrant_collection,
+                vectors_config={
+                    "dense": VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
+                },
+                sparse_vectors_config={
+                    "sparse": SparseVectorParams(),
+                },
+            )
+            logger.info(
+                "Created Qdrant collection '{}' (dense + sparse / hybrid)",
+                cfg.qdrant_collection,
+            )
+        else:
+            # Unnamed dense vector — backward compatible
+            client.create_collection(
+                collection_name=cfg.qdrant_collection,
+                vectors_config=VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
+            )
+            logger.info("Created Qdrant collection '{}'", cfg.qdrant_collection)
 
     for field, schema in (
         ("tenant_id",          PayloadSchemaType.KEYWORD),
