@@ -71,6 +71,9 @@ class Settings(BaseSettings):
 
     use_stub_llm: bool = False           # True -> skip all LLM calls in unit tests
 
+    # Intent router — Phase 4
+    intent_router_enabled: bool = True   # False -> use manual route selection (admin checkboxes)
+
     # Card generation parallelism
     card_gen_workers: int = 4            # parallel Ollama threads for card generation
 

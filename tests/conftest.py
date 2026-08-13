@@ -24,11 +24,14 @@ def reset_db_singletons():
     """Tear down cached DB clients between tests to avoid state leakage."""
     from src.core.database import reset_singletons
     from src.pdf_ingestion.graph_builder import reset_graph_builder
+    from src.core.intent_router import reset_intent_router
     reset_singletons()
     reset_graph_builder()
+    reset_intent_router()
     yield
     reset_singletons()
     reset_graph_builder()
+    reset_intent_router()
 
 
 @pytest.fixture(scope="session")

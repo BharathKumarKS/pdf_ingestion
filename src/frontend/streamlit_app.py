@@ -274,6 +274,7 @@ with tab_search:
     else:
         also_raptor = True
         also_graph  = True
+        # Intent router overrides below after query is embedded
 
     query = st.text_area(
         "Your question",
@@ -296,6 +297,23 @@ with tab_search:
                     source_type=source_type_filter,
                     limit=6,
                 )
+
+                # ── Intent router: decide which routes to activate ────────
+                if cfg.intent_router_enabled and not is_admin:
+                    from src.core.intent_router import get_intent_router
+                    router = get_intent_router(cfg)
+                    route  = router.route(q_vec)
+                    also_raptor = route.use_raptor
+                    also_graph  = route.use_graph
+                    st.caption(f"Route: **{route.intent}** — raptor={'on' if also_raptor else 'off'}, graph={'on' if also_graph else 'off'}")
+                elif is_admin:
+                    # Admin uses manual checkboxes set above
+                    try:
+                        from src.core.intent_router import get_intent_router
+                        route = get_intent_router(cfg).route(q_vec)
+                        st.caption(f"Intent router suggests: **{route.intent}** (overridden by manual selection)")
+                    except Exception:
+                        pass
 
                 raptor_results = []
                 if also_raptor:
