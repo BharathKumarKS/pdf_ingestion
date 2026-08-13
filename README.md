@@ -446,6 +446,34 @@ LLM calls are IO-bound (waiting on HTTP response). The Python GIL does not block
 
 Phase 3 needs to rasterize the original PDF to extract page images for ColPali. If the PDF was moved or the configured base directories changed, the original filename alone is not enough to locate it. Storing the absolute path at ingest time makes Phase 3 reliable regardless of where scripts are run from.
 
+### SPLADE per-environment guidance
+
+SPLADE requires re-ingestion when first enabled because it changes the Qdrant collection schema from unnamed to named vectors (`dense` + `sparse`). This is a one-time cost.
+
+**GPU VM** — enable SPLADE (default):
+```env
+SPLADE_ENABLED=true
+```
+Re-ingest after pulling. SPLADE encodes ~5000 Feynman chunks in minutes on GPU.
+
+**Laptop with existing Feynman data** — disable SPLADE to avoid a slow re-ingest:
+```env
+SPLADE_ENABLED=false
+```
+No data wipe needed. Dense-only search continues to work. The intent router, GraphRAG, and re-ranker all work regardless of this setting.
+
+**Laptop with a small PDF (< 200 chunks)** — SPLADE is fine on CPU:
+```env
+SPLADE_ENABLED=true
+```
+Re-ingest takes seconds. Query-time SPLADE encoding adds ~50-100ms on the first warm-up query, then stays fast.
+
+| Environment | SPLADE_ENABLED | Re-ingest needed? | Ingest speed |
+|---|---|---|---|
+| GPU VM | `true` | Yes (once) | Fast (~minutes) |
+| Laptop, existing large corpus | `false` | No | N/A |
+| Laptop, small PDF | `true` | Yes (once) | Fast (~seconds) |
+
 ---
 
 ## Roadmap
