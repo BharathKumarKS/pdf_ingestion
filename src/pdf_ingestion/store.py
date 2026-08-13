@@ -208,20 +208,11 @@ class DocumentStore:
                 limit=limit,
                 with_payload=True,
             )
-        elif self._cfg.splade_enabled:
-            # SPLADE enabled but no query text — use named dense vector
-            response = self._qdrant.query_points(
-                collection_name=self._cfg.qdrant_collection,
-                query=query_vector.tolist(),
-                using="dense",
-                query_filter=filter_,
-                limit=limit,
-                with_payload=True,
-            )
         else:
             response = self._qdrant.query_points(
                 collection_name=self._cfg.qdrant_collection,
                 query=query_vector.tolist(),
+                using="dense" if self._cfg.splade_enabled else None,
                 query_filter=filter_,
                 limit=limit,
                 with_payload=True,

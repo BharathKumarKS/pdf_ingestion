@@ -44,15 +44,14 @@ class RouteConfig:
     use_raptor:  bool = False
     use_graph:   bool = False
     use_colpali: bool = False
-    intent:      Intent = Intent.MIXED
 
 
 ROUTE_MAP: dict[Intent, RouteConfig] = {
-    Intent.FACTUAL:  RouteConfig(use_vector=True,  use_raptor=False, use_graph=False, use_colpali=False, intent=Intent.FACTUAL),
-    Intent.OVERVIEW: RouteConfig(use_vector=True,  use_raptor=True,  use_graph=False, use_colpali=False, intent=Intent.OVERVIEW),
-    Intent.MULTIHOP: RouteConfig(use_vector=True,  use_raptor=False, use_graph=True,  use_colpali=False, intent=Intent.MULTIHOP),
-    Intent.VISUAL:   RouteConfig(use_vector=False, use_raptor=False, use_graph=False, use_colpali=True,  intent=Intent.VISUAL),
-    Intent.MIXED:    RouteConfig(use_vector=True,  use_raptor=True,  use_graph=True,  use_colpali=False, intent=Intent.MIXED),
+    Intent.FACTUAL:  RouteConfig(use_vector=True,  use_raptor=False, use_graph=False, use_colpali=False),
+    Intent.OVERVIEW: RouteConfig(use_vector=True,  use_raptor=True,  use_graph=False, use_colpali=False),
+    Intent.MULTIHOP: RouteConfig(use_vector=True,  use_raptor=False, use_graph=True,  use_colpali=False),
+    Intent.VISUAL:   RouteConfig(use_vector=False, use_raptor=False, use_graph=False, use_colpali=True),
+    Intent.MIXED:    RouteConfig(use_vector=True,  use_raptor=True,  use_graph=True,  use_colpali=False),
 }
 
 

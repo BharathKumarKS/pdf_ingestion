@@ -303,16 +303,17 @@ with tab_search:
                 if cfg.intent_router_enabled and not is_admin:
                     from src.core.intent_router import get_intent_router
                     router = get_intent_router(cfg)
+                    intent = router.classify(q_vec)
                     route  = router.route(q_vec)
                     also_raptor = route.use_raptor
                     also_graph  = route.use_graph
-                    st.caption(f"Route: **{route.intent}** — raptor={'on' if also_raptor else 'off'}, graph={'on' if also_graph else 'off'}")
+                    st.caption(f"Route: **{intent}** — raptor={'on' if also_raptor else 'off'}, graph={'on' if also_graph else 'off'}")
                 elif is_admin:
                     # Admin uses manual checkboxes set above
                     try:
                         from src.core.intent_router import get_intent_router
-                        route = get_intent_router(cfg).route(q_vec)
-                        st.caption(f"Intent router suggests: **{route.intent}** (overridden by manual selection)")
+                        intent = get_intent_router(cfg).classify(q_vec)
+                        st.caption(f"Intent router suggests: **{intent}** (overridden by manual selection)")
                     except Exception:
                         pass
 

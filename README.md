@@ -365,7 +365,7 @@ pdf_ingestion/
 │   ├── frontend/
 │   │   └── streamlit_app.py        # Student + Admin UI (5 student / 7 admin tabs)
 │   │
-│   ├── inference/                  # Phase 4 (intent router, BM25, RRF, re-ranker)
+│   ├── inference/                  # Phase 4 (intent router, SPLADE, re-ranker)
 │   ├── governance/                 # Phase 5 (DeBERTa guardrails)
 │   └── telemetry/                  # Phase 6 (Arize Phoenix)
 │
@@ -474,6 +474,26 @@ Re-ingest takes seconds. Query-time SPLADE encoding adds ~50-100ms on the first 
 | Laptop, existing large corpus | `false` | No | N/A |
 | Laptop, small PDF | `true` | Yes (once) | Fast (~seconds) |
 
+### Why embedding-based intent routing (not LLM or keyword-based)?
+
+Three options were considered:
+
+- **Keyword-based** ("if query contains 'show me' → visual"): brittle, misses paraphrasing
+- **LLM classification**: accurate but adds 2-10s latency per query — defeats the purpose
+- **Embedding similarity against prototypes**: uses the query vector already computed for vector search — zero extra model calls, zero extra latency
+
+The prototype approach scores the query embedding against pre-embedded representative queries per intent. Below a confidence threshold (0.30), it falls back to `mixed` (all routes active) rather than guessing.
+
+### Why SPLADE over BM25 for sparse search?
+
+BM25 matches exact terms only — "velocity" does not match "speed". SPLADE learns to activate related vocabulary tokens during training, so queries and documents are expanded with semantically related terms. This captures synonym matches that dense embeddings sometimes miss (especially for precise technical terminology in physics).
+
+Both use sparse vectors in Qdrant — the infrastructure is identical. SPLADE is a strict improvement: same index format, better recall.
+
+### Why RRF (Reciprocal Rank Fusion) over weighted sum for hybrid search?
+
+Weighted sum requires tuning weights (e.g. 0.7 dense + 0.3 sparse) per domain and query type. RRF is parameter-free: it ranks by `1 / (k + rank)` across both lists, where `k=60` is standard. It consistently outperforms weighted sum on BEIR benchmarks without any tuning, and Qdrant computes it natively in one query round-trip.
+
 ---
 
 ## Roadmap
@@ -483,7 +503,7 @@ Re-ingest takes seconds. Query-time SPLADE encoding adds ~50-100ms on the first 
 | Phase 1 | ✅ Complete | Docling + Chonkie + Jina v3 + Qdrant + Streamlit |
 | Phase 2 | ✅ Complete | Llama 3.2 card generation + RAPTOR tree (up to 3 levels) |
 | Phase 3 | ✅ Complete | ColPali visual embeddings + Memgraph GraphRAG concept graph |
-| Phase 4 | 🔜 Next | Intent router + BM25 + RRF + cross-encoder re-ranker |
+| Phase 4 | 🚧 In Progress | Intent router ✅ + SPLADE hybrid search ✅ + cross-encoder re-ranker (next) |
 | Phase 5 | 🔜 | DeBERTa guardrails + answer leakage guard |
 | Phase 6 | 🔜 | Arize Phoenix telemetry + Teacher/Student portals |
 

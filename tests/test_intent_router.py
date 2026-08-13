@@ -67,7 +67,10 @@ class TestIntentRouterStub:
         vec = np.random.rand(1024).astype(np.float32)
         result = router.route(vec)
         assert isinstance(result, RouteConfig)
-        assert result.intent == Intent.MIXED
+        # MIXED route: all three main flags on
+        assert result.use_vector is True
+        assert result.use_raptor is True
+        assert result.use_graph  is True
 
     def test_stub_embedder_returns_mixed(self, monkeypatch):
         """When use_stub_embedder=True, router always returns MIXED."""
