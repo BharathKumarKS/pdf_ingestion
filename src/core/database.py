@@ -233,6 +233,7 @@ def get_qdrant(settings: Settings | None = None) -> QdrantClient:
 
         _ensure_collection(_qdrant, cfg)
         _ensure_colpali_collection(_qdrant, cfg)
+        _ensure_concept_collection(_qdrant, cfg)
     return _qdrant
 
 
@@ -288,6 +289,30 @@ def _ensure_colpali_collection(client: QdrantClient, cfg: Settings) -> None:
         try:
             client.create_payload_index(
                 collection_name=cfg.colpali_collection,
+                field_name=field,
+                field_schema=schema,
+            )
+        except Exception:
+            pass
+
+
+def _ensure_concept_collection(client: QdrantClient, cfg: Settings) -> None:
+    """Create the concept embeddings collection for fast GraphRAG concept lookup."""
+    existing = {c.name for c in client.get_collections().collections}
+    if cfg.concept_collection not in existing:
+        client.create_collection(
+            collection_name=cfg.concept_collection,
+            vectors_config=VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
+        )
+        logger.info("Created Qdrant concept collection '{}'", cfg.concept_collection)
+
+    for field, schema in (
+        ("name", PayloadSchemaType.KEYWORD),
+        ("type", PayloadSchemaType.KEYWORD),
+    ):
+        try:
+            client.create_payload_index(
+                collection_name=cfg.concept_collection,
                 field_name=field,
                 field_schema=schema,
             )

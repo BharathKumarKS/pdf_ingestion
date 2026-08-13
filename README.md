@@ -385,6 +385,69 @@ pdf_ingestion/
 
 ---
 
+## Architecture Decisions
+
+Key design choices and the reasoning behind them.
+
+### Why Qdrant for concept embeddings (not Memgraph)?
+
+Memgraph is a graph database optimised for traversal (Cypher queries, edge hops). It is not optimised for vector similarity search — storing 1024-dim embeddings as node properties and fetching them over Bolt adds ~500ms per query.
+
+Qdrant is purpose-built for ANN (Approximate Nearest Neighbour) search using HNSW indexes. A concept lookup in Qdrant takes ~5ms regardless of how many concepts exist.
+
+**Pattern used:** Qdrant finds concept names by embedding similarity → Memgraph traverses the concept graph from those names. Each system does what it is best at.
+
+### Why embedding-based concept search (not LLM at query time)?
+
+The original approach called the LLM to extract concept names from every user query — adding 2–10s latency per search. Production GraphRAG systems (Neo4j, LlamaIndex, Memgraph's own recommended patterns) instead:
+
+1. Embed concept names once at build time
+2. At query time, use the already-computed query embedding (same one used for vector search) to find matching concepts via cosine similarity
+
+No extra LLM call, no extra embedding call. Zero overhead on top of what the vector search already does.
+
+### Why two storage systems for graph retrieval?
+
+```
+Qdrant concept_embeddings  →  find WHICH concepts match the query (~5ms)
+Memgraph                   →  find WHICH chunks those concepts link to (~10ms)
+                              + walk RELATES_TO / PREREQUISITE_OF edges
+```
+
+Splitting the concerns keeps both fast. A unified graph DB that also does fast ANN would need Memgraph's vector index feature (available but slower than Qdrant HNSW) or Neo4j's vector search (same tradeoff).
+
+### Why RAPTOR? And when not to use it?
+
+RAPTOR builds hierarchical cluster summaries at Phase 2 (once). At query time it is just a vector search — no summarisation happens live. It handles overview/synthesis queries that span many chunks ("summarise conservation laws") where a single chunk search would miss the big picture.
+
+RAPTOR is NOT triggered for every query. The Phase 4 intent router will classify queries and only invoke RAPTOR for overview-type questions. For factual point queries ("what is F=ma?") RAPTOR adds latency with no benefit.
+
+### Why Memgraph over Neo4j?
+
+Both use the same Bolt protocol and OpenCypher query language — the code is identical. Memgraph is in-memory first (faster for graph traversal), open-source, and free. Neo4j Community Edition has graph size limits. The `neo4j` Python driver works with both.
+
+### Why ColPali multi-vector (not CLIP)?
+
+CLIP produces a single embedding per image. ColPali produces a matrix of patch embeddings (one per image patch, ~1000 patches per page) and uses MaxSim late-interaction scoring — the same approach as ColBERT for text. This preserves spatial layout and local visual detail, making it significantly better at matching diagram/figure queries to specific page regions.
+
+### Why local Qdrant file store as default?
+
+Zero-dependency local development — no Docker needed for Phase 1 and 2. Three modes are supported in priority order: `QDRANT_URL` (cloud or self-hosted URL) → `QDRANT_HOST:PORT` (self-hosted server) → local file. The GPU VM uses `QDRANT_HOST` + `QDRANT_PORT` pointing to a self-hosted server so ingestion scripts and the app can run concurrently (local file mode allows only one process at a time).
+
+### Why payload-based multi-tenancy (not separate collections)?
+
+Separate Qdrant collections per tenant would require creating collections dynamically and make cross-tenant baseline search (global textbook + user notes) require two separate queries. Payload filtering (`tenant_id`, `is_global_baseline`) keeps everything in one collection and allows flexible per-query filtering with a single search call. The tradeoff is slightly slower searches at very high tenant counts (10,000+) — acceptable for an educational platform.
+
+### Why parallel concept extraction (ThreadPoolExecutor)?
+
+LLM calls are IO-bound (waiting on HTTP response). The Python GIL does not block IO-bound threads, so `CONCEPT_GEN_WORKERS` threads provide real concurrency. Separating Phase A (parallel LLM extraction) from Phase B (sequential Cypher writes) avoids Memgraph session conflicts while maximising LLM throughput. Same pattern as `CARD_GEN_WORKERS` in Phase 2.
+
+### Why store `source_path` on Document?
+
+Phase 3 needs to rasterize the original PDF to extract page images for ColPali. If the PDF was moved or the configured base directories changed, the original filename alone is not enough to locate it. Storing the absolute path at ingest time makes Phase 3 reliable regardless of where scripts are run from.
+
+---
+
 ## Roadmap
 
 | Phase | Status | Description |

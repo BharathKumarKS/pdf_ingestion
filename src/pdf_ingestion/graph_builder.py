@@ -267,6 +267,15 @@ class GraphBuilder:
                 logger.warning(
                     "Concept embedding failed ({}); graph search will fall back to LLM", exc
                 )
+
+        # ── Phase A.6: upsert concept embeddings to Qdrant ────────────────────
+        # This is what makes query-time concept lookup fast (~5ms ANN search
+        # instead of fetching hundreds of embeddings from Memgraph over Bolt).
+        if concept_embeddings:
+            self._upsert_concepts_to_qdrant(
+                concept_embeddings=concept_embeddings,
+                chunk_concepts=chunk_concepts,
+            )
         concept_node_count = 0
         edge_count = 0
 
@@ -407,7 +416,7 @@ class GraphBuilder:
 
         if query_vector is not None:
             query_concepts = self._find_concepts_by_embedding(
-                query_vector, tenant_id, driver, top_k=8
+                query_vector, top_k=8
             )
         else:
             query_concepts = self._extract_query_concepts(query_text)
@@ -446,56 +455,76 @@ class GraphBuilder:
             logger.warning("Memgraph query failed: {}", exc)
             return []
 
+    def _upsert_concepts_to_qdrant(
+        self,
+        concept_embeddings: dict[str, list[float]],
+        chunk_concepts: dict[str, dict],
+    ) -> None:
+        """Upsert concept embeddings to Qdrant for fast ANN search at query time."""
+        import uuid as _uuid
+        from qdrant_client.models import PointStruct
+        from src.core.database import get_qdrant
+
+        qdrant = get_qdrant(self._cfg)
+
+        # Collect concept type from extracted data
+        concept_types: dict[str, str] = {}
+        for extracted in chunk_concepts.values():
+            for c in extracted.get("concepts", []):
+                name = c.get("name", "")
+                if name and name not in concept_types:
+                    concept_types[name] = c.get("type", "definition")
+
+        points = []
+        for name, embedding in concept_embeddings.items():
+            # Deterministic point ID from concept name — ensures upsert is idempotent
+            point_id = str(_uuid.uuid5(_uuid.NAMESPACE_DNS, f"concept:{name}"))
+            points.append(PointStruct(
+                id=point_id,
+                vector=embedding,
+                payload={
+                    "name": name,
+                    "type": concept_types.get(name, "definition"),
+                },
+            ))
+
+        # Upsert in batches of 256
+        for i in range(0, len(points), 256):
+            qdrant.upsert(
+                collection_name=self._cfg.concept_collection,
+                points=points[i : i + 256],
+            )
+        logger.info(
+            "Upserted {} concept embeddings to Qdrant collection '{}'",
+            len(points), self._cfg.concept_collection,
+        )
+
     def _find_concepts_by_embedding(
         self,
         query_vector: np.ndarray,
-        tenant_id: str,
-        driver,
         top_k: int = 8,
     ) -> list[str]:
         """
-        Rank concept nodes by cosine similarity to the query vector.
-        Fetches the top-mentioned concepts for this tenant (capped at 500 to
-        keep the similarity computation fast), then scores them in Python.
-        No LLM call — uses the Jina embedding already computed for vector search.
+        Find the top-k most semantically similar concepts to the query vector
+        using Qdrant ANN search (~5ms) instead of fetching embeddings from
+        Memgraph over Bolt (~500ms+).
+        No LLM call, no Bolt round-trip — just a single Qdrant query.
         """
         try:
-            with driver.session() as session:
-                records = session.run(
-                    """
-                    MATCH (c:Chunk)-[:MENTIONS]->(k:Concept)
-                    WHERE c.tenant_id IN [$tenant_id, 'global']
-                      AND k.embedding IS NOT NULL
-                    WITH k, count(c) AS mentions
-                    ORDER BY mentions DESC
-                    LIMIT 500
-                    RETURN k.name AS name, k.embedding AS embedding
-                    """,
-                    tenant_id=tenant_id,
-                ).data()
+            from src.core.database import get_qdrant
+            qdrant = get_qdrant(self._cfg)
+            response = qdrant.query_points(
+                collection_name=self._cfg.concept_collection,
+                query=query_vector.tolist(),
+                limit=top_k,
+                with_payload=True,
+            )
+            names = [p.payload["name"] for p in response.points if p.payload.get("name")]
+            logger.debug("Concept Qdrant search: top={}", names)
+            return names
         except Exception as exc:
-            logger.warning("Concept embedding fetch failed: {}", exc)
+            logger.warning("Concept Qdrant search failed ({}), falling back to LLM", exc)
             return []
-
-        if not records:
-            return []
-
-        q = np.array(query_vector, dtype=np.float32)
-        q = q / (np.linalg.norm(q) + 1e-9)
-
-        scored: list[tuple[str, float]] = []
-        for r in records:
-            emb = r.get("embedding")
-            if not emb:
-                continue
-            v = np.array(emb, dtype=np.float32)
-            v = v / (np.linalg.norm(v) + 1e-9)
-            scored.append((r["name"], float(np.dot(q, v))))
-
-        scored.sort(key=lambda x: -x[1])
-        top = [name for name, _ in scored[:top_k]]
-        logger.debug("Concept embedding search: top={}", top)
-        return top
 
     def close(self) -> None:
         if self._driver:

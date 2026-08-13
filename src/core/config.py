@@ -87,6 +87,9 @@ class Settings(BaseSettings):
     image_store_backend: str = "local"   # "local" | "minio"
     colpali_page_batch_size: int = 4     # pages per batch; increase to 16+ on GPU VM
 
+    # Phase 3 — Concept embeddings (Qdrant collection for fast GraphRAG lookup)
+    concept_collection: str = "concept_embeddings"
+
     # Phase 3 — MinIO (active when image_store_backend="minio")
     minio_endpoint: str = "http://localhost:9000"
     minio_access_key: str = "synapse"
