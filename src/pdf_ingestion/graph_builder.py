@@ -38,7 +38,7 @@ from src.core.config import Settings, get_settings
 # -- Concept extraction prompt -------------------------------------------------
 
 _CONCEPT_PROMPT = """\
-Extract key educational concepts from the following text. \
+Extract the most important physics/science concepts from the text below.
 Return ONLY valid JSON with no markdown fences.
 
 TEXT:
@@ -50,24 +50,32 @@ Return exactly this structure:
     {{"name": "concept name", "type": "law|theorem|quantity|formula|process|phenomenon|definition|experiment|person", "aliases": ["alt name"]}}
   ],
   "prerequisites": [
-    ["concept_A_depends_on", "concept_B_prerequisite"]
+    ["concept_A_name", "concept_B_name"]
   ]
 }}
 
 Rules:
-- Extract 3-7 most important concepts only.
-- aliases can be an empty list.
-- prerequisites: concept_A cannot be understood without concept_B.
+- Extract 3-7 concepts maximum. Prefer fewer, higher-quality concepts over many vague ones.
+- Use the canonical full name (e.g. "Newton's Second Law" not "F=ma"; "kinetic energy" not "KE").
+- Type must be one of: law, theorem, quantity, formula, process, phenomenon, definition, experiment, person.
+- aliases: alternative names or symbols (e.g. ["F=ma", "second law"]). Empty list if none.
+- prerequisites: [A, B] means concept A cannot be understood without concept B.
+  Only list genuine conceptual dependencies, not superficial associations.
+- Only extract concepts explicitly discussed in the text. Do not infer from context.
 """
 
 _QUERY_CONCEPT_PROMPT = """\
-Extract the key physics/science concepts from this question. \
+Extract the key physics/science concepts being asked about in this question.
 Return ONLY valid JSON with no markdown fences.
 
 QUESTION: {question}
 
 Return:
-{{"concepts": ["concept1", "concept2"]}}
+{{"concepts": ["canonical concept name 1", "canonical concept name 2"]}}
+
+Rules:
+- Use canonical names (e.g. "Newton's First Law" not "inertia law").
+- 1-4 concepts only. Omit vague terms like "physics" or "science".
 """
 
 

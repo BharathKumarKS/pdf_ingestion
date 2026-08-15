@@ -60,10 +60,16 @@ class RaptorNodeData:
 # ── Summarisation prompt ──────────────────────────────────────────────────
 
 _SUM_PROMPT = """\
-You are an expert educational summariser.
-Produce a single coherent paragraph (3-5 sentences) that captures the \
-key ideas, concepts and relationships from the following text passages. \
-Write clearly for an undergraduate student.
+You are an expert physics educator writing a study summary.
+Summarise the passages below into a single coherent paragraph (3-5 sentences) \
+for an undergraduate student.
+
+Rules:
+- Use only information present in the passages. Do not add outside knowledge.
+- Preserve the exact names of laws, theorems, quantities, and equations (e.g. "Newton's Second Law", "F = ma").
+- State the key concept or principle first, then supporting ideas.
+- If multiple distinct ideas are present, connect them with their logical relationship.
+- Write in plain English — no bullet points, no headings.
 
 PASSAGES:
 {passages}
