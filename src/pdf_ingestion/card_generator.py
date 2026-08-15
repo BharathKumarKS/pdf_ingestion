@@ -74,12 +74,13 @@ _SYSTEM = (
 )
 
 _PROMPT_TMPL = """\
-Given the educational text below, produce exactly 7 learning cards.
+Given the educational text below, produce high-quality learning cards.
+Only include card types that are genuinely applicable to the text.
 
 TEXT:
 {text}
 
-Return a JSON object with these exact keys:
+Return a JSON object. Include ONLY the keys that apply — omit keys that would produce generic or N/A content:
 {{
   "summary":       {{"title": "...", "content": "..."}},
   "definition":    {{"title": "...", "content": "..."}},
@@ -91,14 +92,14 @@ Return a JSON object with these exact keys:
 }}
 
 Rules:
-- summary:        1-2 sentence overview.
-- definition:     define the single most important term.
-- example:        one concrete worked example or application.
-- misconception:  one common wrong belief and why it is wrong.
-- question:       a Socratic question + correct answer.
-- objective:      start with a Bloom's verb (e.g. Explain, Calculate, Derive).
-- formula:        write the key equation; use "N/A" if there is none.
-- All values must be non-empty strings.
+- summary:        always include. 1-2 sentence overview, specific to this text.
+- definition:     include only if text introduces a clearly defined concept or term.
+- example:        include only if text contains a concrete example or application.
+- misconception:  include only if there is a genuine common wrong belief worth flagging.
+- question:       always include. A substantive Socratic question with a correct, detailed answer.
+- objective:      always include. Start with a Bloom's verb (Explain, Calculate, Derive, Apply).
+- formula:        include ONLY if text contains an actual equation or formula. Omit entirely otherwise.
+- Content must be specific to this text — never generic or placeholder.
 """
 
 
@@ -216,16 +217,23 @@ class OllamaCardGenerator:
         except json.JSONDecodeError:
             data = self._extract_partial(raw)
 
+        _SKIP = {"n/a", "none", "not applicable", "no formula", ""}
+
         cards: list[GeneratedCard] = []
         for ct in CardType:
             block = data.get(ct.value, {})
             if not isinstance(block, dict):
                 block = {}
-            title   = str(block.get("title",   f"{ct.value.capitalize()} -- chunk {chunk.chunk_index}"))
-            content = str(block.get("content", ""))
+            content = str(block.get("content", "")).strip()
+
+            # Skip cards the LLM omitted or marked as not applicable
+            if content.lower() in _SKIP:
+                continue
+
+            title = str(block.get("title", f"{ct.value.capitalize()} — chunk {chunk.chunk_index}")).strip()
             if ct == CardType.QUESTION:
                 raw_answer = str(block.get("answer", "")).strip()
-                answer = raw_answer if raw_answer else None
+                answer = raw_answer if raw_answer and raw_answer.lower() not in _SKIP else None
             else:
                 answer = None
 
@@ -237,7 +245,7 @@ class OllamaCardGenerator:
                     tenant_id=chunk.tenant_id,
                     card_type=ct.value,
                     title=title,
-                    content=content or f"[empty {ct.value}]",
+                    content=content,
                     answer=answer,
                 )
             )

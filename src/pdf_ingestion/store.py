@@ -604,6 +604,31 @@ class DocumentStore:
             logger.warning("Visual search failed ({})", exc)
             return []
 
+    def get_chunks_by_pages(
+        self,
+        document_id: str,
+        page_numbers: list[int],
+        limit_per_page: int = 2,
+    ) -> list[Chunk]:
+        """Return up to limit_per_page chunks per page for the given page numbers."""
+        with Session(self._engine) as session:
+            chunks = session.exec(
+                select(Chunk)
+                .where(Chunk.document_id == document_id)
+                .where(Chunk.is_active == True)
+                .where(Chunk.page_number.in_(page_numbers))
+                .order_by(Chunk.page_number, Chunk.chunk_index)
+            ).all()
+        # Cap per page to avoid flooding the LLM context
+        seen: dict[int, int] = {}
+        result = []
+        for c in chunks:
+            pn = c.page_number or 0
+            if seen.get(pn, 0) < limit_per_page:
+                result.append(c)
+                seen[pn] = seen.get(pn, 0) + 1
+        return result
+
     def get_page_images(self, document_id: str) -> list[PageImage]:
         with Session(self._engine) as session:
             return session.exec(

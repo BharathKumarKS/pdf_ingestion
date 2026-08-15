@@ -607,7 +607,7 @@ with tab_visual:
         n_results = st.slider("Results to show", 1, 10, 5)
 
         if query_image_file and st.button("Search by Image", type="primary"):
-            with st.spinner("Embedding query image and searching…"):
+            with st.spinner("Embedding query image… (first run is slow on CPU)"):
                 try:
                     from PIL import Image
                     import io
@@ -618,8 +618,7 @@ with tab_visual:
                     colpali     = get_colpali_embedder(cfg)
                     q_patches   = colpali.embed_query_image(query_image)
 
-                    s       = store
-                    results = s.visual_search(
+                    results = store.visual_search(
                         query_patches=q_patches,
                         tenant_id=tenant_id,
                         source_type=source_type_filter,
@@ -629,25 +628,59 @@ with tab_visual:
                     if not results:
                         st.info("No visual matches found.")
                     else:
+                        # ── Synthesize a response from matched page text ───
+                        page_numbers = [r["page_number"] for r in results if r.get("page_number")]
+                        doc_ids      = list({r["document_id"] for r in results if r.get("document_id")})
+
+                        context_chunks = []
+                        for doc_id in doc_ids:
+                            context_chunks.extend(
+                                store.get_chunks_by_pages(doc_id, page_numbers, limit_per_page=2)
+                            )
+
+                        if context_chunks:
+                            with st.spinner("Synthesizing answer…"):
+                                try:
+                                    from src.core.llm import call_llm
+                                    context_text = "\n\n".join(
+                                        f"[Page {c.page_number}] {c.text}" for c in context_chunks
+                                    )
+                                    synthesis = call_llm(
+                                        prompt=(
+                                            f"The user uploaded an image to search a physics knowledge base. "
+                                            f"The most visually similar pages were retrieved. "
+                                            f"Based on the text from those pages, provide a clear, "
+                                            f"educational response explaining what is shown.\n\n"
+                                            f"Retrieved page content:\n{context_text}"
+                                        ),
+                                        system="You are a physics tutor. Answer concisely and accurately based only on the provided content.",
+                                        settings=cfg,
+                                    )
+                                    st.subheader("📝 What these pages show")
+                                    st.markdown(synthesis)
+                                    st.divider()
+                                except Exception:
+                                    pass  # LLM unavailable — skip synthesis, show images only
+
+                        # ── Matched pages ──────────────────────────────────
                         image_store = get_image_store(cfg)
-                        st.subheader(f"Top {len(results)} matching pages")
+                        st.subheader(f"📄 Top {len(results)} matching pages")
                         cols = st.columns(min(3, len(results)))
                         for i, r in enumerate(results):
                             col = cols[i % 3]
                             try:
                                 img_bytes = image_store.get(r["image_key"])
                                 col.image(img_bytes, use_container_width=True)
-                            except Exception:
-                                col.info("Image unavailable")
+                            except Exception as img_err:
+                                col.caption(f"⚠️ Image file not found: `{r.get('image_key', '?')}`")
+                                if is_admin:
+                                    col.caption(str(img_err))
                             col.caption(
                                 f"Page {r.get('page_number', '?')}  ·  "
                                 f"score {r['score']:.3f}"
                             )
                             if is_admin:
-                                col.caption(
-                                    f"doc: `{r.get('document_id','?')[:12]}…`  "
-                                    f"key: `{r.get('image_key','?')}`"
-                                )
+                                col.caption(f"doc: `{r.get('document_id','?')[:12]}…`")
 
                 except Exception as e:
                     st.error(f"Visual search error: {e}")
