@@ -273,6 +273,36 @@ class DocumentStore:
             "created_at":        str(doc.created_at),
         }
 
+    def delete_document(self, document_id: str) -> None:
+        """Hard-delete a document and all its data from Qdrant and SQLite."""
+        from sqlmodel import delete as sql_delete
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+        # Remove all Qdrant points for this document (chunks + RAPTOR nodes)
+        for collection in (self._cfg.qdrant_collection, self._cfg.colpali_collection):
+            try:
+                self._qdrant.delete(
+                    collection_name=collection,
+                    points_selector=Filter(must=[
+                        FieldCondition(key="document_id", match=MatchValue(value=document_id))
+                    ]),
+                )
+            except Exception as exc:
+                logger.warning("Qdrant delete from {} failed: {}", collection, exc)
+
+        # Remove SQLite rows
+        with Session(self._engine) as session:
+            session.exec(sql_delete(Card).where(Card.document_id == document_id))
+            session.exec(sql_delete(RaptorNode).where(RaptorNode.document_id == document_id))
+            session.exec(sql_delete(PageImage).where(PageImage.document_id == document_id))
+            session.exec(sql_delete(Chunk).where(Chunk.document_id == document_id))
+            doc = session.get(Document, document_id)
+            if doc:
+                session.delete(doc)
+            session.commit()
+
+        logger.success("Deleted document {} and all associated data", document_id)
+
     def list_documents(self, tenant_id: Optional[str] = None) -> list[Document]:
         with Session(self._engine) as session:
             stmt = select(Document).where(Document.is_active == True)

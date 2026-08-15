@@ -871,6 +871,28 @@ if tab_status is not None:
                 st.dataframe(pd.DataFrame(rows), use_container_width=True)
             else:
                 st.info("No documents.")
+
+            # ── Delete document ───────────────────────────────────────────
+            st.divider()
+            st.subheader("🗑️ Delete Document")
+            st.caption("Permanently removes all chunks, cards, RAPTOR nodes, and Qdrant vectors.")
+            if all_docs:
+                del_options = {d.id: f"{d.filename}  ({d.source_type})" for d in all_docs}
+                del_id = st.selectbox(
+                    "Select document to delete",
+                    options=list(del_options.keys()),
+                    format_func=lambda x: del_options[x],
+                )
+                confirm = st.checkbox(f"I confirm I want to permanently delete this document")
+                if st.button("Delete", type="primary", disabled=not confirm):
+                    with st.spinner("Deleting…"):
+                        try:
+                            store.delete_document(del_id)
+                            st.success(f"Deleted: {del_options[del_id]}")
+                            st.rerun()
+                        except Exception as exc:
+                            st.error(f"Delete failed: {exc}")
+
         except Exception as e:
             st.error(f"Status error: {e}")
 
