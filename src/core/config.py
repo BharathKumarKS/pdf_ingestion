@@ -74,6 +74,13 @@ class Settings(BaseSettings):
     # Intent router — Phase 4
     intent_router_enabled: bool = True   # False -> use manual route selection (admin checkboxes)
 
+    # Cross-encoder re-ranker — Phase 4
+    reranker_enabled: bool = True
+    reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    reranker_top_k: int = 6              # chunks to keep after re-ranking
+    reranker_fetch_k: int = 20           # candidates to retrieve before re-ranking
+    use_stub_reranker: bool = False
+
     # SPLADE sparse embedder — Phase 4
     splade_model: str = "naver/splade-cocondenser-selfdistil"
     splade_enabled: bool = False         # True -> hybrid dense+sparse (requires re-ingest)

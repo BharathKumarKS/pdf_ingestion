@@ -15,7 +15,8 @@ os.environ.setdefault("USE_STUB_EMBEDDER", "true")
 os.environ.setdefault("USE_STUB_LLM",      "true")
 os.environ.setdefault("USE_STUB_COLPALI",  "true")
 os.environ.setdefault("USE_STUB_GRAPH",    "true")
-os.environ.setdefault("USE_STUB_SPLADE",   "true")
+os.environ.setdefault("USE_STUB_SPLADE",    "true")
+os.environ.setdefault("USE_STUB_RERANKER", "true")
 os.environ.setdefault("QDRANT_IN_MEMORY",  "true")
 os.environ.setdefault("SQLITE_URL", "sqlite:///./data/test_synapse.db")
 
@@ -27,15 +28,18 @@ def reset_db_singletons():
     from src.pdf_ingestion.graph_builder import reset_graph_builder
     from src.core.intent_router import reset_intent_router
     from src.pdf_ingestion.splade_embedder import reset_splade_embedder
+    from src.pdf_ingestion.reranker import reset_reranker
     reset_singletons()
     reset_graph_builder()
     reset_intent_router()
     reset_splade_embedder()
+    reset_reranker()
     yield
     reset_singletons()
     reset_graph_builder()
     reset_intent_router()
     reset_splade_embedder()
+    reset_reranker()
 
 
 @pytest.fixture(scope="session")
@@ -59,6 +63,7 @@ def settings():
         use_stub_llm=True,
         use_stub_colpali=True,
         use_stub_graph=True,
+        use_stub_reranker=True,
         qdrant_in_memory=True,
         sqlite_url="sqlite:///./data/test_synapse.db",
         debug=False,

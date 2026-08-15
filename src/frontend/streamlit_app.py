@@ -291,13 +291,22 @@ with tab_search:
                 q_vec    = embedder.embed_query(query)
                 s        = DocumentStore(cfg)
 
+                fetch_k = cfg.reranker_fetch_k if cfg.reranker_enabled else cfg.reranker_top_k
                 chunk_results = s.search(
                     query_vector=q_vec,
                     tenant_id=tenant_id,
                     source_type=source_type_filter,
-                    limit=6,
+                    limit=fetch_k,
                     query_text=query,
                 )
+
+                if cfg.reranker_enabled and chunk_results:
+                    from src.pdf_ingestion.reranker import get_reranker
+                    chunk_results = get_reranker(cfg).rerank(
+                        query=query,
+                        chunks=chunk_results,
+                        top_k=cfg.reranker_top_k,
+                    )
 
                 # ── Intent router: decide which routes to activate ────────
                 if cfg.intent_router_enabled and not is_admin:
