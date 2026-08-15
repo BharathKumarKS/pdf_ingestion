@@ -362,20 +362,25 @@ with tab_search:
                             context = "\n\n".join(all_passages)
                             synthesis = call_llm(
                                 prompt=(
-                                    f"Question: {query}\n\n"
-                                    f"Retrieved passages:\n{context}\n\n"
-                                    f"Answer the question using only the passages above. "
-                                    f"Cite page numbers inline (e.g. 'page 42'). "
-                                    f"If the passages do not fully answer the question, say so explicitly."
+                                    f"Student question: {query}\n\n"
+                                    f"Textbook passages retrieved:\n{context}\n\n"
+                                    f"Instructions:\n"
+                                    f"1. Answer ONLY the question above — do not answer a different question.\n"
+                                    f"2. Use ONLY the passages provided. Do not add any outside knowledge.\n"
+                                    f"3. Quote or paraphrase only text that actually appears in the passages above.\n"
+                                    f"4. Cite the page number after every claim, e.g. (page 42).\n"
+                                    f"5. If the passages do not contain a direct answer, say exactly: "
+                                    f"'The retrieved passages do not directly answer this question.' "
+                                    f"Then in one sentence describe what the passages do cover."
                                 ),
                                 system=(
-                                    "You are a physics tutor grounded in the course textbook. "
-                                    "Answer accurately and concisely. "
-                                    "Cite the page number for every key claim. "
-                                    "If the retrieved content does not cover the question, "
-                                    "say: 'The textbook passages retrieved do not fully address this — "
-                                    "here is what they do cover:' and summarise what is available. "
-                                    "Never fabricate facts beyond the provided passages."
+                                    "You are a physics tutor. Your only source of truth is the textbook "
+                                    "passages provided in the prompt. Rules you must never break:\n"
+                                    "- Never fabricate or infer facts not stated in the passages.\n"
+                                    "- Never quote text that does not appear verbatim or near-verbatim in the passages.\n"
+                                    "- Never reinterpret the student's question.\n"
+                                    "- Never cite a page number unless it appears as [Page N] in the passages.\n"
+                                    "- If the passages are irrelevant, say so in one sentence and stop."
                                 ),
                                 settings=cfg,
                             )
