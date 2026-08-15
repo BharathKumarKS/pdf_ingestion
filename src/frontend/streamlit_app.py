@@ -343,54 +343,97 @@ with tab_search:
                 if not chunk_results and not raptor_results and not graph_results:
                     st.info("No results found — try rephrasing your question.")
                 else:
-                    # ── RAPTOR summaries ─────────────────────────────────
-                    if raptor_results:
-                        st.subheader("📝 Topic Overview")
-                        for r in raptor_results:
-                            with st.container(border=True):
+                    # ── LLM synthesis ─────────────────────────────────────
+                    all_passages = []
+                    for r in chunk_results:
+                        pg = r.get("page_number")
+                        all_passages.append(
+                            f"[Page {pg}] {r.get('text', '')}" if pg
+                            else r.get("text", "")
+                        )
+                    for r in raptor_results:
+                        all_passages.append(f"[Summary] {r.get('text', '')}")
+                    for r in graph_results:
+                        all_passages.append(f"[Concept-linked] {r.get('text_preview', '')}")
+
+                    if all_passages:
+                        try:
+                            from src.core.llm import call_llm
+                            context = "\n\n".join(all_passages)
+                            synthesis = call_llm(
+                                prompt=(
+                                    f"Question: {query}\n\n"
+                                    f"Retrieved passages:\n{context}\n\n"
+                                    f"Answer the question using only the passages above. "
+                                    f"Cite page numbers inline (e.g. 'page 42'). "
+                                    f"If the passages do not fully answer the question, say so explicitly."
+                                ),
+                                system=(
+                                    "You are a physics tutor grounded in the course textbook. "
+                                    "Answer accurately and concisely. "
+                                    "Cite the page number for every key claim. "
+                                    "If the retrieved content does not cover the question, "
+                                    "say: 'The textbook passages retrieved do not fully address this — "
+                                    "here is what they do cover:' and summarise what is available. "
+                                    "Never fabricate facts beyond the provided passages."
+                                ),
+                                settings=cfg,
+                            )
+                            st.subheader("💡 Answer")
+                            st.markdown(synthesis)
+                            st.divider()
+                        except Exception:
+                            pass  # LLM unavailable — fall through to raw passages
+
+                    # ── Source passages (collapsed) ───────────────────────
+                    with st.expander(
+                        f"📄 Source passages ({len(chunk_results)} chunks"
+                        + (f", {len(raptor_results)} summaries" if raptor_results else "")
+                        + (f", {len(graph_results)} concept-linked" if graph_results else "")
+                        + ")",
+                        expanded=is_admin,
+                    ):
+                        if raptor_results:
+                            st.markdown("**Topic summaries**")
+                            for r in raptor_results:
+                                with st.container(border=True):
+                                    st.markdown(r.get("text", ""))
+                                    if is_admin:
+                                        st.caption(
+                                            f"RAPTOR L{r.get('raptor_level','?')} · "
+                                            f"score={r['score']:.3f} · "
+                                            f"cluster {r.get('cluster_id','?')}"
+                                        )
+
+                        if graph_results:
+                            st.markdown("**Concept-connected passages**")
+                            for gr in graph_results:
+                                with st.container(border=True):
+                                    concepts = " → ".join(gr.get("concept_path", []))
+                                    st.caption(f"Concepts: {concepts}  |  hops: {gr.get('hop_distance', '?')}")
+                                    st.markdown(gr.get("text_preview", ""))
+
+                        if chunk_results:
+                            st.markdown("**Matched passages**")
+                        for i, r in enumerate(chunk_results, 1):
+                            source = _source_label(r)
+                            if is_admin:
+                                label = (
+                                    f"#{i}  {_relevance(r['score'])}  |  "
+                                    f"{r.get('source_type','?')}  |  "
+                                    f"score={r['score']:.3f}  |  "
+                                    f"page {r.get('page_number','?')}"
+                                )
+                            else:
+                                label = f"#{i}  {source}  ·  {_relevance(r['score'])}"
+                            with st.expander(label, expanded=False):
                                 st.markdown(r.get("text", ""))
                                 if is_admin:
                                     st.caption(
-                                        f"RAPTOR L{r.get('raptor_level','?')} · "
-                                        f"score={r['score']:.3f} · "
-                                        f"cluster {r.get('cluster_id','?')}"
+                                        f"tenant={r.get('tenant_id','')}  "
+                                        f"model={r.get('embedding_version','')}  "
+                                        f"chars={r.get('char_start','?')}–{r.get('char_end','?')}"
                                     )
-                        st.divider()
-
-                    # ── GraphRAG results ──────────────────────────────────
-                    if graph_results:
-                        st.subheader("🕸️ Concept-Connected Passages")
-                        for gr in graph_results:
-                            with st.container(border=True):
-                                concepts = " → ".join(gr.get("concept_path", []))
-                                st.caption(f"Concepts: {concepts}  |  hops: {gr.get('hop_distance', '?')}")
-                                st.markdown(gr.get("text_preview", ""))
-                        st.divider()
-
-                    # ── Chunk results ─────────────────────────────────────
-                    st.subheader("📄 Relevant Passages")
-                    for i, r in enumerate(chunk_results, 1):
-                        relevance = _relevance(r["score"])
-                        source    = _source_label(r)
-
-                        if is_admin:
-                            label = (
-                                f"#{i}  {relevance}  |  "
-                                f"{r.get('source_type','?')}  |  "
-                                f"score={r['score']:.3f}  |  "
-                                f"page {r.get('page_number','?')}"
-                            )
-                        else:
-                            label = f"#{i}  {source}  ·  {relevance}"
-
-                        with st.expander(label, expanded=(i == 1)):
-                            st.markdown(r.get("text", ""))
-                            if is_admin:
-                                st.caption(
-                                    f"tenant={r.get('tenant_id','')}  "
-                                    f"model={r.get('embedding_version','')}  "
-                                    f"chars={r.get('char_start','?')}–{r.get('char_end','?')}"
-                                )
 
             except Exception as e:
                 st.error(f"Search error: {e}")
