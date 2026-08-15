@@ -73,6 +73,7 @@ class Settings(BaseSettings):
 
     # Intent router — Phase 4
     intent_router_enabled: bool = True   # False -> use manual route selection (admin checkboxes)
+    intent_classifier_path: str = "data/models/intent_classifier.pkl"  # trained sklearn model
 
     # Cross-encoder re-ranker — Phase 4
     reranker_enabled: bool = True

@@ -110,69 +110,79 @@ _PROTOTYPES: dict[Intent, list[str]] = {
 
 class IntentRouter:
     """
-    Embedding-based query intent classifier.
+    Query intent classifier.
 
-    Classifies queries by computing cosine similarity between the query vector
-    and pre-embedded prototype queries for each intent. The intent with the
-    highest max-similarity prototype wins. Falls back to MIXED when no intent
-    scores above the confidence threshold.
+    Two modes depending on whether a trained model is available:
+
+    1. Trained classifier (preferred): loads a joblib-serialised sklearn model
+       from cfg.intent_classifier_path. predict() returns the intent label.
+
+    2. Prototype similarity (fallback): cosine similarity against pre-embedded
+       hand-crafted prototype queries. Zero training data required but accuracy
+       is unmeasured.
     """
 
-    # Below this similarity score, no intent is confident enough → MIXED
-    CONFIDENCE_THRESHOLD = 0.30
+    CONFIDENCE_THRESHOLD = 0.30  # used only in prototype mode
 
     def __init__(self, settings: Settings | None = None) -> None:
         self._cfg = settings or get_settings()
-        self._proto_matrices: dict[Intent, np.ndarray] | None = None
+        self._clf = None           # trained sklearn classifier (mode 1)
+        self._proto_matrices: dict[Intent, np.ndarray] | None = None  # mode 2
+        self._try_load_classifier()
+
+    def _try_load_classifier(self) -> None:
+        """Load trained sklearn classifier if the model file exists."""
+        from pathlib import Path
+        model_path = Path(self._cfg.intent_classifier_path)
+        if not model_path.exists():
+            return
+        try:
+            import joblib
+            self._clf = joblib.load(model_path)
+            logger.info("IntentRouter: loaded trained classifier from {}", model_path)
+        except Exception as exc:
+            logger.warning("IntentRouter: could not load classifier ({}), using prototypes", exc)
 
     def _ensure_prototypes(self) -> None:
-        """Embed prototype queries once and cache as normalised numpy matrices."""
         if self._proto_matrices is not None:
             return
-
         from src.pdf_ingestion.embedder import get_embedder
         embedder = get_embedder(self._cfg)
-
-        logger.info("IntentRouter: embedding {} intent prototype sets…", len(_PROTOTYPES))
+        logger.info("IntentRouter: embedding {} prototype sets…", len(_PROTOTYPES))
         matrices: dict[Intent, np.ndarray] = {}
         for intent, phrases in _PROTOTYPES.items():
             vecs = np.array([embedder.embed_query(p) for p in phrases], dtype=np.float32)
-            # Normalise rows so dot product = cosine similarity
             norms = np.linalg.norm(vecs, axis=1, keepdims=True) + 1e-9
             matrices[intent] = vecs / norms
         self._proto_matrices = matrices
         logger.info("IntentRouter: prototypes ready")
 
     def classify(self, query_vector: np.ndarray) -> Intent:
-        """
-        Return the intent whose prototypes are most similar to the query vector.
-        Uses the already-computed query embedding — zero extra model calls.
-        """
         if self._cfg.use_stub_embedder:
             return Intent.MIXED
 
-        self._ensure_prototypes()
-
         q = np.array(query_vector, dtype=np.float32)
+
+        # Mode 1: trained classifier
+        if self._clf is not None:
+            label = self._clf.predict([q])[0]
+            logger.debug("IntentRouter (trained): '{}'", label)
+            return Intent(label)
+
+        # Mode 2: prototype similarity
+        self._ensure_prototypes()
         q = q / (np.linalg.norm(q) + 1e-9)
-
         best_intent = Intent.MIXED
-        best_score  = self.CONFIDENCE_THRESHOLD  # must beat threshold to win
-
+        best_score  = self.CONFIDENCE_THRESHOLD
         for intent, matrix in self._proto_matrices.items():
             score = float((matrix @ q).max())
             if score > best_score:
                 best_score  = score
                 best_intent = intent
-
-        logger.debug(
-            "IntentRouter: query classified as '{}' (score={:.3f})",
-            best_intent, best_score,
-        )
+        logger.debug("IntentRouter (prototype): '{}' (score={:.3f})", best_intent, best_score)
         return best_intent
 
     def route(self, query_vector: np.ndarray) -> RouteConfig:
-        """Classify and return the full RouteConfig for the query."""
         intent = self.classify(query_vector)
         return ROUTE_MAP[intent]
 
