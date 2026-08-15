@@ -76,7 +76,7 @@ class Settings(BaseSettings):
 
     # SPLADE sparse embedder — Phase 4
     splade_model: str = "naver/splade-cocondenser-selfdistil"
-    splade_enabled: bool = True          # False -> dense-only search (backward compat)
+    splade_enabled: bool = False         # True -> hybrid dense+sparse (requires re-ingest)
     use_stub_splade: bool = False        # True -> skip model download in unit tests
 
     # Card generation parallelism
