@@ -67,29 +67,22 @@ def main():
             updates.append(q)
             continue
 
-        table = Table(title=f"{qid}: {qtext[:60]}", show_header=True, header_style="cyan")
-        table.add_column("Rank", justify="right", width=5)
-        table.add_column("Page", justify="right", width=6)
-        table.add_column("Score", justify="right", width=8)
-        table.add_column("Text excerpt", width=70)
+        console.print(f"\n[bold cyan]━━ {qid}: {qtext} ━━[/]")
+        console.print(f"   Current relevant_pages: {current_pages}\n")
 
         for i, h in enumerate(hits, start=1):
-            table.add_row(
-                str(i),
-                str(h.get("page_number", "?")),
-                f"{h['score']:.4f}",
-                h.get("text", "")[:70].replace("\n", " "),
-            )
-
-        console.print(table)
+            page  = h.get("page_number", "?")
+            score = h.get("score", 0)
+            text  = h.get("text", "").strip()
+            console.print(f"  [bold]#{i}[/]  page=[yellow]{page}[/]  score={score:.4f}")
+            console.print(f"  {text}\n")
 
         pages_found = [h.get("page_number") for h in hits]
-        console.print(f"  Current relevant_pages: {current_pages}")
-        console.print(f"  Pages retrieved:        {pages_found}")
         console.print(
-            f"  [yellow]→ Update eval_queries.json: set relevant_pages to the "
-            f"correct page numbers from the list above, then set calibrated=true[/]\n"
+            f"  [yellow]→ Mark relevant_pages with the page numbers whose text above "
+            f"actually answers the query. Set calibrated=true when done.[/]\n"
         )
+        console.print("─" * 80)
         updates.append(q)
 
     console.print("\n[bold]Calibration guidance:[/]")
