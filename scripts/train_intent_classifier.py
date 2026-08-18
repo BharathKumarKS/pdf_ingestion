@@ -163,8 +163,28 @@ def call_judge(query: str, intent: str, args) -> bool:
         )
         resp.raise_for_status()
         answer = resp.json().get("response", "").strip()
+    elif args.judge_backend == "anthropic":
+        import httpx
+        headers = {
+            "x-api-key": args.judge_api_key,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": args.judge_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 100,
+        }
+        resp = httpx.post(
+            "https://api.anthropic.com/v1/messages",
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        answer = resp.json()["content"][0]["text"].strip()
     else:
-        # OpenAI-compatible (Claude via OpenAI compat, GPT-4, etc.)
+        # OpenAI-compatible (GPT-4, local OpenAI-compat endpoints, etc.)
         import httpx
         headers = {
             "Authorization": f"Bearer {args.judge_api_key}",
@@ -422,7 +442,7 @@ def parse_args():
                    help="Number of queries to generate per intent (default: 250)")
 
     # Judge LLM (different family from generator)
-    p.add_argument("--judge-backend", choices=["openai", "ollama", "skip"], default="skip",
+    p.add_argument("--judge-backend", choices=["openai", "ollama", "anthropic", "skip"], default="skip",
                    help="Judge LLM backend. 'skip' uses all generated queries without validation.")
     p.add_argument("--judge-api-base", default="https://api.openai.com/v1",
                    help="Base URL for judge API (OpenAI-compatible or Ollama)")
