@@ -291,13 +291,11 @@ with tab_search:
                 q_vec    = embedder.embed_query(query)
                 s        = DocumentStore(cfg)
 
-                fetch_k = cfg.reranker_fetch_k if cfg.reranker_enabled else cfg.reranker_top_k
-                chunk_results = s.search(
+                chunk_results = s.search_with_das(
                     query_vector=q_vec,
-                    tenant_id=tenant_id,
-                    source_type=source_type_filter,
-                    limit=fetch_k,
                     query_text=query,
+                    tenant_id=tenant_id,
+                    fetch_k=cfg.reranker_fetch_k if cfg.reranker_enabled else cfg.reranker_top_k,
                 )
 
                 if cfg.reranker_enabled and chunk_results:

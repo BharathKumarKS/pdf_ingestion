@@ -217,7 +217,7 @@ class DocumentStore:
                 limit=limit,
                 with_payload=True,
             )
-        return [{"score": h.score, **h.payload} for h in response.points]
+        return [{"score": h.score, "qdrant_point_id": str(h.id), **h.payload} for h in response.points]
 
     def search_raptor(
         self,
@@ -253,6 +253,156 @@ class DocumentStore:
             with_payload=True,
         )
         return [{"score": h.score, **h.payload} for h in response.points]
+
+    # ── Phase A: DA + RRF + MMR ───────────────────────────────────────────────
+
+    def search_da(
+        self,
+        query_vector: np.ndarray,
+        tenant_id: str,
+        limit: int = 20,
+    ) -> list[dict]:
+        """Search the derivative_artifacts collection."""
+        if not self._cfg.da_enabled:
+            return []
+        filter_ = Filter(
+            should=[
+                Filter(must=[FieldCondition(key="tenant_id",
+                             match=MatchValue(value=tenant_id))]),
+                Filter(must=[FieldCondition(key="tenant_id",
+                             match=MatchValue(value=self._cfg.global_tenant_id))]),
+            ]
+        )
+        try:
+            response = self._qdrant.query_points(
+                collection_name=self._cfg.da_collection,
+                query=query_vector.tolist(),
+                query_filter=filter_,
+                limit=limit,
+                with_payload=True,
+            )
+            return [{"score": h.score, **h.payload} for h in response.points]
+        except Exception as exc:
+            logger.warning("DA search failed ({}), skipping DA lane", exc)
+            return []
+
+    def _resolve_da_parents(self, da_hits: list[dict]) -> list[dict]:
+        """Map DA hits back to their parent chunks for context retrieval."""
+        chunk_ids = [h["chunk_id"] for h in da_hits if h.get("chunk_id")]
+        if not chunk_ids:
+            return []
+        with Session(self._engine) as session:
+            chunks = session.exec(
+                select(Chunk).where(Chunk.id.in_(chunk_ids))
+            ).all()
+        chunk_map = {c.id: c for c in chunks}
+        resolved = []
+        for da_hit in da_hits:
+            chunk = chunk_map.get(da_hit.get("chunk_id"))
+            if not chunk:
+                continue
+            resolved.append({
+                "chunk_id":    chunk.id,
+                "text":        chunk.text,
+                "page_number": chunk.page_number,
+                "document_id": chunk.document_id,
+                "score":       da_hit["score"],
+                "source_type": "da_parent",
+                "card_type":   da_hit.get("card_type"),
+                "tenant_id":   da_hit.get("tenant_id"),
+            })
+        return resolved
+
+    @staticmethod
+    def _rrf_merge(*result_lists: list[dict], rrf_k: int = 60) -> list[dict]:
+        """
+        Client-side Reciprocal Rank Fusion over multiple ranked result lists.
+        Each item must have a 'chunk_id'. Returns merged list by descending RRF score.
+        """
+        scores: dict[str, float] = {}
+        best: dict[str, dict] = {}
+        for result_list in result_lists:
+            for rank, item in enumerate(result_list, start=1):
+                cid = item.get("chunk_id")
+                if not cid:
+                    continue
+                scores[cid] = scores.get(cid, 0.0) + 1.0 / (rrf_k + rank)
+                if cid not in best or item.get("score", 0) > best[cid].get("score", 0):
+                    best[cid] = item
+        merged = []
+        for cid, rrf_score in sorted(scores.items(), key=lambda x: -x[1]):
+            entry = dict(best[cid])
+            entry["rrf_score"] = round(rrf_score, 6)
+            merged.append(entry)
+        return merged
+
+    @staticmethod
+    def _mmr_select(
+        candidates: list[dict],
+        top_k: int,
+        lambda_: float = 0.7,
+    ) -> list[dict]:
+        """
+        Maximal Marginal Relevance: selects top_k items balancing relevance and diversity.
+        Uses rrf_score (or score) for relevance, Jaccard token overlap for diversity.
+        """
+        if len(candidates) <= top_k:
+            return candidates
+
+        def _tok(text: str) -> set[str]:
+            return set(text.lower().split())
+
+        def _jac(a: set, b: set) -> float:
+            return len(a & b) / len(a | b) if (a or b) else 0.0
+
+        max_score = max(c.get("rrf_score", c.get("score", 0)) for c in candidates) or 1.0
+        rel = [c.get("rrf_score", c.get("score", 0)) / max_score for c in candidates]
+        toks = [_tok(c.get("text", "")) for c in candidates]
+
+        selected: list[int] = []
+        remaining = list(range(len(candidates)))
+
+        while len(selected) < top_k and remaining:
+            best_idx, best_mmr = remaining[0], float("-inf")
+            for i in remaining:
+                diversity = max((_jac(toks[i], toks[j]) for j in selected), default=0.0)
+                mmr = lambda_ * rel[i] - (1 - lambda_) * diversity
+                if mmr > best_mmr:
+                    best_mmr, best_idx = mmr, i
+            selected.append(best_idx)
+            remaining.remove(best_idx)
+
+        return [candidates[i] for i in selected]
+
+    def search_with_das(
+        self,
+        query_vector: np.ndarray,
+        query_text: str | None = None,
+        tenant_id: str = "global",
+        fetch_k: int | None = None,
+    ) -> list[dict]:
+        """
+        Multi-lane retrieval: dense (+SPLADE) + DA → client-side RRF → MMR.
+        Returns candidates ready for cross-encoder reranking.
+        """
+        fetch_k = fetch_k or self._cfg.reranker_fetch_k
+        pool = self._cfg.mmr_candidates
+
+        dense_hits = self.search(
+            query_vector, tenant_id=tenant_id,
+            limit=pool, query_text=query_text,
+        )
+
+        da_parents: list[dict] = []
+        if self._cfg.da_enabled:
+            da_hits = self.search_da(query_vector, tenant_id=tenant_id, limit=fetch_k)
+            da_parents = self._resolve_da_parents(da_hits)
+
+        merged = self._rrf_merge(dense_hits, da_parents)
+
+        if self._cfg.mmr_enabled and len(merged) > fetch_k:
+            return self._mmr_select(merged, top_k=fetch_k, lambda_=self._cfg.mmr_lambda)
+        return merged[:fetch_k]
 
     def get_document_stats(self, document_id: str) -> dict:
         with Session(self._engine) as session:

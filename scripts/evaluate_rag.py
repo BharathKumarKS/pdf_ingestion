@@ -104,6 +104,16 @@ def build_config_snapshot(cfg, threshold: float, tenant_id: str) -> dict:
             "chunk_size": cfg.chunk_size,
             "chunk_overlap": cfg.chunk_overlap,
         },
+        "derivative_artifacts": {
+            "enabled": cfg.da_enabled,
+            "collection": cfg.da_collection,
+            "card_types": cfg.da_card_types,
+        },
+        "mmr": {
+            "enabled": cfg.mmr_enabled,
+            "lambda": cfg.mmr_lambda,
+            "candidates": cfg.mmr_candidates,
+        },
     }
 
 
@@ -121,11 +131,11 @@ def run_retrieval(
     """Embed + search + rerank. Returns raw hits at both stages."""
     q_vec = np.array(embedder.embed_query(query_text), dtype=np.float32)
 
-    hits = store.search(
+    hits = store.search_with_das(
         q_vec,
-        tenant_id=tenant_id,
-        limit=cfg.reranker_fetch_k,
         query_text=query_text,
+        tenant_id=tenant_id,
+        fetch_k=cfg.reranker_fetch_k,
     )
 
     hits_above = [h for h in hits if h["score"] >= threshold]

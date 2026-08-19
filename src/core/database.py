@@ -235,6 +235,7 @@ def get_qdrant(settings: Settings | None = None) -> QdrantClient:
         _ensure_collection(_qdrant, cfg)
         _ensure_colpali_collection(_qdrant, cfg)
         _ensure_concept_collection(_qdrant, cfg)
+        _ensure_da_collection(_qdrant, cfg)
     return _qdrant
 
 
@@ -307,6 +308,32 @@ def _ensure_colpali_collection(client: QdrantClient, cfg: Settings) -> None:
         try:
             client.create_payload_index(
                 collection_name=cfg.colpali_collection,
+                field_name=field,
+                field_schema=schema,
+            )
+        except Exception:
+            pass
+
+
+def _ensure_da_collection(client: QdrantClient, cfg: Settings) -> None:
+    """Create the derivative artifacts collection (cards + RAPTOR summaries for retrieval)."""
+    existing = {c.name for c in client.get_collections().collections}
+    if cfg.da_collection not in existing:
+        client.create_collection(
+            collection_name=cfg.da_collection,
+            vectors_config=VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
+        )
+        logger.info("Created Qdrant DA collection '{}'", cfg.da_collection)
+
+    for field, schema in (
+        ("tenant_id",          PayloadSchemaType.KEYWORD),
+        ("document_id",        PayloadSchemaType.KEYWORD),
+        ("card_type",          PayloadSchemaType.KEYWORD),
+        ("chunk_id",           PayloadSchemaType.KEYWORD),
+    ):
+        try:
+            client.create_payload_index(
+                collection_name=cfg.da_collection,
                 field_name=field,
                 field_schema=schema,
             )

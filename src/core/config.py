@@ -120,6 +120,16 @@ class Settings(BaseSettings):
     use_stub_graph: bool = False
     concept_gen_workers: int = 4         # parallel Ollama threads for concept extraction
 
+    # Phase A — Derivative Artifact retrieval
+    da_collection: str = "derivative_artifacts"
+    da_enabled: bool = True
+    da_card_types: list[str] = Field(default=["definition", "formula", "question"])
+
+    # Phase A — MMR reranking (applied after RRF, before cross-encoder)
+    mmr_enabled: bool = True
+    mmr_lambda: float = 0.7              # 1.0 = pure relevance, 0.0 = pure diversity
+    mmr_candidates: int = 50            # pool size fed into MMR
+
     api_port: int = 8000
 
     def ensure_dirs(self) -> None:
