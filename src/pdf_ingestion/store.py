@@ -380,10 +380,12 @@ class DocumentStore:
         query_text: str | None = None,
         tenant_id: str = "global",
         fetch_k: int | None = None,
+        source_type: str | None = None,
     ) -> list[dict]:
         """
         Multi-lane retrieval: dense (+SPLADE) + DA → client-side RRF → MMR.
         Returns candidates ready for cross-encoder reranking.
+        source_type mirrors the search() parameter for study-mode filtering.
         """
         fetch_k = fetch_k or self._cfg.reranker_fetch_k
         pool = self._cfg.mmr_candidates
@@ -391,6 +393,7 @@ class DocumentStore:
         dense_hits = self.search(
             query_vector, tenant_id=tenant_id,
             limit=pool, query_text=query_text,
+            source_type=source_type,
         )
 
         da_parents: list[dict] = []

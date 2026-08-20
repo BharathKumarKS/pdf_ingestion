@@ -296,6 +296,7 @@ with tab_search:
                     query_text=query,
                     tenant_id=tenant_id,
                     fetch_k=cfg.reranker_fetch_k if cfg.reranker_enabled else cfg.reranker_top_k,
+                    source_type=source_type_filter,
                 )
 
                 if cfg.reranker_enabled and chunk_results:

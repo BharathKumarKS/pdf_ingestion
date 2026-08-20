@@ -138,7 +138,7 @@ def main() -> None:
             nonlocal upserted
             if not batch_texts:
                 return
-            vecs = embedder.embed_documents(batch_texts)
+            vecs = [embedder.embed_query(t) for t in batch_texts]
             for vec, (card, chunk) in zip(vecs, batch_meta):
                 page_numbers = [chunk.page_number] if chunk.page_number is not None else []
                 embed_text = _card_embed_text(
