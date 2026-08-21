@@ -98,11 +98,11 @@ class TestCardGenerator:
             char_start=0, char_end=60, token_count=10, page_number=1,
         )
 
-    def test_stub_produces_7_cards(self, p2_settings):
+    def test_stub_produces_8_cards(self, p2_settings):
         from src.pdf_ingestion.card_generator import get_card_generator
         gen   = get_card_generator(p2_settings)
         cards = gen.generate_cards_for_chunk(self._make_chunk())
-        assert len(cards) == 7
+        assert len(cards) == 8
 
     def test_all_card_types_present(self, p2_settings):
         from src.pdf_ingestion.card_generator import get_card_generator, ALL_CARD_TYPES
@@ -142,7 +142,7 @@ class TestCardGenerator:
         chunks = [self._make_chunk(i) for i in range(5)]
         gen    = get_card_generator(p2_settings)
         cards  = gen.generate_cards_for_chunks(chunks)
-        assert len(cards) == 5 * 7  # 7 cards × 5 chunks
+        assert len(cards) == 5 * 8  # 8 cards × 5 chunks
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -310,12 +310,12 @@ class TestPhase2Orchestration:
         assert len(chunk_pts) == ingested_doc["chunk_count"]
 
     def test_cards_per_chunk_count(self, ingested_doc, p2_settings):
-        """Every chunk must have exactly 7 cards (one per card type)."""
+        """Every chunk must have exactly 8 cards (one per card type)."""
         from src.pdf_ingestion.store import generate_phase2_artifacts, DocumentStore
         generate_phase2_artifacts(ingested_doc["document_id"], p2_settings)
         store = DocumentStore(p2_settings)
         cards = store.get_cards(ingested_doc["document_id"])
-        assert len(cards) == ingested_doc["chunk_count"] * 7
+        assert len(cards) == ingested_doc["chunk_count"] * 8
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -389,9 +389,11 @@ class TestOllamaCardGeneration:
         gen   = OllamaCardGenerator(settings=cfg)
         cards = gen.generate_cards_for_chunk(chunk)
 
-        assert len(cards) == 7
+        # Card count is variable — nullable types (definition, example, etc.)
+        # return 0 cards when not applicable; question/factoid return multiple.
+        assert len(cards) >= 1
         types = {c.card_type for c in cards}
-        assert types == set(ALL_CARD_TYPES)
+        assert types.issubset(set(ALL_CARD_TYPES))
 
         for c in cards:
             assert c.title.strip(),   f"{c.card_type}: empty title"

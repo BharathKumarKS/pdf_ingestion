@@ -59,22 +59,25 @@ class RaptorNodeData:
 
 # ── Summarisation prompt ──────────────────────────────────────────────────
 
-_SUM_PROMPT = """\
-You are an expert physics educator writing a study summary.
-Summarise the passages below into a single coherent paragraph (3-5 sentences) \
-for an undergraduate student.
+def _load_raptor_prompt() -> str:
+    from pathlib import Path
+    path = Path(__file__).parent / "prompts" / "raptor_summarizer.md"
+    return path.read_text(encoding="utf-8") if path.exists() else _FALLBACK_SUM_PROMPT
 
-Rules:
-- Use only information present in the passages. Do not add outside knowledge.
-- Preserve the exact names of laws, theorems, quantities, and equations (e.g. "Newton's Second Law", "F = ma").
-- State the key concept or principle first, then supporting ideas.
-- If multiple distinct ideas are present, connect them with their logical relationship.
-- Write in plain English — no bullet points, no headings.
+_FALLBACK_SUM_PROMPT = """\
+Summarise the passages below into a single coherent paragraph for an undergraduate physics student.
+Use only information present in the passages.
 
 PASSAGES:
 {passages}
 
 SUMMARY:"""
+
+_RAPTOR_PROMPT_TEMPLATE = _load_raptor_prompt()
+
+# Token bounds for RAPTOR cluster summaries
+_RAPTOR_MIN_TOKENS = 150
+_RAPTOR_MAX_TOKENS = 400
 
 
 # ── RAPTOR builder ────────────────────────────────────────────────────────
@@ -252,8 +255,14 @@ class RaptorBuilder:
 
         from src.core.llm import call_llm
         passages = "\n\n---\n\n".join(texts)
-        prompt   = _SUM_PROMPT.format(passages=passages[:6000])
-
+        prompt   = (
+            _RAPTOR_PROMPT_TEMPLATE
+            .format(
+                min_tokens=_RAPTOR_MIN_TOKENS,
+                max_tokens=_RAPTOR_MAX_TOKENS,
+            )
+            + f"\n\nCLUSTER CONTENT:\n{passages[:6000]}"
+        )
         result = call_llm(prompt=prompt, settings=cfg)
         return result.strip() or " ".join(texts[:2][:500])
 

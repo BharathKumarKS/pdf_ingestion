@@ -1,25 +1,27 @@
 """
 Card generator -- Phase 2.
 
-Calls Ollama/Llama 3.2 in a single pass to produce all 7 pedagogical card
-types for every chunk ingested in Phase 1.
+Generates pedagogical cards for every chunk ingested in Phase 1.
+Each card type uses a dedicated COSTAR-format prompt loaded from
+src/pdf_ingestion/prompts/. One LLM call is made per card type per chunk;
+calls across types are parallelised within each chunk.
 
 Card types
 ----------
-summary      -- concise overview of the chunk
-definition   -- key term or concept with explanation
-example      -- worked example or real-world application
-misconception-- common error or wrong mental model
-question     -- Socratic Q&A pair (content = question, answer = answer)
-objective    -- learning objective statement (Bloom's verb + outcome)
-formula      -- key equation / formula (or "N/A" if none)
+summary       -- concise overview of the chunk (COSTAR summarizer prompt)
+definition    -- key term or concept with explanation
+example       -- worked example or real-world application
+misconception -- common error or wrong mental model
+question      -- 5-10 QA pairs per chunk (COSTAR qa_generator prompt)
+objective     -- learning objective (Bloom's verb + outcome)
+formula       -- key equation / formula
+factoid       -- atomic, self-contained propositions (COSTAR propositioner prompt)
 
 Performance
 -----------
-generate_cards_for_chunks() uses a ThreadPoolExecutor with CARD_GEN_WORKERS
-threads so multiple Ollama requests run in parallel. On a GPU VM with Ollama
-serving Llama 3.2, setting CARD_GEN_WORKERS=8 cuts card generation time by
-~8x (from ~25 hours sequential to ~3 hours for 5k chunks).
+generate_cards_for_chunks() parallelises across chunks using CARD_GEN_WORKERS
+threads. Within each chunk, all card-type calls are also parallelised, giving
+O(workers × card_types) throughput on a GPU VM with Ollama.
 """
 from __future__ import annotations
 
@@ -29,12 +31,26 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 from loguru import logger
 
 from src.core.config import Settings, get_settings
 from src.pdf_ingestion.chunker import TextChunk
+
+
+# -- Prompt loading ------------------------------------------------------------
+
+_PROMPTS_DIR = Path(__file__).parent / "prompts"
+
+
+def _load_prompt(filename: str) -> str:
+    """Load a COSTAR prompt template from the prompts directory."""
+    path = _PROMPTS_DIR / filename
+    if not path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {path}")
+    return path.read_text(encoding="utf-8")
 
 
 # -- Card type enum ------------------------------------------------------------
@@ -47,6 +63,7 @@ class CardType(str, Enum):
     QUESTION      = "question"
     OBJECTIVE     = "objective"
     FORMULA       = "formula"
+    FACTOID       = "factoid"
 
 ALL_CARD_TYPES = [t.value for t in CardType]
 
@@ -66,64 +83,143 @@ class GeneratedCard:
     metadata:    dict = field(default_factory=dict)
 
 
-# -- LLM prompt ----------------------------------------------------------------
+# -- Response parsers ----------------------------------------------------------
 
-_SYSTEM = (
-    "You are an expert pedagogy assistant. "
-    "Respond ONLY with valid JSON -- no markdown fences, no prose."
-)
+class ResponseParser:
+    """Stateless parsers for each card type's LLM response format."""
 
-_PROMPT_TMPL = """\
-Given the educational text below, produce high-quality learning cards.
-Only include card types that are genuinely applicable to the text.
+    _SKIP = {"n/a", "none", "not applicable", "no formula", "null", ""}
 
-TEXT:
-{text}
+    @classmethod
+    def _clean(cls, raw: str) -> str:
+        return re.sub(r"```(?:json)?", "", raw).strip()
 
-Return a JSON object. Include ONLY the keys that apply — omit keys that would produce generic or N/A content:
-{{
-  "summary":       {{"title": "...", "content": "..."}},
-  "definition":    {{"title": "...", "content": "..."}},
-  "example":       {{"title": "...", "content": "..."}},
-  "misconception": {{"title": "...", "content": "..."}},
-  "question":      {{"title": "...", "content": "...", "answer": "..."}},
-  "objective":     {{"title": "...", "content": "..."}},
-  "formula":       {{"title": "...", "content": "..."}}
-}}
+    @classmethod
+    def _try_json(cls, raw: str):
+        try:
+            return json.loads(cls._clean(raw))
+        except json.JSONDecodeError:
+            return None
 
-Rules:
-- summary:        always include. 1-2 sentence overview, specific to this text.
-- definition:     include only if text introduces a clearly defined concept or term.
-- example:        include only if text contains a concrete example or application.
-- misconception:  include only if there is a genuine common wrong belief worth flagging.
-- question:       always include. A substantive Socratic question with a correct, detailed answer.
-- objective:      always include. Start with a Bloom's verb (Explain, Calculate, Derive, Apply).
-- formula:        include ONLY if text contains an actual equation or formula. Omit entirely otherwise.
-- Content must be specific to this text — never generic or placeholder.
-"""
+    @classmethod
+    def parse_single_object(
+        cls, raw: str, chunk: TextChunk, card_type: CardType
+    ) -> list[GeneratedCard]:
+        """Parse a {title, content} JSON object → 0 or 1 card."""
+        data = cls._try_json(raw)
+        if not data or not isinstance(data, dict):
+            return []
+        if str(data.get("content", "")).strip().lower() in cls._SKIP:
+            return []
+        if data is None or raw.strip().lower() in ("null", ""):
+            return []
+        content = str(data.get("content", "")).strip()
+        if not content or content.lower() in cls._SKIP:
+            return []
+        return [GeneratedCard(
+            card_id=str(uuid.uuid4()),
+            chunk_id=chunk.chunk_id,
+            document_id=chunk.document_id,
+            tenant_id=chunk.tenant_id,
+            card_type=card_type.value,
+            title=str(data.get("title", card_type.value.capitalize())).strip(),
+            content=content,
+        )]
+
+    @classmethod
+    def parse_qa_pairs(cls, raw: str, chunk: TextChunk) -> list[GeneratedCard]:
+        """Parse a [{question, answer}] JSON array → multiple question cards."""
+        data = cls._try_json(raw)
+        if not isinstance(data, list):
+            return []
+        cards = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            q = str(item.get("question", "")).strip()
+            a = str(item.get("answer", "")).strip()
+            if not q or not a or q.lower() in cls._SKIP:
+                continue
+            cards.append(GeneratedCard(
+                card_id=str(uuid.uuid4()),
+                chunk_id=chunk.chunk_id,
+                document_id=chunk.document_id,
+                tenant_id=chunk.tenant_id,
+                card_type=CardType.QUESTION.value,
+                title=q[:120],
+                content=q,
+                answer=a,
+            ))
+        return cards
+
+    @classmethod
+    def parse_factoids(cls, raw: str, chunk: TextChunk) -> list[GeneratedCard]:
+        """Parse a [string, ...] JSON array → multiple factoid cards."""
+        data = cls._try_json(raw)
+        if not isinstance(data, list):
+            return []
+        cards = []
+        for item in data:
+            text = str(item).strip()
+            if not text or text.lower() in cls._SKIP:
+                continue
+            cards.append(GeneratedCard(
+                card_id=str(uuid.uuid4()),
+                chunk_id=chunk.chunk_id,
+                document_id=chunk.document_id,
+                tenant_id=chunk.tenant_id,
+                card_type=CardType.FACTOID.value,
+                title=text[:120],
+                content=text,
+            ))
+        return cards
+
+
+# -- Per-type generation config ------------------------------------------------
+
+@dataclass
+class _TypeConfig:
+    prompt_file: str
+    json_mode:   bool
+    parser:      str   # "single_object" | "qa_pairs" | "factoids"
+
+
+_TYPE_CONFIGS: dict[CardType, _TypeConfig] = {
+    CardType.SUMMARY:       _TypeConfig("summarizer.md",                json_mode=False, parser="single_object"),
+    CardType.DEFINITION:    _TypeConfig("definition.md",                json_mode=True,  parser="single_object"),
+    CardType.EXAMPLE:       _TypeConfig("example.md",                   json_mode=True,  parser="single_object"),
+    CardType.MISCONCEPTION: _TypeConfig("misconception.md",             json_mode=True,  parser="single_object"),
+    CardType.QUESTION:      _TypeConfig("question_answer_generator.md", json_mode=True,  parser="qa_pairs"),
+    CardType.OBJECTIVE:     _TypeConfig("objective.md",                 json_mode=True,  parser="single_object"),
+    CardType.FORMULA:       _TypeConfig("formula.md",                   json_mode=True,  parser="single_object"),
+    CardType.FACTOID:       _TypeConfig("propositioner.md",             json_mode=True,  parser="factoids"),
+}
+
+# Summary uses token placeholders — fill with sensible defaults for chunk cards
+_SUMMARY_MIN_TOKENS = 50
+_SUMMARY_MAX_TOKENS = 150
 
 
 # -- Stub (no Ollama needed for tests) -----------------------------------------
 
 class StubLLM:
-    """Returns deterministic template cards -- zero Ollama dependency."""
+    """Returns deterministic template cards — zero Ollama dependency."""
 
     def generate_cards_for_chunk(self, chunk: TextChunk) -> list[GeneratedCard]:
         cards = []
         for ct in CardType:
             is_question = ct == CardType.QUESTION
-            cards.append(
-                GeneratedCard(
-                    card_id=str(uuid.uuid4()),
-                    chunk_id=chunk.chunk_id,
-                    document_id=chunk.document_id,
-                    tenant_id=chunk.tenant_id,
-                    card_type=ct.value,
-                    title=f"[stub] {ct.value.capitalize()} for chunk {chunk.chunk_index}",
-                    content=f"Stub {ct.value} content: {chunk.text[:60]}...",
-                    answer="Stub answer." if is_question else None,
-                )
-            )
+            is_factoid  = ct == CardType.FACTOID
+            cards.append(GeneratedCard(
+                card_id=str(uuid.uuid4()),
+                chunk_id=chunk.chunk_id,
+                document_id=chunk.document_id,
+                tenant_id=chunk.tenant_id,
+                card_type=ct.value,
+                title=f"[stub] {ct.value.capitalize()} for chunk {chunk.chunk_index}",
+                content=f"Stub {ct.value} content: {chunk.text[:60]}...",
+                answer="Stub answer." if is_question else None,
+            ))
         return cards
 
     def generate_cards_for_chunks(self, chunks: list[TextChunk]) -> list[GeneratedCard]:
@@ -133,35 +229,60 @@ class StubLLM:
         return all_cards
 
 
-# -- Ollama client -------------------------------------------------------------
+# -- LLM card generator --------------------------------------------------------
 
 class OllamaCardGenerator:
-    """Generates 7 cards per chunk via a single Ollama/Llama 3.2 call."""
+    """
+    Generates cards for each chunk via one LLM call per card type.
+    Calls are parallelised across card types within each chunk, and across
+    chunks using CARD_GEN_WORKERS threads.
+    """
 
     def __init__(self, settings: Settings | None = None) -> None:
-        self._cfg = settings or get_settings()
+        self._cfg     = settings or get_settings()
+        self._prompts = self._load_all_prompts()
+        self._parser  = ResponseParser()
+
+    @staticmethod
+    def _load_all_prompts() -> dict[CardType, str]:
+        prompts = {}
+        for ct, cfg in _TYPE_CONFIGS.items():
+            try:
+                prompts[ct] = _load_prompt(cfg.prompt_file)
+            except FileNotFoundError as exc:
+                logger.warning("Prompt file missing for {}: {}", ct.value, exc)
+        return prompts
+
+    # -- Public API ------------------------------------------------------------
 
     def generate_cards_for_chunk(self, chunk: TextChunk) -> list[GeneratedCard]:
-        prompt = _PROMPT_TMPL.format(text=chunk.text.strip())
-        raw_json = self._call_llm(prompt)
-        return self._parse_response(raw_json, chunk)
+        """Generate all card types for one chunk, parallelised across types."""
+        all_cards: list[GeneratedCard] = []
+        with ThreadPoolExecutor(max_workers=len(CardType)) as pool:
+            futures = {
+                pool.submit(self._generate_one_type, chunk, ct): ct
+                for ct in CardType
+                if ct in self._prompts
+            }
+            for future in as_completed(futures):
+                ct = futures[future]
+                try:
+                    all_cards.extend(future.result())
+                except Exception as exc:
+                    logger.warning(
+                        "Card type '{}' failed for chunk {} ({})",
+                        ct.value, chunk.chunk_index, exc,
+                    )
+        return all_cards
 
-    def generate_cards_for_chunks(
-        self, chunks: list[TextChunk]
-    ) -> list[GeneratedCard]:
-        """
-        Generate cards for all chunks in parallel using a thread pool.
-
-        Each Ollama HTTP call is independent, so threads provide real
-        concurrency even with the GIL. CARD_GEN_WORKERS controls parallelism
-        (default 4; increase to 8+ on a GPU VM running Ollama).
-        """
-        workers = self._cfg.card_gen_workers
+    def generate_cards_for_chunks(self, chunks: list[TextChunk]) -> list[GeneratedCard]:
+        """Generate all cards for all chunks, parallelised across chunks."""
+        workers  = self._cfg.card_gen_workers
         all_cards: list[GeneratedCard] = []
         failed = 0
 
         logger.info(
-            "Generating cards for {} chunks with {} parallel workers...",
+            "Generating cards for {} chunks ({} worker threads)...",
             len(chunks), workers,
         )
 
@@ -177,13 +298,13 @@ class OllamaCardGenerator:
                     all_cards.extend(cards)
                     if chunk.chunk_index % 100 == 0:
                         logger.debug(
-                            "Progress: {} cards done (chunk {})",
+                            "Progress: {} cards, chunk {}",
                             len(all_cards), chunk.chunk_index,
                         )
                 except Exception as exc:
                     failed += 1
                     logger.warning(
-                        "Card generation failed for chunk {} ({}), skipping",
+                        "All cards failed for chunk {} ({}), skipping",
                         chunk.chunk_index, exc,
                     )
 
@@ -195,86 +316,56 @@ class OllamaCardGenerator:
 
     # -- Internals -------------------------------------------------------------
 
-    def _call_llm(self, prompt: str) -> str:
+    def _generate_one_type(
+        self, chunk: TextChunk, card_type: CardType
+    ) -> list[GeneratedCard]:
+        """Make one LLM call for one card type and parse the response."""
+        cfg    = _TYPE_CONFIGS[card_type]
+        prompt = self._build_prompt(card_type, chunk.text)
+        raw    = self._call_llm(
+            prompt=prompt,
+            json_mode=cfg.json_mode,
+        )
+        return self._parse(raw, chunk, card_type, cfg.parser)
+
+    def _build_prompt(self, card_type: CardType, text: str) -> str:
+        template = self._prompts[card_type]
+        if card_type == CardType.SUMMARY:
+            template = template.format(
+                min_tokens=_SUMMARY_MIN_TOKENS,
+                max_tokens=_SUMMARY_MAX_TOKENS,
+            )
+        return f"{template}\n\nTEXT:\n{text.strip()}"
+
+    def _call_llm(self, prompt: str, json_mode: bool) -> str:
         from src.core.llm import call_llm
+        system = (
+            "Respond ONLY with valid JSON — no markdown fences, no prose."
+            if json_mode else
+            "You are an expert physics educator. Follow all instructions precisely."
+        )
         raw = call_llm(
             prompt=prompt,
-            system=_SYSTEM,
+            system=system,
             settings=self._cfg,
-            json_mode=True,
+            json_mode=json_mode,
         )
         if not raw:
             raise RuntimeError("LLM returned empty response")
         return raw
 
-    def _parse_response(
-        self, raw: str, chunk: TextChunk
+    def _parse(
+        self, raw: str, chunk: TextChunk, card_type: CardType, parser: str
     ) -> list[GeneratedCard]:
-        # Strip accidental markdown fences
-        raw = re.sub(r"```(?:json)?", "", raw).strip()
-        try:
-            data = json.loads(raw)
-        except json.JSONDecodeError:
-            data = self._extract_partial(raw)
-
-        _SKIP = {"n/a", "none", "not applicable", "no formula", ""}
-
-        cards: list[GeneratedCard] = []
-        for ct in CardType:
-            block = data.get(ct.value, {})
-            if not isinstance(block, dict):
-                block = {}
-            content = str(block.get("content", "")).strip()
-
-            # Skip cards the LLM omitted or marked as not applicable
-            if content.lower() in _SKIP:
-                continue
-
-            title = str(block.get("title", f"{ct.value.capitalize()} — chunk {chunk.chunk_index}")).strip()
-            if ct == CardType.QUESTION:
-                raw_answer = str(block.get("answer", "")).strip()
-                answer = raw_answer if raw_answer and raw_answer.lower() not in _SKIP else None
-            else:
-                answer = None
-
-            cards.append(
-                GeneratedCard(
-                    card_id=str(uuid.uuid4()),
-                    chunk_id=chunk.chunk_id,
-                    document_id=chunk.document_id,
-                    tenant_id=chunk.tenant_id,
-                    card_type=ct.value,
-                    title=title,
-                    content=content,
-                    answer=answer,
-                )
-            )
-        return cards
-
-    @staticmethod
-    def _extract_partial(raw: str) -> dict:
-        """Best-effort regex extraction when JSON parse fails entirely."""
-        result: dict = {}
-        for ct in CardType:
-            pattern = rf'"{ct.value}"\s*:\s*\{{([^}}]+)\}}'
-            m = re.search(pattern, raw, re.DOTALL)
-            if m:
-                inner = m.group(1)
-                title_m   = re.search(r'"title"\s*:\s*"([^"]+)"', inner)
-                content_m = re.search(r'"content"\s*:\s*"([^"]+)"', inner)
-                entry: dict = {
-                    "title":   title_m.group(1)   if title_m   else ct.value,
-                    "content": content_m.group(1) if content_m else "",
-                }
-                if ct == CardType.QUESTION:
-                    answer_m = re.search(r'"answer"\s*:\s*"([^"]+)"', inner)
-                    entry["answer"] = answer_m.group(1) if answer_m else ""
-                    if not answer_m:
-                        logger.warning(
-                            "Could not extract 'answer' from partial JSON for question card"
-                        )
-                result[ct.value] = entry
-        return result
+        if parser == "qa_pairs":
+            return ResponseParser.parse_qa_pairs(raw, chunk)
+        if parser == "factoids":
+            return ResponseParser.parse_factoids(raw, chunk)
+        # single_object — handles nullable responses (definition, example, etc.)
+        cleaned = re.sub(r"```(?:json)?", "", raw).strip()
+        if cleaned.lower() in ("null", ""):
+            return []
+        return ResponseParser.parse_single_object(raw, chunk, card_type)
 
 
 # -- Factory -------------------------------------------------------------------
