@@ -383,8 +383,9 @@ class DocumentStore:
         source_type: str | None = None,
     ) -> list[dict]:
         """
-        Multi-lane retrieval: dense (+SPLADE) + DA → client-side RRF → MMR.
-        Returns candidates ready for cross-encoder reranking.
+        Multi-lane retrieval: dense (+SPLADE) → MMR → DA expansion for recall.
+        DA-promoted chunks are appended after dense results (recall-only lane)
+        so they never displace top dense hits. Cross-encoder reranks everything.
         source_type mirrors the search() parameter for study-mode filtering.
         """
         fetch_k = fetch_k or self._cfg.reranker_fetch_k
@@ -396,16 +397,25 @@ class DocumentStore:
             source_type=source_type,
         )
 
-        da_parents: list[dict] = []
+        # MMR on dense results first — preserves top dense ranking
+        if self._cfg.mmr_enabled and len(dense_hits) > fetch_k:
+            candidates = self._mmr_select(
+                dense_hits, top_k=fetch_k, lambda_=self._cfg.mmr_lambda
+            )
+        else:
+            candidates = dense_hits[:fetch_k]
+
+        # DA lane: append new chunks not already in candidates (recall expansion only)
         if self._cfg.da_enabled:
-            da_hits = self.search_da(query_vector, tenant_id=tenant_id, limit=fetch_k)
+            da_hits    = self.search_da(query_vector, tenant_id=tenant_id, limit=fetch_k)
             da_parents = self._resolve_da_parents(da_hits)
+            existing   = {c.get("chunk_id") for c in candidates}
+            for p in da_parents:
+                if p.get("chunk_id") not in existing:
+                    candidates.append(p)
+                    existing.add(p["chunk_id"])
 
-        merged = self._rrf_merge(dense_hits, da_parents)
-
-        if self._cfg.mmr_enabled and len(merged) > fetch_k:
-            return self._mmr_select(merged, top_k=fetch_k, lambda_=self._cfg.mmr_lambda)
-        return merged[:fetch_k]
+        return candidates
 
     def get_document_stats(self, document_id: str) -> dict:
         with Session(self._engine) as session:
