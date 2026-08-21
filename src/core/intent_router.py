@@ -158,6 +158,8 @@ class IntentRouter:
         logger.info("IntentRouter: prototypes ready")
 
     def classify(self, query_vector: np.ndarray) -> Intent:
+        from src.core import telemetry
+
         if self._cfg.use_stub_embedder:
             return Intent.MIXED
 
@@ -167,7 +169,10 @@ class IntentRouter:
         if self._clf is not None:
             label = self._clf.predict([q])[0]
             logger.debug("IntentRouter (trained): '{}'", label)
-            return Intent(label)
+            intent = Intent(label)
+            with telemetry.span("intent_route", {"intent": intent.value, "mode": "classifier"}):
+                pass
+            return intent
 
         # Mode 2: prototype similarity
         self._ensure_prototypes()
@@ -180,6 +185,12 @@ class IntentRouter:
                 best_score  = score
                 best_intent = intent
         logger.debug("IntentRouter (prototype): '{}' (score={:.3f})", best_intent, best_score)
+        with telemetry.span("intent_route", {
+            "intent": best_intent.value,
+            "score": round(best_score, 4),
+            "mode": "prototype",
+        }):
+            pass
         return best_intent
 
     def route(self, query_vector: np.ndarray) -> RouteConfig:

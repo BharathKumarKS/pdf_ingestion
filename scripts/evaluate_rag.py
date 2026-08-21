@@ -482,6 +482,44 @@ def aggregate_metrics(results: list[dict], cfg) -> dict:
 
 # ── Report rendering ──────────────────────────────────────────────────────────
 
+def build_summary_table(aggregated: dict, cfg) -> str:
+    """Return the metrics summary as a markdown table string for JSON storage."""
+    recall_k = f"recall_at_{cfg.reranker_fetch_k}"
+    prec_k   = f"precision_at_{cfg.reranker_top_k}"
+    ndcg_k   = f"ndcg_at_{cfg.reranker_top_k}"
+
+    def _fmt(v):
+        return f"{v:.3f}" if v is not None else "—"
+
+    headers = [
+        "Scope",
+        f"Recall@{cfg.reranker_fetch_k}", "MRR",
+        f"Precision@{cfg.reranker_top_k}", f"NDCG@{cfg.reranker_top_k}",
+        "Faithfulness", "Ans.Relevance", "Citation Acc.", "n / cal",
+    ]
+
+    def _row(label, m):
+        n = m.get("n_queries", 0)
+        nc = m.get("n_calibrated", 0)
+        return [
+            label,
+            _fmt(m.get(recall_k)), _fmt(m.get("mrr")),
+            _fmt(m.get(prec_k)), _fmt(m.get(ndcg_k)),
+            _fmt(m.get("faithfulness")), _fmt(m.get("answer_relevance")),
+            _fmt(m.get("citation_accuracy")), f"{n}/{nc}",
+        ]
+
+    rows = [_row("Overall", aggregated["overall"])]
+    for qt, m in aggregated["by_type"].items():
+        rows.append(_row(f"  {qt}", m))
+
+    sep = "| " + " | ".join("---" for _ in headers) + " |"
+    lines = ["| " + " | ".join(headers) + " |", sep]
+    for row in rows:
+        lines.append("| " + " | ".join(row) + " |")
+    return "\n".join(lines)
+
+
 def print_report(aggregated: dict, cfg):
     recall_k = f"recall_at_{cfg.reranker_fetch_k}"
     prec_k   = f"precision_at_{cfg.reranker_top_k}"
@@ -644,6 +682,7 @@ def main():
         "elapsed_s":      round(elapsed, 1),
         "config":         config_snapshot,
         "judge_model":    args.judge_model if args.judge_backend != "skip" else None,
+        "summary_table":  build_summary_table(aggregated, cfg),
         "aggregated":     aggregated,
         "per_query":      results,
     }

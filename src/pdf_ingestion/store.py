@@ -388,32 +388,46 @@ class DocumentStore:
         so they never displace top dense hits. Cross-encoder reranks everything.
         source_type mirrors the search() parameter for study-mode filtering.
         """
+        from src.core import telemetry
+
         fetch_k = fetch_k or self._cfg.reranker_fetch_k
         pool = self._cfg.mmr_candidates
 
-        dense_hits = self.search(
-            query_vector, tenant_id=tenant_id,
-            limit=pool, query_text=query_text,
-            source_type=source_type,
-        )
+        with telemetry.span("retrieval.vector_search", {
+            "tenant_id": tenant_id,
+            "pool_size": pool,
+            "source_type": source_type or "all",
+        }) as vs_span:
+            dense_hits = self.search(
+                query_vector, tenant_id=tenant_id,
+                limit=pool, query_text=query_text,
+                source_type=source_type,
+            )
+            telemetry.set_attr(vs_span, "hits", len(dense_hits))
 
         # MMR on dense results first — preserves top dense ranking
-        if self._cfg.mmr_enabled and len(dense_hits) > fetch_k:
-            candidates = self._mmr_select(
-                dense_hits, top_k=fetch_k, lambda_=self._cfg.mmr_lambda
-            )
-        else:
-            candidates = dense_hits[:fetch_k]
+        with telemetry.span("retrieval.mmr", {"enabled": self._cfg.mmr_enabled}):
+            if self._cfg.mmr_enabled and len(dense_hits) > fetch_k:
+                candidates = self._mmr_select(
+                    dense_hits, top_k=fetch_k, lambda_=self._cfg.mmr_lambda
+                )
+            else:
+                candidates = dense_hits[:fetch_k]
 
         # DA lane: append new chunks not already in candidates (recall expansion only)
+        da_added = 0
         if self._cfg.da_enabled:
-            da_hits    = self.search_da(query_vector, tenant_id=tenant_id, limit=fetch_k)
-            da_parents = self._resolve_da_parents(da_hits)
-            existing   = {c.get("chunk_id") for c in candidates}
-            for p in da_parents:
-                if p.get("chunk_id") not in existing:
-                    candidates.append(p)
-                    existing.add(p["chunk_id"])
+            with telemetry.span("retrieval.da_lane", {"fetch_k": fetch_k}) as da_span:
+                da_hits    = self.search_da(query_vector, tenant_id=tenant_id, limit=fetch_k)
+                da_parents = self._resolve_da_parents(da_hits)
+                existing   = {c.get("chunk_id") for c in candidates}
+                for p in da_parents:
+                    if p.get("chunk_id") not in existing:
+                        candidates.append(p)
+                        existing.add(p["chunk_id"])
+                        da_added += 1
+                telemetry.set_attr(da_span, "da_hits", len(da_hits))
+                telemetry.set_attr(da_span, "new_chunks_added", da_added)
 
         return candidates
 

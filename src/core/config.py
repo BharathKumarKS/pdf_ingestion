@@ -132,6 +132,10 @@ class Settings(BaseSettings):
 
     api_port: int = 8000
 
+    # Phoenix Arize observability (Phase E)
+    phoenix_enabled: bool = False           # set True to send traces to Phoenix
+    phoenix_endpoint: str = "http://localhost:6006"  # Phoenix server OTLP endpoint
+
     def ensure_dirs(self) -> None:
         """Create all required local directories on startup."""
         for path_str in (

@@ -31,6 +31,14 @@ st.set_page_config(
 cfg = get_settings()
 cfg.ensure_dirs()
 
+# ── Phoenix tracing (once per process) ───────────────────────────────────
+from src.core import telemetry as _telemetry
+if "phoenix_initialized" not in st.session_state:
+    active = _telemetry.init_phoenix(cfg)
+    st.session_state["phoenix_initialized"] = True
+    if active and cfg.phoenix_enabled:
+        st.session_state["phoenix_active"] = True
+
 # ── Role detection via URL param ──────────────────────────────────────────
 is_admin = st.query_params.get("admin", "false").lower() == "true"
 
@@ -139,6 +147,18 @@ with st.sidebar:
             st.warning("No textbook loaded yet.")
     except Exception as e:
         st.error(f"DB error: {e}")
+
+    # ── Telemetry status (admin only) ─────────────────────────────────────
+    if is_admin:
+        st.divider()
+        if st.session_state.get("phoenix_active"):
+            st.caption(
+                f"🔭 [Phoenix traces]({cfg.phoenix_endpoint}) — active"
+            )
+        elif cfg.phoenix_enabled:
+            st.caption("🔭 Phoenix enabled but server unreachable")
+        else:
+            st.caption("🔭 Phoenix off (`PHOENIX_ENABLED=true` to enable)")
 
 
 # ── Build tab list depending on role ──────────────────────────────────────
@@ -287,25 +307,41 @@ with tab_search:
         with st.spinner("Finding the best answers…"):
             try:
                 from src.pdf_ingestion.embedder import get_embedder
-                embedder = get_embedder(cfg)
-                q_vec    = embedder.embed_query(query)
-                s        = DocumentStore(cfg)
+                from src.core import telemetry as _tel
 
-                chunk_results = s.search_with_das(
-                    query_vector=q_vec,
-                    query_text=query,
-                    tenant_id=tenant_id,
-                    fetch_k=cfg.reranker_fetch_k if cfg.reranker_enabled else cfg.reranker_top_k,
-                    source_type=source_type_filter,
-                )
+                with _tel.span("query", {
+                    "query.text": query[:200],
+                    "tenant_id": tenant_id,
+                    "source_type": source_type_filter or "all",
+                }) as root_span:
+                    embedder = get_embedder(cfg)
+                    with _tel.span("retrieval.embed"):
+                        q_vec = embedder.embed_query(query)
 
-                if cfg.reranker_enabled and chunk_results:
-                    from src.pdf_ingestion.reranker import get_reranker
-                    chunk_results = get_reranker(cfg).rerank(
-                        query=query,
-                        chunks=chunk_results,
-                        top_k=cfg.reranker_top_k,
+                    s = DocumentStore(cfg)
+
+                    chunk_results = s.search_with_das(
+                        query_vector=q_vec,
+                        query_text=query,
+                        tenant_id=tenant_id,
+                        fetch_k=cfg.reranker_fetch_k if cfg.reranker_enabled else cfg.reranker_top_k,
+                        source_type=source_type_filter,
                     )
+
+                    if cfg.reranker_enabled and chunk_results:
+                        from src.pdf_ingestion.reranker import get_reranker
+                        with _tel.span("retrieval.rerank", {
+                            "candidates": len(chunk_results),
+                            "top_k": cfg.reranker_top_k,
+                        }) as rr_span:
+                            chunk_results = get_reranker(cfg).rerank(
+                                query=query,
+                                chunks=chunk_results,
+                                top_k=cfg.reranker_top_k,
+                            )
+                            _tel.set_attr(rr_span, "kept", len(chunk_results))
+
+                    _tel.set_attr(root_span, "chunks_retrieved", len(chunk_results))
 
                 # ── Intent router: decide which routes to activate ────────
                 if cfg.intent_router_enabled:

@@ -179,6 +179,25 @@ class TestCardStore:
             typed = store.get_cards(ingested_doc["document_id"], card_type=ct)
             assert all(c.card_type == ct for c in typed)
 
+    def test_get_cards_for_chunks(self, ingested_doc, p2_settings):
+        from src.pdf_ingestion.store import generate_phase2_artifacts, DocumentStore
+        generate_phase2_artifacts(ingested_doc["document_id"], p2_settings)
+        store = DocumentStore(p2_settings)
+        all_cards = store.get_cards(ingested_doc["document_id"])
+        chunk_ids = list({c.chunk_id for c in all_cards})[:2]
+
+        # Returns cards matching those chunk_ids
+        result = store.get_cards_for_chunks(chunk_ids)
+        assert len(result) > 0
+        assert all(c.chunk_id in chunk_ids for c in result)
+
+        # card_types filter works
+        defs = store.get_cards_for_chunks(chunk_ids, card_types=["definition"])
+        assert all(c.card_type == "definition" for c in defs)
+
+        # Empty chunk_ids returns empty list
+        assert store.get_cards_for_chunks([]) == []
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 4. RAPTOR tree
