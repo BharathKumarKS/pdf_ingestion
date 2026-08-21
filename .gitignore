@@ -56,6 +56,10 @@ Thumbs.db
 # ── Claude Code workspace ─────────────────────────────────────────────────
 .claude/
 
+# ── Aider (AI coding assistant) ───────────────────────────────────────────
+.aider*
+.aider.tags.cache.v4/
+
 # ── Streamlit ─────────────────────────────────────────────────────────────
 .streamlit/secrets.toml
 
