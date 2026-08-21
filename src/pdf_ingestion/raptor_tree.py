@@ -254,13 +254,14 @@ class RaptorBuilder:
             return "[stub summary] " + " | ".join(t[:40] for t in texts[:3])
 
         from src.core.llm import call_llm
+        from src.core.pipeline_config import get_section
         passages = "\n\n---\n\n".join(texts)
-        prompt   = (
+        raptor_cfg = get_section("raptor_summarization")
+        min_tok = raptor_cfg.get("summary_min_tokens", _RAPTOR_MIN_TOKENS)
+        max_tok = raptor_cfg.get("summary_max_tokens", _RAPTOR_MAX_TOKENS)
+        prompt = (
             _RAPTOR_PROMPT_TEMPLATE
-            .format(
-                min_tokens=_RAPTOR_MIN_TOKENS,
-                max_tokens=_RAPTOR_MAX_TOKENS,
-            )
+            .format(min_tokens=min_tok, max_tokens=max_tok)
             + f"\n\nCLUSTER CONTENT:\n{passages[:6000]}"
         )
         result = call_llm(prompt=prompt, settings=cfg)

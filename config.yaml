@@ -1,0 +1,26 @@
+# =============================================================================
+#  Synapse Learning Worlds — Pipeline Configuration
+#
+#  LLM endpoints and model settings for each pipeline stage.
+#  API keys are read from environment / .env (OPENAI_API_KEY or API_KEY).
+#  Set base_url to empty string to use OpenAI-hosted models.
+# =============================================================================
+
+card_generation:
+  model: openai/gpt-oss-20b
+  base_url: http://10.0.10.51:8000/v1
+  chunk_size: 512
+
+raptor_summarization:
+  model: openai/gpt-oss-20b
+  base_url: http://10.0.10.51:8000/v1
+  summary_min_tokens: 150
+  summary_max_tokens: 400
+
+intent_classifier:
+  model: openai/gpt-oss-20b
+  base_url: http://10.0.10.51:8000/v1
+
+evaluation:
+  judge_model: openai/gpt-oss-20b
+  judge_base_url: http://10.0.10.51:8000/v1

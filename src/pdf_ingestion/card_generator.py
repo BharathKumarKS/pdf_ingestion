@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Optional
 
 from loguru import logger
+from pydantic import BaseModel
 
 from src.core.config import Settings, get_settings
 from src.pdf_ingestion.chunker import TextChunk
@@ -81,6 +82,27 @@ class GeneratedCard:
     content:     str
     answer:      Optional[str] = None   # question cards only
     metadata:    dict = field(default_factory=dict)
+
+
+# -- Pydantic response schemas (instructor enforces these) ---------------------
+
+class _SingleCard(BaseModel):
+    title: str
+    content: str
+
+class _NullableCard(BaseModel):
+    title:   Optional[str] = None
+    content: Optional[str] = None
+
+class _QAPair(BaseModel):
+    question: str
+    answer:   str
+
+class _QAPairList(BaseModel):
+    pairs: list[_QAPair]
+
+class _FactoidList(BaseModel):
+    factoids: list[str]
 
 
 # -- Response parsers ----------------------------------------------------------
@@ -234,6 +256,8 @@ class StubLLM:
 class OllamaCardGenerator:
     """
     Generates cards for each chunk via one LLM call per card type.
+    Uses instructor + Pydantic for structured outputs when config.yaml
+    provides an endpoint; falls back to raw JSON parsing otherwise.
     Calls are parallelised across card types within each chunk, and across
     chunks using CARD_GEN_WORKERS threads.
     """
@@ -242,6 +266,19 @@ class OllamaCardGenerator:
         self._cfg     = settings or get_settings()
         self._prompts = self._load_all_prompts()
         self._parser  = ResponseParser()
+        self._instructor_client = self._init_instructor_client()
+
+    @staticmethod
+    def _init_instructor_client():
+        """Build instructor client from config.yaml if available."""
+        try:
+            from src.core.pipeline_config import build_instructor_client
+            client = build_instructor_client("card_generation")
+            logger.info("CardGenerator: using instructor client (structured outputs)")
+            return client
+        except Exception as exc:
+            logger.warning("CardGenerator: instructor unavailable ({}), using raw LLM", exc)
+            return None
 
     @staticmethod
     def _load_all_prompts() -> dict[CardType, str]:
@@ -322,11 +359,75 @@ class OllamaCardGenerator:
         """Make one LLM call for one card type and parse the response."""
         cfg    = _TYPE_CONFIGS[card_type]
         prompt = self._build_prompt(card_type, chunk.text)
-        raw    = self._call_llm(
-            prompt=prompt,
-            json_mode=cfg.json_mode,
-        )
+
+        if self._instructor_client is not None:
+            return self._generate_with_instructor(prompt, chunk, card_type, cfg.parser)
+
+        raw = self._call_llm(prompt=prompt, json_mode=cfg.json_mode)
         return self._parse(raw, chunk, card_type, cfg.parser)
+
+    def _generate_with_instructor(
+        self, prompt: str, chunk: TextChunk, card_type: CardType, parser: str
+    ) -> list[GeneratedCard]:
+        """Use instructor for guaranteed schema-valid structured output."""
+        from src.core.pipeline_config import get_model
+
+        model = get_model("card_generation")
+        messages = [{"role": "user", "content": prompt}]
+
+        try:
+            if parser == "qa_pairs":
+                result: _QAPairList = self._instructor_client.chat.completions.create(
+                    model=model, response_model=_QAPairList, messages=messages, max_retries=2,
+                )
+                return [
+                    GeneratedCard(
+                        card_id=str(uuid.uuid4()), chunk_id=chunk.chunk_id,
+                        document_id=chunk.document_id, tenant_id=chunk.tenant_id,
+                        card_type=CardType.QUESTION.value,
+                        title=p.question[:120], content=p.question, answer=p.answer,
+                    )
+                    for p in result.pairs if p.question.strip() and p.answer.strip()
+                ]
+
+            elif parser == "factoids":
+                result: _FactoidList = self._instructor_client.chat.completions.create(
+                    model=model, response_model=_FactoidList, messages=messages, max_retries=2,
+                )
+                return [
+                    GeneratedCard(
+                        card_id=str(uuid.uuid4()), chunk_id=chunk.chunk_id,
+                        document_id=chunk.document_id, tenant_id=chunk.tenant_id,
+                        card_type=CardType.FACTOID.value,
+                        title=f[:120], content=f,
+                    )
+                    for f in result.factoids if f.strip()
+                ]
+
+            else:
+                # Nullable single-card types (definition, example, misconception, formula)
+                nullable = card_type in (CardType.DEFINITION, CardType.EXAMPLE,
+                                         CardType.MISCONCEPTION, CardType.FORMULA)
+                schema = _NullableCard if nullable else _SingleCard
+                result = self._instructor_client.chat.completions.create(
+                    model=model, response_model=schema, messages=messages, max_retries=2,
+                )
+                content = (result.content or "").strip()
+                if not content:
+                    return []
+                return [GeneratedCard(
+                    card_id=str(uuid.uuid4()), chunk_id=chunk.chunk_id,
+                    document_id=chunk.document_id, tenant_id=chunk.tenant_id,
+                    card_type=card_type.value,
+                    title=(result.title or card_type.value.capitalize()).strip(),
+                    content=content,
+                )]
+
+        except Exception as exc:
+            logger.warning("Instructor failed for {} chunk {} ({}), falling back",
+                           card_type.value, chunk.chunk_index, exc)
+            raw = self._call_llm(prompt=prompt, json_mode=_TYPE_CONFIGS[card_type].json_mode)
+            return self._parse(raw, chunk, card_type, parser)
 
     def _build_prompt(self, card_type: CardType, text: str) -> str:
         template = self._prompts[card_type]
