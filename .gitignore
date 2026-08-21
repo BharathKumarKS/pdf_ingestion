@@ -66,3 +66,7 @@ Thumbs.db
 # ── Jupyter ───────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
 data/page_images/
+data/intent_classifier/
+data/eval_results/
+data/ingest_log.txt
+minio/
