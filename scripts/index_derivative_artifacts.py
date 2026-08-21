@@ -15,7 +15,6 @@ Usage:
 from __future__ import annotations
 
 import sys
-import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -145,7 +144,7 @@ def main() -> None:
                     card.card_type, card.title, card.content, card.answer
                 )
                 points.append(PointStruct(
-                    id=str(uuid.uuid4()),
+                    id=card.id,
                     vector=vec,
                     payload={
                         "card_id":            card.id,
