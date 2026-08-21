@@ -3,7 +3,7 @@
 An adaptive learning platform powered by Hybrid RAG (Retrieval-Augmented Generation).  
 Pre-ingest a base textbook globally, let students upload their own PDFs, and answer questions from either source — or both.
 
-> **Architecture:** Synapse Learning Worlds v3.1 · Author: Bharath Kumar
+> **Architecture:** Synapse Learning Worlds v4.0 · Author: Bharath Kumar
 
 ---
 
@@ -16,17 +16,21 @@ PDF → Docling → Chonkie               Student uploads PDF
     → Jina v3 (late chunking)             → same pipeline (Phase 1)
     → Qdrant (tenant_id=global)           → ColPali + graph async in background
 
-Phase 2 artifacts (Llama 3.2):        Query flow:
-  • 7 pedagogical cards/chunk            1. Jina v3 → Qdrant vector search
-  • RAPTOR L1/L2/L3 summaries           2. RAPTOR cluster summaries
-  • Stored: SQLite + Qdrant             3. Memgraph concept graph (GraphRAG)
-                                         4. ColPali visual search (image query)
-Phase 3 artifacts:
-  • ColPali patch vectors / page       Retrieval routes by query type:
-  • Concept graph in Memgraph            vector  → factual / point queries
-  • Page images on local disk            raptor  → summaries / chapter overviews
-  • Stored: SQLite + Qdrant             graphrag → multi-hop / prerequisite chains
-            + Memgraph + disk            colpali → diagram / figure / table queries
+Phase 2 artifacts (LLM via config.yaml):   Query flow (Phase 4):
+  • 8 pedagogical cards/chunk              1. Jina v3 → Qdrant vector search
+      summary, definition, example,        2. MMR diversity reranking on dense
+      misconception, question, objective,  3. DA recall lane (definition /
+      formula, factoid (COSTAR prompts)       formula / question / factoid cards)
+  • RAPTOR L1/L2/L3 summaries             4. RAPTOR cluster summaries (overview)
+  • Stored: SQLite + Qdrant               5. Memgraph concept graph (multi-hop)
+                                           6. SPLADE sparse hybrid + RRF (GPU)
+Phase 3 artifacts:                         7. Cross-encoder re-ranker (next)
+  • ColPali patch vectors / page
+  • Concept graph in Memgraph          Retrieval routes by query type:
+  • Page images on local disk            vector  → factual / point queries
+  • Stored: SQLite + Qdrant             raptor  → summaries / chapter overviews
+            + Memgraph + disk            graphrag → multi-hop / prerequisite chains
+                                         colpali → diagram / figure / table queries
 ```
 
 ---
@@ -38,12 +42,15 @@ Phase 3 artifacts:
 | PDF parsing | Docling (IBM) |
 | Chunking | Chonkie `SentenceChunker` |
 | Text embeddings | Jina v3 `jinaai/jina-embeddings-v3` (late chunking) |
+| Sparse embeddings | SPLADE (GPU) — dense+sparse hybrid via Qdrant RRF |
 | Visual embeddings | ColPali `vidore/colpali-v1.2` (multi-vector patch embeddings) |
-| Vector store | Qdrant — text collection + visual collection (MaxSim) |
+| Vector store | Qdrant — `knowledge_base` + `derivative_artifacts` + `visual_knowledge_base` |
 | Relational store | SQLite via SQLModel |
 | Graph store | Memgraph (OpenCypher via neo4j Bolt driver) |
 | Image store | Local disk (swappable to MinIO via `IMAGE_STORE_BACKEND=minio`) |
-| LLM (cards + RAPTOR + concepts) | Llama 3.2 via Ollama |
+| LLM (cards + RAPTOR + synthesis) | Any OpenAI-compatible endpoint via `config.yaml` |
+| Structured outputs | instructor + Pydantic schemas (guaranteed JSON conformance) |
+| Intent routing | Embedding similarity against prototype queries |
 | API | FastAPI |
 | Frontend | Streamlit |
 | Package manager | uv |
@@ -56,8 +63,7 @@ Phase 3 artifacts:
 |---|---|---|
 | Python | 3.11 | Pinned via `.python-version` |
 | [uv](https://docs.astral.sh/uv/) | latest | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| [Ollama](https://ollama.com) | latest | Required for Phase 2 + Phase 3 concept extraction |
-| Llama 3.2 model | — | `ollama pull llama3.2` |
+| LLM endpoint | any | Configured in `config.yaml` — Ollama, vLLM, or OpenAI-compatible |
 | Docker (optional) | latest | Required for Memgraph + MinIO (Phase 3 graph search) |
 
 ---
@@ -86,16 +92,25 @@ Key settings in `.env`:
 ```env
 EMBEDDING_MODEL=jinaai/jina-embeddings-v3   # downloads ~570 MB on first run
 QDRANT_LOCAL_PATH=./data/qdrant             # local file-based persistence
-OLLAMA_HOST=http://localhost:11434           # Ollama must be running for Phase 2+3
-OLLAMA_MODEL=llama3.2
 ```
 
-### 3. Start Ollama (required for Phase 2 + Phase 3)
+### 3. Configure LLM endpoints
 
-```bash
-ollama serve          # start the Ollama server
-ollama pull llama3.2  # download the model (~2 GB, one-time)
+Edit `config.yaml` at the project root:
+
+```yaml
+card_generation:
+  model: openai/gpt-oss-20b
+  base_url: http://your-server:8000/v1   # any OpenAI-compatible endpoint
+
+raptor_summarization:
+  model: openai/gpt-oss-20b
+  base_url: http://your-server:8000/v1
+  summary_min_tokens: 150
+  summary_max_tokens: 400
 ```
+
+API key precedence: `api_key` in config.yaml → `OPENAI_API_KEY` env var → `API_KEY` env var → `"dummy"` (for endpoints that don't require auth).
 
 ### 4. (Optional) Start Memgraph for GraphRAG
 
@@ -119,8 +134,6 @@ uv run python scripts/ingest_base_textbook.py \
   --grade "Undergraduate"
 ```
 
-This parses the PDF with Docling, chunks it with Chonkie, embeds with Jina v3, and stores everything in Qdrant and SQLite.
-
 > **First run** downloads the Jina v3 model (~570 MB) automatically.
 
 ### 6. Generate Phase 2 artifacts (cards + RAPTOR)
@@ -129,44 +142,36 @@ This parses the PDF with Docling, chunks it with Chonkie, embeds with Jina v3, a
 uv run python scripts/run_phase2.py --tenant global
 ```
 
-Generates: **7 pedagogical cards per chunk** (summary, definition, example, misconception, question, objective, formula) + **RAPTOR hierarchical summaries** (up to 3 levels).
+Generates **8 pedagogical cards per chunk** (summary, definition, example, misconception, question, objective, formula, factoid) using COSTAR-format prompts via the configured LLM endpoint, plus **RAPTOR hierarchical summaries** (up to 3 levels).
 
-### 7. Generate Phase 3 artifacts (ColPali + Memgraph)
+### 7. Index derivative artifacts (DA retrieval lane)
 
 ```bash
-# Process all documents for a tenant (PDF path auto-detected from ingest record)
+uv run python scripts/index_derivative_artifacts.py --tenant global
+```
+
+Embeds definition, formula, question, and factoid cards into the `derivative_artifacts` Qdrant collection. Used by Phase 4 retrieval to expand recall beyond the main chunk search.
+
+### 8. Generate Phase 3 artifacts (ColPali + Memgraph)
+
+```bash
+# Process all documents for a tenant
 uv run python scripts/run_phase3.py --tenant global
 
-# Or target one specific document by its ID
+# Target one specific document
 uv run python scripts/run_phase3.py --doc-id <uuid>
 
-# Override the PDF path explicitly (useful if the file was moved)
-uv run python scripts/run_phase3.py --tenant global \
-  --pdf data/base_textbooks/your_textbook.pdf
-
-# Re-run from scratch even if already processed (e.g. after clearing Memgraph)
+# Re-run from scratch
 uv run python scripts/run_phase3.py --tenant global --force
 ```
 
 **What gets generated:**
-- **ColPali patch vectors** — every PDF page rasterized and embedded as a matrix of patch vectors, stored in the `visual_knowledge_base` Qdrant collection. Enables image-level semantic search.
+- **ColPali patch vectors** — every PDF page rasterized and embedded as a matrix of patch vectors, stored in `visual_knowledge_base`. Enables image-level semantic search.
 - **Concept graph in Memgraph** — Document → Chunk → Concept nodes with MENTIONS / RELATES_TO / PREREQUISITE_OF edges. Enables multi-hop GraphRAG retrieval.
 
-**Smart resume** — if you re-run after a partial failure, Phase 3 automatically skips what's already done:
-- ColPali is skipped if `PageImage` records already exist for the document in SQLite.
-- Memgraph is skipped if the `Document` node already exists in the graph.
-- Use `--force` to re-process everything from scratch.
+**Smart resume** — re-running after a partial failure skips what's already done. Use `--force` to re-process from scratch.
 
-**Tuning for local machines (low RAM):**
-```env
-# In .env — reduce pages loaded into memory at once
-COLPALI_PAGE_BATCH_SIZE=2   # default is 4; drop to 2 if you hit OOM
-```
-
-> ColPali model (`vidore/colpali-v1.2`) downloads ~5 GB on first run and is cached to `MODEL_CACHE_DIR`.
-> Memgraph must be running before Phase 3 starts. Skip Memgraph with `USE_STUB_GRAPH=true` if Docker is unavailable.
-
-### 8. Launch the app
+### 9. Launch the app
 
 ```bash
 uv run streamlit run src/frontend/streamlit_app.py
@@ -180,16 +185,16 @@ Open **http://localhost:8501**
 
 Running the 990-page Feynman textbook on CPU takes 30+ hours.
 On the Support Vectors GPU VM with the remote Qdrant cluster, the same job
-completes in **2-3 hours**.
+completes in **2–3 hours**.
 
 ### Step 1 — Copy and edit `.env`
 
 ```bash
 cp .env.example .env
-nano .env   # or use any editor
+nano .env
 ```
 
-Fill in these values from your Support Vectors dashboard (leave all others as-is):
+Fill in these values from your Support Vectors dashboard:
 
 | Key | Where to get it | Example |
 |---|---|---|
@@ -197,78 +202,54 @@ Fill in these values from your Support Vectors dashboard (leave all others as-is
 | `QDRANT_API_KEY` | Support Vectors Qdrant dashboard → API Keys | `sv-xxxxxxxxxxxx` |
 | `USE_GPU` | Set to `true` on the GPU VM | `true` |
 | `EMBEDDING_BATCH_SIZE` | Increase for GPU | `32` |
-| `CARD_GEN_WORKERS` | Parallel Ollama threads for card generation | `8` |
-| `CONCEPT_GEN_WORKERS` | Parallel Ollama threads for concept extraction (Phase 3) | `8` |
+| `CARD_GEN_WORKERS` | Parallel LLM threads for card generation | `8` |
+| `SPLADE_ENABLED` | Enable sparse hybrid search (requires re-ingest) | `true` |
 
-Your `.env` on the GPU VM should look like:
+### Step 2 — Configure `config.yaml`
 
-```env
-# Remote Qdrant cluster (Support Vectors)
-QDRANT_URL=https://your-cluster-url.cloud.qdrant.io
-QDRANT_API_KEY=your-api-key-from-dashboard
+Point the LLM endpoints at your cluster-hosted models:
 
-# GPU acceleration
-USE_GPU=true
-EMBEDDING_BATCH_SIZE=32
+```yaml
+card_generation:
+  model: openai/gpt-oss-20b
+  base_url: http://10.0.10.51:8000/v1
 
-# Parallel Ollama workers (card generation + concept extraction)
-CARD_GEN_WORKERS=8
-CONCEPT_GEN_WORKERS=8
-OLLAMA_TIMEOUT=60
+raptor_summarization:
+  model: openai/gpt-oss-20b
+  base_url: http://10.0.10.51:8000/v1
 ```
 
-### Step 2 — Install Ollama and pull the model
+### Step 3 — Ingest and generate artifacts
 
 ```bash
-curl -fsSL https://ollama.com/install.sh | sh
-ollama serve &
-ollama pull llama3.2
-```
-
-### Step 3 — Ingest the base textbook
-
-```bash
+# Phase 1: ingest
 uv run python scripts/ingest_base_textbook.py \
   --pdf data/base_textbooks/feynman_physics_vol1.pdf \
   --title "The Feynman Lectures on Physics Vol. 1" \
-  --subject "Physics" \
-  --grade "Undergraduate"
-```
+  --subject "Physics" --grade "Undergraduate"
 
-### Step 4 — Generate cards + RAPTOR tree
-
-```bash
+# Phase 2: cards + RAPTOR
 uv run python scripts/run_phase2.py --tenant global
-```
 
-### Step 5 — Generate ColPali + concept graph
+# Phase 2b: index DA cards into Qdrant
+uv run python scripts/index_derivative_artifacts.py --tenant global
 
-```bash
-# PDF path is auto-detected from the ingest record — no --pdf needed
+# Phase 3: ColPali + concept graph
 uv run python scripts/run_phase3.py --tenant global
-
-# If Phase 3 was interrupted, re-running resumes automatically (skips what's done)
-# Use --force to start over completely
-uv run python scripts/run_phase3.py --tenant global --force
-```
-
-### Step 6 — Launch the app
-
-```bash
-uv run streamlit run src/frontend/streamlit_app.py
 ```
 
 ### Speed breakdown (990 pages, 5,047 chunks)
 
 | Stage | CPU laptop | GPU VM (estimated) |
 |---|---|---|
-| Docling parsing | ~2 hours | ~20 min (GPU layout model) |
-| Jina v3 embedding | ~2 hours | ~15 min (batch_size=32, CUDA) |
-| Card generation (sequential) | ~25 hours | ~3 hours (8 parallel workers) |
+| Docling parsing | ~2 hours | ~20 min |
+| Jina v3 embedding | ~2 hours | ~15 min |
+| Card generation (8 types) | ~30 hours | ~3 hours (8 parallel workers) |
 | RAPTOR tree | ~5 min | ~2 min |
-| ColPali embedding (5k pages) | ~8 hours | ~45 min (GPU) |
-| Concept graph (Memgraph) | ~2 hours | ~30 min (parallel Ollama) |
-| **Total** | **~40 hours** | **~5 hours** |
+| DA indexing | ~30 min | ~5 min |
+| ColPali embedding (5k pages) | ~8 hours | ~45 min |
+| Concept graph (Memgraph) | ~2 hours | ~30 min |
+| **Total** | **~45 hours** | **~5 hours** |
 
 ---
 
@@ -279,14 +260,13 @@ uv run streamlit run src/frontend/streamlit_app.py
 | Tab | What it does |
 |---|---|
 | 📄 Upload PDF | Upload lecture notes / supplementary reading |
-| 🔍 Ask a Question | Semantic search + GraphRAG concept results |
-| 🃏 Study Cards | Flashcards by type (summary, definition, Q&A, etc.) |
-| 🖼️ Visual Search | Upload an image to find matching pages (ColPali) |
-| 🕸️ Concept Graph | Ask a multi-hop reasoning question (Memgraph GraphRAG) |
+| 🔍 Ask a Question | Synthesized answer + Key Facts panel + source citations |
+| 🃏 Study Cards | Flashcards by type (summary, definition, Q&A, formula, factoid, etc.) |
 
 - Source toggle: **Textbook + My Notes** (default) / **My Notes only**
-- No system internals exposed (no scores, IDs, or metadata)
-- After uploading a PDF, visual embeddings + concept graph are built in the background automatically
+- Clean interface: no system internals (no scores, IDs, routing details, or metadata)
+- Key Facts panel surfaces relevant definition and factoid cards from matched chunks
+- After uploading a PDF, visual embeddings + concept graph are built in the background
 
 ### Admin / Teacher view (http://localhost:8501?admin=true)
 
@@ -295,43 +275,70 @@ All student tabs **plus**:
 | Tab | What it does |
 |---|---|
 | 🌲 RAPTOR Tree | Hierarchical cluster summaries with full metadata |
+| 🖼️ Visual Search | Upload an image to find matching pages (ColPali) |
+| 🕸️ Concept Graph | Ask a multi-hop reasoning question (Memgraph GraphRAG) |
 | 📊 Admin Status | Chunk / card / RAPTOR / visual page counts + ColPali status per document |
 
-- Full similarity scores, source types, tenant IDs, concept paths visible
+- Full similarity scores, source types, intent routing details, concept paths visible
 - "Generate Phase 2 artifacts" button in sidebar
 - Upload as base textbook or user upload
 
 ---
 
-## Retrieval Routes
+## Retrieval Routes (Phase 4)
 
-The platform routes queries across four retrieval mechanisms:
+Queries are classified by the intent router and routed across retrieval mechanisms:
 
 | Query type | Best route | Example |
 |---|---|---|
-| Specific fact / formula | **Vector search** | "What is the formula for kinetic energy?" |
+| Specific fact / formula | **Vector search + DA lane** | "What is the formula for kinetic energy?" |
 | Chapter overview / synthesis | **RAPTOR** | "Summarize conservation laws across the textbook" |
 | Multi-hop / prerequisite | **GraphRAG** | "Why does a satellite stay in orbit?" |
 | Diagram / figure / table | **ColPali visual** | "Show me the double-slit experiment diagram" |
 
-See `data/eval_queries.json` for 22 curated evaluation queries across all four routes.
+**DA (Derivative Artifact) retrieval lane** — definition, formula, question, and factoid cards are independently embedded and searched. DA hits that aren't already in the dense result set are appended to expand recall without hurting precision (DA acts as a recall-only expansion lane, not interleaved via RRF).
+
+**MMR (Maximal Marginal Relevance)** — applied to dense results first (λ=0.7) to diversify retrieved chunks before DA expansion.
+
+See `data/eval_queries.json` for curated evaluation queries across all four routes.
+
+---
+
+## Evaluation
+
+```bash
+# Run RAG evaluation against calibrated query set
+uv run python scripts/evaluate_rag.py
+
+# Calibrate page annotations after manual review
+uv run python scripts/calibrate_eval_pages.py
+```
+
+Results are saved to `data/eval_results/`. Current metrics on Feynman corpus (Phase 4):
+
+| Metric | Baseline | Phase A v2 |
+|---|---|---|
+| Recall@20 | 0.315 | 0.384 |
+| MRR | 0.598 | 0.684 |
+| Precision@6 | 0.360 | 0.404 |
+| NDCG@6 | 0.429 | 0.505 |
 
 ---
 
 ## Run Tests
 
 ```bash
-# Unit + integration tests (fast, stubs only — no model download, no Ollama needed)
-uv run pytest tests/test_phase1.py tests/test_phase2.py tests/test_phase3.py -v -m "not slow"
+# Unit + integration tests (fast, stubs only — no model download, no LLM needed)
+uv run pytest tests/ -q -m "not slow"
+
+# All phase-specific tests
+uv run pytest tests/test_phase1.py tests/test_phase2.py tests/test_phase3.py tests/test_phase_a.py -v -m "not slow"
 
 # Real Jina v3 integration test (downloads model on first run)
 uv run pytest tests/test_integration_real.py -v -s
-
-# Real Ollama card generation test (requires Ollama running)
-uv run pytest tests/test_phase2.py::TestOllamaCardGeneration -v -s -m "slow"
 ```
 
-All 81 tests pass (including 11 real Jina v3 integration tests).
+**125 tests pass** (stubs only — no model downloads, no Ollama, no Qdrant server needed).
 
 ---
 
@@ -339,160 +346,113 @@ All 81 tests pass (including 11 real Jina v3 integration tests).
 
 ```
 pdf_ingestion/
-├── pyproject.toml                  # uv project — all deps + metadata
-├── uv.lock                         # deterministic lockfile
-├── .env.example                    # environment variable template
-├── docker-compose.yml              # Memgraph + MinIO (Phase 3)
+├── pyproject.toml                      # uv project — all deps + metadata
+├── uv.lock                             # deterministic lockfile
+├── config.yaml                         # LLM endpoint config per pipeline stage
+├── .env.example                        # environment variable template
+├── docker-compose.yml                  # Memgraph + MinIO (Phase 3)
 ├── data/
-│   └── eval_queries.json           # 22 evaluation queries (vector/raptor/graphrag/colpali)
+│   ├── eval_queries.json               # curated evaluation queries (vector/raptor/graph/colpali)
+│   └── eval_results/                   # evaluation output JSONs (gitignored)
 │
 ├── src/
 │   ├── core/
-│   │   ├── config.py               # Pydantic settings (all env vars)
-│   │   └── database.py             # SQLModel tables + Qdrant + Memgraph bootstrap
+│   │   ├── config.py                   # Pydantic settings (all env vars)
+│   │   ├── database.py                 # SQLModel tables + Qdrant + Memgraph bootstrap
+│   │   ├── intent_router.py            # query intent classification (Phase 4)
+│   │   ├── llm.py                      # shared LLM caller (OpenAI-compatible)
+│   │   └── pipeline_config.py          # config.yaml loader + instructor client factory
 │   │
 │   ├── pdf_ingestion/
-│   │   ├── parser.py               # Docling PDF parser (+ page rasterization)
-│   │   ├── chunker.py              # Chonkie semantic chunker
-│   │   ├── embedder.py             # Jina v3 late-chunking embedder
-│   │   ├── store.py                # Qdrant + SQLite storage facade (Phase 1-3)
-│   │   ├── card_generator.py       # Llama 3.2 → 7 card types (Phase 2)
-│   │   ├── raptor_tree.py          # GMM clustering + RAPTOR summaries (Phase 2)
-│   │   ├── colpali_embedder.py     # ColPali multi-vector page embeddings (Phase 3)
-│   │   ├── graph_builder.py        # Memgraph concept graph builder (Phase 3)
-│   │   └── image_store.py          # Page image storage abstraction (Phase 3)
+│   │   ├── parser.py                   # Docling PDF parser (+ page rasterization)
+│   │   ├── chunker.py                  # Chonkie semantic chunker
+│   │   ├── embedder.py                 # Jina v3 late-chunking embedder
+│   │   ├── splade_embedder.py          # SPLADE sparse embedder (GPU, Phase 4)
+│   │   ├── store.py                    # Qdrant + SQLite storage facade (Phase 1–4)
+│   │   ├── card_generator.py           # 8 card types, COSTAR prompts, instructor (Phase 2)
+│   │   ├── raptor_tree.py              # GMM clustering + RAPTOR summaries (Phase 2)
+│   │   ├── colpali_embedder.py         # ColPali multi-vector page embeddings (Phase 3)
+│   │   ├── graph_builder.py            # Memgraph concept graph builder (Phase 3)
+│   │   ├── image_store.py              # Page image storage abstraction (Phase 3)
+│   │   └── prompts/                    # COSTAR-format prompt files (9 .md files)
 │   │
-│   ├── frontend/
-│   │   └── streamlit_app.py        # Student + Admin UI (5 student / 7 admin tabs)
-│   │
-│   ├── inference/                  # Phase 4 (intent router, SPLADE, re-ranker)
-│   ├── governance/                 # Phase 5 (DeBERTa guardrails)
-│   └── telemetry/                  # Phase 6 (Arize Phoenix)
+│   └── frontend/
+│       └── streamlit_app.py            # Student (3 tabs) + Admin (7 tabs) UI
 │
 ├── scripts/
-│   ├── ingest_base_textbook.py     # Admin: ingest global knowledge base
-│   ├── run_phase2.py               # Admin: generate cards + RAPTOR
-│   ├── run_phase3.py               # Admin: generate ColPali + concept graph
-│   └── create_test_pdf.py          # Dev: create sample physics PDF
+│   ├── ingest_base_textbook.py         # Admin: ingest global knowledge base
+│   ├── run_phase2.py                   # Admin: generate cards + RAPTOR
+│   ├── index_derivative_artifacts.py   # Admin: index DA cards into Qdrant
+│   ├── run_phase3.py                   # Admin: generate ColPali + concept graph
+│   ├── evaluate_rag.py                 # Evaluation: MRR / Recall / NDCG
+│   ├── calibrate_eval_pages.py         # Evaluation: calibrate page annotations
+│   ├── train_intent_classifier.py      # Training: intent router training pipeline
+│   └── create_test_pdf.py              # Dev: create sample physics PDF
 │
 └── tests/
-    ├── conftest.py                 # Shared fixtures (stubs, in-memory Qdrant)
-    ├── test_phase1.py              # 20 unit tests — ingestion pipeline
-    ├── test_phase2.py              # 27 unit tests — cards + RAPTOR
-    ├── test_phase3.py              # 23 unit tests — ColPali, image store, graph, orchestration
-    └── test_integration_real.py    # Real Jina v3 integration tests
+    ├── conftest.py                     # Shared fixtures (stubs, in-memory Qdrant)
+    ├── test_phase1.py                  # Phase 1: ingestion pipeline
+    ├── test_phase2.py                  # Phase 2: cards + RAPTOR
+    ├── test_phase3.py                  # Phase 3: ColPali, image store, graph
+    ├── test_phase_a.py                 # Phase A: DA retrieval, MMR, RRF
+    └── test_integration_real.py        # Real Jina v3 integration tests
 ```
 
 ---
 
 ## Architecture Decisions
 
-Key design choices and the reasoning behind them.
-
 ### Why Qdrant for concept embeddings (not Memgraph)?
 
-Memgraph is a graph database optimised for traversal (Cypher queries, edge hops). It is not optimised for vector similarity search — storing 1024-dim embeddings as node properties and fetching them over Bolt adds ~500ms per query.
-
-Qdrant is purpose-built for ANN (Approximate Nearest Neighbour) search using HNSW indexes. A concept lookup in Qdrant takes ~5ms regardless of how many concepts exist.
+Memgraph is a graph database optimised for traversal (Cypher queries, edge hops). It is not optimised for vector similarity search. Qdrant is purpose-built for ANN search using HNSW indexes (~5ms per lookup vs ~500ms over Bolt).
 
 **Pattern used:** Qdrant finds concept names by embedding similarity → Memgraph traverses the concept graph from those names. Each system does what it is best at.
 
-### Why embedding-based concept search (not LLM at query time)?
+### Why a separate `derivative_artifacts` collection for DA retrieval?
 
-The original approach called the LLM to extract concept names from every user query — adding 2–10s latency per search. Production GraphRAG systems (Neo4j, LlamaIndex, Memgraph's own recommended patterns) instead:
+Definition, formula, question, and factoid cards are denser and more targeted than source chunks. Searching them separately — and appending non-duplicate hits to the dense result set — expands recall for specific fact queries without disrupting the ranking of the top dense results. Interleaving via RRF was tested and degraded MRR by ~0.078; the recall-only append pattern recovered this without sacrificing MRR.
 
-1. Embed concept names once at build time
-2. At query time, use the already-computed query embedding (same one used for vector search) to find matching concepts via cosine similarity
+### Why MMR before DA expansion?
 
-No extra LLM call, no extra embedding call. Zero overhead on top of what the vector search already does.
-
-### Why two storage systems for graph retrieval?
-
-```
-Qdrant concept_embeddings  →  find WHICH concepts match the query (~5ms)
-Memgraph                   →  find WHICH chunks those concepts link to (~10ms)
-                              + walk RELATES_TO / PREREQUISITE_OF edges
-```
-
-Splitting the concerns keeps both fast. A unified graph DB that also does fast ANN would need Memgraph's vector index feature (available but slower than Qdrant HNSW) or Neo4j's vector search (same tradeoff).
+Maximal Marginal Relevance (λ=0.7) diversifies the dense candidate pool first so that the final top-K chunks cover different aspects of the query. DA expansion then fills remaining slots with additional relevant chunks that the dense search missed. Applying MMR after DA expansion would dilute the benefit of the dense ranking.
 
 ### Why RAPTOR? And when not to use it?
 
-RAPTOR builds hierarchical cluster summaries at Phase 2 (once). At query time it is just a vector search — no summarisation happens live. It handles overview/synthesis queries that span many chunks ("summarise conservation laws") where a single chunk search would miss the big picture.
-
-RAPTOR is NOT triggered for every query. The Phase 4 intent router will classify queries and only invoke RAPTOR for overview-type questions. For factual point queries ("what is F=ma?") RAPTOR adds latency with no benefit.
+RAPTOR builds hierarchical cluster summaries at Phase 2 (once). At query time it is just a vector search — no summarisation happens live. It handles overview/synthesis queries that span many chunks. The intent router classifies queries and only invokes RAPTOR for overview-type questions.
 
 ### Why Memgraph over Neo4j?
 
-Both use the same Bolt protocol and OpenCypher query language — the code is identical. Memgraph is in-memory first (faster for graph traversal), open-source, and free. Neo4j Community Edition has graph size limits. The `neo4j` Python driver works with both.
+Both use the same Bolt protocol and OpenCypher query language — the code is identical. Memgraph is in-memory first (faster for graph traversal), open-source, and free.
 
 ### Why ColPali multi-vector (not CLIP)?
 
-CLIP produces a single embedding per image. ColPali produces a matrix of patch embeddings (one per image patch, ~1000 patches per page) and uses MaxSim late-interaction scoring — the same approach as ColBERT for text. This preserves spatial layout and local visual detail, making it significantly better at matching diagram/figure queries to specific page regions.
-
-### Why local Qdrant file store as default?
-
-Zero-dependency local development — no Docker needed for Phase 1 and 2. Three modes are supported in priority order: `QDRANT_URL` (cloud or self-hosted URL) → `QDRANT_HOST:PORT` (self-hosted server) → local file. The GPU VM uses `QDRANT_HOST` + `QDRANT_PORT` pointing to a self-hosted server so ingestion scripts and the app can run concurrently (local file mode allows only one process at a time).
-
-### Why payload-based multi-tenancy (not separate collections)?
-
-Separate Qdrant collections per tenant would require creating collections dynamically and make cross-tenant baseline search (global textbook + user notes) require two separate queries. Payload filtering (`tenant_id`, `is_global_baseline`) keeps everything in one collection and allows flexible per-query filtering with a single search call. The tradeoff is slightly slower searches at very high tenant counts (10,000+) — acceptable for an educational platform.
-
-### Why parallel concept extraction (ThreadPoolExecutor)?
-
-LLM calls are IO-bound (waiting on HTTP response). The Python GIL does not block IO-bound threads, so `CONCEPT_GEN_WORKERS` threads provide real concurrency. Separating Phase A (parallel LLM extraction) from Phase B (sequential Cypher writes) avoids Memgraph session conflicts while maximising LLM throughput. Same pattern as `CARD_GEN_WORKERS` in Phase 2.
-
-### Why store `source_path` on Document?
-
-Phase 3 needs to rasterize the original PDF to extract page images for ColPali. If the PDF was moved or the configured base directories changed, the original filename alone is not enough to locate it. Storing the absolute path at ingest time makes Phase 3 reliable regardless of where scripts are run from.
-
-### SPLADE per-environment guidance
-
-SPLADE requires re-ingestion when first enabled because it changes the Qdrant collection schema from unnamed to named vectors (`dense` + `sparse`). This is a one-time cost.
-
-**GPU VM** — enable SPLADE (default):
-```env
-SPLADE_ENABLED=true
-```
-Re-ingest after pulling. SPLADE encodes ~5000 Feynman chunks in minutes on GPU.
-
-**Laptop with existing Feynman data** — disable SPLADE to avoid a slow re-ingest:
-```env
-SPLADE_ENABLED=false
-```
-No data wipe needed. Dense-only search continues to work. The intent router, GraphRAG, and re-ranker all work regardless of this setting.
-
-**Laptop with a small PDF (< 200 chunks)** — SPLADE is fine on CPU:
-```env
-SPLADE_ENABLED=true
-```
-Re-ingest takes seconds. Query-time SPLADE encoding adds ~50-100ms on the first warm-up query, then stays fast.
-
-| Environment | SPLADE_ENABLED | Re-ingest needed? | Ingest speed |
-|---|---|---|---|
-| GPU VM | `true` | Yes (once) | Fast (~minutes) |
-| Laptop, existing large corpus | `false` | No | N/A |
-| Laptop, small PDF | `true` | Yes (once) | Fast (~seconds) |
+CLIP produces a single embedding per image. ColPali produces a matrix of patch embeddings (~1000 patches per page) and uses MaxSim late-interaction scoring. This preserves spatial layout and local visual detail, making it significantly better at matching diagram/figure queries to specific page regions.
 
 ### Why embedding-based intent routing (not LLM or keyword-based)?
 
-Three options were considered:
-
-- **Keyword-based** ("if query contains 'show me' → visual"): brittle, misses paraphrasing
-- **LLM classification**: accurate but adds 2-10s latency per query — defeats the purpose
-- **Embedding similarity against prototypes**: uses the query vector already computed for vector search — zero extra model calls, zero extra latency
-
-The prototype approach scores the query embedding against pre-embedded representative queries per intent. Below a confidence threshold (0.30), it falls back to `mixed` (all routes active) rather than guessing.
+LLM classification adds 2–10s latency per query. Keyword-based routing is brittle. Embedding similarity against pre-embedded prototype queries uses the query vector already computed for dense search — zero extra model calls, zero extra latency.
 
 ### Why SPLADE over BM25 for sparse search?
 
-BM25 matches exact terms only — "velocity" does not match "speed". SPLADE learns to activate related vocabulary tokens during training, so queries and documents are expanded with semantically related terms. This captures synonym matches that dense embeddings sometimes miss (especially for precise technical terminology in physics).
+BM25 matches exact terms only — "velocity" does not match "speed". SPLADE learns to activate related vocabulary tokens, capturing synonym matches that dense embeddings sometimes miss (especially for precise technical terminology).
 
-Both use sparse vectors in Qdrant — the infrastructure is identical. SPLADE is a strict improvement: same index format, better recall.
+### SPLADE per-environment guidance
 
-### Why RRF (Reciprocal Rank Fusion) over weighted sum for hybrid search?
+SPLADE requires re-ingestion when first enabled (changes Qdrant collection schema to named vectors `dense` + `sparse`).
 
-Weighted sum requires tuning weights (e.g. 0.7 dense + 0.3 sparse) per domain and query type. RRF is parameter-free: it ranks by `1 / (k + rank)` across both lists, where `k=60` is standard. It consistently outperforms weighted sum on BEIR benchmarks without any tuning, and Qdrant computes it natively in one query round-trip.
+| Environment | `SPLADE_ENABLED` | Re-ingest needed? |
+|---|---|---|
+| GPU VM | `true` | Yes (once, fast on GPU) |
+| Laptop, existing large corpus | `false` | No — dense search continues |
+| Laptop, small PDF | `true` | Yes (seconds on CPU) |
+
+### Why `config.yaml` for LLM endpoints?
+
+Per-stage model configuration — card generation, RAPTOR summarisation, intent classification, evaluation — with different models and base URLs per stage. The instructor library wraps the OpenAI client to guarantee Pydantic-schema-conforming JSON outputs, eliminating fragile regex-based parsing.
+
+### Why payload-based multi-tenancy (not separate collections)?
+
+Payload filtering (`tenant_id`, `is_global_baseline`) keeps everything in one collection and allows cross-tenant baseline search with a single Qdrant call. The tradeoff is slightly slower searches at very high tenant counts (10,000+) — acceptable for an educational platform.
 
 ---
 
@@ -501,17 +461,19 @@ Weighted sum requires tuning weights (e.g. 0.7 dense + 0.3 sparse) per domain an
 | Phase | Status | Description |
 |---|---|---|
 | Phase 1 | ✅ Complete | Docling + Chonkie + Jina v3 + Qdrant + Streamlit |
-| Phase 2 | ✅ Complete | Llama 3.2 card generation + RAPTOR tree (up to 3 levels) |
+| Phase 2 | ✅ Complete | 8-type card generation (COSTAR + instructor) + RAPTOR tree |
 | Phase 3 | ✅ Complete | ColPali visual embeddings + Memgraph GraphRAG concept graph |
-| Phase 4 | 🚧 In Progress | Intent router ✅ + SPLADE hybrid search ✅ + cross-encoder re-ranker (next) |
+| Phase 4A | ✅ Complete | Intent router + SPLADE hybrid + DA retrieval lane + MMR |
+| Phase 4B | 🔜 | Matryoshka two-stage (Jina MRL 64d fast filter → 768d rescore) |
+| Phase 4C | 🔜 | Cross-encoder re-ranker (ColBERT MaxSim intermediate) |
 | Phase 5 | 🔜 | DeBERTa guardrails + answer leakage guard |
-| Phase 6 | 🔜 | Arize Phoenix telemetry + Teacher/Student portals |
+| Phase 6 | 🔜 | Per-query observability (latency/route logging) + teacher dashboard |
 
 ---
 
 ## Multi-tenancy
 
-Text data is stored in a **single Qdrant collection** (`knowledge_base`) and visual data in a second collection (`visual_knowledge_base`), both with payload-based tenant isolation:
+Text data is stored in `knowledge_base`, DA cards in `derivative_artifacts`, and visual data in `visual_knowledge_base` — all with payload-based tenant isolation:
 
 ```json
 { "tenant_id": "global",      "source_type": "base_textbook", "is_global_baseline": true }

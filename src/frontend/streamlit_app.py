@@ -44,7 +44,11 @@ CARD_ICONS = {
     "question":      "❓",
     "objective":     "🎯",
     "formula":       "🧮",
+    "factoid":       "💡",
 }
+
+# Card types shown in the Key Facts panel (student Ask tab)
+_KEY_FACT_TYPES = ["definition", "factoid", "formula"]
 
 def _relevance(score: float) -> str:
     """Convert cosine similarity to a human-readable indicator."""
@@ -150,15 +154,15 @@ if is_admin:
         "📊 Admin Status",
     ])
 else:
-    tab_upload, tab_search, tab_cards, tab_visual, tab_graph = st.tabs([
+    tab_upload, tab_search, tab_cards = st.tabs([
         "📄 Upload PDF",
         "🔍 Ask a Question",
-        "🃏 Learning Cards",
-        "🖼️ Visual Search",
-        "🕸️ Concept Graph",
+        "🃏 Study Cards",
     ])
-    tab_raptor = None
-    tab_status = None
+    tab_raptor  = None
+    tab_visual  = None
+    tab_graph   = None
+    tab_status  = None
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -259,6 +263,9 @@ with tab_upload:
 with tab_search:
     if is_admin:
         st.header("Search (admin view)")
+        col_a, col_b = st.columns(2)
+        also_raptor = col_a.checkbox("Include RAPTOR summaries", value=True)
+        also_graph  = col_b.checkbox("Include Concept Graph (GraphRAG)", value=True)
     else:
         st.header("Ask a question")
         st.caption(
@@ -266,15 +273,8 @@ with tab_search:
             + ("and your notes " if has_upload else "")
             + "to find the most relevant passages."
         )
-
-    if is_admin:
-        col_a, col_b = st.columns(2)
-        also_raptor = col_a.checkbox("Include RAPTOR summaries", value=True)
-        also_graph  = col_b.checkbox("Include Concept Graph (GraphRAG)", value=True)
-    else:
         also_raptor = True
         also_graph  = True
-        # Intent router overrides below after query is embedded
 
     query = st.text_area(
         "Your question",
@@ -308,22 +308,18 @@ with tab_search:
                     )
 
                 # ── Intent router: decide which routes to activate ────────
-                if cfg.intent_router_enabled and not is_admin:
+                if cfg.intent_router_enabled:
                     from src.core.intent_router import get_intent_router
                     router = get_intent_router(cfg)
                     intent = router.classify(q_vec)
                     route  = router.route(q_vec)
-                    also_raptor = route.use_raptor
-                    also_graph  = route.use_graph
-                    st.caption(f"Route: **{intent}** — raptor={'on' if also_raptor else 'off'}, graph={'on' if also_graph else 'off'}")
-                elif is_admin:
-                    # Admin uses manual checkboxes set above
-                    try:
-                        from src.core.intent_router import get_intent_router
-                        intent = get_intent_router(cfg).classify(q_vec)
-                        st.caption(f"Intent router suggests: **{intent}** (overridden by manual selection)")
-                    except Exception:
-                        pass
+                    if is_admin:
+                        if also_raptor or also_graph:
+                            # admin checkboxes override router
+                            st.caption(f"Intent router suggests: **{intent}** (overridden by manual selection)")
+                    else:
+                        also_raptor = route.use_raptor
+                        also_graph  = route.use_graph
 
                 raptor_results = []
                 if also_raptor:
@@ -351,7 +347,7 @@ with tab_search:
                 if not chunk_results and not raptor_results and not graph_results:
                     st.info("No results found — try rephrasing your question.")
                 else:
-                    # ── LLM synthesis ─────────────────────────────────────
+                    # ── Build passages for LLM context ────────────────────
                     all_passages = []
                     for r in chunk_results:
                         pg = r.get("page_number")
@@ -364,6 +360,8 @@ with tab_search:
                     for r in graph_results:
                         all_passages.append(f"[Concept-linked] {r.get('text_preview', '')}")
 
+                    # ── LLM synthesis ─────────────────────────────────────
+                    synthesis = None
                     if all_passages:
                         try:
                             from src.core.llm import call_llm
@@ -392,56 +390,99 @@ with tab_search:
                                 ),
                                 settings=cfg,
                             )
-                            st.subheader("💡 Answer")
-                            st.markdown(synthesis)
-                            st.divider()
                         except Exception:
-                            pass  # LLM unavailable — fall through to raw passages
+                            pass  # LLM unavailable — show passages only
 
-                    # ── Source passages (collapsed) ───────────────────────
-                    with st.expander(
-                        f"📄 Source passages ({len(chunk_results)} chunks"
-                        + (f", {len(raptor_results)} summaries" if raptor_results else "")
-                        + (f", {len(graph_results)} concept-linked" if graph_results else "")
-                        + ")",
-                        expanded=is_admin,
-                    ):
-                        if raptor_results:
-                            st.markdown("**Topic summaries**")
-                            for r in raptor_results:
+                    if synthesis:
+                        st.subheader("💡 Answer")
+                        st.markdown(synthesis)
+                        st.divider()
+
+                    # ── Key Facts panel (student only) ────────────────────
+                    if not is_admin and chunk_results:
+                        chunk_ids = [r["chunk_id"] for r in chunk_results if r.get("chunk_id")]
+                        key_cards = s.get_cards_for_chunks(chunk_ids, card_types=_KEY_FACT_TYPES, limit=8)
+                        if key_cards:
+                            st.subheader("📌 Key Facts")
+                            cols = st.columns(min(3, len(key_cards)))
+                            for i, card in enumerate(key_cards):
+                                icon = CARD_ICONS.get(card.card_type, "💡")
+                                with cols[i % 3]:
+                                    with st.container(border=True):
+                                        st.caption(f"{icon} {card.card_type.capitalize()}")
+                                        st.markdown(f"**{card.title}**")
+                                        st.markdown(card.content)
+                            st.divider()
+
+                    # ── Source citations ───────────────────────────────────
+                    pages = sorted({
+                        r.get("page_number") for r in chunk_results
+                        if r.get("page_number")
+                    })
+                    titles = sorted({
+                        r.get("title") for r in chunk_results
+                        if r.get("title")
+                    })
+
+                    if not is_admin:
+                        # Student: compact citation line + collapsed passages
+                        if pages:
+                            sources_str = ", ".join(f"p. {p}" for p in pages)
+                            works_str   = "  ·  ".join(titles) if titles else "Knowledge base"
+                            st.caption(f"📄 Sources: {works_str}  —  {sources_str}")
+                        n_total = (
+                            len(chunk_results)
+                            + (len(raptor_results) if raptor_results else 0)
+                            + (len(graph_results)  if graph_results  else 0)
+                        )
+                        with st.expander(f"View {n_total} source passage(s)", expanded=False):
+                            for i, r in enumerate(chunk_results, 1):
                                 with st.container(border=True):
+                                    pg = r.get("page_number")
+                                    st.caption(
+                                        f"#{i}  {_source_label(r)}"
+                                        + (f"  ·  p. {pg}" if pg else "")
+                                    )
                                     st.markdown(r.get("text", ""))
-                                    if is_admin:
+                    else:
+                        # Admin: full technical detail, open by default
+                        with st.expander(
+                            f"📄 Source passages ({len(chunk_results)} chunks"
+                            + (f", {len(raptor_results)} summaries" if raptor_results else "")
+                            + (f", {len(graph_results)} concept-linked" if graph_results else "")
+                            + ")",
+                            expanded=True,
+                        ):
+                            if raptor_results:
+                                st.markdown("**Topic summaries**")
+                                for r in raptor_results:
+                                    with st.container(border=True):
+                                        st.markdown(r.get("text", ""))
                                         st.caption(
                                             f"RAPTOR L{r.get('raptor_level','?')} · "
                                             f"score={r['score']:.3f} · "
                                             f"cluster {r.get('cluster_id','?')}"
                                         )
 
-                        if graph_results:
-                            st.markdown("**Concept-connected passages**")
-                            for gr in graph_results:
-                                with st.container(border=True):
-                                    concepts = " → ".join(gr.get("concept_path", []))
-                                    st.caption(f"Concepts: {concepts}  |  hops: {gr.get('hop_distance', '?')}")
-                                    st.markdown(gr.get("text_preview", ""))
+                            if graph_results:
+                                st.markdown("**Concept-connected passages**")
+                                for gr in graph_results:
+                                    with st.container(border=True):
+                                        concepts = " → ".join(gr.get("concept_path", []))
+                                        st.caption(f"Concepts: {concepts}  |  hops: {gr.get('hop_distance', '?')}")
+                                        st.markdown(gr.get("text_preview", ""))
 
-                        if chunk_results:
-                            st.markdown("**Matched passages**")
-                        for i, r in enumerate(chunk_results, 1):
-                            source = _source_label(r)
-                            if is_admin:
+                            if chunk_results:
+                                st.markdown("**Matched passages**")
+                            for i, r in enumerate(chunk_results, 1):
                                 label = (
                                     f"#{i}  {_relevance(r['score'])}  |  "
                                     f"{r.get('source_type','?')}  |  "
                                     f"score={r['score']:.3f}  |  "
                                     f"page {r.get('page_number','?')}"
                                 )
-                            else:
-                                label = f"#{i}  {source}  ·  {_relevance(r['score'])}"
-                            with st.expander(label, expanded=False):
-                                st.markdown(r.get("text", ""))
-                                if is_admin:
+                                with st.expander(label, expanded=False):
+                                    st.markdown(r.get("text", ""))
                                     st.caption(
                                         f"tenant={r.get('tenant_id','')}  "
                                         f"model={r.get('embedding_version','')}  "
@@ -614,203 +655,194 @@ if tab_raptor is not None:
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# TAB 5 — Visual Search (Phase 3)
+# TAB 5 — Visual Search (Phase 3)  [admin only]
 # ══════════════════════════════════════════════════════════════════════════
-with tab_visual:
-    st.header("🖼️ Visual Search")
-    st.caption(
-        "Upload an image (a diagram, figure, or photo of a page) to find the most "
-        "similar pages in the knowledge base using ColPali late-interaction search."
-    )
+if tab_visual is not None:
+    with tab_visual:
+        st.header("🖼️ Visual Search")
+        st.caption(
+            "Upload an image (a diagram, figure, or photo of a page) to find the most "
+            "similar pages in the knowledge base using ColPali late-interaction search."
+        )
 
-    # Check if any documents have visual embeddings ready for the current study mode
-    try:
-        store    = DocumentStore(cfg)
-        all_docs = store.list_documents()
-        # Scope to docs actually searchable under the current study-mode setting
-        if source_type_filter == "user_upload":
-            searchable = [d for d in all_docs if d.tenant_id == tenant_id]
+        try:
+            store    = DocumentStore(cfg)
+            all_docs = store.list_documents()
+            if source_type_filter == "user_upload":
+                searchable = [d for d in all_docs if d.tenant_id == tenant_id]
+            else:
+                searchable = [d for d in all_docs
+                              if d.tenant_id in (tenant_id, cfg.global_tenant_id)]
+            ready_docs   = [d for d in searchable if d.colpali_status == "ready"]
+            pending_docs = [d for d in searchable if d.colpali_status in ("processing", "pending")]
+        except Exception:
+            ready_docs = []
+            pending_docs = []
+
+        if pending_docs:
+            st.info(
+                f"⏳ Visual embeddings are being generated for "
+                f"{len(pending_docs)} document(s). Text search is available now — "
+                "come back shortly for visual search.",
+                icon="🔄",
+            )
+
+        if not ready_docs:
+            st.warning(
+                "No documents have visual embeddings yet. "
+                "Run `scripts/run_phase3.py --tenant global` for the base textbook, "
+                "or upload a PDF — visual embeddings will be generated automatically.",
+                icon="💡",
+            )
         else:
-            searchable = [d for d in all_docs
-                          if d.tenant_id in (tenant_id, cfg.global_tenant_id)]
-        ready_docs   = [d for d in searchable if d.colpali_status == "ready"]
-        pending_docs = [d for d in searchable if d.colpali_status in ("processing", "pending")]
-    except Exception:
-        ready_docs = []
-        pending_docs = []
+            query_image_file = st.file_uploader(
+                "Upload a query image (PNG, JPG)",
+                type=["png", "jpg", "jpeg"],
+                key="visual_query",
+            )
+            n_results = st.slider("Results to show", 1, 10, 5)
 
-    if pending_docs:
-        st.info(
-            f"⏳ Visual embeddings are being generated for "
-            f"{len(pending_docs)} document(s). Text search is available now — "
-            "come back shortly for visual search.",
-            icon="🔄",
+            if query_image_file and st.button("Search by Image", type="primary"):
+                with st.spinner("Embedding query image… (first run is slow on CPU)"):
+                    try:
+                        from PIL import Image
+                        import io
+                        from src.pdf_ingestion.colpali_embedder import get_colpali_embedder
+                        from src.pdf_ingestion.image_store import get_image_store
+
+                        query_image = Image.open(io.BytesIO(query_image_file.read()))
+                        colpali     = get_colpali_embedder(cfg)
+                        q_patches   = colpali.embed_query_image(query_image)
+
+                        results = store.visual_search(
+                            query_patches=q_patches,
+                            tenant_id=tenant_id,
+                            source_type=source_type_filter,
+                            limit=n_results,
+                        )
+
+                        if not results:
+                            st.info("No visual matches found.")
+                        else:
+                            page_numbers = [r["page_number"] for r in results if r.get("page_number")]
+                            doc_ids      = list({r["document_id"] for r in results if r.get("document_id")})
+
+                            context_chunks = []
+                            for doc_id in doc_ids:
+                                context_chunks.extend(
+                                    store.get_chunks_by_pages(doc_id, page_numbers, limit_per_page=2)
+                                )
+
+                            if context_chunks:
+                                with st.spinner("Synthesizing answer…"):
+                                    try:
+                                        from src.core.llm import call_llm
+                                        context_text = "\n\n".join(
+                                            f"[Page {c.page_number}] {c.text}" for c in context_chunks
+                                        )
+                                        synthesis = call_llm(
+                                            prompt=(
+                                                f"The user uploaded an image to search a physics knowledge base. "
+                                                f"The most visually similar pages were retrieved. "
+                                                f"Based on the text from those pages, provide a clear, "
+                                                f"educational response explaining what is shown.\n\n"
+                                                f"Retrieved page content:\n{context_text}"
+                                            ),
+                                            system="You are a physics tutor. Answer concisely and accurately based only on the provided content.",
+                                            settings=cfg,
+                                        )
+                                        st.subheader("📝 What these pages show")
+                                        st.markdown(synthesis)
+                                        st.divider()
+                                    except Exception:
+                                        pass
+
+                            image_store = get_image_store(cfg)
+                            st.subheader(f"📄 Top {len(results)} matching pages")
+                            cols = st.columns(min(3, len(results)))
+                            for i, r in enumerate(results):
+                                col = cols[i % 3]
+                                try:
+                                    img_bytes = image_store.get(r["image_key"])
+                                    col.image(img_bytes, use_container_width=True)
+                                except Exception as img_err:
+                                    col.caption(f"⚠️ Image file not found: `{r.get('image_key', '?')}`")
+                                    col.caption(str(img_err))
+                                col.caption(
+                                    f"Page {r.get('page_number', '?')}  ·  "
+                                    f"score {r['score']:.3f}  ·  "
+                                    f"doc: `{r.get('document_id','?')[:12]}…`"
+                                )
+
+                    except Exception as e:
+                        st.error(f"Visual search error: {e}")
+
+            st.divider()
+            st.caption(
+                f"**{len(ready_docs)}** document(s) indexed for visual search.  "
+                "ColPali encodes visual structure, layout, diagrams, and equations."
+            )
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# TAB 6 — Concept Graph / GraphRAG (Phase 3)  [admin only]
+# ══════════════════════════════════════════════════════════════════════════
+if tab_graph is not None:
+    with tab_graph:
+        st.header("🕸️ Concept Graph Search")
+        st.caption(
+            "GraphRAG finds passages connected through concept relationships — "
+            "multi-hop reasoning that vector search alone misses. "
+            "Requires Memgraph (`docker compose --profile phase3 up`)."
         )
 
-    if not ready_docs:
-        st.warning(
-            "No documents have visual embeddings yet. "
-            "Run `scripts/run_phase3.py --tenant global` for the base textbook, "
-            "or upload a PDF — visual embeddings will be generated automatically.",
-            icon="💡",
+        graph_query = st.text_input(
+            "Ask a concept-reasoning question",
+            placeholder="e.g. Why does a satellite stay in orbit?",
         )
-    else:
-        query_image_file = st.file_uploader(
-            "Upload a query image (PNG, JPG)",
-            type=["png", "jpg", "jpeg"],
-            key="visual_query",
-        )
-        n_results = st.slider("Results to show", 1, 10, 5)
+        show_concepts = st.checkbox("Show concept paths", value=True)
 
-        if query_image_file and st.button("Search by Image", type="primary"):
-            with st.spinner("Embedding query image… (first run is slow on CPU)"):
+        if st.button("Graph Search", type="primary") and graph_query.strip():
+            with st.spinner("Traversing concept graph…"):
                 try:
-                    from PIL import Image
-                    import io
-                    from src.pdf_ingestion.colpali_embedder import get_colpali_embedder
-                    from src.pdf_ingestion.image_store import get_image_store
-
-                    query_image = Image.open(io.BytesIO(query_image_file.read()))
-                    colpali     = get_colpali_embedder(cfg)
-                    q_patches   = colpali.embed_query_image(query_image)
-
-                    results = store.visual_search(
-                        query_patches=q_patches,
+                    from src.pdf_ingestion.embedder import get_embedder
+                    from src.pdf_ingestion.graph_builder import get_graph_builder
+                    gq_vec = get_embedder(cfg).embed_query(graph_query)
+                    graph  = get_graph_builder(cfg)
+                    results = graph.graph_search(
+                        query_text=graph_query,
                         tenant_id=tenant_id,
-                        source_type=source_type_filter,
-                        limit=n_results,
+                        query_vector=gq_vec,
+                        limit=6,
                     )
 
                     if not results:
-                        st.info("No visual matches found.")
+                        st.info(
+                            "No concept-graph results found. This may mean:\n"
+                            "- Memgraph is not running (`docker compose --profile phase3 up`)\n"
+                            "- Phase 3 graph hasn't been built yet for this document\n"
+                            "- The query concepts don't match extracted concept nodes"
+                        )
                     else:
-                        # ── Synthesize a response from matched page text ───
-                        page_numbers = [r["page_number"] for r in results if r.get("page_number")]
-                        doc_ids      = list({r["document_id"] for r in results if r.get("document_id")})
-
-                        context_chunks = []
-                        for doc_id in doc_ids:
-                            context_chunks.extend(
-                                store.get_chunks_by_pages(doc_id, page_numbers, limit_per_page=2)
-                            )
-
-                        if context_chunks:
-                            with st.spinner("Synthesizing answer…"):
-                                try:
-                                    from src.core.llm import call_llm
-                                    context_text = "\n\n".join(
-                                        f"[Page {c.page_number}] {c.text}" for c in context_chunks
-                                    )
-                                    synthesis = call_llm(
-                                        prompt=(
-                                            f"The user uploaded an image to search a physics knowledge base. "
-                                            f"The most visually similar pages were retrieved. "
-                                            f"Based on the text from those pages, provide a clear, "
-                                            f"educational response explaining what is shown.\n\n"
-                                            f"Retrieved page content:\n{context_text}"
-                                        ),
-                                        system="You are a physics tutor. Answer concisely and accurately based only on the provided content.",
-                                        settings=cfg,
-                                    )
-                                    st.subheader("📝 What these pages show")
-                                    st.markdown(synthesis)
-                                    st.divider()
-                                except Exception:
-                                    pass  # LLM unavailable — skip synthesis, show images only
-
-                        # ── Matched pages ──────────────────────────────────
-                        image_store = get_image_store(cfg)
-                        st.subheader(f"📄 Top {len(results)} matching pages")
-                        cols = st.columns(min(3, len(results)))
-                        for i, r in enumerate(results):
-                            col = cols[i % 3]
-                            try:
-                                img_bytes = image_store.get(r["image_key"])
-                                col.image(img_bytes, use_container_width=True)
-                            except Exception as img_err:
-                                col.caption(f"⚠️ Image file not found: `{r.get('image_key', '?')}`")
-                                if is_admin:
-                                    col.caption(str(img_err))
-                            col.caption(
-                                f"Page {r.get('page_number', '?')}  ·  "
-                                f"score {r['score']:.3f}"
-                            )
-                            if is_admin:
-                                col.caption(f"doc: `{r.get('document_id','?')[:12]}…`")
-
-                except Exception as e:
-                    st.error(f"Visual search error: {e}")
-
-        st.divider()
-        st.caption(
-            f"**{len(ready_docs)}** document(s) indexed for visual search.  "
-            "ColPali encodes visual structure, layout, diagrams, and equations."
-        )
-
-
-# ══════════════════════════════════════════════════════════════════════════
-# TAB 6 — Concept Graph / GraphRAG (Phase 3)
-# ══════════════════════════════════════════════════════════════════════════
-with tab_graph:
-    st.header("🕸️ Concept Graph Search")
-    st.caption(
-        "GraphRAG finds passages connected through concept relationships — "
-        "multi-hop reasoning that vector search alone misses. "
-        "Requires Memgraph (`docker compose --profile phase3 up`)."
-    )
-
-    graph_query = st.text_input(
-        "Ask a concept-reasoning question",
-        placeholder="e.g. Why does a satellite stay in orbit?",
-    )
-
-    if is_admin:
-        show_concepts = st.checkbox("Show concept paths", value=True)
-    else:
-        show_concepts = False
-
-    if st.button("Graph Search", type="primary") and graph_query.strip():
-        with st.spinner("Traversing concept graph…"):
-            try:
-                from src.pdf_ingestion.embedder import get_embedder
-                from src.pdf_ingestion.graph_builder import get_graph_builder
-                gq_vec = get_embedder(cfg).embed_query(graph_query)
-                graph  = get_graph_builder(cfg)
-                results = graph.graph_search(
-                    query_text=graph_query,
-                    tenant_id=tenant_id,
-                    query_vector=gq_vec,
-                    limit=6,
-                )
-
-                if not results:
-                    st.info(
-                        "No concept-graph results found. This may mean:\n"
-                        "- Memgraph is not running (`docker compose --profile phase3 up`)\n"
-                        "- Phase 3 graph hasn't been built yet for this document\n"
-                        "- The query concepts don't match extracted concept nodes"
-                    )
-                else:
-                    st.subheader(f"Found {len(results)} concept-connected passage(s)")
-                    for i, r in enumerate(results, 1):
-                        with st.container(border=True):
-                            if show_concepts or not is_admin:
-                                concepts = " → ".join(r.get("concept_path", []))
-                                st.caption(f"🔗 Concept path: **{concepts}**  |  hops: {r.get('hop_distance', '?')}")
-                            st.markdown(r.get("text_preview", ""))
-                            if is_admin:
+                        st.subheader(f"Found {len(results)} concept-connected passage(s)")
+                        for i, r in enumerate(results, 1):
+                            with st.container(border=True):
+                                if show_concepts:
+                                    concepts = " → ".join(r.get("concept_path", []))
+                                    st.caption(f"🔗 Concept path: **{concepts}**  |  hops: {r.get('hop_distance', '?')}")
+                                st.markdown(r.get("text_preview", ""))
                                 st.caption(f"chunk_id: `{r.get('chunk_id','?')}`")
 
-            except Exception as e:
-                st.error(f"Graph search error: {e}")
+                except Exception as e:
+                    st.error(f"Graph search error: {e}")
 
-    with st.expander("💡 Example questions that benefit from GraphRAG"):
-        st.markdown("""
+        with st.expander("💡 Example questions that benefit from GraphRAG"):
+            st.markdown("""
 - *Why does a satellite stay in orbit?* — needs Newton's 2nd law → centripetal force → orbital mechanics chain
 - *What should I know before studying Maxwell's equations?* — prerequisite concept traversal
 - *How is simple harmonic motion related to wave propagation?* — RELATES_TO multi-hop
 - *How do conservation laws appear across different areas of physics?* — cross-chapter concept linking
-        """)
+            """)
 
 
 # ══════════════════════════════════════════════════════════════════════════

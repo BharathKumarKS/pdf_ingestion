@@ -576,6 +576,26 @@ class DocumentStore:
                 stmt = stmt.where(Card.card_type == card_type)
             return session.exec(stmt).all()
 
+    def get_cards_for_chunks(
+        self,
+        chunk_ids: list[str],
+        card_types: list[str] | None = None,
+        limit: int = 12,
+    ) -> list[Card]:
+        """Return active cards belonging to the given chunk_ids."""
+        if not chunk_ids:
+            return []
+        with Session(self._engine) as session:
+            stmt = (
+                select(Card)
+                .where(Card.chunk_id.in_(chunk_ids))
+                .where(Card.is_active == True)
+            )
+            if card_types:
+                stmt = stmt.where(Card.card_type.in_(card_types))
+            stmt = stmt.limit(limit)
+            return session.exec(stmt).all()
+
     # ── Phase 2: RAPTOR ───────────────────────────────────────────────────
 
     def save_raptor_tree(

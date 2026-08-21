@@ -353,6 +353,13 @@ class OllamaCardGenerator:
 
     # -- Internals -------------------------------------------------------------
 
+    # Nullable card types legitimately return bare "null" when the chunk has no
+    # relevant content (e.g. formula on a biographical paragraph). Instructor
+    # retries 3× before failing on these, adding noise and 3× the LLM calls.
+    # Use raw LLM + parsing for nullable types; instructor for the rest.
+    _NULLABLE_TYPES = {CardType.DEFINITION, CardType.EXAMPLE,
+                       CardType.MISCONCEPTION, CardType.FORMULA}
+
     def _generate_one_type(
         self, chunk: TextChunk, card_type: CardType
     ) -> list[GeneratedCard]:
@@ -360,7 +367,11 @@ class OllamaCardGenerator:
         cfg    = _TYPE_CONFIGS[card_type]
         prompt = self._build_prompt(card_type, chunk.text)
 
-        if self._instructor_client is not None:
+        use_instructor = (
+            self._instructor_client is not None
+            and card_type not in self._NULLABLE_TYPES
+        )
+        if use_instructor:
             return self._generate_with_instructor(prompt, chunk, card_type, cfg.parser)
 
         raw = self._call_llm(prompt=prompt, json_mode=cfg.json_mode)
