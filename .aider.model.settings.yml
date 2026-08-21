@@ -1,0 +1,10 @@
+# .aider.model.settings.yml
+- name: openai/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+  extra_params:
+    api_base: http://10.0.10.51:8000/v1
+    api_key: dummy
+
+- name: openai/qwen2.5-coder:14b-instruct
+  extra_params:
+    api_base: http://localhost:11434/v1
+    api_key: dummy
