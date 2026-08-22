@@ -27,7 +27,7 @@ from rich.table import Table
 console = Console()
 
 # Card types to include in the DA retrieval lane
-DA_CARD_TYPES = ["definition", "formula", "factoid"]
+DA_CARD_TYPES = ["summary", "definition", "formula", "question", "factoid"]
 
 # Keywords that identify non-chapter content (checked in first 500 chars of chunk text)
 NON_CHAPTER_KEYWORDS = [
