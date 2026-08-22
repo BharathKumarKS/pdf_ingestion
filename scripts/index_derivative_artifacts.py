@@ -42,6 +42,17 @@ NON_CHAPTER_KEYWORDS = [
     "## references\n",
     "list of figures",
     "list of tables",
+    "errata\n",
+    "## errata",
+    "erratum",
+    "typographical error",
+    "all rights reserved",
+    "copyright ©",
+    "© 20",
+    "© 19",
+    "printed in the united states",
+    "isbn ",
+    "library of congress",
 ]
 
 

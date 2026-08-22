@@ -943,13 +943,16 @@ def generate_phase2_artifacts(
     if not chunks_db:
         raise ValueError(f"No chunks for document {document_id}")
 
-    # Skip front/back matter (preface, TOC, bibliography, index) — these
-    # produce low-quality cards (copyright notices as objectives, etc.)
+    # Skip front/back matter — these produce low-quality cards
+    # (copyright notices as objectives, errata as definitions, etc.)
     _NON_CHAPTER = [
         "table of contents", "## preface", "\npreface\n",
         "## bibliography", "bibliography\n", "## subject index",
         "## index\n", "## acknowledgment", "## references\n",
         "list of figures", "list of tables",
+        "errata\n", "## errata", "erratum", "typographical error",
+        "all rights reserved", "copyright ©", "© 20", "© 19",
+        "printed in the united states", "isbn ", "library of congress",
     ]
 
     def _is_chapter(text: str) -> bool:
