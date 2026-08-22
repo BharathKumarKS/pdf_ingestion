@@ -203,18 +203,20 @@ class ResponseParser:
 class _TypeConfig:
     prompt_file: str
     json_mode:   bool
-    parser:      str   # "single_object" | "qa_pairs" | "factoids"
+    parser:      str   # "plain_text" | "single_object" | "qa_pairs" | "factoids"
 
 
 _TYPE_CONFIGS: dict[CardType, _TypeConfig] = {
-    CardType.SUMMARY:       _TypeConfig("summarizer.md",                json_mode=False, parser="single_object"),
+    # json_mode=False: model returns plain text or bare array — no response_format constraint
+    # json_mode=True:  sends response_format=json_object — only valid for single-object outputs
+    CardType.SUMMARY:       _TypeConfig("summarizer.md",                json_mode=False, parser="plain_text"),
     CardType.DEFINITION:    _TypeConfig("definition.md",                json_mode=True,  parser="single_object"),
     CardType.EXAMPLE:       _TypeConfig("example.md",                   json_mode=True,  parser="single_object"),
     CardType.MISCONCEPTION: _TypeConfig("misconception.md",             json_mode=True,  parser="single_object"),
-    CardType.QUESTION:      _TypeConfig("question_answer_generator.md", json_mode=True,  parser="qa_pairs"),
+    CardType.QUESTION:      _TypeConfig("question_answer_generator.md", json_mode=False, parser="qa_pairs"),
     CardType.OBJECTIVE:     _TypeConfig("objective.md",                 json_mode=True,  parser="single_object"),
     CardType.FORMULA:       _TypeConfig("formula.md",                   json_mode=True,  parser="single_object"),
-    CardType.FACTOID:       _TypeConfig("propositioner.md",             json_mode=True,  parser="factoids"),
+    CardType.FACTOID:       _TypeConfig("propositioner.md",             json_mode=False, parser="factoids"),
 }
 
 # Summary uses token placeholders — fill with sensible defaults for chunk cards
@@ -476,6 +478,20 @@ class OllamaCardGenerator:
             return ResponseParser.parse_qa_pairs(raw, chunk)
         if parser == "factoids":
             return ResponseParser.parse_factoids(raw, chunk)
+        if parser == "plain_text":
+            # Summary: model returns plain prose, not JSON — wrap directly
+            text = re.sub(r"```(?:json)?", "", raw).strip()
+            if not text or text.lower() in ("null", ""):
+                return []
+            return [GeneratedCard(
+                card_id=str(uuid.uuid4()),
+                chunk_id=chunk.chunk_id,
+                document_id=chunk.document_id,
+                tenant_id=chunk.tenant_id,
+                card_type=card_type.value,
+                title=card_type.value.capitalize(),
+                content=text,
+            )]
         # single_object — handles nullable responses (definition, example, etc.)
         cleaned = re.sub(r"```(?:json)?", "", raw).strip()
         if cleaned.lower() in ("null", ""):
