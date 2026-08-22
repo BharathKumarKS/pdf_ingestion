@@ -220,8 +220,9 @@ def get_qdrant(settings: Settings | None = None) -> QdrantClient:
             _qdrant = QdrantClient(**kwargs)
             logger.info("Qdrant: server at '{}'", cfg.qdrant_url)
 
-        elif cfg.qdrant_host and cfg.qdrant_host != "localhost":
+        elif cfg.qdrant_host:
             # Self-hosted via explicit QDRANT_HOST + QDRANT_PORT
+            # Includes localhost (e.g. Docker Qdrant on the same machine)
             _qdrant = QdrantClient(host=cfg.qdrant_host, port=cfg.qdrant_port)
             logger.info("Qdrant: server at {}:{}", cfg.qdrant_host, cfg.qdrant_port)
 
