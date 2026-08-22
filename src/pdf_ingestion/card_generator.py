@@ -270,9 +270,12 @@ class OllamaCardGenerator:
 
     @staticmethod
     def _init_instructor_client():
-        """Build instructor client from config.yaml if available."""
+        """Build instructor client from config.yaml if available and enabled."""
         try:
-            from src.core.pipeline_config import build_instructor_client
+            from src.core.pipeline_config import build_instructor_client, get_section
+            if not get_section("card_generation").get("use_instructor", True):
+                logger.info("CardGenerator: instructor disabled in config.yaml — using raw LLM")
+                return None
             client = build_instructor_client("card_generation")
             logger.info("CardGenerator: using instructor client (structured outputs)")
             return client

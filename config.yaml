@@ -10,6 +10,7 @@ card_generation:
   model: openai/gpt-oss-20b
   base_url: http://10.0.10.51:8000/v1
   chunk_size: 512
+  use_instructor: false   # model returns JSON in content (not tool calls) — skip instructor
 
 raptor_summarization:
   model: openai/gpt-oss-20b
