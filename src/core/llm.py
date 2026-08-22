@@ -116,9 +116,14 @@ def _call_openai(
     if cfg.openai_api_key and cfg.openai_api_key.lower() != "none":
         headers["Authorization"] = f"Bearer {cfg.openai_api_key}"
 
+    # Strip trailing /v1 if already included in base_url to avoid double /v1
+    base = cfg.openai_api_base.rstrip("/")
+    if base.endswith("/v1"):
+        base = base[:-3]
+
     try:
         resp = httpx.post(
-            f"{cfg.openai_api_base.rstrip('/')}/v1/chat/completions",
+            f"{base}/v1/chat/completions",
             json=payload,
             headers=headers,
             timeout=timeout,
