@@ -943,6 +943,19 @@ def generate_phase2_artifacts(
     if not chunks_db:
         raise ValueError(f"No chunks for document {document_id}")
 
+    # Skip front/back matter (preface, TOC, bibliography, index) — these
+    # produce low-quality cards (copyright notices as objectives, etc.)
+    _NON_CHAPTER = [
+        "table of contents", "## preface", "\npreface\n",
+        "## bibliography", "bibliography\n", "## subject index",
+        "## index\n", "## acknowledgment", "## references\n",
+        "list of figures", "list of tables",
+    ]
+
+    def _is_chapter(text: str) -> bool:
+        sample = text.lower()[:500]
+        return not any(kw in sample for kw in _NON_CHAPTER)
+
     chunk_objects = [
         TextChunk(
             chunk_id=c.id,
@@ -956,7 +969,11 @@ def generate_phase2_artifacts(
             page_number=c.page_number,
         )
         for c in chunks_db
+        if _is_chapter(c.text)
     ]
+    skipped = len(chunks_db) - len(chunk_objects)
+    if skipped:
+        logger.info("Skipped {} non-chapter chunks (preface/TOC/bibliography)", skipped)
 
     generator = get_card_generator(cfg)
     cards     = generator.generate_cards_for_chunks(chunk_objects)

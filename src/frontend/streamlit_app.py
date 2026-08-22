@@ -402,30 +402,35 @@ with tab_search:
                         try:
                             from src.core.llm import call_llm
                             context = "\n\n".join(all_passages)
+                            # Direct prompt — no numbered instructions that
+                            # reasoning models echo back into their answer.
                             synthesis = call_llm(
                                 prompt=(
-                                    f"Student question: {query}\n\n"
-                                    f"Textbook passages retrieved:\n{context}\n\n"
-                                    f"Instructions:\n"
-                                    f"1. Answer ONLY the question above — do not answer a different question.\n"
-                                    f"2. Use ONLY the passages provided. Do not add any outside knowledge.\n"
-                                    f"3. Quote or paraphrase only text that actually appears in the passages above.\n"
-                                    f"4. Cite the page number after every claim, e.g. (page 42).\n"
-                                    f"5. If the passages do not contain a direct answer, say exactly: "
-                                    f"'The retrieved passages do not directly answer this question.' "
-                                    f"Then in one sentence describe what the passages do cover."
+                                    f"Question: {query}\n\n"
+                                    f"Textbook passages:\n{context}\n\n"
+                                    f"Answer the question using only the passages above. "
+                                    f"Cite page numbers like (page 42) after each claim. "
+                                    f"If the passages do not contain a direct answer, say so in one sentence "
+                                    f"then describe what they do cover."
                                 ),
                                 system=(
-                                    "You are a physics tutor. Your only source of truth is the textbook "
-                                    "passages provided in the prompt. Rules you must never break:\n"
-                                    "- Never fabricate or infer facts not stated in the passages.\n"
-                                    "- Never quote text that does not appear verbatim or near-verbatim in the passages.\n"
-                                    "- Never reinterpret the student's question.\n"
-                                    "- Never cite a page number unless it appears as [Page N] in the passages.\n"
-                                    "- If the passages are irrelevant, say so in one sentence and stop."
+                                    "You are a physics tutor. Answer concisely using only "
+                                    "the provided passages. Never fabricate facts. "
+                                    "Never cite a page number not shown as [Page N] in the passages."
                                 ),
                                 settings=cfg,
                             )
+                            # Strip reasoning-model preambles that echo the prompt
+                            if synthesis:
+                                for prefix in (
+                                    "I'll follow the instructions to provide an accurate response.",
+                                    "I will follow the instructions to provide an accurate response.",
+                                    "Based on the provided passages,",
+                                    f"Question: {query}",
+                                    "Student question:",
+                                ):
+                                    if synthesis.lstrip().startswith(prefix):
+                                        synthesis = synthesis.lstrip()[len(prefix):].lstrip(" \n.,")
                         except Exception:
                             pass  # LLM unavailable — show passages only
 
@@ -436,8 +441,21 @@ with tab_search:
 
                     # ── Key Facts panel (student only) ────────────────────
                     if not is_admin and chunk_results:
+                        _skip_content = {"n/a", "none", "not applicable", "null", ""}
                         chunk_ids = [r["chunk_id"] for r in chunk_results if r.get("chunk_id")]
-                        key_cards = s.get_cards_for_chunks(chunk_ids, card_types=_KEY_FACT_TYPES, limit=8)
+                        raw_key_cards = s.get_cards_for_chunks(chunk_ids, card_types=_KEY_FACT_TYPES, limit=16)
+                        # Filter junk + deduplicate by content
+                        seen_kf: set = set()
+                        key_cards = []
+                        for kc in raw_key_cards:
+                            txt = kc.content.strip()
+                            key = txt.lower()[:200]
+                            if txt.lower() in _skip_content or key in seen_kf:
+                                continue
+                            seen_kf.add(key)
+                            key_cards.append(kc)
+                        key_cards = key_cards[:8]
+
                         if key_cards:
                             st.subheader("📌 Key Facts")
                             cols = st.columns(min(3, len(key_cards)))
@@ -446,8 +464,11 @@ with tab_search:
                                 with cols[i % 3]:
                                     with st.container(border=True):
                                         st.caption(f"{icon} {card.card_type.capitalize()}")
-                                        st.markdown(f"**{card.title}**")
-                                        st.markdown(card.content)
+                                        if card.card_type == "factoid":
+                                            st.markdown(card.content)
+                                        else:
+                                            st.markdown(f"**{card.title}**")
+                                            st.markdown(card.content)
                             st.divider()
 
                     # ── Source citations ───────────────────────────────────
@@ -587,13 +608,24 @@ with tab_cards:
             cards    = cards_map.get(sel_doc_id, [])
             filtered = [c for c in cards if c.card_type in sel_types]
 
+            # Deduplicate by content within each card type (cross-chunk duplicates
+            # e.g. same formula generated from 20 chunks that all mention KE)
+            def _dedup(card_list):
+                seen, unique = set(), []
+                for c in card_list:
+                    key = c.content.strip().lower()[:200]
+                    if key not in seen:
+                        seen.add(key)
+                        unique.append(c)
+                return unique
+
             if is_admin:
                 st.markdown(f"**{len(filtered)} cards** from `{doc_labels[sel_doc_id]}`")
 
             st.divider()
 
             for ct in sel_types:
-                type_cards = [c for c in filtered if c.card_type == ct]
+                type_cards = _dedup([c for c in filtered if c.card_type == ct])
                 if not type_cards:
                     continue
                 icon = CARD_ICONS.get(ct, "📌")
@@ -603,11 +635,22 @@ with tab_cards:
                 ):
                     for card in type_cards:
                         with st.container(border=True):
-                            st.markdown(f"**{card.title}**")
-                            st.markdown(card.content)
-                            if ct == "question" and card.answer:
-                                with st.expander("Reveal answer"):
-                                    st.success(card.answer)
+                            if ct == "question":
+                                # title == content for questions; show content once
+                                st.markdown(f"**{card.content}**")
+                                if card.answer:
+                                    with st.expander("Reveal answer"):
+                                        st.success(card.answer)
+                            elif ct == "factoid":
+                                # title == content for factoids; render content only
+                                st.markdown(card.content)
+                            elif ct == "objective":
+                                # title = Bloom's verb, content = objective text
+                                st.caption(card.title)
+                                st.markdown(card.content)
+                            else:
+                                st.markdown(f"**{card.title}**")
+                                st.markdown(card.content)
                             if is_admin:
                                 st.caption(
                                     f"chunk `{card.chunk_id[:8]}…`  "
