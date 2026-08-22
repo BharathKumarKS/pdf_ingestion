@@ -345,14 +345,12 @@ with tab_search:
 
                 # ── Intent router: decide which routes to activate ────────
                 if cfg.intent_router_enabled:
-                    from src.core.intent_router import get_intent_router
+                    from src.core.intent_router import get_intent_router, ROUTE_MAP
                     router = get_intent_router(cfg)
-                    intent = router.classify(q_vec)
-                    route  = router.route(q_vec)
+                    intent = router.classify(q_vec)   # one call, one span
+                    route  = ROUTE_MAP[intent]         # dict lookup, no extra classify
                     if is_admin:
-                        if also_raptor or also_graph:
-                            # admin checkboxes override router
-                            st.caption(f"Intent router suggests: **{intent}** (overridden by manual selection)")
+                        st.caption(f"Intent router: **{intent}** (admin checkboxes override)")
                     else:
                         also_raptor = route.use_raptor
                         also_graph  = route.use_graph
