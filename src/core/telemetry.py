@@ -54,7 +54,7 @@ def init_phoenix(settings=None) -> bool:
         tracer_provider = register(
             project_name="synapse-learning",
             endpoint=f"{cfg.phoenix_endpoint.rstrip('/')}/v1/traces",
-            set_global_default=True,
+            set_global_tracer_provider=True,
         )
 
         # Auto-instrument all OpenAI-compatible LLM calls
