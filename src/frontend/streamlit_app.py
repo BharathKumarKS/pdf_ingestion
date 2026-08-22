@@ -406,14 +406,15 @@ with tab_search:
                                 prompt=(
                                     f"Question: {query}\n\n"
                                     f"Textbook passages:\n{context}\n\n"
-                                    f"Answer the question using only the passages above. "
+                                    f"Write a single flowing answer to the question above. "
+                                    f"Use only the passages provided. "
                                     f"Cite page numbers like (page 42) after each claim. "
-                                    f"If the passages do not contain a direct answer, say so in one sentence "
-                                    f"then describe what they do cover."
+                                    f"If the passages do not contain a direct answer, say so briefly."
                                 ),
                                 system=(
-                                    "You are a physics tutor. Answer concisely using only "
-                                    "the provided passages. Never fabricate facts. "
+                                    "You are a physics tutor. Answer in clear prose — "
+                                    "never as a numbered list, never as Q&A pairs, never invent questions. "
+                                    "One cohesive answer only. Never fabricate facts. "
                                     "Never cite a page number not shown as [Page N] in the passages."
                                 ),
                                 settings=cfg,

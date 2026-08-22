@@ -123,7 +123,7 @@ class Settings(BaseSettings):
     # Phase A — Derivative Artifact retrieval
     da_collection: str = "derivative_artifacts"
     da_enabled: bool = True
-    da_card_types: list[str] = Field(default=["definition", "formula", "question", "factoid"])
+    da_card_types: list[str] = Field(default=["definition", "formula", "factoid"])
 
     # Phase A — MMR reranking (applied after RRF, before cross-encoder)
     mmr_enabled: bool = True
