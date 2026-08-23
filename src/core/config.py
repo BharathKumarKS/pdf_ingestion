@@ -24,7 +24,7 @@ class Settings(BaseSettings):
 
     # Qdrant — local or remote
     # Remote (Support Vectors / Qdrant Cloud) takes priority over local path when set.
-    qdrant_host: str = "localhost"
+    qdrant_host: str = ""  # set to hostname/IP for Docker/remote Qdrant; empty → use local path
     qdrant_port: int = 6333
     qdrant_collection: str = "knowledge_base"
     qdrant_in_memory: bool = False        # True -> in-process RAM (tests only)
