@@ -1,6 +1,6 @@
 [
   {
-    "_note": "relevant_pages are approximate for the standard Feynman Lectures Vol 1 PDF. Set calibrated=true after verifying against your PDF. Visual queries have relevant_pages=null — they use the ColPali pipeline.",
+    "_note": "relevant_pages verified against feynman-lectures-on-physics-volume1.pdf. Page numbers from PDF reader (not printed page numbers). Visual queries use ColPali pipeline — relevant_pages=null.",
     "id": "vec-001",
     "query": "What is the formula for kinetic energy?",
     "query_type": "factual",
@@ -14,7 +14,7 @@
     "query": "Define Newton's first law of motion",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [139, 140, 141, 5, 7],
+    "relevant_pages": [177, 178, 179, 180],
     "expected_answer_hint": "object at rest stays at rest, object in motion stays in motion unless acted on by external force",
     "calibrated": true
   },
@@ -23,7 +23,7 @@
     "query": "What is the value of Planck's constant?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [521, 522, 523, 965,118],
+    "relevant_pages": [678, 679, 680, 681, 682, 683, 684, 685],
     "expected_answer_hint": "h = 6.626 times 10 to the -34 joule-seconds",
     "calibrated": true
   },
@@ -32,7 +32,7 @@
     "query": "What does Feynman say about the principle of least action?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [278, 279, 280, 281, 282],
+    "relevant_pages": [452, 453, 454, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 465],
     "expected_answer_hint": "path taken minimises the action integral, stationary action principle, Hamilton's principle",
     "calibrated": true
   },
@@ -41,7 +41,7 @@
     "query": "What is the difference between elastic and inelastic collisions?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [159, 160, 161, 162, 163, 207,208,316],
+    "relevant_pages": [200, 201, 202, 203, 204, 205, 206, 207, 208, 209],
     "expected_answer_hint": "elastic: kinetic energy conserved; inelastic: kinetic energy not conserved but momentum is",
     "calibrated": true
   },
@@ -50,7 +50,7 @@
     "query": "What is Newton's second law of motion?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [139, 140, 141, 142,7,179, 181],
+    "relevant_pages": [177, 178, 179, 180, 181, 182, 183, 184, 185],
     "expected_answer_hint": "F equals ma, net force equals mass times acceleration",
     "calibrated": true
   },
@@ -59,7 +59,7 @@
     "query": "What is the formula for gravitational force?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [98, 99, 100, 101,242,243],
+    "relevant_pages": [143, 144, 145, 146, 147, 148],
     "expected_answer_hint": "F equals G m1 m2 over r squared, inversely proportional to square of distance",
     "calibrated": true
   },
@@ -68,8 +68,26 @@
     "query": "Define momentum",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [159, 160, 178],
+    "relevant_pages": [177, 178, 179, 180],
     "expected_answer_hint": "p equals m times v, mass times velocity, vector quantity",
+    "calibrated": true
+  },
+  {
+    "id": "vec-009",
+    "query": "What is the work-energy theorem?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [240, 241, 242, 243, 244, 245, 246, 247, 248],
+    "expected_answer_hint": "work done on an object equals the change in its kinetic energy, W = delta KE",
+    "calibrated": true
+  },
+  {
+    "id": "vec-010",
+    "query": "What is the uncertainty principle?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [660, 661, 662, 663, 664, 665, 666, 667, 668],
+    "expected_answer_hint": "delta x times delta p is greater than or equal to h-bar over 2, position and momentum cannot both be known precisely",
     "calibrated": true
   },
   {
@@ -77,7 +95,7 @@
     "query": "Give me an overview of how classical mechanics breaks down at atomic scales",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 349,686,693],
+    "relevant_pages": [349, 686, 687, 688, 689, 690, 691, 692, 693],
     "expected_answer_hint": "classical mechanics fails to explain quantised energy levels, wave-particle duality, uncertainty principle observed at atomic scales",
     "calibrated": true
   },
@@ -86,7 +104,7 @@
     "query": "Summarize the key themes in the chapter on conservation laws",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [52, 53, 54, 55, 56, 57, 58, 159, 160, 161, 211, 212, 213, 84,97, 98],
+    "relevant_pages": [97, 98, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213],
     "expected_answer_hint": "conservation of energy, momentum, angular momentum; symmetries and conservation; different forms energy takes",
     "calibrated": true
   },
@@ -95,7 +113,7 @@
     "query": "How does Feynman build up the concept of energy from mechanics to thermodynamics?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [52, 53, 54, 55, 56,565, 566, 591, 592],
+    "relevant_pages": [240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 730, 731, 732, 733, 734, 735, 736, 737, 738, 739, 740],
     "expected_answer_hint": "mechanical energy, work-energy theorem, heat as random kinetic energy, internal energy, first law of thermodynamics",
     "calibrated": true
   },
@@ -104,7 +122,7 @@
     "query": "What are the main ideas connecting electricity and magnetism?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [286, 484, 487],
+    "relevant_pages": [485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495],
     "expected_answer_hint": "changing magnetic fields induce electric fields, Maxwell displacement current, electromagnetic waves",
     "calibrated": true
   },
@@ -113,8 +131,17 @@
     "query": "How does the textbook introduce probability into physics?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [565, 566, 567, 568, 591, 592, 593, 670, 673, 693],
+    "relevant_pages": [119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 660, 661, 662, 663, 664, 665, 666, 667, 668, 669, 670, 671, 672, 673],
     "expected_answer_hint": "Boltzmann distributions in statistical mechanics, then inherent probability in quantum mechanics via Born rule",
+    "calibrated": true
+  },
+  {
+    "id": "raptor-006",
+    "query": "How does Feynman explain the relationship between force and potential energy?",
+    "query_type": "overview",
+    "expected_route": "raptor",
+    "relevant_pages": [274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285],
+    "expected_answer_hint": "force is the negative gradient of potential energy, F = -dU/dx, conservative forces and path independence",
     "calibrated": true
   },
   {
@@ -122,7 +149,7 @@
     "query": "Why does a satellite stay in orbit?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [98, 99, 100, 101, 102, 139, 140, 141, 142, 274],
+    "relevant_pages": [139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 274],
     "expected_answer_hint": "gravity provides centripetal force, satellite continuously falls but moves sideways fast enough to follow Earth's curvature, F equals mv squared over r",
     "calibrated": true
   },
@@ -131,7 +158,7 @@
     "query": "What should I understand before learning about Maxwell's equations?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [487],
+    "relevant_pages": [485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500],
     "expected_answer_hint": "electric fields, magnetic fields, Gauss's law, Faraday's law, vector calculus, divergence and curl",
     "calibrated": true
   },
@@ -140,7 +167,7 @@
     "query": "How is simple harmonic motion related to wave propagation?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [340, 341, 342, 343, 344, 345, 384],
+    "relevant_pages": [382, 383, 384, 385, 386, 870, 871, 872, 873, 874, 875],
     "expected_answer_hint": "each point in a wave undergoes SHM, wave equation from Newton's second law applied to coupled oscillators, frequency and wavenumber",
     "calibrated": true
   },
@@ -149,7 +176,7 @@
     "query": "How do conservation laws appear across different areas of physics?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [52, 53, 54, 55, 56, 159, 160, 161, 211, 212, 213, 97, 98, 922],
+    "relevant_pages": [52, 53, 54, 55, 56, 97, 98, 211, 212, 213, 922],
     "expected_answer_hint": "conservation of energy in thermodynamics and mechanics, momentum in collisions, angular momentum in rotation, charge in electromagnetism",
     "calibrated": true
   },
@@ -158,7 +185,7 @@
     "query": "Explain quantum tunnelling in terms of concepts I've already seen in classical physics",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [520, 521, 522, 523, 524, 525],
+    "relevant_pages": [685, 686, 687, 688],
     "expected_answer_hint": "classical waves pass through barriers via evanescent fields, QM wave function decays exponentially inside barrier, non-zero probability on other side",
     "calibrated": true
   },
@@ -167,8 +194,17 @@
     "query": "What concepts connect thermodynamics and statistical mechanics?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [565, 566, 567, 591, 592, 593, 594, 70, 709, 715, 728],
+    "relevant_pages": [706, 707, 708, 709, 710, 726, 727, 728, 729, 730],
     "expected_answer_hint": "entropy S equals k ln W, Boltzmann distribution, temperature as average kinetic energy, partition function",
+    "calibrated": true
+  },
+  {
+    "id": "graph-007",
+    "query": "How does the concept of fields unify electricity, magnetism, and light?",
+    "query_type": "multihop",
+    "expected_route": "graphrag",
+    "relevant_pages": [485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 580, 581, 582, 583, 584, 585],
+    "expected_answer_hint": "electric and magnetic fields, Maxwell unification, displacement current gives rise to electromagnetic waves travelling at speed of light",
     "calibrated": true
   },
   {

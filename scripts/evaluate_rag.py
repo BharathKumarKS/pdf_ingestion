@@ -482,8 +482,15 @@ def aggregate_metrics(results: list[dict], cfg) -> dict:
 
 # ── Report rendering ──────────────────────────────────────────────────────────
 
+def _md_table(headers: list[str], rows: list[list[str]]) -> str:
+    sep = "| " + " | ".join("---" for _ in headers) + " |"
+    lines = ["| " + " | ".join(headers) + " |", sep]
+    for row in rows:
+        lines.append("| " + " | ".join(str(c) for c in row) + " |")
+    return "\n".join(lines)
+
+
 def build_summary_table(aggregated: dict, cfg) -> str:
-    """Return the metrics summary as a markdown table string for JSON storage."""
     recall_k = f"recall_at_{cfg.reranker_fetch_k}"
     prec_k   = f"precision_at_{cfg.reranker_top_k}"
     ndcg_k   = f"ndcg_at_{cfg.reranker_top_k}"
@@ -513,11 +520,47 @@ def build_summary_table(aggregated: dict, cfg) -> str:
     for qt, m in aggregated["by_type"].items():
         rows.append(_row(f"  {qt}", m))
 
-    sep = "| " + " | ".join("---" for _ in headers) + " |"
-    lines = ["| " + " | ".join(headers) + " |", sep]
-    for row in rows:
-        lines.append("| " + " | ".join(row) + " |")
-    return "\n".join(lines)
+    return _md_table(headers, rows)
+
+
+def build_per_query_table(results: list[dict], cfg) -> str:
+    recall_k = f"recall_at_{cfg.reranker_fetch_k}"
+    prec_k   = f"precision_at_{cfg.reranker_top_k}"
+    ndcg_k   = f"ndcg_at_{cfg.reranker_top_k}"
+
+    def _fmt(v):
+        return f"{v:.3f}" if v is not None else "—"
+
+    headers = [
+        "ID", "Query", "Type",
+        f"Recall@{cfg.reranker_fetch_k}", "MRR",
+        f"P@{cfg.reranker_top_k}", f"NDCG@{cfg.reranker_top_k}",
+        "Retrieved pages", "Labeled pages",
+    ]
+
+    rows = []
+    for r in results:
+        if r.get("skipped") or r.get("error"):
+            continue
+        m = r.get("metrics", {})
+        top_pages = ", ".join(
+            str(c["page"]) for c in r.get("top_chunks", [])[:cfg.reranker_top_k]
+            if c.get("page") is not None
+        )
+        labeled = ", ".join(str(p) for p in (r.get("relevant_pages") or [])[:8])
+        if len(r.get("relevant_pages") or []) > 8:
+            labeled += ", …"
+        rows.append([
+            r["id"],
+            r["query"][:55] + ("…" if len(r["query"]) > 55 else ""),
+            r.get("query_type", ""),
+            _fmt(m.get(recall_k)), _fmt(m.get("mrr")),
+            _fmt(m.get(prec_k)), _fmt(m.get(ndcg_k)),
+            top_pages or "—",
+            labeled or "—",
+        ])
+
+    return _md_table(headers, rows)
 
 
 def print_report(aggregated: dict, cfg):
@@ -670,40 +713,42 @@ def main():
     aggregated = aggregate_metrics(results, cfg)
     print_report(aggregated, cfg)
 
-    # Save results
+    # Save results — single .md file (summary + per-query tables + config)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M")
-    out_path = output_dir / f"{args.run_name}_{ts}.json"
-    md_path  = output_dir / f"{args.run_name}_{ts}.md"
+    ts       = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M")
+    out_path = output_dir / f"{args.run_name}_{ts}.md"
 
-    summary_table = build_summary_table(aggregated, cfg)
+    timestamp   = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    summary_tbl = build_summary_table(aggregated, cfg)
+    per_qry_tbl = build_per_query_table(results, cfg)
 
-    # summary_table first so it's the first thing visible when opening the JSON
-    report = {
-        "summary_table":  summary_table,
-        "run_name":       args.run_name,
-        "timestamp":      datetime.now(timezone.utc).isoformat(),
-        "elapsed_s":      round(elapsed, 1),
-        "config":         config_snapshot,
-        "judge_model":    args.judge_model if args.judge_backend != "skip" else None,
-        "aggregated":     aggregated,
-        "per_query":      results,
-    }
-    out_path.write_text(json.dumps(report, indent=2, default=str))
+    cfg_lines = "\n".join([
+        f"- **Tenant:** {args.tenant}",
+        f"- **Collection:** {cfg.qdrant_collection}",
+        f"- **Embedder:** {cfg.embedding_model}",
+        f"- **SPLADE:** {cfg.splade_enabled}",
+        f"- **Reranker:** {cfg.reranker_enabled}" + (f" ({cfg.reranker_model})" if cfg.reranker_enabled else ""),
+        f"- **Score threshold:** {args.score_threshold}",
+        f"- **Judge:** {args.judge_model if args.judge_backend != 'skip' else 'none'}",
+        f"- **Elapsed:** {round(elapsed, 1)}s",
+    ])
 
-    # Human-readable companion: plain table at the top, no JSON parsing needed
-    md_path.write_text(
+    out_path.write_text(
         f"# {args.run_name}\n\n"
-        f"**{report['timestamp']}** — {report['elapsed_s']}s\n\n"
-        f"{summary_table}\n"
+        f"**{timestamp}**\n\n"
+        f"## Summary\n\n"
+        f"{summary_tbl}\n\n"
+        f"## Per-Query Results\n\n"
+        f"{per_qry_tbl}\n\n"
+        f"## Config\n\n"
+        f"{cfg_lines}\n"
     )
 
     console.print(f"\n[green]Results saved to:[/] {out_path}")
-    console.print(f"[green]Summary table:  [/] {md_path}")
     console.print(
         "\n[dim]Tip: Run again with --run-name <name> after each system change "
-        "to track lift. Compare JSON files to see per-query regressions.[/]"
+        "to track lift.[/]"
     )
 
 
