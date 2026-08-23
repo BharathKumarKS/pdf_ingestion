@@ -83,7 +83,7 @@ def reembed_document(doc_id: str, batch_size: int) -> int:
             try:
                 vectors = embedder.embed_documents(texts)
             except Exception as exc:
-                logger.warning("Embedding batch {}-{} failed: {}", i, i + len(batch), exc)
+                logger.error("Embedding batch {}-{} FAILED: {} — {}", i, i + len(batch), type(exc).__name__, exc)
                 progress.advance(task, len(batch))
                 continue
 

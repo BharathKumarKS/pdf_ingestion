@@ -43,6 +43,15 @@ class StubEmbedder:
         vec = rng.random(self.dim).astype(np.float32)
         return vec / (np.linalg.norm(vec) + 1e-9)
 
+    def embed_documents(self, texts: list[str]) -> list[np.ndarray]:
+        rng = np.random.default_rng(seed=42)
+        results = []
+        for _ in texts:
+            vec = rng.random(self.dim).astype(np.float32)
+            vec /= np.linalg.norm(vec) + 1e-9
+            results.append(vec)
+        return results
+
 
 # -- Jina v3 embedder via sentence-transformers --------------------------------
 
@@ -145,6 +154,11 @@ class JinaEmbedder:
         self._load()
         vecs = self._encode_late([text], task="retrieval.query", late_chunking=False)
         return vecs[0]
+
+    def embed_documents(self, texts: list[str]) -> list[np.ndarray]:
+        """Batch embed raw strings without late-chunking context (for re-indexing)."""
+        self._load()
+        return self._encode_late(texts, task="retrieval.passage", late_chunking=False)
 
     # -- Internals -------------------------------------------------------------
 
