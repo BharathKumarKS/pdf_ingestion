@@ -104,9 +104,11 @@ def reembed_document(doc_id: str, batch_size: int) -> int:
                     "embedding_version":  cfg.embedding_model,
                     "title":              None,
                 }
+                # Named-vector collection (SPLADE hybrid) requires {"dense": [...]}
+                vector = {"dense": vec.tolist()} if cfg.splade_enabled else vec.tolist()
                 points.append(PointStruct(
                     id=chunk.qdrant_point_id,
-                    vector=vec.tolist(),
+                    vector=vector,
                     payload=payload,
                 ))
 
