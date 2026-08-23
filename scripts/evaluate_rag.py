@@ -675,19 +675,32 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M")
     out_path = output_dir / f"{args.run_name}_{ts}.json"
+    md_path  = output_dir / f"{args.run_name}_{ts}.md"
 
+    summary_table = build_summary_table(aggregated, cfg)
+
+    # summary_table first so it's the first thing visible when opening the JSON
     report = {
+        "summary_table":  summary_table,
         "run_name":       args.run_name,
         "timestamp":      datetime.now(timezone.utc).isoformat(),
         "elapsed_s":      round(elapsed, 1),
         "config":         config_snapshot,
         "judge_model":    args.judge_model if args.judge_backend != "skip" else None,
-        "summary_table":  build_summary_table(aggregated, cfg),
         "aggregated":     aggregated,
         "per_query":      results,
     }
     out_path.write_text(json.dumps(report, indent=2, default=str))
-    console.print(f"\n[green]Results saved to: {out_path}[/]")
+
+    # Human-readable companion: plain table at the top, no JSON parsing needed
+    md_path.write_text(
+        f"# {args.run_name}\n\n"
+        f"**{report['timestamp']}** — {report['elapsed_s']}s\n\n"
+        f"{summary_table}\n"
+    )
+
+    console.print(f"\n[green]Results saved to:[/] {out_path}")
+    console.print(f"[green]Summary table:  [/] {md_path}")
     console.print(
         "\n[dim]Tip: Run again with --run-name <name> after each system change "
         "to track lift. Compare JSON files to see per-query regressions.[/]"
