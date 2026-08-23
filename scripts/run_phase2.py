@@ -27,12 +27,14 @@ def parse_args():
     g = p.add_mutually_exclusive_group(required=True)
     g.add_argument("--doc-id", help="Document UUID to process")
     g.add_argument("--tenant", help="Process ALL documents for this tenant")
+    p.add_argument("--raptor-only", action="store_true",
+                   help="Skip card generation, rebuild RAPTOR only (use when cards are good but RAPTOR used zero vectors)")
     return p.parse_args()
 
 
-def run_for_doc(doc_id: str) -> dict:
+def run_for_doc(doc_id: str, raptor_only: bool = False) -> dict:
     from src.pdf_ingestion.store import generate_phase2_artifacts
-    return generate_phase2_artifacts(doc_id)
+    return generate_phase2_artifacts(doc_id, raptor_only=raptor_only)
 
 
 def main():
@@ -64,7 +66,7 @@ def main():
     for doc_id in doc_ids:
         console.print(f"\n[bold]Processing[/bold] {doc_id}…")
         try:
-            result = run_for_doc(doc_id)
+            result = run_for_doc(doc_id, raptor_only=args.raptor_only)
             table.add_row(
                 result["document_id"][:8] + "…",
                 result["filename"],

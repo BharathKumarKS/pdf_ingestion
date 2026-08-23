@@ -924,8 +924,13 @@ def ingest_pdf(
 def generate_phase2_artifacts(
     document_id: str,
     settings: Settings | None = None,
+    raptor_only: bool = False,
 ) -> dict:
-    """Generate cards + RAPTOR tree for an already-ingested document."""
+    """Generate cards + RAPTOR tree for an already-ingested document.
+
+    raptor_only=True skips card generation and rebuilds only the RAPTOR tree.
+    Use this when cards are already correct but RAPTOR was built with zero vectors.
+    """
     from src.pdf_ingestion.card_generator import get_card_generator
     from src.pdf_ingestion.chunker import TextChunk
     from src.pdf_ingestion.raptor_tree import RaptorBuilder
@@ -978,9 +983,13 @@ def generate_phase2_artifacts(
     if skipped:
         logger.info("Skipped {} non-chapter chunks (preface/TOC/bibliography)", skipped)
 
-    generator = get_card_generator(cfg)
-    cards     = generator.generate_cards_for_chunks(chunk_objects)
-    n_cards   = store.save_cards(cards)
+    if raptor_only:
+        n_cards = len(store.get_cards(document_id))
+        logger.info("raptor_only=True — skipping card generation ({} existing cards)", n_cards)
+    else:
+        generator = get_card_generator(cfg)
+        cards     = generator.generate_cards_for_chunks(chunk_objects)
+        n_cards   = store.save_cards(cards)
 
     builder = RaptorBuilder(settings=cfg)
     nodes   = builder.build_tree(
