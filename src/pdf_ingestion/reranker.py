@@ -55,7 +55,7 @@ def get_reranker(settings: Settings | None = None) -> StubReranker | CrossEncode
     global _reranker_instance
     if _reranker_instance is None:
         cfg = settings or get_settings()
-        if cfg.use_stub_reranker:
+        if not cfg.reranker_enabled or cfg.use_stub_reranker:
             _reranker_instance = StubReranker()
         else:
             _reranker_instance = CrossEncoderReranker(cfg.reranker_model)
