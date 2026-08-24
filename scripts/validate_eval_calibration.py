@@ -124,10 +124,13 @@ def call_judge(prompt: str, args) -> str:
 
 
 def parse_verdict(response: str) -> tuple[str, str]:
-    """Parse judge response into (verdict, reason)."""
-    lines = [l.strip() for l in response.strip().splitlines() if l.strip()]
+    """Parse judge response into (verdict, reason). Strips <think> blocks."""
+    import re
+    # Strip chain-of-thought blocks (DeepSeek R1, Qwen3 thinking mode)
+    cleaned = re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL).strip()
+    lines = [l.strip() for l in cleaned.splitlines() if l.strip()]
     verdict = "UNKNOWN"
-    reason = response[:120]
+    reason = cleaned[:120]
     if lines:
         first = lines[0].upper()
         if first.startswith("YES"):
