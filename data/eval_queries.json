@@ -32,7 +32,7 @@
     "query": "What does Feynman say about the principle of least action?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [452, 453, 454],
+    "relevant_pages": [452, 456, 460, 466],
     "expected_answer_hint": "path taken minimises the action integral, stationary action principle, Hamilton's principle",
     "calibrated": true
   },
@@ -113,7 +113,7 @@
     "query": "How does Feynman build up the concept of energy from mechanics to thermodynamics?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [252, 730, 735],
+    "relevant_pages": [252, 730, 786, 800],
     "expected_answer_hint": "mechanical energy, work-energy theorem, heat as random kinetic energy, internal energy, first law of thermodynamics",
     "calibrated": true
   },
