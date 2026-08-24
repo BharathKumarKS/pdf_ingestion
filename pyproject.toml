@@ -53,6 +53,7 @@ dependencies = [
     "openinference-instrumentation-openai>=0.1",
     "opentelemetry-sdk>=1.20",
     "arize-phoenix-otel>=0.6",
+    "pymupdf>=1.24",
 ]
 
 [project.optional-dependencies]
