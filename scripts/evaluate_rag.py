@@ -174,11 +174,20 @@ def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -
             break
 
     # Precision@top_k and NDCG@top_k (reranked, binary relevance)
-    gains = [
-        1 if h["page_number"] in relevant else 0
-        for h in reranked
-    ]
-    precision = sum(gains) / cfg.reranker_top_k if cfg.reranker_top_k else None
+    # Deduplicate by page: a relevant page counts only on its first occurrence.
+    # Without this, multiple chunks from the same page inflate DCG above IDCG.
+    seen_pages: set[int] = set()
+    gains = []
+    for h in reranked:
+        p = h["page_number"]
+        if p in relevant and p not in seen_pages:
+            gains.append(1)
+            seen_pages.add(p)
+        else:
+            gains.append(0)
+
+    n_relevant_hits = sum(gains)
+    precision = n_relevant_hits / cfg.reranker_top_k if cfg.reranker_top_k else None
 
     dcg  = sum(g / np.log2(i + 2) for i, g in enumerate(gains))
     ideal_hits = min(len(relevant), cfg.reranker_top_k)

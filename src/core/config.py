@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     qdrant_local_path: str = "./data/qdrant"  # file-based persistence (no Docker)
     qdrant_url: str = ""                  # e.g. https://xxxx.cloud.qdrant.io
     qdrant_api_key: str = ""              # cluster API key (support vectors)
+    min_content_page: int = 0            # skip chunks below this PDF page (filters TOC/preface)
 
     # Embedding — Jina v3
     embedding_model: str = "jinaai/jina-embeddings-v3"

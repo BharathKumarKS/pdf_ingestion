@@ -7,7 +7,7 @@ from typing import Optional
 
 import numpy as np
 from loguru import logger
-from qdrant_client.models import FieldCondition, Filter, MatchValue, PointStruct
+from qdrant_client.models import FieldCondition, Filter, MatchValue, PointStruct, Range
 from sqlmodel import Session, select
 
 from src.core.config import Settings, get_settings
@@ -173,9 +173,17 @@ class DocumentStore:
         _NOT_RAPTOR = FieldCondition(
             key="source_type", match=MatchValue(value="raptor_summary")
         )
+        # Exclude front matter (TOC, preface) when configured
+        _must_not: list = [_NOT_RAPTOR]
+        if self._cfg.min_content_page > 0:
+            _must_not.append(FieldCondition(
+                key="page_number",
+                range=Range(lt=self._cfg.min_content_page),
+            ))
+
         if source_type is None:
             filter_ = Filter(
-                must_not=[_NOT_RAPTOR],
+                must_not=_must_not,
                 should=[
                     Filter(must=[FieldCondition(key="tenant_id",
                                  match=MatchValue(value=tenant_id))]),
@@ -191,7 +199,7 @@ class DocumentStore:
             else:
                 must.append(FieldCondition(key="tenant_id",
                             match=MatchValue(value=tenant_id)))
-            filter_ = Filter(must=must)
+            filter_ = Filter(must=must, must_not=_must_not if self._cfg.min_content_page > 0 else [])
 
         if self._cfg.splade_enabled and query_text:
             from qdrant_client.models import Fusion, FusionQuery, Prefetch
