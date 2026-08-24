@@ -14,9 +14,10 @@
     "query": "Define Newton's first law of motion",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": null,
-    "_calibration_note": "Qwen judge: p178=NO (momentum/inertia context), p179=NO (2nd law content). First law stated pages unknown — needs re-verification.",
-    "calibrated": false
+    "relevant_pages": [177],
+    "_calibration_note": "PDF agent confirmed: p177 is the only page in Ch.9 that explicitly names and states the First Law (principle of inertia, Galileo/Newton attribution). p178-179 pivot to 2nd law.",
+    "expected_answer_hint": "object at rest stays at rest, object in motion stays in motion unless acted on by external force — principle of inertia",
+    "calibrated": true
   },
   {
     "id": "vec-003",
