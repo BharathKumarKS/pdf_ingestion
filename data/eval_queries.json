@@ -1,6 +1,6 @@
 [
   {
-    "_note": "relevant_pages = 2-4 most central pages per query verified against feynman-lectures-on-physics-volume1.pdf. Focused labels: a good retriever should score Recall@20 > 0.80. Visual queries use ColPali — relevant_pages=null.",
+    "_note": "relevant_pages validated by Qwen3-VL-8B-Instruct independent judge (2026-08-24). All NO pages removed. Queries where no page scored YES/PARTIAL are marked calibrated=false. Visual queries use ColPali — relevant_pages=null.",
     "id": "vec-001",
     "query": "What is the formula for kinetic energy?",
     "query_type": "factual",
@@ -14,9 +14,9 @@
     "query": "Define Newton's first law of motion",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [178, 179],
-    "expected_answer_hint": "object at rest stays at rest, object in motion stays in motion unless acted on by external force",
-    "calibrated": true
+    "relevant_pages": null,
+    "_calibration_note": "Qwen judge: p178=NO (momentum/inertia context), p179=NO (2nd law content). First law stated pages unknown — needs re-verification.",
+    "calibrated": false
   },
   {
     "id": "vec-003",
@@ -29,11 +29,12 @@
   },
   {
     "id": "vec-004",
-    "query": "What does Feynman say about the principle of least action?",
+    "query": "What does Feynman say about the principle of least time?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [452, 456, 460, 466],
-    "expected_answer_hint": "path taken minimises the action integral, stationary action principle, Hamilton's principle",
+    "relevant_pages": [460],
+    "_calibration_note": "Query changed from 'least action' to 'least time' — pages 452-466 are Ch.26 optics/Fermat principle of least time, not Hamilton's principle. Only p460 scored PARTIAL.",
+    "expected_answer_hint": "light takes the path of least time between two points, Fermat's principle, equivalent to Snell's law",
     "calibrated": true
   },
   {
@@ -41,7 +42,7 @@
     "query": "What is the difference between elastic and inelastic collisions?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [207, 208, 209],
+    "relevant_pages": [207, 208],
     "expected_answer_hint": "elastic: kinetic energy conserved; inelastic: kinetic energy not conserved but momentum is",
     "calibrated": true
   },
@@ -50,7 +51,7 @@
     "query": "What is Newton's second law of motion?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [179, 180, 181],
+    "relevant_pages": [179, 181],
     "expected_answer_hint": "F equals ma, net force equals mass times acceleration",
     "calibrated": true
   },
@@ -59,7 +60,8 @@
     "query": "What is the formula for gravitational force?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [242, 243],
+    "relevant_pages": [182, 243],
+    "_calibration_note": "p182: F=GmM/R²=mg explicit formula (near-Earth). p243: PARTIAL (mentions in comparison context). p242=NO (electric force).",
     "expected_answer_hint": "F equals G m1 m2 over r squared, inversely proportional to square of distance",
     "calibrated": true
   },
@@ -77,7 +79,8 @@
     "query": "What is the work-energy theorem?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [267, 268, 269, 270],
+    "relevant_pages": [270],
+    "_calibration_note": "p267-269=NO (context/setup, not the theorem). p270=YES (theorem stated directly).",
     "expected_answer_hint": "work done on an object equals the change in its kinetic energy, W = delta KE",
     "calibrated": true
   },
@@ -86,7 +89,8 @@
     "query": "What is the uncertainty principle?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [668, 669, 670, 671, 672],
+    "relevant_pages": [668, 669, 672],
+    "_calibration_note": "p668/669/672=PARTIAL (mentions HUP in QM context). p670/671=NO (double-slit, interference).",
     "expected_answer_hint": "delta x times delta p is greater than or equal to h-bar over 2, position and momentum cannot both be known precisely",
     "calibrated": true
   },
@@ -104,7 +108,8 @@
     "query": "Summarize the key themes in the chapter on conservation laws",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [97, 98, 211, 212],
+    "relevant_pages": [97, 98, 212],
+    "_calibration_note": "p211=NO (truncated, no coherent content). p97/98/212=PARTIAL.",
     "expected_answer_hint": "conservation of energy, momentum, angular momentum; symmetries and conservation; different forms energy takes",
     "calibrated": true
   },
@@ -113,7 +118,8 @@
     "query": "How does Feynman build up the concept of energy from mechanics to thermodynamics?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [252, 730, 786, 800],
+    "relevant_pages": [252, 730, 800],
+    "_calibration_note": "p252=YES, p730/800=PARTIAL. p786=NO (Carnot without energy bridge).",
     "expected_answer_hint": "mechanical energy, work-energy theorem, heat as random kinetic energy, internal energy, first law of thermodynamics",
     "calibrated": true
   },
@@ -122,7 +128,8 @@
     "query": "What are the main ideas connecting electricity and magnetism?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [487, 490, 492],
+    "relevant_pages": [487, 492],
+    "_calibration_note": "p490=NO (radiation from accelerating charges — tangential). p487/492=PARTIAL.",
     "expected_answer_hint": "changing magnetic fields induce electric fields, Maxwell displacement current, electromagnetic waves",
     "calibrated": true
   },
@@ -131,7 +138,8 @@
     "query": "How does the textbook introduce probability into physics?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [124, 670, 673],
+    "relevant_pages": [124, 670],
+    "_calibration_note": "p670=YES. p124=PARTIAL (coin toss statistics). p673=NO (position/momentum measurement limits).",
     "expected_answer_hint": "Boltzmann distributions in statistical mechanics, then inherent probability in quantum mechanics via Born rule",
     "calibrated": true
   },
@@ -140,7 +148,8 @@
     "query": "How does Feynman explain the relationship between force and potential energy?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [278, 279, 280],
+    "relevant_pages": [278, 280],
+    "_calibration_note": "p279=NO (scalar potential Psi, not force-potential relationship directly). p278/280=PARTIAL.",
     "expected_answer_hint": "force is the negative gradient of potential energy, F = -dU/dx, conservative forces and path independence",
     "calibrated": true
   },
@@ -158,7 +167,8 @@
     "query": "What should I understand before learning about Maxwell's equations?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [487, 488, 489],
+    "relevant_pages": [487, 488],
+    "_calibration_note": "p489=NO (quantum/nuclear forces — off-topic). p487/488=PARTIAL.",
     "expected_answer_hint": "electric fields, magnetic fields, Gauss's law, Faraday's law, vector calculus, divergence and curl",
     "calibrated": true
   },
@@ -176,7 +186,8 @@
     "query": "How do conservation laws appear across different areas of physics?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [97, 211, 213],
+    "relevant_pages": [97, 213],
+    "_calibration_note": "p211=NO (fragmented/truncated). p97/213=PARTIAL.",
     "expected_answer_hint": "conservation of energy in thermodynamics and mechanics, momentum in collisions, angular momentum in rotation, charge in electromagnetism",
     "calibrated": true
   },
@@ -203,7 +214,8 @@
     "query": "How does the concept of fields unify electricity, magnetism, and light?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [487, 488, 580],
+    "relevant_pages": [487, 488],
+    "_calibration_note": "p580=NO (reflection/polarization — not unification). p487/488=PARTIAL.",
     "expected_answer_hint": "electric and magnetic fields, Maxwell unification, displacement current gives rise to electromagnetic waves travelling at speed of light",
     "calibrated": true
   },
