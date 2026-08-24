@@ -225,7 +225,16 @@ class DocumentStore:
                 limit=limit,
                 with_payload=True,
             )
-        return [{"score": h.score, "qdrant_point_id": str(h.id), **h.payload} for h in response.points]
+        results = [{"score": h.score, "qdrant_point_id": str(h.id), **h.payload} for h in response.points]
+
+        # Post-filter front matter (local file Qdrant doesn't support Range payload filters)
+        if self._cfg.min_content_page > 0:
+            results = [
+                r for r in results
+                if (r.get("page_number") or 0) >= self._cfg.min_content_page
+            ]
+
+        return results
 
     def search_raptor(
         self,

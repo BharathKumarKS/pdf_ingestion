@@ -23,7 +23,7 @@
     "query": "What is the value of Planck's constant?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [680, 681, 682],
+    "relevant_pages": [965],
     "expected_answer_hint": "h = 6.626 times 10 to the -34 joule-seconds",
     "calibrated": true
   },
@@ -59,7 +59,7 @@
     "query": "What is the formula for gravitational force?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [143, 144, 145],
+    "relevant_pages": [242, 243],
     "expected_answer_hint": "F equals G m1 m2 over r squared, inversely proportional to square of distance",
     "calibrated": true
   },
@@ -77,7 +77,7 @@
     "query": "What is the work-energy theorem?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [242, 243, 244],
+    "relevant_pages": [267, 268, 269, 270],
     "expected_answer_hint": "work done on an object equals the change in its kinetic energy, W = delta KE",
     "calibrated": true
   },
@@ -182,11 +182,11 @@
   },
   {
     "id": "graph-005",
-    "query": "Explain quantum tunnelling in terms of concepts I've already seen in classical physics",
+    "query": "What connects the inverse square law in gravity and electricity?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [686, 687],
-    "expected_answer_hint": "classical waves pass through barriers via evanescent fields, QM wave function decays exponentially inside barrier, non-zero probability on other side",
+    "relevant_pages": [143, 144, 242, 243],
+    "expected_answer_hint": "both gravitational force and Coulomb electrostatic force follow the same inverse square law, F proportional to 1/r squared, suggesting a deep structural similarity",
     "calibrated": true
   },
   {

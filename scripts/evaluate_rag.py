@@ -738,6 +738,7 @@ def main():
         f"- **Embedder:** {cfg.embedding_model}",
         f"- **SPLADE:** {cfg.splade_enabled}",
         f"- **Reranker:** {cfg.reranker_enabled}" + (f" ({cfg.reranker_model})" if cfg.reranker_enabled else ""),
+        f"- **Min content page:** {cfg.min_content_page}",
         f"- **Score threshold:** {args.score_threshold}",
         f"- **Judge:** {args.judge_model if args.judge_backend != 'skip' else 'none'}",
         f"- **Elapsed:** {round(elapsed, 1)}s",
