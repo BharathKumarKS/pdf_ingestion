@@ -219,12 +219,19 @@ def main():
     issues = []
     for r in all_results:
         verdicts = [v["verdict"] for v in r["page_verdicts"]]
-        n_yes = verdicts.count("YES")
+        n_yes     = verdicts.count("YES")
         n_partial = verdicts.count("PARTIAL")
-        n_no = verdicts.count("NO")
-        n_pages = len(verdicts)
+        n_no      = verdicts.count("NO")
+        n_error   = verdicts.count("ERROR")
+        n_pages   = len(verdicts)
 
-        if n_no == n_pages:
+        if n_error == n_pages:
+            overall = "[red]ALL ERRORS[/]"
+            issues.append(r)
+        elif n_error > 0:
+            overall = f"[red]{n_error} ERRORS[/]"
+            issues.append(r)
+        elif n_no == n_pages:
             overall = "[red]ALL WRONG[/]"
             issues.append(r)
         elif n_no > 0:
@@ -263,7 +270,8 @@ def main():
             r["id"],
             r["query"][:55] + ("…" if len(r["query"]) > 55 else ""),
             ", ".join(str(p) for p in r["labeled_pages"]),
-            verdicts.count("YES"), verdicts.count("PARTIAL"), verdicts.count("NO"),
+            verdicts.count("YES"), verdicts.count("PARTIAL"),
+            verdicts.count("NO"), verdicts.count("ERROR"),
         ])
 
     detail_rows = []
@@ -279,7 +287,7 @@ def main():
         f"**{datetime.now(timezone.utc).isoformat(timespec='seconds')}**  \n"
         f"Judge: {args.judge_backend} / {args.judge_model}\n\n"
         f"## Summary\n\n"
-        + _md_table(["ID", "Query", "Labeled pages", "YES", "PARTIAL", "NO"], summary_rows)
+        + _md_table(["ID", "Query", "Labeled pages", "YES", "PARTIAL", "NO", "ERROR"], summary_rows)
         + "\n\n## Per-Page Verdicts\n\n"
         + _md_table(["ID", "Page", "Verdict", "Reason"], detail_rows)
         + "\n\n## Queries Needing Attention\n\n"
