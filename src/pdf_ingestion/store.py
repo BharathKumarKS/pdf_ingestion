@@ -249,10 +249,53 @@ class DocumentStore:
             dense_64 top-3N → dense_768 rescore top-N
 
         Optionally adds SPLADE as a parallel RRF lane (when splade_enabled).
+
+        Legacy fallback: if the collection still uses the old single-vector
+        schema (pre-Phase-4B, before re-ingest), falls back transparently to
+        a plain unnamed-vector search so evaluate_rag.py keeps working.
         """
         from qdrant_client.models import Prefetch
 
         cfg = self._cfg
+
+        # Detect whether the collection has the new named-vector schema.
+        # Old schema: VectorParams (unnamed) or {"dense": VectorParams}.
+        # New schema: {"dense_64": ..., "dense_768": ..., ...}.
+        try:
+            col_info = self._qdrant.get_collection(cfg.qdrant_collection)
+            vectors_cfg = col_info.config.params.vectors
+            has_new_schema = isinstance(vectors_cfg, dict) and "dense_64" in vectors_cfg
+        except Exception:
+            has_new_schema = False
+
+        if not has_new_schema:
+            # Legacy path: old Jina single-vector or {"dense": ...} collection
+            using = "dense" if (
+                isinstance(vectors_cfg, dict) and "dense" in vectors_cfg
+            ) else None
+            if cfg.splade_enabled and query_text and using == "dense":
+                from qdrant_client.models import Fusion, FusionQuery, Prefetch as _P
+                from src.pdf_ingestion.splade_embedder import get_splade_embedder
+                sparse_vec = get_splade_embedder(cfg).encode_sparse(query_text)
+                return self._qdrant.query_points(
+                    collection_name=cfg.qdrant_collection,
+                    prefetch=[
+                        _P(query=query_vector.tolist(), using="dense", limit=limit * 3),
+                        _P(query=sparse_vec.to_qdrant(), using="sparse", limit=limit * 3),
+                    ],
+                    query=FusionQuery(fusion=Fusion.RRF),
+                    query_filter=filter_,
+                    limit=limit,
+                    with_payload=True,
+                )
+            return self._qdrant.query_points(
+                collection_name=cfg.qdrant_collection,
+                query=query_vector.tolist(),
+                using=using,
+                query_filter=filter_,
+                limit=limit,
+                with_payload=True,
+            )
 
         # 64d MRL truncation of the query vector (first-stage ANN)
         vec_64 = query_vector[:cfg.embedding_dim_low].copy()
@@ -345,10 +388,23 @@ class DocumentStore:
                                  match=MatchValue(value=self._cfg.global_tenant_id))]),
                 ],
             )
+        # Legacy fallback: old collections use "dense" or unnamed vector
+        try:
+            col_info = self._qdrant.get_collection(self._cfg.qdrant_collection)
+            vectors_cfg = col_info.config.params.vectors
+            if isinstance(vectors_cfg, dict) and "dense_768" in vectors_cfg:
+                using = "dense_768"
+            elif isinstance(vectors_cfg, dict) and "dense" in vectors_cfg:
+                using = "dense"
+            else:
+                using = None
+        except Exception:
+            using = None
+
         response = self._qdrant.query_points(
             collection_name=self._cfg.qdrant_collection,
             query=query_vector.tolist(),
-            using="dense_768",
+            using=using,
             query_filter=filter_,
             limit=limit,
             with_payload=True,
