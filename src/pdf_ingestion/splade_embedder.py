@@ -138,21 +138,23 @@ class ClusterSpladeEmbedder:
         self._url   = cfg.sv_sparse_url
         self._model = cfg.splade_model
 
-    def _post(self, texts: list[str]) -> list[SparseVector]:
+    def _post(self, texts: list[str], batch_size: int = 32) -> list[SparseVector]:
         import httpx
-        resp = httpx.post(
-            self._url,
-            json={"model": self._model, "input": texts},
-            timeout=60,
-        )
-        resp.raise_for_status()
         results = []
-        for item in resp.json()["data"]:
-            emb = item["embedding"]
-            results.append(SparseVector(
-                indices=emb["indices"],
-                values=emb["values"],
-            ))
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i : i + batch_size]
+            resp = httpx.post(
+                self._url,
+                json={"model": self._model, "input": batch},
+                timeout=120,
+            )
+            resp.raise_for_status()
+            for item in resp.json()["data"]:
+                emb = item["embedding"]
+                results.append(SparseVector(
+                    indices=emb["indices"],
+                    values=emb["values"],
+                ))
         return results
 
     def encode_sparse(self, text: str) -> SparseVector:

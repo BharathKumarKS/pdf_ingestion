@@ -187,22 +187,22 @@ class ClusterColBERTEmbedder:
         self._url = self._cfg.sv_colbert_url
         self._model = self._cfg.colbert_model
 
-    def _post(self, texts: list[str], encoding_type: str) -> list[np.ndarray]:
+    def _post(self, texts: list[str], encoding_type: str, batch_size: int = 32) -> list[np.ndarray]:
         import httpx
-        payload = {
-            "model": self._model,
-            "input": texts,
-            "encoding_type": encoding_type,
-        }
-        resp = httpx.post(self._url, json=payload, timeout=60)
-        resp.raise_for_status()
-        data = resp.json()
         results = []
-        for item in data["data"]:
-            mat = np.array(item["embedding"], dtype=np.float32)
-            # L2-normalise each token vector
-            norms = np.linalg.norm(mat, axis=1, keepdims=True) + 1e-9
-            results.append(mat / norms)
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i : i + batch_size]
+            payload = {
+                "model": self._model,
+                "input": batch,
+                "encoding_type": encoding_type,
+            }
+            resp = httpx.post(self._url, json=payload, timeout=120)
+            resp.raise_for_status()
+            for item in resp.json()["data"]:
+                mat = np.array(item["embedding"], dtype=np.float32)
+                norms = np.linalg.norm(mat, axis=1, keepdims=True) + 1e-9
+                results.append(mat / norms)
         return results
 
     def embed_passages(self, texts: list[str]) -> list[np.ndarray]:
