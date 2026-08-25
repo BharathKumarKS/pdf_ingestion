@@ -187,7 +187,7 @@ class ClusterColBERTEmbedder:
         self._url = self._cfg.sv_colbert_url
         self._model = self._cfg.colbert_model
 
-    def _post(self, texts: list[str], encoding_type: str, batch_size: int = 32) -> list[np.ndarray]:
+    def _post(self, texts: list[str], encoding_type: str, batch_size: int = 4) -> list[np.ndarray]:
         import httpx
         results = []
         for i in range(0, len(texts), batch_size):
