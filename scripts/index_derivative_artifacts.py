@@ -120,9 +120,14 @@ def main() -> None:
     console.print(f"  Cards found: [cyan]{len(rows)}[/] (before chapter filter)")
 
     # ── Filter non-chapter chunks ────────────────────────────────────────────
-    filtered = [(card, chunk) for card, chunk in rows if _is_chapter_chunk(chunk.text)]
+    min_page = cfg.min_content_page  # skip front matter (TOC, copyright, publisher info)
+    filtered = [
+        (card, chunk) for card, chunk in rows
+        if _is_chapter_chunk(chunk.text)
+        and (min_page == 0 or (chunk.page_number or 0) >= min_page)
+    ]
     skipped  = len(rows) - len(filtered)
-    console.print(f"  After filter: [green]{len(filtered)}[/] kept, [yellow]{skipped}[/] skipped (non-chapter)")
+    console.print(f"  After filter: [green]{len(filtered)}[/] kept, [yellow]{skipped}[/] skipped (non-chapter / front matter)")
 
     if not filtered:
         console.print("[red]No cards to index.[/]")

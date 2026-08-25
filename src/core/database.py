@@ -398,6 +398,8 @@ def get_memgraph(settings: Settings | None = None):
             _memgraph = GraphDatabase.driver(
                 uri,
                 auth=(cfg.memgraph_user, cfg.memgraph_password),
+                connection_timeout=3,    # fail fast — don't block for 60s when Memgraph is down
+                max_connection_lifetime=300,
             )
             logger.info("Memgraph: connected at {}", uri)
         except Exception as exc:
