@@ -134,6 +134,11 @@ class Settings(BaseSettings):
     use_stub_graph: bool = False
     concept_gen_workers: int = 4         # parallel Ollama threads for concept extraction
 
+    # HyDE — Hypothetical Document Embedding for overview queries
+    # Generates a short hypothetical answer, embeds it, uses that vector for RAPTOR search.
+    # Improves overview recall at the cost of one extra LLM call per query.
+    hyde_enabled: bool = False
+
     # Phase A — Derivative Artifact retrieval
     da_collection: str = "derivative_artifacts"
     da_enabled: bool = True

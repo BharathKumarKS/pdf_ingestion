@@ -650,6 +650,9 @@ def parse_args():
     p.add_argument("--judge-api-key",  default="")
     p.add_argument("--judge-model",    default="gpt-4o-mini",
                    help="Judge model (e.g. claude-3-haiku-20240307, gpt-4o-mini)")
+    p.add_argument("--judge-from-env", action="store_true",
+                   help="Auto-configure judge from LLM_BACKEND/OPENAI_API_BASE/OPENAI_MODEL in .env "
+                        "(skips --judge-backend/--judge-api-base/--judge-model flags)")
 
     return p.parse_args()
 
@@ -663,6 +666,18 @@ def main():
     from src.pdf_ingestion.store     import DocumentStore
 
     cfg = get_settings()
+
+    # Auto-configure judge from .env LLM settings
+    if getattr(args, "judge_from_env", False):
+        if cfg.llm_backend == "ollama":
+            args.judge_backend = "ollama"
+            args.judge_api_base = cfg.ollama_host
+            args.judge_model = cfg.ollama_model
+        else:
+            args.judge_backend = "openai"
+            args.judge_api_base = cfg.openai_api_base
+            args.judge_api_key = cfg.openai_api_key
+            args.judge_model = cfg.openai_model
 
     console.print("\n[bold blue]Synapse RAG Evaluation Pipeline[/]")
     console.print(f"  Query file:       {args.query_file}")

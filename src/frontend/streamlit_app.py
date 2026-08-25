@@ -344,6 +344,7 @@ with tab_search:
                     _tel.set_attr(root_span, "chunks_retrieved", len(chunk_results))
 
                 # ── Intent router: decide which routes to activate ────────
+                intent = None
                 if cfg.intent_router_enabled:
                     from src.core.intent_router import get_intent_router, ROUTE_MAP
                     router = get_intent_router(cfg)
@@ -355,10 +356,31 @@ with tab_search:
                         also_raptor = route.use_raptor
                         also_graph  = route.use_graph
 
+                # ── HyDE: generate hypothetical answer for RAPTOR vector ──
+                raptor_vec = q_vec
+                if also_raptor and intent == "overview" and cfg.hyde_enabled:
+                    try:
+                        from src.core.llm import call_llm
+                        hyp = call_llm(
+                            prompt=(
+                                f"Write 2-3 sentences of physics textbook content "
+                                f"that directly answers: {query}"
+                            ),
+                            system=(
+                                "You are a physics textbook author. Write factual content only. "
+                                "No preamble, no 'Here is...', just the content itself."
+                            ),
+                            settings=cfg,
+                        )
+                        if hyp:
+                            raptor_vec = embedder.embed_query(hyp)
+                    except Exception:
+                        pass  # fall back to raw query vector
+
                 raptor_results = []
                 if also_raptor:
                     raptor_results = s.search_raptor(
-                        query_vector=q_vec,
+                        query_vector=raptor_vec,
                         tenant_id=tenant_id,
                         source_type_filter=source_type_filter,
                         limit=2,
@@ -415,7 +437,8 @@ with tab_search:
                                     "You are a physics tutor. Answer in clear prose — "
                                     "never as a numbered list, never as Q&A pairs, never invent questions. "
                                     "One cohesive answer only. Never fabricate facts. "
-                                    "Never cite a page number not shown as [Page N] in the passages."
+                                    "Never cite a page number not shown as [Page N] in the passages. "
+                                    "Use $...$ for inline math and $$...$$ for display equations."
                                 ),
                                 settings=cfg,
                             )
@@ -832,7 +855,7 @@ if tab_visual is not None:
                                                 f"educational response explaining what is shown.\n\n"
                                                 f"Retrieved page content:\n{context_text}"
                                             ),
-                                            system="You are a physics tutor. Answer concisely and accurately based only on the provided content.",
+                                            system="You are a physics tutor. Answer concisely and accurately based only on the provided content. Use $...$ for inline math and $$...$$ for display equations.",
                                             settings=cfg,
                                         )
                                         st.subheader("📝 What these pages show")
