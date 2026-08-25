@@ -33,13 +33,20 @@ class Settings(BaseSettings):
     qdrant_api_key: str = ""              # cluster API key (support vectors)
     min_content_page: int = 0            # skip chunks below this PDF page (filters TOC/preface)
 
-    # Embedding — Jina v3
-    embedding_model: str = "jinaai/jina-embeddings-v3"
-    embedding_dim: int = 1024
+    # Embedding — Nomic MRL (replaces Jina v3; Apache 2.0, MRL capable)
+    embedding_model: str = "nomic-ai/nomic-embed-text-v1.5"
+    embedding_dim: int = 768             # full Nomic dense dim
+    embedding_dim_low: int = 64          # MRL truncation for fast ANN first-stage
     embedding_batch_size: int = 8        # 8 on CPU; set 32-64 with GPU
-    max_context_tokens: int = 8192       # max tokens per late-chunking window
+    max_context_tokens: int = 8192       # max tokens per context window
     use_gpu: bool = False                # set True on GPU VM (CUDA)
     use_stub_embedder: bool = False      # random vectors for unit tests
+
+    # ColBERT v2.0 late-interaction multi-vector embedder
+    colbert_model: str = "colbert-ir/colbertv2.0"
+    colbert_dim: int = 128               # per-token vector dimension
+    colbert_enabled: bool = True         # False → skip ColBERT (dense only)
+    use_stub_colbert: bool = False       # random token matrices for unit tests
 
     # Chunking
     chunk_size: int = 512

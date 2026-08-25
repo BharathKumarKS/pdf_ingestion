@@ -16,7 +16,8 @@ from src.core.config import Settings
 class TestConfig:
     def test_defaults_load(self, settings):
         assert settings.global_tenant_id == "global"
-        assert settings.embedding_dim == 1024
+        assert settings.embedding_dim == 768
+        assert settings.embedding_dim_low == 64
         assert settings.use_stub_embedder is True
 
     def test_ensure_dirs_creates_paths(self, settings, tmp_path):
@@ -325,7 +326,7 @@ class TestStore:
 @pytest.mark.integration
 class TestIntegration:
     """
-    Full pipeline with real Jina v3 model and Docker Qdrant.
+    Full pipeline with real Nomic embed v1.5 + ColBERT v2.0, Docker Qdrant.
     Run with: uv run pytest -m integration -v
     Requires:  docker compose up qdrant -d
     """
@@ -336,6 +337,7 @@ class TestIntegration:
 
         settings = Settings(
             use_stub_embedder=False,
+            use_stub_colbert=False,
             qdrant_in_memory=False,
             sqlite_url=f"sqlite:///{tmp_path}/integration.db",
         )

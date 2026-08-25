@@ -241,30 +241,46 @@ def get_qdrant(settings: Settings | None = None) -> QdrantClient:
 
 
 def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
+    """Create the knowledge_base collection with the 4-vector Nomic+ColBERT schema.
+
+    Named vectors:
+        dense_64   — Nomic 64d MRL truncation (fast ANN first stage)
+        dense_768  — Nomic 768d full embedding (rescore second stage)
+        colbert    — ColBERT 128d token matrices, MaxSim comparator (third stage)
+        sparse     — SPLADE sparse vectors (optional fourth lane)
+
+    Nested prefetch in search():
+        dense_64(500) → dense_768(250) → colbert MaxSim(100)
+    """
     existing = {c.name for c in client.get_collections().collections}
     if cfg.qdrant_collection not in existing:
-        if cfg.splade_enabled:
-            # Named dense + sparse vectors for hybrid search
-            client.create_collection(
-                collection_name=cfg.qdrant_collection,
-                vectors_config={
-                    "dense": VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
-                },
-                sparse_vectors_config={
-                    "sparse": SparseVectorParams(),
-                },
+        vectors_config: dict = {
+            "dense_64": VectorParams(size=cfg.embedding_dim_low, distance=Distance.COSINE),
+            "dense_768": VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
+        }
+        if cfg.colbert_enabled:
+            vectors_config["colbert"] = VectorParams(
+                size=cfg.colbert_dim,
+                distance=Distance.COSINE,
+                multivector_config=MultiVectorConfig(comparator=MultiVectorComparator.MAX_SIM),
             )
-            logger.info(
-                "Created Qdrant collection '{}' (dense + sparse / hybrid)",
-                cfg.qdrant_collection,
-            )
-        else:
-            # Unnamed dense vector — backward compatible
-            client.create_collection(
-                collection_name=cfg.qdrant_collection,
-                vectors_config=VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
-            )
-            logger.info("Created Qdrant collection '{}'", cfg.qdrant_collection)
+
+        sparse_cfg = {"sparse": SparseVectorParams()} if cfg.splade_enabled else None
+
+        create_kwargs: dict = {
+            "collection_name": cfg.qdrant_collection,
+            "vectors_config": vectors_config,
+        }
+        if sparse_cfg:
+            create_kwargs["sparse_vectors_config"] = sparse_cfg
+
+        client.create_collection(**create_kwargs)
+        logger.info(
+            "Created Qdrant collection '{}' (dense_64+dense_768{}{})",
+            cfg.qdrant_collection,
+            "+colbert" if cfg.colbert_enabled else "",
+            "+sparse" if cfg.splade_enabled else "",
+        )
 
     for field, schema in (
         ("tenant_id",          PayloadSchemaType.KEYWORD),

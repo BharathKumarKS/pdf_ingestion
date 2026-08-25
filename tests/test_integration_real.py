@@ -1,6 +1,6 @@
 """
-Integration test: real Jina v3 model, in-memory Qdrant, real sample PDF.
-No Docker required. Downloads Jina v3 on first run (~570 MB).
+Integration test: real Nomic embed v1.5 + ColBERT v2.0, in-memory Qdrant, real sample PDF.
+No Docker required. Downloads Nomic model on first run (~270 MB).
 
 Run: uv run pytest tests/test_integration_real.py -v -s
 """
@@ -28,16 +28,20 @@ def reset_db_singletons():
 
 @pytest.fixture(scope="module")
 def real_settings(tmp_path_factory):
-    """Real Jina v3 + in-memory Qdrant + isolated SQLite for this module."""
+    """Real Nomic embed v1.5 + in-memory Qdrant + isolated SQLite for this module."""
     from src.core.database import reset_singletons
     reset_singletons()  # start clean
     from src.core.config import Settings
     db_path = tmp_path_factory.mktemp("integration") / "real.db"
     return Settings(
         use_stub_embedder=False,
+        use_stub_colbert=True,   # skip ColBERT download in integration tests
         qdrant_in_memory=True,
         sqlite_url=f"sqlite:///{db_path}",
         debug=False,
+        embedding_model="nomic-ai/nomic-embed-text-v1.5",
+        embedding_dim=768,
+        embedding_dim_low=64,
         embedding_batch_size=4,
     )
 
@@ -70,49 +74,49 @@ def ingested_result(real_settings, real_pdf):
     return result
 
 
-# ── Jina v3 embedder tests ─────────────────────────────────────────────────
+# ── Nomic v1.5 embedder tests ─────────────────────────────────────────────────
 
-class TestRealJinaEmbedder:
+class TestRealNomicEmbedder:
     def test_model_loads(self, real_settings):
-        from src.pdf_ingestion.embedder import JinaEmbedder
-        print("\n[Jina v3] Loading model…")
-        emb = JinaEmbedder(settings=real_settings)
+        from src.pdf_ingestion.embedder import NomicEmbedder
+        print("\n[Nomic v1.5] Loading model…")
+        emb = NomicEmbedder(settings=real_settings)
         emb._load()
         assert emb._model is not None
-        print("[Jina v3] Model loaded successfully")
+        print("[Nomic v1.5] Model loaded successfully")
 
     def test_query_embedding_shape_and_norm(self, real_settings):
-        from src.pdf_ingestion.embedder import JinaEmbedder
-        emb = JinaEmbedder(settings=real_settings)
+        from src.pdf_ingestion.embedder import NomicEmbedder
+        emb = NomicEmbedder(settings=real_settings)
         vec = emb.embed_query("What is Newton's second law of motion?")
         assert vec.shape == (real_settings.embedding_dim,)
         norm = float(np.linalg.norm(vec))
         assert abs(norm - 1.0) < 0.02, f"Expected unit norm, got {norm:.4f}"
-        print(f"\n[Jina v3] Query embedding: shape={vec.shape}, norm={norm:.4f}")
+        print(f"\n[Nomic v1.5] Query embedding: shape={vec.shape}, norm={norm:.4f}")
 
     def test_similar_queries_close_in_space(self, real_settings):
         """Semantically similar sentences must have higher cosine sim than unrelated."""
-        from src.pdf_ingestion.embedder import JinaEmbedder
-        emb = JinaEmbedder(settings=real_settings)
+        from src.pdf_ingestion.embedder import NomicEmbedder
+        emb = NomicEmbedder(settings=real_settings)
         v1 = emb.embed_query("force equals mass times acceleration")
         v2 = emb.embed_query("F = m * a, Newton's second law")
         v3 = emb.embed_query("the capital of France is Paris")
         sim_related   = float(np.dot(v1, v2))
         sim_unrelated = float(np.dot(v1, v3))
-        print(f"\n[Jina v3] Cosine sim (F=ma vs F=ma paraphrase): {sim_related:.4f}")
-        print(f"[Jina v3] Cosine sim (F=ma vs Paris capital):    {sim_unrelated:.4f}")
+        print(f"\n[Nomic v1.5] Cosine sim (F=ma vs F=ma paraphrase): {sim_related:.4f}")
+        print(f"[Nomic v1.5] Cosine sim (F=ma vs Paris capital):    {sim_unrelated:.4f}")
         assert sim_related > sim_unrelated
 
-    def test_late_chunking_produces_correct_count(self, real_settings):
-        """Late chunking must return exactly one embedding per input chunk."""
+    def test_embed_chunks_correct_count(self, real_settings):
+        """embed_chunks must return exactly one EmbeddedChunk per input."""
         from src.pdf_ingestion.chunker import TextChunk
-        from src.pdf_ingestion.embedder import JinaEmbedder
+        from src.pdf_ingestion.embedder import NomicEmbedder
         import uuid
 
         chunks = [
             TextChunk(
                 chunk_id=str(uuid.uuid4()),
-                document_id="test-late",
+                document_id="test-count",
                 tenant_id="global",
                 chunk_index=i,
                 text=f"Physics concept {i}: " + (
@@ -123,24 +127,19 @@ class TestRealJinaEmbedder:
             )
             for i in range(6)
         ]
-        emb = JinaEmbedder(settings=real_settings)
+        emb = NomicEmbedder(settings=real_settings)
         results = emb.embed_chunks(chunks)
         assert len(results) == 6
         for r in results:
             assert r.embedding.shape == (real_settings.embedding_dim,)
             norm = float(np.linalg.norm(r.embedding))
             assert abs(norm - 1.0) < 0.02, f"Non-unit norm: {norm:.4f}"
-        print(f"\n[Jina v3] Late chunking: 6 chunks → 6 unit-norm embeddings ✓")
+        print(f"\n[Nomic v1.5] embed_chunks: 6 chunks → 6 unit-norm embeddings ✓")
 
-    def test_late_chunking_context_effect(self, real_settings):
-        """
-        Embeddings produced with late chunking (full context) should differ
-        from those produced independently per-chunk.
-        If late_chunking falls back, both paths return the same encoding,
-        so we just verify unit norms — a soft assertion that is always valid.
-        """
+    def test_embed_chunks_mrl_low_dim(self, real_settings):
+        """EmbeddedChunk.embedding_low must be 64d and unit-normed (MRL truncation)."""
         from src.pdf_ingestion.chunker import TextChunk
-        from src.pdf_ingestion.embedder import JinaEmbedder
+        from src.pdf_ingestion.embedder import NomicEmbedder
         import uuid
 
         texts = [
@@ -150,37 +149,32 @@ class TestRealJinaEmbedder:
         ]
         chunks = [
             TextChunk(
-                chunk_id=str(uuid.uuid4()), document_id="ctx-test",
+                chunk_id=str(uuid.uuid4()), document_id="mrl-test",
                 tenant_id="global", chunk_index=i, text=t,
                 char_start=i * 80, char_end=i * 80 + len(t),
                 token_count=12, page_number=1,
             )
             for i, t in enumerate(texts)
         ]
-        emb = JinaEmbedder(settings=real_settings)
-        late_results = emb.embed_chunks(chunks)
-        late_vecs = np.array([r.embedding for r in late_results])
+        emb = NomicEmbedder(settings=real_settings)
+        results = emb.embed_chunks(chunks)
 
-        # Verify all late embeddings are unit-normed (never zero vectors)
-        for i in range(3):
-            norm = float(np.linalg.norm(late_vecs[i]))
-            assert abs(norm - 1.0) < 0.02, f"Chunk {i} has non-unit norm: {norm:.4f}"
+        for i, r in enumerate(results):
+            assert r.embedding.shape == (real_settings.embedding_dim,), f"Chunk {i}: wrong 768d shape"
+            assert r.embedding_low.shape == (real_settings.embedding_dim_low,), f"Chunk {i}: wrong 64d shape"
+            norm_768 = float(np.linalg.norm(r.embedding))
+            norm_64  = float(np.linalg.norm(r.embedding_low))
+            assert abs(norm_768 - 1.0) < 0.02, f"Chunk {i} 768d non-unit norm: {norm_768:.4f}"
+            assert abs(norm_64 - 1.0) < 0.02, f"Chunk {i} 64d non-unit norm: {norm_64:.4f}"
 
-        # Solo encode for comparison
-        solo_results = [emb.embed_chunks([c])[0] for c in chunks]
-        solo_vecs = np.array([r.embedding for r in solo_results])
-        diffs = [float(np.linalg.norm(late_vecs[i] - solo_vecs[i])) for i in range(3)]
-        print(f"\n[Jina v3] Late vs solo L2 diffs: {[f'{d:.4f}' for d in diffs]}")
-        print(f"[Jina v3] Mean diff: {np.mean(diffs):.4f} (>0 confirms late chunking active)")
-        # All late embeddings must be valid regardless of whether diff > 0
-        assert all(abs(float(np.linalg.norm(late_vecs[i])) - 1.0) < 0.02 for i in range(3))
+        print(f"\n[Nomic v1.5] MRL: 3 chunks → 768d+64d embeddings ✓")
 
 
 # ── End-to-end pipeline tests (share one ingestion via module fixture) ─────
 
 class TestRealEndToEnd:
     def test_full_ingest_pipeline(self, ingested_result):
-        """Parse → chunk → embed (Jina v3) → store in Qdrant + SQLite."""
+        """Parse → chunk → embed (Nomic v1.5) → store in Qdrant + SQLite."""
         r = ingested_result
         print(f"\n[E2E] document_id={r['document_id']}, chunks={r['chunk_count']}, pages={r['page_count']}")
         assert r["document_id"]
@@ -250,11 +244,11 @@ class TestRealEndToEnd:
         assert sql_count == qdrant_count
 
     def test_semantic_search_returns_relevant_results(self, real_settings, ingested_result):
-        """Real Jina v3 search should rank physics-relevant chunks at the top."""
+        """Real Nomic v1.5 search should rank physics-relevant chunks at the top."""
         from src.pdf_ingestion.store import DocumentStore
-        from src.pdf_ingestion.embedder import JinaEmbedder
+        from src.pdf_ingestion.embedder import NomicEmbedder
 
-        emb   = JinaEmbedder(settings=real_settings)
+        emb   = NomicEmbedder(settings=real_settings)
         store = DocumentStore(settings=real_settings)
 
         queries = [

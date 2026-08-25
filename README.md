@@ -3,7 +3,7 @@
 An adaptive learning platform powered by Hybrid RAG (Retrieval-Augmented Generation).  
 Pre-ingest a base textbook globally, let students upload their own PDFs, and answer questions from either source — or both.
 
-> **Architecture:** Synapse Learning Worlds v4.0 · Author: Bharath Kumar
+> **Architecture:** Synapse Learning Worlds v5.0 · Author: Bharath Kumar
 
 ---
 
@@ -13,25 +13,40 @@ Pre-ingest a base textbook globally, let students upload their own PDFs, and ans
 Offline (admin, run once)              Online (runtime, per user)
 ──────────────────────────             ──────────────────────────
 PDF → Docling → Chonkie               Student uploads PDF
-    → Jina v3 (late chunking)             → same pipeline (Phase 1)
-    → Qdrant (tenant_id=global)           → ColPali + graph async in background
+    → Nomic MRL (768d + 64d)              → same pipeline (Phase 1)
+    → ColBERT v2.0 (128d tokens)         → ColPali + graph async in background
+    → Qdrant 4-vector schema
 
-Phase 2 artifacts (LLM via config.yaml):   Query flow (Phase 4):
-  • 8 pedagogical cards/chunk              1. Jina v3 → Qdrant vector search
-      summary, definition, example,        2. MMR diversity reranking on dense
-      misconception, question, objective,  3. DA recall lane (definition /
-      formula, factoid (COSTAR prompts)       formula / question / factoid cards)
-  • RAPTOR L1/L2/L3 summaries             4. RAPTOR cluster summaries (overview)
-  • Stored: SQLite + Qdrant               5. Memgraph concept graph (multi-hop)
-                                           6. SPLADE sparse hybrid + RRF (GPU)
-Phase 3 artifacts:                         7. Cross-encoder re-ranker (next)
-  • ColPali patch vectors / page
-  • Concept graph in Memgraph          Retrieval routes by query type:
-  • Page images on local disk            vector  → factual / point queries
-  • Stored: SQLite + Qdrant             raptor  → summaries / chapter overviews
-            + Memgraph + disk            graphrag → multi-hop / prerequisite chains
+Phase 2 artifacts (LLM via config.yaml):   Query flow (Phase 4B — Nomic+ColBERT):
+  • 8 pedagogical cards/chunk              1. Nomic embed → dense_64 top-500
+      summary, definition, example,           → dense_768 rescore top-250
+      misconception, question, objective,     → ColBERT MaxSim top-100
+      formula, factoid (COSTAR prompts)    2. SPLADE sparse lane → RRF (GPU only)
+  • RAPTOR L1/L2/L3 summaries             3. MMR diversity on dense hits
+  • Stored: SQLite + Qdrant               4. DA recall lane (definition /
+                                              formula / question / factoid cards)
+Phase 3 artifacts:                         5. RAPTOR cluster summaries (overview)
+  • ColPali patch vectors / page           6. Memgraph concept graph (multi-hop)
+  • Concept graph in Memgraph             7. Equal-weight RRF across all lanes
+  • Page images on local disk             8. Cross-encoder re-ranker (top-20)
+  • Stored: SQLite + Qdrant
+            + Memgraph + disk          Retrieval routes by query type:
+                                         vector  → factual / point queries
+                                         raptor  → summaries / chapter overviews
+                                         graphrag → multi-hop / prerequisite chains
                                          colpali → diagram / figure / table queries
 ```
+
+### Qdrant 4-Vector Schema (`knowledge_base`)
+
+| Vector name | Dim | Purpose |
+|---|---|---|
+| `dense_64` | 64d | Fast first-stage ANN (Nomic MRL truncation) |
+| `dense_768` | 768d | Full-precision dense rescore (second stage) |
+| `colbert` | 128d × L | Late-interaction MaxSim (third stage, per-token) |
+| `sparse` | — | SPLADE hybrid lane (GPU deployments only) |
+
+**Nested prefetch pipeline:** `dense_64(top-500) → dense_768(top-250) → colbert MaxSim(top-100)`
 
 ---
 
@@ -41,7 +56,8 @@ Phase 3 artifacts:                         7. Cross-encoder re-ranker (next)
 |---|---|
 | PDF parsing | Docling (IBM) |
 | Chunking | Chonkie `SentenceChunker` |
-| Text embeddings | Jina v3 `jinaai/jina-embeddings-v3` (late chunking) |
+| Text embeddings | Nomic `nomic-ai/nomic-embed-text-v1.5` (MRL 768d→64d, Apache 2.0) |
+| Late-interaction | ColBERT v2.0 `colbert-ir/colbertv2.0` (128d per-token MaxSim) |
 | Sparse embeddings | SPLADE (GPU) — dense+sparse hybrid via Qdrant RRF |
 | Visual embeddings | ColPali `vidore/colpali-v1.2` (multi-vector patch embeddings) |
 | Vector store | Qdrant — `knowledge_base` + `derivative_artifacts` + `visual_knowledge_base` |
@@ -90,8 +106,9 @@ cp .env.example .env
 Key settings in `.env`:
 
 ```env
-EMBEDDING_MODEL=jinaai/jina-embeddings-v3   # downloads ~570 MB on first run
-QDRANT_LOCAL_PATH=./data/qdrant             # local file-based persistence
+EMBEDDING_MODEL=nomic-ai/nomic-embed-text-v1.5  # downloads ~270 MB on first run
+COLBERT_MODEL=colbert-ir/colbertv2.0             # optional late-interaction (downloads separately)
+QDRANT_LOCAL_PATH=./data/qdrant                  # local file-based persistence
 ```
 
 ### 3. Configure LLM endpoints
@@ -134,7 +151,7 @@ uv run python scripts/ingest_base_textbook.py \
   --grade "Undergraduate"
 ```
 
-> **First run** downloads the Jina v3 model (~570 MB) automatically.
+> **First run** downloads the Nomic embed model (~270 MB) automatically. ColBERT v2.0 (~440 MB) is downloaded on first search when `COLBERT_ENABLED=true`.
 
 ### 6. Generate Phase 2 artifacts (cards + RAPTOR)
 
@@ -204,6 +221,7 @@ Fill in these values from your Support Vectors dashboard:
 | `EMBEDDING_BATCH_SIZE` | Increase for GPU | `32` |
 | `CARD_GEN_WORKERS` | Parallel LLM threads for card generation | `8` |
 | `SPLADE_ENABLED` | Enable sparse hybrid search (requires re-ingest) | `true` |
+| `COLBERT_ENABLED` | Enable ColBERT MaxSim late-interaction (requires re-ingest) | `true` |
 
 ### Step 2 — Configure `config.yaml`
 
@@ -243,13 +261,16 @@ uv run python scripts/run_phase3.py --tenant global
 | Stage | CPU laptop | GPU VM (estimated) |
 |---|---|---|
 | Docling parsing | ~2 hours | ~20 min |
-| Jina v3 embedding | ~2 hours | ~15 min |
+| Nomic MRL embedding | ~1 hour | ~10 min |
+| ColBERT v2.0 encoding | ~3 hours | ~20 min |
 | Card generation (8 types) | ~30 hours | ~3 hours (8 parallel workers) |
 | RAPTOR tree | ~5 min | ~2 min |
 | DA indexing | ~30 min | ~5 min |
 | ColPali embedding (5k pages) | ~8 hours | ~45 min |
 | Concept graph (Memgraph) | ~2 hours | ~30 min |
-| **Total** | **~45 hours** | **~5 hours** |
+| **Total** | **~47 hours** | **~5 hours** |
+
+> **Re-ingest required** when upgrading from Jina v3 — the Qdrant collection schema changed from single-vector to 4-vector (`dense_64`, `dense_768`, `colbert`, `sparse`).
 
 ---
 
@@ -338,7 +359,7 @@ uv run pytest tests/test_phase1.py tests/test_phase2.py tests/test_phase3.py tes
 uv run pytest tests/test_integration_real.py -v -s
 ```
 
-**125 tests pass** (stubs only — no model downloads, no Ollama, no Qdrant server needed).
+**135 tests pass** (stubs only — no model downloads, no Ollama, no Qdrant server needed).
 
 ---
 
@@ -366,12 +387,13 @@ pdf_ingestion/
 │   ├── pdf_ingestion/
 │   │   ├── parser.py                   # Docling PDF parser (+ page rasterization)
 │   │   ├── chunker.py                  # Chonkie semantic chunker
-│   │   ├── embedder.py                 # Jina v3 late-chunking embedder
+│   │   ├── embedder.py                 # Nomic MRL embedder (768d + 64d MRL truncation, Phase 4B)
 │   │   ├── splade_embedder.py          # SPLADE sparse embedder (GPU, Phase 4)
 │   │   ├── store.py                    # Qdrant + SQLite storage facade (Phase 1–4)
 │   │   ├── card_generator.py           # 8 card types, COSTAR prompts, instructor (Phase 2)
 │   │   ├── raptor_tree.py              # GMM clustering + RAPTOR summaries (Phase 2)
 │   │   ├── colpali_embedder.py         # ColPali multi-vector page embeddings (Phase 3)
+│   │   ├── colbert_embedder.py         # ColBERT v2.0 late-interaction embedder (Phase 4B)
 │   │   ├── graph_builder.py            # Memgraph concept graph builder (Phase 3)
 │   │   ├── image_store.py              # Page image storage abstraction (Phase 3)
 │   │   └── prompts/                    # COSTAR-format prompt files (9 .md files)
@@ -464,8 +486,8 @@ Payload filtering (`tenant_id`, `is_global_baseline`) keeps everything in one co
 | Phase 2 | ✅ Complete | 8-type card generation (COSTAR + instructor) + RAPTOR tree |
 | Phase 3 | ✅ Complete | ColPali visual embeddings + Memgraph GraphRAG concept graph |
 | Phase 4A | ✅ Complete | Intent router + SPLADE hybrid + DA retrieval lane + MMR |
-| Phase 4B | 🔜 | Matryoshka two-stage (Jina MRL 64d fast filter → 768d rescore) |
-| Phase 4C | 🔜 | Cross-encoder re-ranker (ColBERT MaxSim intermediate) |
+| Phase 4B | ✅ Complete | Nomic MRL (64d→768d nested prefetch) + ColBERT v2.0 MaxSim 4-vector schema |
+| Phase 4C | 🔜 | Cross-encoder re-ranker (ms-marco MiniLM, top-20 final reranking) |
 | Phase 5 | 🔜 | DeBERTa guardrails + answer leakage guard |
 | Phase 6 | 🔜 | Per-query observability (latency/route logging) + teacher dashboard |
 

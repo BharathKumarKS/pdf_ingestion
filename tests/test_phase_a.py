@@ -107,6 +107,7 @@ def stub_store(tmp_path, monkeypatch):
     monkeypatch.setenv("USE_STUB_COLPALI", "true")
     monkeypatch.setenv("USE_STUB_GRAPH", "true")
     monkeypatch.setenv("USE_STUB_SPLADE", "true")
+    monkeypatch.setenv("USE_STUB_COLBERT", "true")
     monkeypatch.setenv("QDRANT_IN_MEMORY", "true")
     monkeypatch.setenv("SQLITE_URL", f"sqlite:///{tmp_path}/test.db")
 
@@ -128,14 +129,14 @@ def stub_store(tmp_path, monkeypatch):
 
 
 def test_search_with_das_returns_list(stub_store):
-    q_vec = np.random.rand(1024).astype(np.float32)
+    q_vec = np.random.rand(768).astype(np.float32)
     results = stub_store.search_with_das(q_vec, query_text="kinetic energy", tenant_id="global")
     assert isinstance(results, list)
 
 
 def test_search_with_das_da_disabled(stub_store, monkeypatch):
     monkeypatch.setattr(stub_store._cfg, "da_enabled", False)
-    q_vec = np.random.rand(1024).astype(np.float32)
+    q_vec = np.random.rand(768).astype(np.float32)
     results = stub_store.search_with_das(q_vec, query_text="test", tenant_id="global")
     assert isinstance(results, list)
 

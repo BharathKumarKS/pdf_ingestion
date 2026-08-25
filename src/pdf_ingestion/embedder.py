@@ -1,7 +1,16 @@
-"""Jina v3 embedder with late-chunking support and a fast stub for tests."""
+"""Nomic MRL embedder (replaces Jina v3) with a fast stub for tests.
+
+Key changes vs Jina v3:
+- Model: nomic-ai/nomic-embed-text-v1.5 (Apache 2.0, Matryoshka-capable)
+- Task prefixes: "search_query: " / "search_document: " (no late-chunking)
+- MRL truncation: full 768d vector is sliced to 64d then re-normalised
+  → EmbeddedChunk carries both embedding (768d) and embedding_low (64d)
+- embed_query() still returns a single 768d array; store.search() computes
+  the 64d slice internally when building the nested Qdrant prefetch.
+"""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 from loguru import logger
@@ -15,19 +24,22 @@ from src.pdf_ingestion.chunker import TextChunk
 @dataclass
 class EmbeddedChunk:
     chunk: TextChunk
-    embedding: np.ndarray   # shape (embedding_dim,)
+    embedding: np.ndarray       # shape (embedding_dim,)  — full 768d dense
     model_name: str
+    embedding_low: np.ndarray = field(default_factory=lambda: np.array([]))
+    # shape (embedding_dim_low,) — 64d MRL truncation; populated by NomicEmbedder
 
 
 # -- Stub (fast unit tests, no model download) ---------------------------------
 
 class StubEmbedder:
-    """Deterministic random vectors -- zero model download, used in tests."""
+    """Deterministic random vectors — zero model download, used in tests."""
 
-    def __init__(self, dim: int = 1024) -> None:
+    def __init__(self, dim: int = 768, dim_low: int = 64) -> None:
         self.dim = dim
+        self.dim_low = dim_low
         self.model_name = "stub"
-        logger.warning("StubEmbedder active -- embeddings are random vectors")
+        logger.warning("StubEmbedder active — embeddings are random vectors")
 
     def embed_chunks(self, chunks: list[TextChunk]) -> list[EmbeddedChunk]:
         rng = np.random.default_rng(seed=42)
@@ -35,7 +47,14 @@ class StubEmbedder:
         for chunk in chunks:
             vec = rng.random(self.dim).astype(np.float32)
             vec /= np.linalg.norm(vec) + 1e-9
-            results.append(EmbeddedChunk(chunk=chunk, embedding=vec, model_name=self.model_name))
+            vec_low = vec[: self.dim_low].copy()
+            vec_low /= np.linalg.norm(vec_low) + 1e-9
+            results.append(EmbeddedChunk(
+                chunk=chunk,
+                embedding=vec,
+                embedding_low=vec_low,
+                model_name=self.model_name,
+            ))
         return results
 
     def embed_query(self, text: str) -> np.ndarray:
@@ -53,33 +72,26 @@ class StubEmbedder:
         return results
 
 
-# -- Jina v3 embedder via sentence-transformers --------------------------------
+# -- Nomic MRL embedder --------------------------------------------------------
 
-class JinaEmbedder:
+class NomicEmbedder:
     """
-    Wraps jinaai/jina-embeddings-v3 via sentence-transformers.
+    Wraps nomic-ai/nomic-embed-text-v1.5 via sentence-transformers.
 
-    GPU acceleration:
-        Set USE_GPU=true in .env to run on CUDA. The model is loaded onto the
-        GPU device and EMBEDDING_BATCH_SIZE should be increased (32-64 on GPU).
+    Task prefixes (Nomic convention):
+        Queries  → "search_query: " prefix
+        Passages → "search_document: " prefix
 
-    Late chunking:
-        All chunks from the same document context window are passed together
-        with late_chunking=True. The model encodes the concatenated sequence
-        and returns one mean-pooled vector per chunk, each informed by its
-        neighbours in the same window.
-
-    Long documents:
-        A 1,000-page textbook exceeds the 8,192-token limit. We partition
-        chunks into contiguous windows <= max_context_tokens and apply late
-        chunking within each window independently.
+    Matryoshka (MRL):
+        Full 768d embedding is sliced to 64d and re-normalised.
+        Both dimensions are stored in Qdrant (dense_768 and dense_64).
+        The 64d vector is used for a fast first-stage ANN; 768d rescores.
     """
 
     def __init__(self, settings: Settings | None = None) -> None:
         self._cfg = settings or get_settings()
         self._model = None
         self._device: str = "cuda" if self._cfg.use_gpu else "cpu"
-        self._supports_late_chunking: bool | None = None  # probed once after load
 
     def _load(self) -> None:
         if self._model is not None:
@@ -91,13 +103,10 @@ class JinaEmbedder:
         os.environ.setdefault("HF_HOME", self._cfg.model_cache_dir)
 
         logger.info(
-            "Loading Jina v3 via sentence-transformers '{}' on device={}...",
+            "Loading Nomic embed v1.5 '{}' on device={}...",
             self._cfg.embedding_model,
             self._device,
         )
-        # Do NOT pass device="cpu" — Jina v3 uses LoRA meta tensors that break
-        # when SentenceTransformer calls .to("cpu") explicitly. Let it auto-detect
-        # on CPU. Only specify device for CUDA to move to the GPU.
         st_kwargs: dict = {
             "trust_remote_code": True,
             "cache_folder": self._cfg.model_cache_dir,
@@ -107,16 +116,9 @@ class JinaEmbedder:
 
         self._model = SentenceTransformer(self._cfg.embedding_model, **st_kwargs)
         self._model.eval()
-
-        # Probe once whether the underlying module exposes .encode() with
-        # late_chunking support, so we never retry-and-fail per window.
-        underlying = self._model._first_module()
-        self._supports_late_chunking = callable(getattr(underlying, "encode", None))
         logger.info(
-            "Jina v3 loaded -- device={}, dim={}, native late-chunking={}",
-            self._device,
-            self._cfg.embedding_dim,
-            self._supports_late_chunking,
+            "Nomic embed loaded — device={}, full_dim={}, low_dim={}",
+            self._device, self._cfg.embedding_dim, self._cfg.embedding_dim_low,
         )
 
     @property
@@ -126,120 +128,78 @@ class JinaEmbedder:
     # -- Public API ------------------------------------------------------------
 
     def embed_chunks(self, chunks: list[TextChunk]) -> list[EmbeddedChunk]:
-        """
-        Embed all chunks with late chunking.
-        Chunks are grouped into context windows; each window is encoded jointly.
-        """
+        """Embed passage chunks with the 'search_document:' task prefix."""
         self._load()
         if not chunks:
             return []
 
-        windows = self._build_windows(chunks)
-        results: list[EmbeddedChunk] = []
+        texts = ["search_document: " + c.text for c in chunks]
+        vecs = self._encode(texts)
 
-        for window_chunks in windows:
-            texts = [c.text for c in window_chunks]
-            vecs = self._encode_late(texts, task="retrieval.passage")
-            for chunk, vec in zip(window_chunks, vecs):
-                results.append(
-                    EmbeddedChunk(chunk=chunk, embedding=vec, model_name=self.model_name)
-                )
+        results = []
+        for chunk, vec in zip(chunks, vecs):
+            vec_low = self._truncate(vec, self._cfg.embedding_dim_low)
+            results.append(EmbeddedChunk(
+                chunk=chunk,
+                embedding=vec,
+                embedding_low=vec_low,
+                model_name=self.model_name,
+            ))
 
-        logger.success("Embedded {} chunks via Jina v3 late chunking (device={})",
-                       len(results), self._device)
+        logger.success("Embedded {} chunks via Nomic MRL (device={})", len(results), self._device)
         return results
 
     def embed_query(self, text: str) -> np.ndarray:
-        """Single query embedding with retrieval.query task prefix."""
+        """Single query embedding with 'search_query:' task prefix. Returns 768d."""
         self._load()
-        vecs = self._encode_late([text], task="retrieval.query", late_chunking=False)
+        vecs = self._encode(["search_query: " + text])
         return vecs[0]
 
     def embed_documents(self, texts: list[str]) -> list[np.ndarray]:
-        """Batch embed raw strings without late-chunking context (for re-indexing)."""
+        """Batch embed raw strings as passages (for re-indexing). Returns 768d each."""
         self._load()
-        return self._encode_late(texts, task="retrieval.passage", late_chunking=False)
+        prefixed = ["search_document: " + t for t in texts]
+        return self._encode(prefixed)
 
     # -- Internals -------------------------------------------------------------
 
-    def _build_windows(self, chunks: list[TextChunk]) -> list[list[TextChunk]]:
-        """
-        Partition chunks into windows whose token sum <= max_context_tokens.
-        Preserves document order so late-chunking context is meaningful.
-        """
-        windows: list[list[TextChunk]] = []
-        current: list[TextChunk] = []
-        current_tokens = 0
+    @staticmethod
+    def _truncate(vec: np.ndarray, dim: int) -> np.ndarray:
+        """MRL truncation: slice to first `dim` dims and re-normalise."""
+        low = vec[:dim].copy()
+        norm = np.linalg.norm(low) + 1e-9
+        return low / norm
 
-        for chunk in chunks:
-            t = chunk.token_count or len(chunk.text.split())
-            if current and current_tokens + t > self._cfg.max_context_tokens:
-                windows.append(current)
-                current = []
-                current_tokens = 0
-            current.append(chunk)
-            current_tokens += t
-
-        if current:
-            windows.append(current)
-
-        logger.debug("Split {} chunks into {} context windows", len(chunks), len(windows))
-        return windows
-
-    def _encode_late(
-        self,
-        texts: list[str],
-        task: str = "retrieval.passage",
-        late_chunking: bool = True,
-    ) -> list[np.ndarray]:
-        """
-        Encode via Jina v3 with GPU support and configurable batch size.
-
-        If the underlying model exposes .encode() with late_chunking support
-        (probed once at load time), use it for context-aware embeddings.
-        Otherwise falls back to standard sentence-transformers encode.
-        """
+    def _encode(self, texts: list[str]) -> list[np.ndarray]:
+        """Encode texts via sentence-transformers, L2-normalise, return list."""
         import torch
 
-        arr: np.ndarray | None = None
         batch_size = self._cfg.embedding_batch_size
+        arr: np.ndarray | None = None
 
-        # Path 1: native late chunking (probed at load time)
-        if late_chunking and len(texts) > 1 and self._supports_late_chunking:
-            try:
-                underlying = self._model._first_module()
-                with torch.no_grad():
-                    out = underlying.encode(texts, task=task, late_chunking=True)
-                arr = np.array(out, dtype=np.float32)
-            except Exception as exc:
-                logger.debug("Native late-chunking encode failed: {}", exc)
-                arr = None
+        try:
+            with torch.no_grad():
+                out = self._model.encode(
+                    texts,
+                    batch_size=batch_size,
+                    show_progress_bar=False,
+                    convert_to_numpy=True,
+                    normalize_embeddings=True,
+                )
+            arr = np.array(out, dtype=np.float32)
+        except Exception as exc:
+            logger.error("Nomic encoding failed: {}. Using zero vectors.", exc)
+            arr = np.zeros((len(texts), self._cfg.embedding_dim), dtype=np.float32)
 
-        # Path 2: standard ST encode (with GPU-aware batch size)
-        if arr is None:
-            try:
-                with torch.no_grad():
-                    out = self._model.encode(
-                        texts,
-                        task=task,
-                        batch_size=batch_size,
-                        show_progress_bar=False,
-                        convert_to_numpy=True,
-                    )
-                arr = np.array(out, dtype=np.float32)
-            except Exception as exc:
-                logger.error("Encoding failed: {}. Using zero vectors.", exc)
-                arr = np.zeros((len(texts), self._cfg.embedding_dim), dtype=np.float32)
-
-        # L2-normalise for cosine similarity in Qdrant
+        # Ensure L2-normalised (normalize_embeddings=True should handle it)
         norms = np.linalg.norm(arr, axis=1, keepdims=True) + 1e-9
         return list(arr / norms)
 
 
 # -- Factory -------------------------------------------------------------------
 
-def get_embedder(settings: Settings | None = None) -> StubEmbedder | JinaEmbedder:
+def get_embedder(settings: Settings | None = None) -> StubEmbedder | NomicEmbedder:
     cfg = settings or get_settings()
     if cfg.use_stub_embedder:
-        return StubEmbedder(dim=cfg.embedding_dim)
-    return JinaEmbedder(settings=cfg)
+        return StubEmbedder(dim=cfg.embedding_dim, dim_low=cfg.embedding_dim_low)
+    return NomicEmbedder(settings=cfg)

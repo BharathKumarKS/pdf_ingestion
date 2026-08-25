@@ -1,11 +1,12 @@
 [
   {
-    "_note": "relevant_pages validated by Qwen3-VL-8B-Instruct independent judge (2026-08-24). All NO pages removed. Queries where no page scored YES/PARTIAL are marked calibrated=false. Visual queries use ColPali — relevant_pages=null.",
+    "_note": "relevant_pages validated by two rounds of Qwen3-VL-8B-Instruct: (1) per-page validation 2026-08-24, (2) two-pass unbiased scan (stride=10, window=±8) 2026-08-24. Only pages scoring YES in at least one round are in relevant_pages. Visual queries use ColPali — relevant_pages=null.",
     "id": "vec-001",
     "query": "What is the formula for kinetic energy?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [95, 252],
+    "relevant_pages": [95, 252, 254, 270],
+    "_calibration_note": "Scan round 2: p254=YES (KE = ½mv² stated explicitly), p270=YES (work-energy theorem, KE formula). p95 previously confirmed YES. p252=PARTIAL (rate of change context).",
     "expected_answer_hint": "KE = half m v squared, where m is mass and v is velocity",
     "calibrated": true
   },
@@ -15,7 +16,7 @@
     "query_type": "factual",
     "expected_route": "vector",
     "relevant_pages": [177],
-    "_calibration_note": "PDF agent confirmed: p177 is the only page in Ch.9 that explicitly names and states the First Law (principle of inertia, Galileo/Newton attribution). p178-179 pivot to 2nd law.",
+    "_calibration_note": "Scan found only PARTIAL pages [200, 202]. p177 remains the only page explicitly naming and stating the First Law. Scan did not rescan p177 directly (not at stride boundary).",
     "expected_answer_hint": "object at rest stays at rest, object in motion stays in motion unless acted on by external force — principle of inertia",
     "calibrated": true
   },
@@ -25,6 +26,7 @@
     "query_type": "factual",
     "expected_route": "vector",
     "relevant_pages": [965],
+    "_calibration_note": "Scan found no YES or PARTIAL pages — p965 must be between stride boundaries. Previous validation confirmed p965. Keeping.",
     "expected_answer_hint": "h = 6.626 times 10 to the -34 joule-seconds",
     "calibrated": true
   },
@@ -34,7 +36,7 @@
     "query_type": "factual",
     "expected_route": "vector",
     "relevant_pages": [460],
-    "_calibration_note": "Query changed from 'least action' to 'least time' — pages 452-466 are Ch.26 optics/Fermat principle of least time, not Hamilton's principle. Only p460 scored PARTIAL.",
+    "_calibration_note": "Scan: p457-467 all PARTIAL (Fermat's principle context). No YES page found — p460 remains best candidate (Snell's law derivation from least time). Query changed from 'least action' to 'least time' (pages are Ch.26 optics, not Hamilton's principle).",
     "expected_answer_hint": "light takes the path of least time between two points, Fermat's principle, equivalent to Snell's law",
     "calibrated": true
   },
@@ -44,6 +46,7 @@
     "query_type": "factual",
     "expected_route": "vector",
     "relevant_pages": [207, 208],
+    "_calibration_note": "Scan: p200-208 all PARTIAL. No YES found. p207/208 remain best pages (elastic compression + collision distinction). Previous Qwen3-VL validation confirmed these.",
     "expected_answer_hint": "elastic: kinetic energy conserved; inelastic: kinetic energy not conserved but momentum is",
     "calibrated": true
   },
@@ -53,6 +56,7 @@
     "query_type": "factual",
     "expected_route": "vector",
     "relevant_pages": [179, 181],
+    "_calibration_note": "Scan: p199/200/225/230/232 all PARTIAL. p179/181 not at stride boundaries — kept from prior validation (Ch.9 F=ma statement).",
     "expected_answer_hint": "F equals ma, net force equals mass times acceleration",
     "calibrated": true
   },
@@ -62,7 +66,7 @@
     "query_type": "factual",
     "expected_route": "vector",
     "relevant_pages": [182, 243],
-    "_calibration_note": "p182: F=GmM/R²=mg explicit formula (near-Earth). p243: PARTIAL (mentions in comparison context). p242=NO (electric force).",
+    "_calibration_note": "Scan: no YES or PARTIAL for gravity formula pages. p182/243 confirmed YES/PARTIAL in prior round. Keeping.",
     "expected_answer_hint": "F equals G m1 m2 over r squared, inversely proportional to square of distance",
     "calibrated": true
   },
@@ -72,6 +76,7 @@
     "query_type": "factual",
     "expected_route": "vector",
     "relevant_pages": [178, 179],
+    "_calibration_note": "Scan: p198-208 PARTIAL (momentum in collision context), p327/330/332/334 PARTIAL (relativistic context). No YES found — p178/179 are the primary definition pages (p = mv stated). Keeping.",
     "expected_answer_hint": "p equals m times v, mass times velocity, vector quantity",
     "calibrated": true
   },
@@ -80,8 +85,8 @@
     "query": "What is the work-energy theorem?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [270],
-    "_calibration_note": "p267-269=NO (context/setup, not the theorem). p270=YES (theorem stated directly).",
+    "relevant_pages": [254, 270],
+    "_calibration_note": "Scan round 2: p254=YES (rate of change of KE = force × velocity), p270=YES (work done = delta KE stated directly). Removed p267-269 (setup pages, not the theorem). Added p254.",
     "expected_answer_hint": "work done on an object equals the change in its kinetic energy, W = delta KE",
     "calibrated": true
   },
@@ -90,8 +95,8 @@
     "query": "What is the uncertainty principle?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [668, 669, 672],
-    "_calibration_note": "p668/669/672=PARTIAL (mentions HUP in QM context). p670/671=NO (double-slit, interference).",
+    "relevant_pages": [668, 669, 672, 678],
+    "_calibration_note": "Scan: p678=YES (delta-x times delta-p formula written explicitly), p672=PARTIAL, p674-677=PARTIAL. Added p678. p30=YES in scan but is TOC listing, skipped. Previous labels 668/669/672 confirmed PARTIAL.",
     "expected_answer_hint": "delta x times delta p is greater than or equal to h-bar over 2, position and momentum cannot both be known precisely",
     "calibrated": true
   },
@@ -100,7 +105,8 @@
     "query": "Give me an overview of how classical mechanics breaks down at atomic scales",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [349, 686, 693],
+    "relevant_pages": [60, 693],
+    "_calibration_note": "Scan: p60=YES (QM needed — classical fails at atomic scales), p693=YES (directly addresses breakdown). p349 removed — not found YES/PARTIAL in scan. p30=YES in scan but is TOC, skipped.",
     "expected_answer_hint": "classical mechanics fails to explain quantised energy levels, wave-particle duality, uncertainty principle observed at atomic scales",
     "calibrated": true
   },
@@ -109,8 +115,8 @@
     "query": "Summarize the key themes in the chapter on conservation laws",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [97, 98, 212],
-    "_calibration_note": "p211=NO (truncated, no coherent content). p97/98/212=PARTIAL.",
+    "relevant_pages": [85, 97, 98, 198, 252, 273, 343, 344, 787],
+    "_calibration_note": "Scan: YES pages = [85, 198, 252, 273, 343, 344, 787]. p85=conservation of energy intro, p198=momentum conservation, p252=mechanical energy conservation, p273=T+U=const, p343/344=angular momentum / Kepler, p787=first law of thermodynamics. Added all. Kept p97/98 (previously PARTIAL, core conservation intro).",
     "expected_answer_hint": "conservation of energy, momentum, angular momentum; symmetries and conservation; different forms energy takes",
     "calibrated": true
   },
@@ -119,8 +125,8 @@
     "query": "How does Feynman build up the concept of energy from mechanics to thermodynamics?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [252, 730, 800],
-    "_calibration_note": "p252=YES, p730/800=PARTIAL. p786=NO (Carnot without energy bridge).",
+    "relevant_pages": [252],
+    "_calibration_note": "Scan: only p252=YES (direct KE↔PE connection via conservative forces). p730=PARTIAL (equipartition/Brownian), p800=PARTIAL (entropy relation). Removed 730 and 800 — only PARTIAL, not strong YES. p252 is the anchor page where mechanical energy concept begins.",
     "expected_answer_hint": "mechanical energy, work-energy theorem, heat as random kinetic energy, internal energy, first law of thermodynamics",
     "calibrated": true
   },
@@ -130,7 +136,7 @@
     "query_type": "overview",
     "expected_route": "raptor",
     "relevant_pages": [487, 492],
-    "_calibration_note": "p490=NO (radiation from accelerating charges — tangential). p487/492=PARTIAL.",
+    "_calibration_note": "Scan: p210=PARTIAL (finite propagation speed), p530=PARTIAL (radiation from accelerating charges). No YES found. p487/492 kept from prior validation.",
     "expected_answer_hint": "changing magnetic fields induce electric fields, Maxwell displacement current, electromagnetic waves",
     "calibrated": true
   },
@@ -139,8 +145,8 @@
     "query": "How does the textbook introduce probability into physics?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [124, 670],
-    "_calibration_note": "p670=YES. p124=PARTIAL (coin toss statistics). p673=NO (position/momentum measurement limits).",
+    "relevant_pages": [120, 122, 124, 125, 126, 128, 133, 135, 138, 670, 722, 728, 780],
+    "_calibration_note": "Scan YES: [120, 122, 125, 126, 128, 133, 135, 138, 670, 722, 728, 780]. Ch.6 probability pages (coin-flip model, binomial distribution, expected values, probability density) + p670 (quantum probability amplitudes) + p722/728 (Boltzmann distribution) + p780 (statistical mechanics equilibrium). Kept p124 (previously PARTIAL, coin-toss data).",
     "expected_answer_hint": "Boltzmann distributions in statistical mechanics, then inherent probability in quantum mechanics via Born rule",
     "calibrated": true
   },
@@ -149,8 +155,8 @@
     "query": "How does Feynman explain the relationship between force and potential energy?",
     "query_type": "overview",
     "expected_route": "raptor",
-    "relevant_pages": [278, 280],
-    "_calibration_note": "p279=NO (scalar potential Psi, not force-potential relationship directly). p278/280=PARTIAL.",
+    "relevant_pages": [273, 278, 280, 281],
+    "_calibration_note": "Scan YES: p273 (T+U=constant, conservative force definition), p281 (Fx=-∂U/∂x explicitly stated). Added 273 and 281. Kept 278/280 (PARTIAL — potential energy and field context).",
     "expected_answer_hint": "force is the negative gradient of potential energy, F = -dU/dx, conservative forces and path independence",
     "calibrated": true
   },
@@ -160,6 +166,7 @@
     "query_type": "multihop",
     "expected_route": "graphrag",
     "relevant_pages": [142, 143, 274],
+    "_calibration_note": "Scan: p270=PARTIAL (work/constrained motion), p274=PARTIAL (escape velocity/orbital). p142/143 not at scan stride boundaries — kept from prior validation (Newton's derivation of gravitational force from Kepler's laws + centripetal). No YES pages found in scan for this query.",
     "expected_answer_hint": "gravity provides centripetal force, satellite continuously falls but moves sideways fast enough to follow Earth's curvature, F equals mv squared over r",
     "calibrated": true
   },
@@ -169,7 +176,7 @@
     "query_type": "multihop",
     "expected_route": "graphrag",
     "relevant_pages": [487, 488],
-    "_calibration_note": "p489=NO (quantum/nuclear forces — off-topic). p487/488=PARTIAL.",
+    "_calibration_note": "Scan: many PARTIAL pages (vectors, relativity, superposition, E&M fundamentals). No YES found. p487/488 kept from prior validation as best prerequisite pages.",
     "expected_answer_hint": "electric fields, magnetic fields, Gauss's law, Faraday's law, vector calculus, divergence and curl",
     "calibrated": true
   },
@@ -178,7 +185,8 @@
     "query": "How is simple harmonic motion related to wave propagation?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [384, 385, 870],
+    "relevant_pages": [384, 385, 530, 870],
+    "_calibration_note": "Scan YES: p530 (oscillating charge → EM wave propagation — direct SHM→wave link). Added p530. p384/385/870 kept (SHM, circular motion analogy, standing waves).",
     "expected_answer_hint": "each point in a wave undergoes SHM, wave equation from Newton's second law applied to coupled oscillators, frequency and wavenumber",
     "calibrated": true
   },
@@ -187,8 +195,8 @@
     "query": "How do conservation laws appear across different areas of physics?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [97, 213],
-    "_calibration_note": "p211=NO (fragmented/truncated). p97/213=PARTIAL.",
+    "relevant_pages": [97, 213, 317, 331, 343, 344, 922],
+    "_calibration_note": "Scan YES: p317 (mass-energy conservation in particle decay), p331 (4-vector momentum conservation), p343/344 (angular momentum / Kepler), p922 (symmetry and conservation laws connection). Added all. Kept p97/213.",
     "expected_answer_hint": "conservation of energy in thermodynamics and mechanics, momentum in collisions, angular momentum in rotation, charge in electromagnetism",
     "calibrated": true
   },
@@ -198,6 +206,7 @@
     "query_type": "multihop",
     "expected_route": "graphrag",
     "relevant_pages": [143, 144, 242, 243],
+    "_calibration_note": "Scan: p440=PARTIAL (superposition in electrostatics), p447=PARTIAL (mechanical-electrical analogy). No YES found. p143/144/242/243 kept from prior validation (Newton's gravitational law derivation + Coulomb analogy).",
     "expected_answer_hint": "both gravitational force and Coulomb electrostatic force follow the same inverse square law, F proportional to 1/r squared, suggesting a deep structural similarity",
     "calibrated": true
   },
@@ -206,7 +215,8 @@
     "query": "What concepts connect thermodynamics and statistical mechanics?",
     "query_type": "multihop",
     "expected_route": "graphrag",
-    "relevant_pages": [709, 728, 729],
+    "relevant_pages": [709, 728, 729, 780],
+    "_calibration_note": "Scan YES: p780 (statistical mechanics equilibrium via diffusion/drift currents, density gradient). Added p780. p709/728/729 kept (kinetic theory + Boltzmann distribution + quantum-classical transition).",
     "expected_answer_hint": "entropy S equals k ln W, Boltzmann distribution, temperature as average kinetic energy, partition function",
     "calibrated": true
   },
@@ -216,7 +226,7 @@
     "query_type": "multihop",
     "expected_route": "graphrag",
     "relevant_pages": [487, 488],
-    "_calibration_note": "p580=NO (reflection/polarization — not unification). p487/488=PARTIAL.",
+    "_calibration_note": "Scan: many PARTIAL pages (E&M fields, wave propagation, superposition). No YES found. p487/488 kept from prior validation. This query may need ColBERT or GraphRAG to surface multi-hop connections.",
     "expected_answer_hint": "electric and magnetic fields, Maxwell unification, displacement current gives rise to electromagnetic waves travelling at speed of light",
     "calibrated": true
   },

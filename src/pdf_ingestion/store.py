@@ -117,7 +117,7 @@ class DocumentStore:
 
         logger.info("SQLite: saved doc {} with {} chunks", doc_id, len(embedded_chunks))
 
-        # Encode sparse vectors for hybrid search (if SPLADE enabled)
+        # Encode SPLADE sparse vectors (optional)
         sparse_vecs: list = [None] * len(embedded_chunks)
         if self._cfg.splade_enabled:
             try:
@@ -128,16 +128,30 @@ class DocumentStore:
             except Exception as exc:
                 logger.warning("SPLADE encoding failed ({}), falling back to dense-only", exc)
 
+        # Encode ColBERT token matrices (optional)
+        colbert_mats: list = [None] * len(embedded_chunks)
+        if self._cfg.colbert_enabled:
+            try:
+                from src.pdf_ingestion.colbert_embedder import get_colbert_embedder
+                colbert = get_colbert_embedder(self._cfg)
+                colbert_mats = colbert.embed_passages([ec.chunk.text for ec in embedded_chunks])
+                logger.debug("ColBERT: encoded {} token matrices", len(colbert_mats))
+            except Exception as exc:
+                logger.warning("ColBERT encoding failed ({}), skipping colbert vectors", exc)
+
         points = []
         for i, ec in enumerate(embedded_chunks):
-            sv = sparse_vecs[i]
-            if self._cfg.splade_enabled and sv is not None:
-                vector = {
-                    "dense":  ec.embedding.tolist(),
-                    "sparse": sv.to_qdrant(),
-                }
-            else:
-                vector = ec.embedding.tolist()
+            # Always include dual-dense Nomic MRL vectors
+            vector: dict = {
+                "dense_64":  (ec.embedding_low if len(ec.embedding_low) > 0
+                              else ec.embedding[:self._cfg.embedding_dim_low]).tolist(),
+                "dense_768": ec.embedding.tolist(),
+            }
+            if self._cfg.colbert_enabled and colbert_mats[i] is not None:
+                vector["colbert"] = colbert_mats[i].tolist()
+            if self._cfg.splade_enabled and sparse_vecs[i] is not None:
+                vector["sparse"] = sparse_vecs[i].to_qdrant()
+
             points.append(PointStruct(
                 id=ec.chunk.chunk_id,
                 vector=vector,
@@ -201,30 +215,12 @@ class DocumentStore:
                             match=MatchValue(value=tenant_id)))
             filter_ = Filter(must=must, must_not=_must_not if self._cfg.min_content_page > 0 else [])
 
-        if self._cfg.splade_enabled and query_text:
-            from qdrant_client.models import Fusion, FusionQuery, Prefetch
-            from src.pdf_ingestion.splade_embedder import get_splade_embedder
-            sparse_vec = get_splade_embedder(self._cfg).encode_sparse(query_text)
-            response = self._qdrant.query_points(
-                collection_name=self._cfg.qdrant_collection,
-                prefetch=[
-                    Prefetch(query=query_vector.tolist(), using="dense", limit=limit * 3),
-                    Prefetch(query=sparse_vec.to_qdrant(), using="sparse", limit=limit * 3),
-                ],
-                query=FusionQuery(fusion=Fusion.RRF),
-                query_filter=filter_,
-                limit=limit,
-                with_payload=True,
-            )
-        else:
-            response = self._qdrant.query_points(
-                collection_name=self._cfg.qdrant_collection,
-                query=query_vector.tolist(),
-                using="dense" if self._cfg.splade_enabled else None,
-                query_filter=filter_,
-                limit=limit,
-                with_payload=True,
-            )
+        response = self._qdrant_search(
+            query_vector=query_vector,
+            query_text=query_text,
+            filter_=filter_,
+            limit=limit,
+        )
         results = [{"score": h.score, "qdrant_point_id": str(h.id), **h.payload} for h in response.points]
 
         # Post-filter front matter (local file Qdrant doesn't support Range payload filters)
@@ -235,6 +231,94 @@ class DocumentStore:
             ]
 
         return results
+
+    def _qdrant_search(
+        self,
+        query_vector: np.ndarray,
+        filter_,
+        limit: int,
+        query_text: str | None = None,
+    ):
+        """
+        Unified Qdrant search with the 4-vector Nomic+ColBERT schema.
+
+        Pipeline (when colbert_enabled + query_text available):
+            dense_64 top-500 → dense_768 rescore top-250 → colbert MaxSim top-N
+
+        When colbert disabled or no query_text:
+            dense_64 top-3N → dense_768 rescore top-N
+
+        Optionally adds SPLADE as a parallel RRF lane (when splade_enabled).
+        """
+        from qdrant_client.models import Prefetch
+
+        cfg = self._cfg
+
+        # 64d MRL truncation of the query vector (first-stage ANN)
+        vec_64 = query_vector[:cfg.embedding_dim_low].copy()
+        norm = float(np.linalg.norm(vec_64)) + 1e-9
+        vec_64 = vec_64 / norm
+
+        # Stage 1: dense_64 → dense_768 nested prefetch
+        inner_prefetch = Prefetch(
+            query=vec_64.tolist(),
+            using="dense_64",
+            limit=min(500, limit * 10),
+        )
+        mid_prefetch = Prefetch(
+            prefetch=[inner_prefetch],
+            query=query_vector.tolist(),
+            using="dense_768",
+            limit=min(250, limit * 5),
+        )
+
+        # Stage 3: ColBERT MaxSim (outer query)
+        if cfg.colbert_enabled and query_text:
+            try:
+                from src.pdf_ingestion.colbert_embedder import get_colbert_embedder
+                colbert_q = get_colbert_embedder(cfg).embed_query(query_text)
+                response = self._qdrant.query_points(
+                    collection_name=cfg.qdrant_collection,
+                    prefetch=[mid_prefetch],
+                    query=colbert_q.tolist(),
+                    using="colbert",
+                    query_filter=filter_,
+                    limit=limit,
+                    with_payload=True,
+                )
+                return response
+            except Exception as exc:
+                logger.warning("ColBERT query failed ({}), falling back to dense", exc)
+
+        # SPLADE hybrid (if enabled and query text available, no ColBERT)
+        if cfg.splade_enabled and query_text:
+            from qdrant_client.models import Fusion, FusionQuery, Prefetch as _P
+            from src.pdf_ingestion.splade_embedder import get_splade_embedder
+            sparse_vec = get_splade_embedder(cfg).encode_sparse(query_text)
+            response = self._qdrant.query_points(
+                collection_name=cfg.qdrant_collection,
+                prefetch=[
+                    mid_prefetch,
+                    _P(query=sparse_vec.to_qdrant(), using="sparse", limit=limit * 2),
+                ],
+                query=FusionQuery(fusion=Fusion.RRF),
+                query_filter=filter_,
+                limit=limit,
+                with_payload=True,
+            )
+            return response
+
+        # Fallback: dense_64 → dense_768 two-stage without ColBERT
+        response = self._qdrant.query_points(
+            collection_name=cfg.qdrant_collection,
+            prefetch=[inner_prefetch],
+            query=query_vector.tolist(),
+            using="dense_768",
+            query_filter=filter_,
+            limit=limit,
+            with_payload=True,
+        )
+        return response
 
     def search_raptor(
         self,
@@ -264,7 +348,7 @@ class DocumentStore:
         response = self._qdrant.query_points(
             collection_name=self._cfg.qdrant_collection,
             query=query_vector.tolist(),
-            using="dense" if self._cfg.splade_enabled else None,
+            using="dense_768",
             query_filter=filter_,
             limit=limit,
             with_payload=True,
@@ -526,9 +610,10 @@ class DocumentStore:
                 with_vectors=True,
             )
             def _extract_dense(vec) -> np.ndarray:
-                # When SPLADE is enabled, vector is a dict {"dense": [...], "sparse": ...}
+                # New 4-vector schema: extract dense_768 (primary embedding)
+                # Falls back to "dense" (old SPLADE schema) for backward compat
                 if isinstance(vec, dict):
-                    vec = vec.get("dense", [])
+                    vec = vec.get("dense_768") or vec.get("dense", [])
                 return np.array(vec, dtype=np.float32)
 
             id_to_vec = {str(r.id): _extract_dense(r.vector) for r in results}
@@ -660,10 +745,16 @@ class DocumentStore:
                 ))
             session.commit()
 
-        points = [
-            PointStruct(
+        points = []
+        for nd in nodes:
+            if nd.embedding is None:
+                continue
+            vec_768 = nd.embedding.tolist()
+            vec_64 = nd.embedding[:self._cfg.embedding_dim_low].copy()
+            vec_64 /= float(np.linalg.norm(vec_64)) + 1e-9
+            points.append(PointStruct(
                 id=nd.qdrant_point_id,
-                vector={"dense": nd.embedding.tolist()} if self._cfg.splade_enabled else nd.embedding.tolist(),
+                vector={"dense_64": vec_64.tolist(), "dense_768": vec_768},
                 payload={
                     "tenant_id":          nd.tenant_id,
                     "source_type":        "raptor_summary",
@@ -674,12 +765,9 @@ class DocumentStore:
                     "cluster_id":         nd.cluster_id,
                     "text":               nd.summary,
                     "child_chunk_count":  len(nd.child_ids),
-                    "embedding_version":  "jina-v3",
+                    "embedding_version":  "nomic-v1.5",
                 },
-            )
-            for nd in nodes
-            if nd.embedding is not None
-        ]
+            ))
         for i in range(0, len(points), 64):
             self._qdrant.upsert(
                 collection_name=self._cfg.qdrant_collection,

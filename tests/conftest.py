@@ -10,13 +10,14 @@ import pytest
 # ── Make src importable ────────────────────────────────────────────────────
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-# Force stub embedder + in-memory Qdrant for all tests unless overridden
+# Force stubs + in-memory Qdrant for all tests unless overridden
 os.environ.setdefault("USE_STUB_EMBEDDER", "true")
 os.environ.setdefault("USE_STUB_LLM",      "true")
 os.environ.setdefault("USE_STUB_COLPALI",  "true")
 os.environ.setdefault("USE_STUB_GRAPH",    "true")
-os.environ.setdefault("USE_STUB_SPLADE",    "true")
+os.environ.setdefault("USE_STUB_SPLADE",   "true")
 os.environ.setdefault("USE_STUB_RERANKER", "true")
+os.environ.setdefault("USE_STUB_COLBERT",  "true")
 os.environ.setdefault("QDRANT_IN_MEMORY",  "true")
 os.environ.setdefault("SQLITE_URL", "sqlite:///./data/test_synapse.db")
 
@@ -29,17 +30,20 @@ def reset_db_singletons():
     from src.core.intent_router import reset_intent_router
     from src.pdf_ingestion.splade_embedder import reset_splade_embedder
     from src.pdf_ingestion.reranker import reset_reranker
+    from src.pdf_ingestion.colbert_embedder import reset_colbert_embedder
     reset_singletons()
     reset_graph_builder()
     reset_intent_router()
     reset_splade_embedder()
     reset_reranker()
+    reset_colbert_embedder()
     yield
     reset_singletons()
     reset_graph_builder()
     reset_intent_router()
     reset_splade_embedder()
     reset_reranker()
+    reset_colbert_embedder()
 
 
 @pytest.fixture(scope="session")
@@ -64,7 +68,12 @@ def settings():
         use_stub_colpali=True,
         use_stub_graph=True,
         use_stub_reranker=True,
+        use_stub_colbert=True,
         qdrant_in_memory=True,
         sqlite_url="sqlite:///./data/test_synapse.db",
+        # Nomic MRL dims — override any .env leftovers from Jina era
+        embedding_model="nomic-ai/nomic-embed-text-v1.5",
+        embedding_dim=768,
+        embedding_dim_low=64,
         debug=False,
     )
