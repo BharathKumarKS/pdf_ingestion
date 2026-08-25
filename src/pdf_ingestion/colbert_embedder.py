@@ -167,6 +167,53 @@ class ColBERTEmbedder:
         return results
 
 
+# -- SV Cluster API client -----------------------------------------------------
+
+class ClusterColBERTEmbedder:
+    """
+    Calls the SV cluster ColBERT multivector endpoint instead of loading locally.
+    URL: http://10.0.10.51:8000/embed-text/v1/multivector-embeddings
+
+    Request:
+        POST {url}
+        {"model": "colbert-ir/colbertv2.0", "input": [...], "encoding_type": "document"|"query"}
+
+    Response:
+        {"data": [{"embedding": [[...token vecs...]], "index": 0}, ...]}
+    """
+
+    def __init__(self, settings=None) -> None:
+        self._cfg = settings or get_settings()
+        self._url = self._cfg.sv_colbert_url
+        self._model = self._cfg.colbert_model
+
+    def _post(self, texts: list[str], encoding_type: str) -> list[np.ndarray]:
+        import httpx
+        payload = {
+            "model": self._model,
+            "input": texts,
+            "encoding_type": encoding_type,
+        }
+        resp = httpx.post(self._url, json=payload, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+        results = []
+        for item in data["data"]:
+            mat = np.array(item["embedding"], dtype=np.float32)
+            # L2-normalise each token vector
+            norms = np.linalg.norm(mat, axis=1, keepdims=True) + 1e-9
+            results.append(mat / norms)
+        return results
+
+    def embed_passages(self, texts: list[str]) -> list[np.ndarray]:
+        """Returns list of (n_tokens, colbert_dim) matrices for passages."""
+        return self._post(texts, "document")
+
+    def embed_query(self, text: str) -> np.ndarray:
+        """Returns (n_tokens, colbert_dim) matrix for a query."""
+        return self._post([text], "query")[0]
+
+
 # -- Singleton + factory -------------------------------------------------------
 
 _colbert_instance: StubColBERTEmbedder | ColBERTEmbedder | None = None
@@ -174,12 +221,15 @@ _colbert_instance: StubColBERTEmbedder | ColBERTEmbedder | None = None
 
 def get_colbert_embedder(
     settings: Settings | None = None,
-) -> StubColBERTEmbedder | ColBERTEmbedder:
+) -> StubColBERTEmbedder | ClusterColBERTEmbedder | ColBERTEmbedder:
     global _colbert_instance
     if _colbert_instance is None:
         cfg = settings or get_settings()
         if cfg.use_stub_colbert or not cfg.colbert_enabled:
             _colbert_instance = StubColBERTEmbedder()
+        elif cfg.sv_colbert_url:
+            _colbert_instance = ClusterColBERTEmbedder(settings=cfg)
+            logger.info("ColBERT: using SV cluster at {}", cfg.sv_colbert_url)
         else:
             _colbert_instance = ColBERTEmbedder(settings=cfg)
     return _colbert_instance

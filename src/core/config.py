@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     colbert_enabled: bool = True         # False → skip ColBERT (dense only)
     use_stub_colbert: bool = False       # random token matrices for unit tests
 
+    # SV Cluster API endpoints — set to use cluster inference instead of local models.
+    # When a URL is non-empty, the corresponding cluster client is used automatically.
+    sv_colbert_url: str = ""             # e.g. http://10.0.10.51:8000/embed-text/v1/multivector-embeddings
+    sv_sparse_url: str = ""             # e.g. http://10.0.10.51:8000/embed-text/v1/sparse-embeddings
+    sv_rerank_url: str = ""             # e.g. http://10.0.10.51:8000/rerank/v1/rank
+
     # Chunking
     chunk_size: int = 512
     chunk_overlap: int = 64
@@ -85,13 +91,13 @@ class Settings(BaseSettings):
 
     # Cross-encoder re-ranker — Phase 4
     reranker_enabled: bool = True
-    reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    reranker_model: str = "BAAI/bge-reranker-v2-m3"
     reranker_top_k: int = 6              # chunks to keep after re-ranking
     reranker_fetch_k: int = 20           # candidates to retrieve before re-ranking
     use_stub_reranker: bool = False
 
     # SPLADE sparse embedder — Phase 4
-    splade_model: str = "naver/splade-cocondenser-selfdistil"
+    splade_model: str = "prithivida/Splade_PP_en_v1"
     splade_enabled: bool = False         # True -> hybrid dense+sparse (requires re-ingest)
     use_stub_splade: bool = False        # True -> skip model download in unit tests
 

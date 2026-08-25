@@ -46,17 +46,73 @@ class CrossEncoderReranker:
         return [c for _, c in ranked[:top_k]]
 
 
+# ── SV Cluster cross-encoder reranker ─────────────────────────────────────
+
+
+class ClusterCrossEncoderReranker:
+    """
+    Calls the SV cluster reranker endpoint instead of loading locally.
+    Fixes the HuggingFace lock-file issue permanently.
+
+    RANK endpoint (sorted results):
+        POST http://10.0.10.51:8000/rerank/v1/rank
+        {"model": "BAAI/bge-reranker-v2-m3",
+         "query": "...", "documents": ["doc1", ...], "top_n": 20}
+    Response:
+        {"results": [{"index": 0, "relevance_score": 0.95, "document": {"text": "..."}}, ...]}
+    """
+
+    def __init__(self, url: str, model: str) -> None:
+        self._url   = url
+        self._model = model
+        logger.info("ClusterCrossEncoderReranker: {} @ {}", model, url)
+
+    def rerank(self, query: str, chunks: list[dict], top_k: int) -> list[dict]:
+        if not chunks:
+            return []
+        import httpx
+        documents = [c.get("text", "") for c in chunks]
+        payload = {
+            "model":     self._model,
+            "query":     query,
+            "documents": documents,
+            "top_n":     min(top_k, len(chunks)),
+        }
+        try:
+            resp = httpx.post(self._url, json=payload, timeout=30)
+            resp.raise_for_status()
+            results = resp.json()["results"]
+            # results sorted by relevance_score desc; map back to original chunks
+            ranked = [chunks[r["index"]] for r in results]
+            logger.debug(
+                "Cluster reranker: top score {:.3f} (kept {}/{})",
+                results[0]["relevance_score"] if results else 0,
+                len(ranked), len(chunks),
+            )
+            return ranked
+        except Exception as exc:
+            logger.warning("Cluster reranker failed ({}), returning original order", exc)
+            return chunks[:top_k]
+
+
 # ── Singleton ──────────────────────────────────────────────────────────────
 
 _reranker_instance: StubReranker | CrossEncoderReranker | None = None
 
 
-def get_reranker(settings: Settings | None = None) -> StubReranker | CrossEncoderReranker:
+def get_reranker(
+    settings: Settings | None = None,
+) -> StubReranker | ClusterCrossEncoderReranker | CrossEncoderReranker:
     global _reranker_instance
     if _reranker_instance is None:
         cfg = settings or get_settings()
         if not cfg.reranker_enabled or cfg.use_stub_reranker:
             _reranker_instance = StubReranker()
+        elif cfg.sv_rerank_url:
+            _reranker_instance = ClusterCrossEncoderReranker(
+                url=cfg.sv_rerank_url,
+                model=cfg.reranker_model,
+            )
         else:
             _reranker_instance = CrossEncoderReranker(cfg.reranker_model)
     return _reranker_instance

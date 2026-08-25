@@ -116,6 +116,52 @@ class SpladeEmbedder:
         return results
 
 
+# ── SV Cluster sparse embedder ────────────────────────────────────────────────
+
+class ClusterSpladeEmbedder:
+    """
+    Calls the SV cluster sparse embedding endpoint instead of loading locally.
+    URL: http://10.0.10.51:8000/embed-text/v1/sparse-embeddings
+    Model: prithivida/Splade_PP_en_v1
+
+    Request:
+        POST {url}
+        {"model": "prithivida/Splade_PP_en_v1", "input": ["text1", ...]}
+
+    Response:
+        {"data": [{"embedding": {"indices": [...], "values": [...]}, "index": 0}, ...]}
+    """
+
+    def __init__(self, settings=None) -> None:
+        from src.core.config import get_settings as _gs
+        cfg = settings or _gs()
+        self._url   = cfg.sv_sparse_url
+        self._model = cfg.splade_model
+
+    def _post(self, texts: list[str]) -> list[SparseVector]:
+        import httpx
+        resp = httpx.post(
+            self._url,
+            json={"model": self._model, "input": texts},
+            timeout=60,
+        )
+        resp.raise_for_status()
+        results = []
+        for item in resp.json()["data"]:
+            emb = item["embedding"]
+            results.append(SparseVector(
+                indices=emb["indices"],
+                values=emb["values"],
+            ))
+        return results
+
+    def encode_sparse(self, text: str) -> SparseVector:
+        return self._post([text])[0]
+
+    def encode_batch(self, texts: list[str]) -> list[SparseVector]:
+        return self._post(texts)
+
+
 # ── Singleton factory ─────────────────────────────────────────────────────────
 
 _splade_instance: StubSpladeEmbedder | SpladeEmbedder | None = None
@@ -123,12 +169,15 @@ _splade_instance: StubSpladeEmbedder | SpladeEmbedder | None = None
 
 def get_splade_embedder(
     settings: Settings | None = None,
-) -> StubSpladeEmbedder | SpladeEmbedder:
+) -> StubSpladeEmbedder | ClusterSpladeEmbedder | SpladeEmbedder:
     global _splade_instance
     if _splade_instance is None:
         cfg = settings or get_settings()
         if cfg.use_stub_splade or not cfg.splade_enabled:
             _splade_instance = StubSpladeEmbedder()
+        elif cfg.sv_sparse_url:
+            _splade_instance = ClusterSpladeEmbedder(settings=cfg)
+            logger.info("SPLADE: using SV cluster at {}", cfg.sv_sparse_url)
         else:
             _splade_instance = SpladeEmbedder(settings=cfg)
     return _splade_instance
