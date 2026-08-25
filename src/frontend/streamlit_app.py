@@ -556,7 +556,7 @@ with tab_search:
 # Student sees only study-relevant types. Summary/Factoid/Objective are
 # too numerous (5k-11k each) and crash the browser — admin-only.
 _STUDENT_CARD_TYPES = ["formula", "definition", "question", "misconception", "example"]
-_CARDS_PER_TYPE = 50   # max rendered per type to prevent browser OOM
+_CARDS_PER_TYPE = 8    # max rendered per type — keeps initial load fast
 
 def _dedup_cards(card_list):
     seen, unique = set(), []
