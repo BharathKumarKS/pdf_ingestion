@@ -335,33 +335,47 @@ class DocumentStore:
 
         # SPLADE hybrid (if enabled and query text available, no ColBERT)
         if cfg.splade_enabled and query_text:
-            from qdrant_client.models import Fusion, FusionQuery, Prefetch as _P
-            from src.pdf_ingestion.splade_embedder import get_splade_embedder
-            sparse_vec = get_splade_embedder(cfg).encode_sparse(query_text)
-            response = self._qdrant.query_points(
+            try:
+                from qdrant_client.models import Fusion, FusionQuery, Prefetch as _P
+                from src.pdf_ingestion.splade_embedder import get_splade_embedder
+                sparse_vec = get_splade_embedder(cfg).encode_sparse(query_text)
+                return self._qdrant.query_points(
+                    collection_name=cfg.qdrant_collection,
+                    prefetch=[
+                        mid_prefetch,
+                        _P(query=sparse_vec.to_qdrant(), using="sparse", limit=limit * 2),
+                    ],
+                    query=FusionQuery(fusion=Fusion.RRF),
+                    query_filter=filter_,
+                    limit=limit,
+                    with_payload=True,
+                )
+            except Exception as exc:
+                logger.warning("SPLADE hybrid query failed ({}), falling back to dense", exc)
+
+        # Fallback: dense_64 → dense_768 two-stage (no ColBERT, no SPLADE)
+        try:
+            return self._qdrant.query_points(
                 collection_name=cfg.qdrant_collection,
-                prefetch=[
-                    mid_prefetch,
-                    _P(query=sparse_vec.to_qdrant(), using="sparse", limit=limit * 2),
-                ],
-                query=FusionQuery(fusion=Fusion.RRF),
+                prefetch=[inner_prefetch],
+                query=query_vector.tolist(),
+                using="dense_768",
                 query_filter=filter_,
                 limit=limit,
                 with_payload=True,
             )
-            return response
+        except Exception as exc:
+            logger.warning("Nested prefetch failed ({}), using plain dense_768", exc)
 
-        # Fallback: dense_64 → dense_768 two-stage without ColBERT
-        response = self._qdrant.query_points(
+        # Last resort: plain dense_768 — works even in local file mode
+        return self._qdrant.query_points(
             collection_name=cfg.qdrant_collection,
-            prefetch=[inner_prefetch],
             query=query_vector.tolist(),
             using="dense_768",
             query_filter=filter_,
             limit=limit,
             with_payload=True,
         )
-        return response
 
     def search_raptor(
         self,
