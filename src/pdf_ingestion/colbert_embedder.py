@@ -201,6 +201,8 @@ class ClusterColBERTEmbedder:
             resp.raise_for_status()
             for item in resp.json()["data"]:
                 mat = np.array(item["embedding"], dtype=np.float32)
+                if mat.ndim == 1:
+                    mat = mat[np.newaxis, :]  # cluster returns (dim,) for query — wrap to (1, dim)
                 norms = np.linalg.norm(mat, axis=1, keepdims=True) + 1e-9
                 results.append(mat / norms)
         return results
