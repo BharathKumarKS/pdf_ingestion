@@ -167,12 +167,20 @@ class IntentRouter:
 
         # Mode 1: trained classifier
         if self._clf is not None:
-            label = self._clf.predict([q])[0]
-            logger.debug("IntentRouter (trained): '{}'", label)
-            intent = Intent(label)
-            with telemetry.span("intent_route", {"intent": intent.value, "mode": "classifier"}):
-                pass
-            return intent
+            try:
+                label = self._clf.predict([q])[0]
+                logger.debug("IntentRouter (trained): '{}'", label)
+                intent = Intent(label)
+                with telemetry.span("intent_route", {"intent": intent.value, "mode": "classifier"}):
+                    pass
+                return intent
+            except Exception as exc:
+                logger.warning(
+                    "IntentRouter: trained classifier failed ({}), falling back to prototypes. "
+                    "Re-train with 768d embeddings: uv run python scripts/train_intent_classifier.py",
+                    exc,
+                )
+                self._clf = None  # don't retry every query
 
         # Mode 2: prototype similarity
         self._ensure_prototypes()
