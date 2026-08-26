@@ -81,13 +81,37 @@ class ClusterCrossEncoderReranker:
         try:
             resp = httpx.post(self._url, json=payload, timeout=30)
             resp.raise_for_status()
-            results = resp.json()["results"]
-            # results sorted by relevance_score desc; map back to original chunks
-            ranked = [chunks[r["index"]] for r in results]
+            data = resp.json()
+            results = data.get("results", data) if isinstance(data, dict) else data
+
+            # Handle multiple response formats:
+            # Format A: [{"index": 0, "relevance_score": 0.9}, ...]  — vLLM standard
+            # Format B: [{"score": 0.9}, ...]                        — infinity-emb (no index, score-sorted)
+            # Format C: [0.9, 0.23, ...]                             — raw score list in input order
+            if results and isinstance(results[0], dict):
+                if "index" in results[0]:
+                    # Format A: results sorted by score, index maps back to input
+                    score_key = "relevance_score" if "relevance_score" in results[0] else "score"
+                    ranked = [chunks[r["index"]] for r in results]
+                    top_score = results[0].get(score_key, 0)
+                else:
+                    # Format B: results already score-sorted, position = rank
+                    score_key = "relevance_score" if "relevance_score" in results[0] else "score"
+                    top_score = results[0].get(score_key, 0)
+                    # Results are in score order but we need to map back to chunks
+                    # Pair with original order using enumerate over input documents order
+                    pairs = sorted(enumerate(results), key=lambda x: x[1].get(score_key, 0), reverse=True)
+                    ranked = [chunks[i] for i, _ in pairs[:top_k]]
+            else:
+                # Format C: list of floats in input order — sort chunks by score
+                scores = [float(r) for r in results]
+                pairs = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
+                ranked = [chunks[i] for i, _ in pairs[:top_k]]
+                top_score = pairs[0][1] if pairs else 0
+
             logger.debug(
                 "Cluster reranker: top score {:.3f} (kept {}/{})",
-                results[0]["relevance_score"] if results else 0,
-                len(ranked), len(chunks),
+                top_score, len(ranked), len(chunks),
             )
             return ranked
         except Exception as exc:
