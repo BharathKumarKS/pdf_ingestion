@@ -320,16 +320,31 @@ class DocumentStore:
             try:
                 from src.pdf_ingestion.colbert_embedder import get_colbert_embedder
                 colbert_q = get_colbert_embedder(cfg).embed_query(query_text)
-                response = self._qdrant.query_points(
-                    collection_name=cfg.qdrant_collection,
-                    prefetch=[mid_prefetch],
-                    query=colbert_q.tolist(),
-                    using="colbert",
-                    query_filter=filter_,
-                    limit=limit,
-                    with_payload=True,
-                )
-                return response
+                colbert_query_list = colbert_q.tolist()
+                # Try with nested prefetch first (GPU server Qdrant handles this natively)
+                try:
+                    response = self._qdrant.query_points(
+                        collection_name=cfg.qdrant_collection,
+                        prefetch=[mid_prefetch],
+                        query=colbert_query_list,
+                        using="colbert",
+                        query_filter=filter_,
+                        limit=limit,
+                        with_payload=True,
+                    )
+                    return response
+                except Exception:
+                    # Local file Qdrant may not support nested prefetch + MaxSim together.
+                    # Fall back to direct ColBERT MaxSim without prefetch.
+                    response = self._qdrant.query_points(
+                        collection_name=cfg.qdrant_collection,
+                        query=colbert_query_list,
+                        using="colbert",
+                        query_filter=filter_,
+                        limit=limit,
+                        with_payload=True,
+                    )
+                    return response
             except Exception as exc:
                 import traceback
                 logger.warning("ColBERT query failed ({})\n{}", exc, traceback.format_exc())
