@@ -1,18 +1,12 @@
-"""
-SPLADE sparse embedder — Phase 4.
+"""SPLADE sparse embedder — Phase 4.
 
-SPLADE (SParse Lexical AnD Expansion) produces sparse vectors over the full
-vocabulary (~30k BERT token dimensions). Unlike BM25, SPLADE also expands
-queries and documents with semantically related terms learned during training.
-For example, "velocity" activates "speed", "motion", "kinematics" — catching
-matches that dense-only search misses.
+SPLADE produces sparse vectors over the full vocabulary. Unlike BM25, it also
+expands queries with semantically related terms learned during training.
 
-Used alongside Jina v3 dense vectors in Qdrant hybrid search with RRF fusion:
-  dense (Jina)  → semantic similarity
-  sparse (SPLADE) → keyword + synonym matching
-  RRF fusion     → combines both signals
-
-Model: naver/splade-cocondenser-selfdistil (~500MB, CPU-friendly)
+Three implementations — same interface, pick via factory:
+  StubSpladeEmbedder      — deterministic sparse vectors for unit tests
+  ClusterSpladeEmbedder   — SV cluster API (GPU inference, no local download)
+  FastembedSpladeEmbedder — fastembed ONNX (CPU-friendly, default for local)
 """
 from __future__ import annotations
 
@@ -22,10 +16,11 @@ from loguru import logger
 from src.core.config import Settings, get_settings
 
 
-# ── Sparse vector type ────────────────────────────────────────────────────────
+# -- Sparse vector type -------------------------------------------------------
 
 class SparseVector:
     """Lightweight sparse vector — matches Qdrant's SparseVector schema."""
+
     def __init__(self, indices: list[int], values: list[float]) -> None:
         self.indices = indices
         self.values  = values
@@ -35,7 +30,7 @@ class SparseVector:
         return QSparseVector(indices=self.indices, values=self.values)
 
 
-# ── Stub (no model download for tests) ───────────────────────────────────────
+# -- Stub (fast unit tests, no model download) --------------------------------
 
 class StubSpladeEmbedder:
     """Returns deterministic sparse vectors — no model needed for tests."""
@@ -51,90 +46,19 @@ class StubSpladeEmbedder:
         return [self.encode_sparse(t) for t in texts]
 
 
-# ── Real SPLADE embedder ──────────────────────────────────────────────────────
-
-class SpladeEmbedder:
-    """
-    Encodes text as SPLADE sparse vectors using naver/splade-cocondenser-selfdistil.
-
-    Encoding formula (SPLADE):
-        sparse_vec[token] = max_over_positions( log(1 + ReLU(logit[token])) )
-
-    Result: dict-like sparse vector with non-zero weights on relevant token IDs.
-    Semantically related tokens get non-zero weights even if absent from the text.
-    """
-
-    def __init__(self, settings: Settings | None = None) -> None:
-        self._cfg   = settings or get_settings()
-        self._model = None
-        self._tok   = None
-
-    def _load(self) -> None:
-        if self._model is not None:
-            return
-        import torch
-        from transformers import AutoModelForMaskedLM, AutoTokenizer
-
-        model_name = self._cfg.splade_model
-        cache_dir  = self._cfg.model_cache_dir
-
-        logger.info("Loading SPLADE model '{}' on device=cpu…", model_name)
-        self._tok   = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
-        self._model = AutoModelForMaskedLM.from_pretrained(model_name, cache_dir=cache_dir)
-        self._model.eval()
-        logger.info("SPLADE loaded — vocab size {}", self._tok.vocab_size)
-
-    def encode_sparse(self, text: str) -> SparseVector:
-        """Encode a single text to a sparse vector."""
-        return self.encode_batch([text])[0]
-
-    def encode_batch(self, texts: list[str]) -> list[SparseVector]:
-        """Encode a batch of texts to sparse vectors."""
-        import torch
-        self._load()
-
-        inputs = self._tok(
-            texts,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=512,
-        )
-        with torch.no_grad():
-            logits = self._model(**inputs).logits   # (batch, seq_len, vocab)
-
-        # SPLADE pooling: log(1 + ReLU(logit)).max(dim=seq_len)
-        scores = torch.log(1 + torch.relu(logits)).max(dim=1).values  # (batch, vocab)
-
-        results = []
-        for row in scores:
-            nz_mask = row > 0
-            indices = nz_mask.nonzero(as_tuple=False).squeeze(1).tolist()
-            values  = row[nz_mask].tolist()
-            results.append(SparseVector(indices=indices, values=values))
-
-        return results
-
-
-# ── SV Cluster sparse embedder ────────────────────────────────────────────────
+# -- SV Cluster API (GPU inference, no local model) ---------------------------
 
 class ClusterSpladeEmbedder:
     """
-    Calls the SV cluster sparse embedding endpoint instead of loading locally.
+    Calls the SV cluster sparse embedding endpoint.
     URL: http://10.0.10.51:8000/embed-text/v1/sparse-embeddings
-    Model: prithivida/Splade_PP_en_v1
 
-    Request:
-        POST {url}
-        {"model": "prithivida/Splade_PP_en_v1", "input": ["text1", ...]}
-
-    Response:
-        {"data": [{"embedding": {"indices": [...], "values": [...]}, "index": 0}, ...]}
+    Request:  {"model": "prithivida/Splade_PP_en_v1", "input": [...]}
+    Response: {"data": [{"embedding": {"indices": [...], "values": [...]}, "index": 0}]}
     """
 
-    def __init__(self, settings=None) -> None:
-        from src.core.config import get_settings as _gs
-        cfg = settings or _gs()
+    def __init__(self, settings: Settings | None = None) -> None:
+        cfg        = settings or get_settings()
         self._url   = cfg.sv_sparse_url
         self._model = cfg.splade_model
 
@@ -151,10 +75,7 @@ class ClusterSpladeEmbedder:
             resp.raise_for_status()
             for item in resp.json()["data"]:
                 emb = item["embedding"]
-                results.append(SparseVector(
-                    indices=emb["indices"],
-                    values=emb["values"],
-                ))
+                results.append(SparseVector(indices=emb["indices"], values=emb["values"]))
         return results
 
     def encode_sparse(self, text: str) -> SparseVector:
@@ -164,14 +85,52 @@ class ClusterSpladeEmbedder:
         return self._post(texts)
 
 
-# ── Singleton factory ─────────────────────────────────────────────────────────
+# -- fastembed ONNX (local, CPU-friendly) -------------------------------------
 
-_splade_instance: StubSpladeEmbedder | SpladeEmbedder | None = None
+class FastembedSpladeEmbedder:
+    """
+    SPLADE via fastembed ONNX — no cluster required, runs on CPU.
+    Downloads the model once to cfg.model_cache_dir (~532 MB).
+    """
+
+    def __init__(self, settings: Settings | None = None) -> None:
+        self._cfg   = settings or get_settings()
+        self._model = None
+
+    def _load(self) -> None:
+        if self._model is not None:
+            return
+        from fastembed import SparseTextEmbedding
+        logger.info("Loading SPLADE '{}' via fastembed (ONNX)…", self._cfg.splade_model)
+        self._model = SparseTextEmbedding(
+            model_name=self._cfg.splade_model,
+            cache_dir=self._cfg.model_cache_dir,
+        )
+        logger.info("SPLADE (fastembed) ready")
+
+    def encode_sparse(self, text: str) -> SparseVector:
+        return self.encode_batch([text])[0]
+
+    def encode_batch(self, texts: list[str]) -> list[SparseVector]:
+        self._load()
+        results = []
+        for e in self._model.embed(texts):
+            d = e.as_object()
+            results.append(SparseVector(
+                indices=list(d["indices"]),
+                values=list(d["values"]),
+            ))
+        return results
+
+
+# -- Singleton factory --------------------------------------------------------
+
+_splade_instance: StubSpladeEmbedder | ClusterSpladeEmbedder | FastembedSpladeEmbedder | None = None
 
 
 def get_splade_embedder(
     settings: Settings | None = None,
-) -> StubSpladeEmbedder | ClusterSpladeEmbedder | SpladeEmbedder:
+) -> StubSpladeEmbedder | ClusterSpladeEmbedder | FastembedSpladeEmbedder:
     global _splade_instance
     if _splade_instance is None:
         cfg = settings or get_settings()
@@ -181,7 +140,8 @@ def get_splade_embedder(
             _splade_instance = ClusterSpladeEmbedder(settings=cfg)
             logger.info("SPLADE: using SV cluster at {}", cfg.sv_sparse_url)
         else:
-            _splade_instance = SpladeEmbedder(settings=cfg)
+            _splade_instance = FastembedSpladeEmbedder(settings=cfg)
+            logger.info("SPLADE: using fastembed (local ONNX)")
     return _splade_instance
 
 

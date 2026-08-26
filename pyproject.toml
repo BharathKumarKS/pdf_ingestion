@@ -24,6 +24,7 @@ dependencies = [
     "torch>=2.3",
     "numpy>=1.26",
     "einops>=0.8",
+    "fastembed>=0.4",             # ONNX-based ColBERT + SPLADE (CPU-friendly, no cluster needed)
     # API
     "fastapi>=0.112",
     "uvicorn[standard]>=0.30",

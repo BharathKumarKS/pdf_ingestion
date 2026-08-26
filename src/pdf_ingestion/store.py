@@ -240,59 +240,30 @@ class DocumentStore:
         query_text: str | None = None,
     ):
         """
-        Unified Qdrant search with the 4-vector Nomic+ColBERT schema.
+        Notebook-style retrieval funnel (see retrieval_funnel.ipynb):
 
-        Pipeline (when colbert_enabled + query_text available):
-            dense_64 top-500 → dense_768 rescore top-250 → colbert MaxSim top-N
+          [dense_64(500) → dense_768(250)]  ─┐
+          [splade(250), if enabled]           ─┤ → ColBERT MaxSim outer (top-N)
+                                               │   or RRF if no ColBERT
+                                               └─  or dense_768 if no SPLADE
 
-        When colbert disabled or no query_text:
-            dense_64 top-3N → dense_768 rescore top-N
-
-        Optionally adds SPLADE as a parallel RRF lane (when splade_enabled).
-
-        Legacy fallback: if the collection still uses the old single-vector
-        schema (pre-Phase-4B, before re-ingest), falls back transparently to
-        a plain unnamed-vector search so evaluate_rag.py keeps working.
+        Legacy fallback for old Jina single-vector collections (pre-reingest).
+        Local file Qdrant skips ColBERT (Python MaxSim bug on real collections).
         """
-        from qdrant_client.models import Prefetch
+        from qdrant_client.models import Fusion, FusionQuery, Prefetch
 
         cfg = self._cfg
 
-        # Local file Qdrant (no host/url set) has a bug in its Python MaxSim
-        # implementation — ColBERT queries fail on real collections even without
-        # prefetch. GPU/server Qdrant (Rust) handles MaxSim correctly.
-        is_local_qdrant = not cfg.qdrant_host and not cfg.qdrant_url
-
-        # Detect whether the collection has the new named-vector schema.
-        # Old schema: VectorParams (unnamed) or {"dense": VectorParams}.
-        # New schema: {"dense_64": ..., "dense_768": ..., ...}.
+        # Schema detection — old Jina vs new 4-vector schema
         try:
-            col_info = self._qdrant.get_collection(cfg.qdrant_collection)
+            col_info    = self._qdrant.get_collection(cfg.qdrant_collection)
             vectors_cfg = col_info.config.params.vectors
             has_new_schema = isinstance(vectors_cfg, dict) and "dense_64" in vectors_cfg
         except Exception:
             has_new_schema = False
 
         if not has_new_schema:
-            # Legacy path: old Jina single-vector or {"dense": ...} collection
-            using = "dense" if (
-                isinstance(vectors_cfg, dict) and "dense" in vectors_cfg
-            ) else None
-            if cfg.splade_enabled and query_text and using == "dense":
-                from qdrant_client.models import Fusion, FusionQuery, Prefetch as _P
-                from src.pdf_ingestion.splade_embedder import get_splade_embedder
-                sparse_vec = get_splade_embedder(cfg).encode_sparse(query_text)
-                return self._qdrant.query_points(
-                    collection_name=cfg.qdrant_collection,
-                    prefetch=[
-                        _P(query=query_vector.tolist(), using="dense", limit=limit * 3),
-                        _P(query=sparse_vec.to_qdrant(), using="sparse", limit=limit * 3),
-                    ],
-                    query=FusionQuery(fusion=Fusion.RRF),
-                    query_filter=filter_,
-                    limit=limit,
-                    with_payload=True,
-                )
+            using = "dense" if isinstance(vectors_cfg, dict) and "dense" in vectors_cfg else None
             return self._qdrant.query_points(
                 collection_name=cfg.qdrant_collection,
                 query=query_vector.tolist(),
@@ -302,95 +273,61 @@ class DocumentStore:
                 with_payload=True,
             )
 
-        # 64d MRL truncation of the query vector (first-stage ANN)
+        # Stage 1+2: dense funnel (always)
         vec_64 = query_vector[:cfg.embedding_dim_low].copy()
-        norm = float(np.linalg.norm(vec_64)) + 1e-9
-        vec_64 = vec_64 / norm
+        vec_64 /= np.linalg.norm(vec_64) + 1e-9
 
-        # Stage 1: dense_64 → dense_768 nested prefetch
-        inner_prefetch = Prefetch(
-            query=vec_64.tolist(),
-            using="dense_64",
-            limit=min(500, limit * 10),
-        )
-        mid_prefetch = Prefetch(
-            prefetch=[inner_prefetch],
+        dense_prefetch = Prefetch(
+            prefetch=[Prefetch(query=vec_64.tolist(), using="dense_64", limit=500)],
             query=query_vector.tolist(),
             using="dense_768",
-            limit=min(250, limit * 5),
+            limit=250,
         )
+        prefetches = [dense_prefetch]
 
-        # Stage 3: ColBERT MaxSim (outer query)
-        if cfg.colbert_enabled and query_text and not is_local_qdrant:
+        # Stage 3: SPLADE parallel lane (if enabled)
+        if cfg.splade_enabled and query_text:
+            try:
+                from src.pdf_ingestion.splade_embedder import get_splade_embedder
+                sv = get_splade_embedder(cfg).encode_sparse(query_text)
+                prefetches.append(Prefetch(query=sv.to_qdrant(), using="sparse", limit=250))
+            except Exception as exc:
+                logger.warning("SPLADE encode failed ({}), skipping sparse lane", exc)
+
+        # Stage 4: ColBERT MaxSim outer query over merged prefetch candidates.
+        # Skipped on local file Qdrant — Python MaxSim implementation has a bug
+        # with real collections; server Qdrant (Rust) handles it correctly.
+        is_local = not cfg.qdrant_host and not cfg.qdrant_url
+        if cfg.colbert_enabled and query_text and not is_local:
             try:
                 from src.pdf_ingestion.colbert_embedder import get_colbert_embedder
                 colbert_q = get_colbert_embedder(cfg).embed_query(query_text)
-                colbert_query_list = colbert_q.tolist()
-                # Try with nested prefetch first (GPU server Qdrant handles this natively)
-                try:
-                    response = self._qdrant.query_points(
-                        collection_name=cfg.qdrant_collection,
-                        prefetch=[mid_prefetch],
-                        query=colbert_query_list,
-                        using="colbert",
-                        query_filter=filter_,
-                        limit=limit,
-                        with_payload=True,
-                    )
-                    return response
-                except Exception:
-                    # Local file Qdrant may not support nested prefetch + MaxSim together.
-                    # Fall back to direct ColBERT MaxSim without prefetch.
-                    response = self._qdrant.query_points(
-                        collection_name=cfg.qdrant_collection,
-                        query=colbert_query_list,
-                        using="colbert",
-                        query_filter=filter_,
-                        limit=limit,
-                        with_payload=True,
-                    )
-                    return response
-            except Exception as exc:
-                import traceback
-                logger.warning("ColBERT query failed ({})\n{}", exc, traceback.format_exc())
-
-        # SPLADE hybrid (if enabled and query text available, no ColBERT)
-        if cfg.splade_enabled and query_text:
-            try:
-                from qdrant_client.models import Fusion, FusionQuery, Prefetch as _P
-                from src.pdf_ingestion.splade_embedder import get_splade_embedder
-                sparse_vec = get_splade_embedder(cfg).encode_sparse(query_text)
                 return self._qdrant.query_points(
                     collection_name=cfg.qdrant_collection,
-                    prefetch=[
-                        mid_prefetch,
-                        _P(query=sparse_vec.to_qdrant(), using="sparse", limit=limit * 2),
-                    ],
-                    query=FusionQuery(fusion=Fusion.RRF),
+                    prefetch=prefetches,
+                    query=colbert_q.tolist(),
+                    using="colbert",
                     query_filter=filter_,
                     limit=limit,
                     with_payload=True,
                 )
             except Exception as exc:
-                logger.warning("SPLADE hybrid query failed ({}), falling back to dense", exc)
+                logger.warning("ColBERT query failed ({}), using dense+SPLADE", exc)
 
-        # Fallback: dense_64 → dense_768 two-stage (no ColBERT, no SPLADE)
-        try:
+        # No ColBERT: RRF over dense+SPLADE, or plain dense if SPLADE absent
+        if len(prefetches) > 1:
             return self._qdrant.query_points(
                 collection_name=cfg.qdrant_collection,
-                prefetch=[inner_prefetch],
-                query=query_vector.tolist(),
-                using="dense_768",
+                prefetch=prefetches,
+                query=FusionQuery(fusion=Fusion.RRF),
                 query_filter=filter_,
                 limit=limit,
                 with_payload=True,
             )
-        except Exception as exc:
-            logger.warning("Nested prefetch failed ({}), using plain dense_768", exc)
 
-        # Last resort: plain dense_768 — works even in local file mode
         return self._qdrant.query_points(
             collection_name=cfg.qdrant_collection,
+            prefetch=[dense_prefetch],
             query=query_vector.tolist(),
             using="dense_768",
             query_filter=filter_,
