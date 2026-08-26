@@ -331,7 +331,8 @@ class DocumentStore:
                 )
                 return response
             except Exception as exc:
-                logger.warning("ColBERT query failed ({}), falling back to dense", exc)
+                import traceback
+                logger.warning("ColBERT query failed ({})\n{}", exc, traceback.format_exc())
 
         # SPLADE hybrid (if enabled and query text available, no ColBERT)
         if cfg.splade_enabled and query_text:
