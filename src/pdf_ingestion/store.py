@@ -258,6 +258,11 @@ class DocumentStore:
 
         cfg = self._cfg
 
+        # Local file Qdrant (no host/url set) has a bug in its Python MaxSim
+        # implementation — ColBERT queries fail on real collections even without
+        # prefetch. GPU/server Qdrant (Rust) handles MaxSim correctly.
+        is_local_qdrant = not cfg.qdrant_host and not cfg.qdrant_url
+
         # Detect whether the collection has the new named-vector schema.
         # Old schema: VectorParams (unnamed) or {"dense": VectorParams}.
         # New schema: {"dense_64": ..., "dense_768": ..., ...}.
@@ -316,7 +321,7 @@ class DocumentStore:
         )
 
         # Stage 3: ColBERT MaxSim (outer query)
-        if cfg.colbert_enabled and query_text:
+        if cfg.colbert_enabled and query_text and not is_local_qdrant:
             try:
                 from src.pdf_ingestion.colbert_embedder import get_colbert_embedder
                 colbert_q = get_colbert_embedder(cfg).embed_query(query_text)
