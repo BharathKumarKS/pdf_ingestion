@@ -15,8 +15,8 @@
     "query": "Define Newton's first law of motion",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [177],
-    "_calibration_note": "Scan found only PARTIAL pages [200, 202]. p177 remains the only page explicitly naming and stating the First Law. Scan did not rescan p177 directly (not at stride boundary).",
+    "relevant_pages": [176],
+    "_calibration_note": "Corrected from p177: Qdrant scroll shows no p177 chunk exists. P176 contains the principle of inertia text ('if an object is left alone... it continues to move with a constant velocity') and the Newton's Laws chapter heading. Retriever was already finding p176 correctly.",
     "expected_answer_hint": "object at rest stays at rest, object in motion stays in motion unless acted on by external force — principle of inertia",
     "calibrated": true
   },
@@ -35,8 +35,8 @@
     "query": "What does Feynman say about the principle of least time?",
     "query_type": "factual",
     "expected_route": "vector",
-    "relevant_pages": [460],
-    "_calibration_note": "Scan: p457-467 all PARTIAL (Fermat's principle context). No YES page found — p460 remains best candidate (Snell's law derivation from least time). Query changed from 'least action' to 'least time' (pages are Ch.26 optics, not Hamilton's principle).",
+    "relevant_pages": [459],
+    "_calibration_note": "Corrected from p460: Qdrant scroll shows p459 contains the core least-time explanation (Fermat's principle, Snell's law derivation, point C at shortest time). No p460 chunk exists in the collection. P459 is the primary relevant page.",
     "expected_answer_hint": "light takes the path of least time between two points, Fermat's principle, equivalent to Snell's law",
     "calibrated": true
   },
