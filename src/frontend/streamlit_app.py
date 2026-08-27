@@ -60,11 +60,21 @@ _KEY_FACT_TYPES = ["definition", "factoid", "formula"]
 
 
 def render_math(text: str) -> None:
-    """Render card content, converting {LaTeX} → $LaTeX$ for Streamlit."""
+    """Render card content with LaTeX support.
+
+    Cards generated before math-rendering support used {LaTeX} notation.
+    If the entire content is wrapped in {}, treat it as a display equation.
+    Otherwise render as markdown (which supports $...$ inline math).
+    """
     import re
-    # Cards were generated with {formula} notation — convert to $formula$ for st.markdown
-    converted = re.sub(r'\{([^{}]+(?:\\[a-zA-Z]+[^{}]*)?)\}', r'$\1$', text)
-    st.markdown(converted)
+    stripped = text.strip()
+    # Whole content is a single formula block: {F = G\frac{m_1 m_2}{r^2}}
+    if stripped.startswith('{') and stripped.endswith('}'):
+        st.latex(stripped[1:-1].strip())
+    else:
+        # Inline: convert {LaTeX} → $LaTeX$ only for simple (non-nested) patterns
+        converted = re.sub(r'\{([^{}]+)\}', r'$\1$', stripped)
+        st.markdown(converted)
 
 def _relevance(score: float) -> str:
     """Convert cosine similarity to a human-readable indicator."""
