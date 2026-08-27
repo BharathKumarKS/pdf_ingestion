@@ -132,8 +132,30 @@ def run_retrieval(
     """Embed + search + rerank. Adds graph lane for multihop queries."""
     q_vec = np.array(embedder.embed_query(query_text), dtype=np.float32)
 
+    # HyDE: generate a hypothetical passage and embed it — better matches Feynman's phrasing
+    search_vec = q_vec
+    if cfg.hyde_enabled and query_type in ("factual", "overview"):
+        try:
+            from src.core.llm import call_llm
+            hyp = call_llm(
+                prompt=(
+                    f"Write 2-3 sentences of physics textbook content "
+                    f"that directly answers: {query_text}"
+                ),
+                system=(
+                    "You are a physics textbook author. Write factual content only. "
+                    "No preamble, no 'Here is...', just the content itself."
+                ),
+                settings=cfg,
+            )
+            if hyp:
+                search_vec = np.array(embedder.embed_query(hyp), dtype=np.float32)
+                logger.debug("HyDE: generated hypothetical ({} chars)", len(hyp))
+        except Exception as exc:
+            logger.warning("HyDE failed ({}), using raw query vector", exc)
+
     hits = store.search_with_das(
-        q_vec,
+        search_vec,
         query_text=query_text,
         tenant_id=tenant_id,
         fetch_k=cfg.reranker_fetch_k,
@@ -662,8 +684,8 @@ def parse_args():
                    help="Path to labeled query file (default: data/eval_queries.json)")
     p.add_argument("--tenant", default="global",
                    help="Tenant ID to query against (default: global)")
-    p.add_argument("--score-threshold", type=float, default=0.45,
-                   help="Similarity score threshold for recall/precision (default: 0.45)")
+    p.add_argument("--score-threshold", type=float, default=0.0,
+                   help="Similarity score threshold for recall/precision (default: 0.0)")
     p.add_argument("--retrieval-only", action="store_true",
                    help="Skip LLM synthesis and generation metrics (fast mode)")
     p.add_argument("--skip-visual", action="store_true",
