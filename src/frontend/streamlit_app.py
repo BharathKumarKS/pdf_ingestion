@@ -328,8 +328,43 @@ with tab_search:
 
                     s = DocumentStore(cfg)
 
+                    # ── Intent router: classify before search so HyDE can use it ──
+                    intent = None
+                    if cfg.intent_router_enabled:
+                        from src.core.intent_router import get_intent_router, ROUTE_MAP
+                        router = get_intent_router(cfg)
+                        intent = router.classify(q_vec)
+                        route  = ROUTE_MAP[intent]
+                        if not is_admin:
+                            also_raptor = route.use_raptor
+                            also_graph  = route.use_graph
+
+                    # ── HyDE: generate hypothetical passage for factual + overview ──
+                    search_vec = q_vec
+                    raptor_vec = q_vec
+                    if cfg.hyde_enabled and intent in ("factual", "overview"):
+                        try:
+                            from src.core.llm import call_llm
+                            hyp = call_llm(
+                                prompt=(
+                                    f"Write 2-3 sentences of physics textbook content "
+                                    f"that directly answers: {query}"
+                                ),
+                                system=(
+                                    "You are a physics textbook author. Write factual content only. "
+                                    "No preamble, no 'Here is...', just the content itself."
+                                ),
+                                settings=cfg,
+                            )
+                            if hyp:
+                                import numpy as np
+                                search_vec = np.array(embedder.embed_query(hyp), dtype=np.float32)
+                                raptor_vec = search_vec
+                        except Exception:
+                            pass  # fall back to raw query vector
+
                     chunk_results = s.search_with_das(
-                        query_vector=q_vec,
+                        query_vector=search_vec,
                         query_text=query,
                         tenant_id=tenant_id,
                         fetch_k=cfg.reranker_fetch_k if cfg.reranker_enabled else cfg.reranker_top_k,
@@ -351,39 +386,8 @@ with tab_search:
 
                     _tel.set_attr(root_span, "chunks_retrieved", len(chunk_results))
 
-                # ── Intent router: decide which routes to activate ────────
-                intent = None
-                if cfg.intent_router_enabled:
-                    from src.core.intent_router import get_intent_router, ROUTE_MAP
-                    router = get_intent_router(cfg)
-                    intent = router.classify(q_vec)   # one call, one span
-                    route  = ROUTE_MAP[intent]         # dict lookup, no extra classify
-                    if is_admin:
-                        st.caption(f"Intent router: **{intent}** (admin checkboxes override)")
-                    else:
-                        also_raptor = route.use_raptor
-                        also_graph  = route.use_graph
-
-                # ── HyDE: generate hypothetical answer for RAPTOR vector ──
-                raptor_vec = q_vec
-                if also_raptor and intent == "overview" and cfg.hyde_enabled:
-                    try:
-                        from src.core.llm import call_llm
-                        hyp = call_llm(
-                            prompt=(
-                                f"Write 2-3 sentences of physics textbook content "
-                                f"that directly answers: {query}"
-                            ),
-                            system=(
-                                "You are a physics textbook author. Write factual content only. "
-                                "No preamble, no 'Here is...', just the content itself."
-                            ),
-                            settings=cfg,
-                        )
-                        if hyp:
-                            raptor_vec = embedder.embed_query(hyp)
-                    except Exception:
-                        pass  # fall back to raw query vector
+                if is_admin and intent:
+                    st.caption(f"Intent router: **{intent}** (admin checkboxes override)")
 
                 raptor_results = []
                 if also_raptor:
