@@ -70,22 +70,39 @@ CARD_LABELS = {
 _KEY_FACT_TYPES = ["definition", "factoid", "formula"]
 
 
-def render_math(text: str) -> None:
-    """Render card content with LaTeX support.
+def _convert_braces_to_math(text: str) -> str:
+    """Convert top-level {LaTeX} blocks to $LaTeX$ for Streamlit markdown.
 
-    Cards generated before math-rendering support used {LaTeX} notation.
-    If the entire content is wrapped in {}, treat it as a display equation.
-    Otherwise render as markdown (which supports $...$ inline math).
+    Handles nested braces correctly (e.g. {F = G\\frac{m_1 m_2}{r^2}}).
+    Only converts blocks that contain a LaTeX command (backslash) or
+    math operators (^, _) to avoid converting non-math curly braces.
     """
-    import re
-    stripped = text.strip()
-    # Whole content is a single formula block: {F = G\frac{m_1 m_2}{r^2}}
-    if stripped.startswith('{') and stripped.endswith('}'):
-        st.latex(stripped[1:-1].strip())
-    else:
-        # Inline: convert {LaTeX} → $LaTeX$ only for simple (non-nested) patterns
-        converted = re.sub(r'\{([^{}]+)\}', r'$\1$', stripped)
-        st.markdown(converted)
+    result = []
+    i = 0
+    while i < len(text):
+        if text[i] == '{':
+            depth, j = 1, i + 1
+            while j < len(text) and depth > 0:
+                if text[j] == '{':
+                    depth += 1
+                elif text[j] == '}':
+                    depth -= 1
+                j += 1
+            inner = text[i + 1 : j - 1]
+            if any(c in inner for c in ('\\', '^', '_')):
+                result.append(f'${inner}$')
+            else:
+                result.append(text[i:j])
+            i = j
+        else:
+            result.append(text[i])
+            i += 1
+    return ''.join(result)
+
+
+def render_math(text: str) -> None:
+    """Render card content with LaTeX support."""
+    st.markdown(_convert_braces_to_math(text.strip()))
 
 def _relevance(score: float) -> str:
     """Convert cosine similarity to a human-readable indicator."""
@@ -363,6 +380,7 @@ with tab_search:
                     # ── HyDE: generate hypothetical passage for factual + overview ──
                     search_vec = q_vec
                     raptor_vec = q_vec
+                    rerank_query = query  # use HyDE hypothesis for reranker if available
                     if cfg.hyde_enabled and intent in ("factual", "overview"):
                         try:
                             from src.core.llm import call_llm
@@ -381,6 +399,7 @@ with tab_search:
                                 import numpy as np
                                 search_vec = np.array(embedder.embed_query(hyp), dtype=np.float32)
                                 raptor_vec = search_vec
+                                rerank_query = hyp  # richer signal for cross-encoder
                         except Exception:
                             pass  # fall back to raw query vector
 
@@ -399,7 +418,7 @@ with tab_search:
                             "top_k": cfg.reranker_top_k,
                         }) as rr_span:
                             chunk_results = get_reranker(cfg).rerank(
-                                query=query,
+                                query=rerank_query,
                                 chunks=chunk_results,
                                 top_k=cfg.reranker_top_k,
                             )

@@ -134,6 +134,7 @@ def run_retrieval(
 
     # HyDE: generate a hypothetical passage and embed it — better matches Feynman's phrasing
     search_vec = q_vec
+    rerank_query = query_text
     if cfg.hyde_enabled and query_type in ("factual", "overview"):
         try:
             from src.core.llm import call_llm
@@ -150,6 +151,7 @@ def run_retrieval(
             )
             if hyp:
                 search_vec = np.array(embedder.embed_query(hyp), dtype=np.float32)
+                rerank_query = hyp  # richer signal for cross-encoder reranker
                 logger.debug("HyDE: generated hypothetical ({} chars)", len(hyp))
         except Exception as exc:
             logger.warning("HyDE failed ({}), using raw query vector", exc)
@@ -192,7 +194,7 @@ def run_retrieval(
     hits_above = [h for h in hits if h.get("score", 1.0) >= threshold]
 
     if cfg.reranker_enabled and hits:
-        reranked = reranker.rerank(query_text, hits, top_k=cfg.reranker_top_k)
+        reranked = reranker.rerank(rerank_query, hits, top_k=cfg.reranker_top_k)
     else:
         reranked = hits[: cfg.reranker_top_k]
 
