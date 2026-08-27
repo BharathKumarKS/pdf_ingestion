@@ -127,8 +127,9 @@ def run_retrieval(
     cfg,
     tenant_id: str,
     threshold: float,
+    query_type: str = "factual",
 ) -> dict:
-    """Embed + search + rerank. Returns raw hits at both stages."""
+    """Embed + search + rerank. Adds graph lane for multihop queries."""
     q_vec = np.array(embedder.embed_query(query_text), dtype=np.float32)
 
     hits = store.search_with_das(
@@ -138,7 +139,28 @@ def run_retrieval(
         fetch_k=cfg.reranker_fetch_k,
     )
 
-    hits_above = [h for h in hits if h["score"] >= threshold]
+    # Graph lane for multihop queries — same logic as the Streamlit app
+    if query_type == "multihop":
+        try:
+            from src.pdf_ingestion.graph_builder import get_graph_builder
+            graph = get_graph_builder(cfg)
+            graph_hits = graph.graph_search(
+                query_text=query_text,
+                tenant_id=tenant_id,
+                query_vector=q_vec,
+                limit=5,
+            )
+            # Merge: graph results as extra hits (deduplicate by chunk_id)
+            existing_ids = {h.get("chunk_id") for h in hits}
+            for gh in graph_hits:
+                cid = gh.get("chunk_id")
+                if cid and cid not in existing_ids:
+                    hits.append(gh)
+                    existing_ids.add(cid)
+        except Exception as exc:
+            logger.warning("Graph search failed for eval query ({})", exc)
+
+    hits_above = [h for h in hits if h.get("score", 1.0) >= threshold]
 
     if cfg.reranker_enabled and hits:
         reranked = reranker.rerank(query_text, hits, top_k=cfg.reranker_top_k)
@@ -406,7 +428,8 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
     # Queries without page labels skip retrieval metrics (but still run retrieval)
     try:
         retrieval = run_retrieval(
-            query_text, store, embedder, reranker, cfg, args.tenant, args.score_threshold
+            query_text, store, embedder, reranker, cfg, args.tenant, args.score_threshold,
+            query_type=query_type,
         )
     except Exception as exc:
         result["error"] = str(exc)
