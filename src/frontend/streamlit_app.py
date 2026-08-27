@@ -58,6 +58,14 @@ CARD_ICONS = {
 # Card types shown in the Key Facts panel (student Ask tab)
 _KEY_FACT_TYPES = ["definition", "factoid", "formula"]
 
+
+def render_math(text: str) -> None:
+    """Render card content, converting {LaTeX} → $LaTeX$ for Streamlit."""
+    import re
+    # Cards were generated with {formula} notation — convert to $formula$ for st.markdown
+    converted = re.sub(r'\{([^{}]+(?:\\[a-zA-Z]+[^{}]*)?)\}', r'$\1$', text)
+    st.markdown(converted)
+
 def _relevance(score: float) -> str:
     """Convert cosine similarity to a human-readable indicator."""
     if score >= 0.65:  return "●●●●●  Very relevant"
@@ -487,10 +495,10 @@ with tab_search:
                                     with st.container(border=True):
                                         st.caption(f"{icon} {card.card_type.capitalize()}")
                                         if card.card_type == "factoid":
-                                            st.markdown(card.content)
+                                            render_math(card.content)
                                         else:
                                             st.markdown(f"**{card.title}**")
-                                            st.markdown(card.content)
+                                            render_math(card.content)
                             st.divider()
 
                     # ── Source citations ───────────────────────────────────
@@ -598,13 +606,13 @@ def _render_card(card, ct, is_admin):
                 with st.expander("Reveal answer"):
                     st.success(card.answer)
         elif ct == "factoid":
-            st.markdown(card.content)
+            render_math(card.content)
         elif ct == "objective":
             st.caption(card.title)
-            st.markdown(card.content)
+            render_math(card.content)
         else:
             st.markdown(f"**{card.title}**")
-            st.markdown(card.content)
+            render_math(card.content)
         if is_admin:
             st.caption(
                 f"chunk `{card.chunk_id[:8]}…`  "
