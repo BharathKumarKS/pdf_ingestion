@@ -150,11 +150,18 @@ def run_retrieval(
                 query_vector=q_vec,
                 limit=5,
             )
-            # Merge: graph results as extra hits (deduplicate by chunk_id)
+            # Normalise graph hits to match dense hit schema, then merge
             existing_ids = {h.get("chunk_id") for h in hits}
             for gh in graph_hits:
                 cid = gh.get("chunk_id")
                 if cid and cid not in existing_ids:
+                    # graph_search returns text_preview; reranker needs text
+                    if "text" not in gh:
+                        gh["text"] = gh.get("text_preview", "")
+                    # ensure page_number exists (compute_retrieval_metrics needs it)
+                    if "page_number" not in gh:
+                        gh["page_number"] = gh.get("page_num")
+                    gh.setdefault("score", 1.0)
                     hits.append(gh)
                     existing_ids.add(cid)
         except Exception as exc:
@@ -185,13 +192,13 @@ def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -
     threshold = None  # extracted separately
 
     # Recall@fetch_k (base retriever, above threshold)
-    pages_above = {h["page_number"] for h in retrieval["hits_above"]}
+    pages_above = {h.get("page_number") for h in retrieval["hits_above"] if h.get("page_number")}
     recall = len(relevant & pages_above) / len(relevant) if relevant else None
 
     # MRR@fetch_k (no threshold — measures rank of first relevant result)
     mrr = 0.0
     for rank, h in enumerate(hits, start=1):
-        if h["page_number"] in relevant:
+        if h.get("page_number") in relevant:
             mrr = 1.0 / rank
             break
 
@@ -201,7 +208,7 @@ def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -
     seen_pages: set[int] = set()
     gains = []
     for h in reranked:
-        p = h["page_number"]
+        p = h.get("page_number")
         if p in relevant and p not in seen_pages:
             gains.append(1)
             seen_pages.add(p)
