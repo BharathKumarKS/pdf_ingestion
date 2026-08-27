@@ -55,6 +55,17 @@ CARD_ICONS = {
     "factoid":       "💡",
 }
 
+CARD_LABELS = {
+    "factoid":       "Quick Fact",
+    "definition":    "Definition",
+    "formula":       "Formula",
+    "summary":       "Summary",
+    "example":       "Example",
+    "misconception": "Watch Out",
+    "question":      "Question",
+    "objective":     "Objective",
+}
+
 # Card types shown in the Key Facts panel (student Ask tab)
 _KEY_FACT_TYPES = ["definition", "factoid", "formula"]
 
@@ -507,7 +518,7 @@ with tab_search:
                                 icon = CARD_ICONS.get(card.card_type, "💡")
                                 with cols[i % 3]:
                                     with st.container(border=True):
-                                        st.caption(f"{icon} {card.card_type.capitalize()}")
+                                        st.caption(f"{icon} {CARD_LABELS.get(card.card_type, card.card_type.capitalize())}")
                                         if card.card_type == "factoid":
                                             render_math(card.content)
                                         else:
@@ -697,7 +708,7 @@ with tab_cards:
                 display_cards = all_type_cards[:_CARDS_PER_TYPE]
                 icon = CARD_ICONS.get(ct, "📌")
                 with st.expander(
-                    f"{icon} {ct.capitalize()}s  ({total})",
+                    f"{icon} {CARD_LABELS.get(ct, ct.capitalize())}s  ({total})",
                     expanded=(ct in ("question", "formula")),
                 ):
                     if total > _CARDS_PER_TYPE:
