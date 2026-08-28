@@ -534,9 +534,24 @@ class DocumentStore:
             )
             telemetry.set_attr(vs_span, "hits", len(dense_hits))
 
+        # DA lane: merge resolved parent chunks into the pool BEFORE dedup/MMR
+        # so DA candidates compete fairly through all downstream filtering stages.
+        da_added = 0
+        if self._cfg.da_enabled:
+            with telemetry.span("retrieval.da_lane", {"fetch_k": fetch_k}) as da_span:
+                da_hits    = self.search_da(query_vector, tenant_id=tenant_id, limit=fetch_k)
+                da_parents = self._resolve_da_parents(da_hits)
+                existing   = {c.get("chunk_id") for c in dense_hits}
+                for p in da_parents:
+                    if p.get("chunk_id") not in existing:
+                        dense_hits.append(p)
+                        existing.add(p["chunk_id"])
+                        da_added += 1
+                telemetry.set_attr(da_span, "da_hits", len(da_hits))
+                telemetry.set_attr(da_span, "new_chunks_added", da_added)
+
         # Page-level dedup: keep only the highest-scoring chunk per page.
-        # Prevents overlapping chunks from the same page consuming multiple slots.
-        # Hits are already sorted by score descending, so first seen = best for page.
+        # Hits are sorted by score descending so first seen = best for that page.
         seen_pages: dict[int, bool] = {}
         deduped: list[dict] = []
         for hit in dense_hits:
@@ -545,31 +560,15 @@ class DocumentStore:
                 deduped.append(hit)
                 if pg is not None:
                     seen_pages[pg] = True
-        dense_hits = deduped
 
-        # MMR on dense results first — preserves top dense ranking
+        # MMR: diversity-aware selection from combined (dense + DA) pool
         with telemetry.span("retrieval.mmr", {"enabled": self._cfg.mmr_enabled}):
-            if self._cfg.mmr_enabled and len(dense_hits) > fetch_k:
+            if self._cfg.mmr_enabled and len(deduped) > fetch_k:
                 candidates = self._mmr_select(
-                    dense_hits, top_k=fetch_k, lambda_=self._cfg.mmr_lambda
+                    deduped, top_k=fetch_k, lambda_=self._cfg.mmr_lambda
                 )
             else:
-                candidates = dense_hits[:fetch_k]
-
-        # DA lane: append new chunks not already in candidates (recall expansion only)
-        da_added = 0
-        if self._cfg.da_enabled:
-            with telemetry.span("retrieval.da_lane", {"fetch_k": fetch_k}) as da_span:
-                da_hits    = self.search_da(query_vector, tenant_id=tenant_id, limit=fetch_k)
-                da_parents = self._resolve_da_parents(da_hits)
-                existing   = {c.get("chunk_id") for c in candidates}
-                for p in da_parents:
-                    if p.get("chunk_id") not in existing:
-                        candidates.append(p)
-                        existing.add(p["chunk_id"])
-                        da_added += 1
-                telemetry.set_attr(da_span, "da_hits", len(da_hits))
-                telemetry.set_attr(da_span, "new_chunks_added", da_added)
+                candidates = deduped[:fetch_k]
 
         return candidates
 
