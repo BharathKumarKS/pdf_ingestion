@@ -119,9 +119,21 @@ def _convert_braces_to_math(text: str) -> str:
     return ''.join(result)
 
 
-def render_math(text: str) -> None:
-    """Render card content with LaTeX support."""
-    st.markdown(_convert_braces_to_math(text.strip()))
+def render_math(text: str, card_type: str = "") -> None:
+    """Render card content with LaTeX support.
+
+    Formula cards: use st.latex() directly — reliable rendering without
+    markdown parser interference.
+    Other cards: convert {expr} / (expr) → $expr$ for inline math in markdown.
+    """
+    stripped = text.strip()
+    if card_type == "formula":
+        # Extract the LaTeX expression — strip outer {}, (), or $$ wrappers if present
+        import re
+        inner = re.sub(r'^[\$\{\(]+|[\$\}\)]+$', '', stripped).strip()
+        st.latex(inner)
+    else:
+        st.markdown(_convert_braces_to_math(stripped))
 
 def _relevance(score: float) -> str:
     """Convert cosine similarity to a human-readable indicator."""
@@ -558,10 +570,10 @@ with tab_search:
                                     with st.container(border=True):
                                         st.caption(f"{icon} {CARD_LABELS.get(card.card_type, card.card_type.capitalize())}")
                                         if card.card_type == "factoid":
-                                            render_math(card.content)
+                                            render_math(card.content, card.card_type)
                                         else:
                                             st.markdown(f"**{card.title}**")
-                                            render_math(card.content)
+                                            render_math(card.content, card.card_type)
                             st.divider()
 
                     # ── Source citations ───────────────────────────────────
@@ -669,13 +681,13 @@ def _render_card(card, ct, is_admin):
                 with st.expander("Reveal answer"):
                     st.success(card.answer)
         elif ct == "factoid":
-            render_math(card.content)
+            render_math(card.content, ct)
         elif ct == "objective":
             st.caption(card.title)
-            render_math(card.content)
+            render_math(card.content, ct)
         else:
             st.markdown(f"**{card.title}**")
-            render_math(card.content)
+            render_math(card.content, ct)
         if is_admin:
             st.caption(
                 f"chunk `{card.chunk_id[:8]}…`  "

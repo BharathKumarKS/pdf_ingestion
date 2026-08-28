@@ -92,7 +92,7 @@ class Settings(BaseSettings):
     # Cross-encoder re-ranker — Phase 4
     reranker_enabled: bool = True
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
-    reranker_top_k: int = 6              # chunks to keep after re-ranking
+    reranker_top_k: int = 8              # chunks to keep after re-ranking
     reranker_fetch_k: int = 20           # candidates to retrieve before re-ranking
     use_stub_reranker: bool = False
 
