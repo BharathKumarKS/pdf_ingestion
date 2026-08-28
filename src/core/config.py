@@ -92,8 +92,8 @@ class Settings(BaseSettings):
     # Cross-encoder re-ranker — Phase 4
     reranker_enabled: bool = True
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
-    reranker_top_k: int = 8              # chunks to keep after re-ranking
-    reranker_fetch_k: int = 20           # candidates to retrieve before re-ranking
+    reranker_top_k: int = 20             # chunks to keep after re-ranking
+    reranker_fetch_k: int = 100          # candidates to retrieve before re-ranking
     use_stub_reranker: bool = False
 
     # SPLADE sparse embedder — Phase 4
@@ -147,7 +147,7 @@ class Settings(BaseSettings):
     # Phase A — MMR reranking (applied after RRF, before cross-encoder)
     mmr_enabled: bool = True
     mmr_lambda: float = 0.7              # 1.0 = pure relevance, 0.0 = pure diversity
-    mmr_candidates: int = 50            # pool size fed into MMR
+    mmr_candidates: int = 100           # pool size fed into MMR (ColBERT MaxSim fetch)
 
     api_port: int = 8000
 

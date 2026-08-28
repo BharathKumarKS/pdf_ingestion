@@ -534,6 +534,19 @@ class DocumentStore:
             )
             telemetry.set_attr(vs_span, "hits", len(dense_hits))
 
+        # Page-level dedup: keep only the highest-scoring chunk per page.
+        # Prevents overlapping chunks from the same page consuming multiple slots.
+        # Hits are already sorted by score descending, so first seen = best for page.
+        seen_pages: dict[int, bool] = {}
+        deduped: list[dict] = []
+        for hit in dense_hits:
+            pg = hit.get("page_number")
+            if pg is None or pg not in seen_pages:
+                deduped.append(hit)
+                if pg is not None:
+                    seen_pages[pg] = True
+        dense_hits = deduped
+
         # MMR on dense results first — preserves top dense ranking
         with telemetry.span("retrieval.mmr", {"enabled": self._cfg.mmr_enabled}):
             if self._cfg.mmr_enabled and len(dense_hits) > fetch_k:
