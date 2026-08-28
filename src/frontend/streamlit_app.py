@@ -71,16 +71,35 @@ _KEY_FACT_TYPES = ["definition", "factoid", "formula"]
 
 
 def _convert_braces_to_math(text: str) -> str:
-    """Convert top-level {LaTeX} blocks to $LaTeX$ for Streamlit markdown.
+    """Convert LaTeX notation in card content to Streamlit $...$ format.
 
-    Handles nested braces correctly (e.g. {F = G\\frac{m_1 m_2}{r^2}}).
-    Only converts blocks that contain a LaTeX command (backslash) or
-    math operators (^, _) to avoid converting non-math curly braces.
+    GPU cards use two notations:
+      (F = G\\frac{m_1 m_2}{r^2})  — parentheses wrapping a LaTeX expression
+      {E = mc^2}                   — curly braces wrapping a LaTeX expression
+
+    Pass 1: regex converts (expr_with_backslash) → $expr$.
+    Pass 2: balanced-brace walker converts {expr} → $expr$, skipping
+            content already inside $...$ (so Pass 1 results are not re-processed).
     """
+    import re
+    # Pass 1: (expr_with_backslash) → $expr$ — handles (F = G\frac{...}{...})
+    text = re.sub(r'\(([^()]*\\[^()]*)\)', r'$\1$', text)
+
+    # Pass 2: top-level {expr} → $expr$, skipping existing $...$ blocks
     result = []
     i = 0
     while i < len(text):
-        if text[i] == '{':
+        if text[i] == '$':
+            # Already in math — copy through to closing $ without re-processing
+            result.append(text[i])
+            i += 1
+            while i < len(text) and text[i] != '$':
+                result.append(text[i])
+                i += 1
+            if i < len(text):
+                result.append(text[i])
+                i += 1
+        elif text[i] == '{':
             depth, j = 1, i + 1
             while j < len(text) and depth > 0:
                 if text[j] == '{':
