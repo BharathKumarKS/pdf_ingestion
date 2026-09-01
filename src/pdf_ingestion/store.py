@@ -278,10 +278,10 @@ class DocumentStore:
         vec_64 /= np.linalg.norm(vec_64) + 1e-9
 
         dense_prefetch = Prefetch(
-            prefetch=[Prefetch(query=vec_64.tolist(), using="dense_64", limit=500)],
+            prefetch=[Prefetch(query=vec_64.tolist(), using="dense_64", limit=1000)],
             query=query_vector.tolist(),
             using="dense_768",
-            limit=250,
+            limit=500,
         )
         prefetches = [dense_prefetch]
 
@@ -938,6 +938,7 @@ class DocumentStore:
         tenant_id: str,
         source_type: Optional[str] = None,
         limit: int = 5,
+        score_threshold: Optional[float] = None,
     ) -> list[dict]:
         """MaxSim late-interaction search against the ColPali collection.
 
@@ -971,7 +972,12 @@ class DocumentStore:
                 limit=limit,
                 with_payload=True,
             )
-            return [{"score": h.score, **h.payload} for h in response.points]
+            threshold = score_threshold if score_threshold is not None else self._cfg.visual_score_threshold
+            return [
+                {"score": h.score, **h.payload}
+                for h in response.points
+                if h.score >= threshold
+            ]
         except Exception as exc:
             logger.warning("Visual search failed ({})", exc)
             return []

@@ -116,6 +116,7 @@ class Settings(BaseSettings):
     page_images_dir: str = "./data/page_images"
     image_store_backend: str = "local"   # "local" | "minio"
     colpali_page_batch_size: int = 4     # pages per batch; increase to 16+ on GPU VM
+    visual_score_threshold: float = 0.15  # min ColPali MaxSim score; filters out-of-domain images
 
     # Phase 3 — Concept embeddings (Qdrant collection for fast GraphRAG lookup)
     concept_collection: str = "concept_embeddings"
