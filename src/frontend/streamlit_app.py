@@ -462,12 +462,16 @@ with tab_search:
 
                 raptor_results = []
                 if also_raptor:
-                    raptor_results = s.search_raptor(
-                        query_vector=raptor_vec,
-                        tenant_id=tenant_id,
-                        source_type_filter=source_type_filter,
-                        limit=2,
-                    )
+                    try:
+                        raptor_results = s.search_raptor(
+                            query_vector=raptor_vec,
+                            tenant_id=tenant_id,
+                            source_type_filter=source_type_filter,
+                            limit=2,
+                        )
+                    except Exception as _raptor_exc:
+                        if is_admin:
+                            st.warning(f"⚠️ RAPTOR lane skipped: {_raptor_exc}", icon="🌲")
 
                 graph_results = []
                 if also_graph:
@@ -480,8 +484,9 @@ with tab_search:
                             query_vector=q_vec,
                             limit=3,
                         )
-                    except Exception:
-                        graph_results = []
+                    except Exception as _graph_exc:
+                        if is_admin:
+                            st.warning(f"⚠️ Graph lane skipped: {_graph_exc}", icon="🕸️")
 
                 if not chunk_results and not raptor_results and not graph_results:
                     st.info("No results found — try rephrasing your question.")
@@ -858,14 +863,13 @@ if tab_visual is not None:
         try:
             store    = DocumentStore(cfg)
             all_docs = store.list_documents()
-            if source_type_filter == "user_upload":
-                searchable = [d for d in all_docs if d.tenant_id == tenant_id]
-            else:
-                searchable = [d for d in all_docs
-                              if d.tenant_id in (tenant_id, cfg.global_tenant_id)]
+            # Always include global baseline regardless of source_type_filter
+            searchable = [d for d in all_docs
+                          if d.tenant_id in (tenant_id, cfg.global_tenant_id)]
             ready_docs   = [d for d in searchable if d.colpali_status == "ready"]
             pending_docs = [d for d in searchable if d.colpali_status in ("processing", "pending")]
-        except Exception:
+        except Exception as e:
+            st.error(f"⚠️ Error loading visual search documents: {e}")
             ready_docs = []
             pending_docs = []
 
