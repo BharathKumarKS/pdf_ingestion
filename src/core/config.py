@@ -143,7 +143,13 @@ class Settings(BaseSettings):
     # Phase A — Derivative Artifact retrieval
     da_collection: str = "derivative_artifacts"
     da_enabled: bool = True
-    da_card_types: list[str] = Field(default=["summary", "definition", "formula", "question", "factoid"])
+    # Must stay in sync with CardType (src/pdf_ingestion/card_generator.py), which is
+    # the single source of truth. config.py cannot import that module (it imports
+    # config), so the invariant is enforced by tests/test_config_invariants.py.
+    da_card_types: list[str] = Field(default=[
+        "summary", "definition", "example", "misconception",
+        "question", "objective", "formula", "factoid",
+    ])
 
     # Phase A — MMR reranking (applied after RRF, before cross-encoder)
     mmr_enabled: bool = True

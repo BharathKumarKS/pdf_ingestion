@@ -200,7 +200,7 @@ Open **http://localhost:8501**
 
 ## GPU VM Setup (Support Vectors)
 
-Running the 990-page Feynman textbook on CPU takes 30+ hours.
+Running the 968-page Feynman textbook on CPU takes 30+ hours.
 On the Support Vectors GPU VM with the remote Qdrant cluster, the same job
 completes in **2–3 hours**.
 
@@ -256,7 +256,7 @@ uv run python scripts/index_derivative_artifacts.py --tenant global
 uv run python scripts/run_phase3.py --tenant global
 ```
 
-### Speed breakdown (990 pages, 5,047 chunks)
+### Speed breakdown (968 pages, 5,051 chunks)
 
 | Stage | CPU laptop | GPU VM (estimated) |
 |---|---|---|
@@ -355,7 +355,7 @@ uv run pytest tests/ -q -m "not slow"
 # All phase-specific tests
 uv run pytest tests/test_phase1.py tests/test_phase2.py tests/test_phase3.py tests/test_phase_a.py -v -m "not slow"
 
-# Real Jina v3 integration test (downloads model on first run)
+# Real Nomic integration test (downloads model on first run)
 uv run pytest tests/test_integration_real.py -v -s
 ```
 
@@ -417,7 +417,7 @@ pdf_ingestion/
     ├── test_phase2.py                  # Phase 2: cards + RAPTOR
     ├── test_phase3.py                  # Phase 3: ColPali, image store, graph
     ├── test_phase_a.py                 # Phase A: DA retrieval, MMR, RRF
-    └── test_integration_real.py        # Real Jina v3 integration tests
+    └── test_integration_real.py        # Real Nomic integration tests
 ```
 
 ---
@@ -482,12 +482,12 @@ Payload filtering (`tenant_id`, `is_global_baseline`) keeps everything in one co
 
 | Phase | Status | Description |
 |---|---|---|
-| Phase 1 | ✅ Complete | Docling + Chonkie + Jina v3 + Qdrant + Streamlit |
+| Phase 1 | ✅ Complete | Docling + Chonkie + Nomic MRL + Qdrant + Streamlit |
 | Phase 2 | ✅ Complete | 8-type card generation (COSTAR + instructor) + RAPTOR tree |
 | Phase 3 | ✅ Complete | ColPali visual embeddings + Memgraph GraphRAG concept graph |
 | Phase 4A | ✅ Complete | Intent router + SPLADE hybrid + DA retrieval lane + MMR |
 | Phase 4B | ✅ Complete | Nomic MRL (64d→768d nested prefetch) + ColBERT v2.0 MaxSim 4-vector schema |
-| Phase 4C | 🔜 | Cross-encoder re-ranker (ms-marco MiniLM, top-20 final reranking) |
+| Phase 4C | 🔜 | Cross-encoder re-ranker (BAAI/bge-reranker-v2-m3, top-20 final reranking) |
 | Phase 5 | 🔜 | DeBERTa guardrails + answer leakage guard |
 | Phase 6 | 🔜 | Per-query observability (latency/route logging) + teacher dashboard |
 

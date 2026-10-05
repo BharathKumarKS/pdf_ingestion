@@ -135,13 +135,37 @@ class IntentRouter:
         from pathlib import Path
         model_path = Path(self._cfg.intent_classifier_path)
         if not model_path.exists():
+            logger.warning(
+                "IntentRouter: classifier model not found at {} — using prototype "
+                "similarity mode (lower accuracy). Train once with: "
+                "uv run python scripts/train_intent_classifier.py",
+                model_path,
+            )
             return
         try:
             import joblib
-            self._clf = joblib.load(model_path)
+            from sklearn.linear_model import LogisticRegression
+            clf = joblib.load(model_path)
+            # Schema check before trusting the artifact: a wrong-type or wrong-dim
+            # model would otherwise predict garbage while logging a clean load.
+            if not isinstance(clf, LogisticRegression):
+                raise TypeError(
+                    f"expected sklearn LogisticRegression, got {type(clf).__name__}"
+                )
+            n_feat = getattr(clf, "n_features_in_", None)
+            if n_feat != self._cfg.embedding_dim:
+                raise ValueError(
+                    f"classifier expects {n_feat} features but the embedder produces "
+                    f"{self._cfg.embedding_dim}; re-train with the current embedder"
+                )
+            self._clf = clf
             logger.info("IntentRouter: loaded trained classifier from {}", model_path)
         except Exception as exc:
-            logger.warning("IntentRouter: could not load classifier ({}), using prototypes", exc)
+            logger.warning(
+                "IntentRouter: classifier at {} failed validation ({}) — using "
+                "prototype similarity (lower accuracy)",
+                model_path, exc,
+            )
 
     def _ensure_prototypes(self) -> None:
         if self._proto_matrices is not None:

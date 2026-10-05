@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Fast test suite (stubs, no model downloads)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv sync --extra dev
+      - name: Run fast tests
+        run: uv run pytest tests/ -q -m "not slow"
+
+  eval-gate:
+    name: Eval gate (retrieval regression)
+    runs-on: ubuntu-latest
+    # The gate reads committed evaluate_rag.py artifacts, so it needs no Qdrant
+    # or models. A real regression check requires a FRESH artifact produced by a
+    # runner with cluster access:
+    #
+    #   uv run python scripts/evaluate_rag.py \
+    #       --run-name ci --retrieval-only --skip-visual
+    #   uv run python scripts/eval_gate.py \
+    #       --baseline  data/eval_results/p0-plumbing-check_2026-10-04_0440.md \
+    #       --candidate data/eval_results/ci_<timestamp>.md
+    #
+    # Without that infrastructure, this job pins the committed baseline and
+    # exercises the gate so it can't rot.
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv sync --extra dev
+      - name: Gate the pinned baseline (integrity smoke)
+        run: |
+          uv run python scripts/eval_gate.py \
+            --baseline  data/eval_results/p0-plumbing-check_2026-10-04_0440.md \
+            --candidate data/eval_results/p0-plumbing-check_2026-10-04_0440.md

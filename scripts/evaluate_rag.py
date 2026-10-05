@@ -50,6 +50,7 @@ import json
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -86,6 +87,13 @@ def build_config_snapshot(cfg, threshold: float, tenant_id: str) -> dict:
             "enabled": cfg.reranker_enabled,
             "model": cfg.reranker_model if cfg.reranker_enabled else None,
             "top_k": cfg.reranker_top_k,
+        },
+        # "enabled" mirrors the config flag; "active" is whether the lane can
+        # actually run. ColBERT is enabled-but-inactive on file-backed Qdrant,
+        # which used to be invisible in the artifact.
+        "colbert": {
+            "enabled": cfg.colbert_enabled,
+            "active": cfg.colbert_enabled and bool(cfg.qdrant_host or cfg.qdrant_url),
         },
         "intent_router": {
             "enabled": cfg.intent_router_enabled,
@@ -318,39 +326,67 @@ Question: {question}
 Answer: {answer}"""
 
 
-def compute_faithfulness(answer: str, chunks: list[dict], judge_fn) -> float:
-    """Bipartite claim-entailment faithfulness. Cross-family judge required."""
+# Faithfulness cost is O(claims x passages) judge calls. Uncapped and sequential
+# this was ~200-300 calls per query — the reason a full judged run was still
+# grinding after 8 hours. Both dimensions are capped and the claims run
+# concurrently.
+_MAX_CLAIMS    = 12
+_MAX_PASSAGES  = 8
+_JUDGE_WORKERS = 8
+
+
+def compute_faithfulness(answer: str, chunks: list[dict], judge_fn) -> float | None:
+    """Bipartite claim-entailment faithfulness. Cross-family judge required.
+
+    Returns None when the metric cannot be computed (no answer, no passages, or
+    claim extraction failed) — never a score. An earlier version returned 1.0 in
+    exactly those cases, i.e. a *perfect* faithfulness score whenever the LLM was
+    down, which is indistinguishable from a genuinely faithful answer in the
+    artifact.
+    """
     from src.core.llm import call_llm
 
     if not answer or not chunks:
-        return 1.0
+        return None
 
     # Extract atomic claims from the answer (generator LLM)
     raw = call_llm(
         prompt=_CLAIM_EXTRACT_PROMPT.format(answer=answer),
         system="You are a precise fact extractor.",
+        timeout=60,
     )
+    if not raw:
+        logger.error("Faithfulness: claim extraction returned nothing — metric unavailable")
+        return None
+
     try:
         start = raw.find("[")
         end   = raw.rfind("]") + 1
         claims = json.loads(raw[start:end]) if start != -1 else []
-    except Exception:
-        claims = []
+    except Exception as exc:
+        logger.error("Faithfulness: claim extraction was not valid JSON ({}) — metric unavailable", exc)
+        return None
 
+    claims = [str(c).strip() for c in claims if str(c).strip()][:_MAX_CLAIMS]
     if not claims:
-        return 1.0
+        logger.error("Faithfulness: claim extraction produced no usable claims — metric unavailable")
+        return None
 
-    passages = [c.get("text", "") for c in chunks if c.get("text")]
-    faithful = 0
+    passages = [c.get("text", "") for c in chunks if c.get("text")][:_MAX_PASSAGES]
+    if not passages:
+        return None
 
-    for claim in claims:
+    def _entailed(claim: str) -> bool:
         for passage in passages:
             verdict = judge_fn(
                 _ENTAILMENT_PROMPT.format(passage=passage[:800], claim=claim)
             )
             if verdict.strip().upper().startswith("YES"):
-                faithful += 1
-                break
+                return True
+        return False
+
+    with ThreadPoolExecutor(max_workers=_JUDGE_WORKERS) as pool:
+        faithful = sum(pool.map(_entailed, claims))
 
     return round(faithful / len(claims), 4)
 
@@ -377,13 +413,28 @@ def compute_citation_accuracy(answer: str, chunks: list[dict]) -> float:
 # ── Judge LLM factory ─────────────────────────────────────────────────────────
 
 def make_judge_fn(args):
-    """Returns a callable(prompt) -> str using the specified judge LLM backend."""
+    """Returns a callable(prompt) -> str using the specified judge LLM backend.
+
+    The returned callable carries a `.stats` dict with call/failure counts, so a
+    judge backend that is down surfaces in the artifact instead of silently
+    leaving the generation columns empty (which is how every artifact in this
+    repo's history came to show Faithfulness/Ans.Relevance/Citation as em-dashes).
+    """
     if args.judge_backend == "skip":
         return None
 
     import httpx
 
+    stats = {"calls": 0, "failures": 0, "last_error": ""}
+
+    def _fail(exc) -> str:
+        stats["failures"] += 1
+        stats["last_error"] = f"{type(exc).__name__}: {exc}"[:200]
+        logger.error("JUDGE CALL FAILED: {} — returning empty string", stats["last_error"])
+        return ""
+
     def _call_judge(prompt: str) -> str:
+        stats["calls"] += 1
         if args.judge_backend == "ollama":
             payload = {
                 "model": args.judge_model,
@@ -399,13 +450,14 @@ def make_judge_fn(args):
                 resp.raise_for_status()
                 return resp.json().get("response", "")
             except Exception as exc:
-                logger.warning("Judge call failed: {}", exc)
-                return ""
+                return _fail(exc)
         else:
-            headers = {
-                "Authorization": f"Bearer {args.judge_api_key}",
-                "Content-Type": "application/json",
-            }
+            headers = {"Content-Type": "application/json"}
+            # Mirror llm.py: the cluster gateway returns HTTP 500 for an empty
+            # `Authorization: Bearer` header, so omit it entirely when unset.
+            key = (args.judge_api_key or "").strip()
+            if key and key.lower() != "none":
+                headers["Authorization"] = f"Bearer {key}"
             payload = {
                 "model": args.judge_model,
                 "messages": [{"role": "user", "content": prompt}],
@@ -420,11 +472,16 @@ def make_judge_fn(args):
                     timeout=30,
                 )
                 resp.raise_for_status()
-                return resp.json()["choices"][0]["message"]["content"].strip()
+                msg = resp.json()["choices"][0]["message"]
+                # Reasoning models (gpt-oss) emit content=null when the token
+                # budget is spent on reasoning; fall back so the verdict isn't
+                # silently empty.
+                return ((msg.get("content") or "").strip()
+                        or (msg.get("reasoning") or "").strip())
             except Exception as exc:
-                logger.warning("Judge call failed: {}", exc)
-                return ""
+                return _fail(exc)
 
+    _call_judge.stats = stats  # type: ignore[attr-defined]
     return _call_judge
 
 
@@ -488,7 +545,12 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
     if not args.retrieval_only and judge_fn is not None:
         answer = synthesize(query_text, retrieval["reranked"], cfg)
         result["generation"]["answer"] = answer
-        if answer:
+        if not answer:
+            # Recorded rather than skipped: a dead generator must not look like a
+            # clean run with the generation columns merely absent.
+            result["generation"]["error"] = "synthesis returned nothing — LLM call failed"
+            logger.error("[{}] synthesis returned nothing; generation metrics unavailable", qid)
+        else:
             result["generation"]["faithfulness"]      = compute_faithfulness(
                 answer, retrieval["reranked"], judge_fn
             )
@@ -791,6 +853,36 @@ def main():
     aggregated = aggregate_metrics(results, cfg)
     print_report(aggregated, cfg)
 
+    # Run integrity — what actually ran and what failed. Without this a dead judge
+    # or generator is invisible: the columns simply read "—" and the artifact looks
+    # complete. (Every artifact before this one had that property.)
+    n = len(results)
+    judge_stats   = getattr(judge_fn, "stats", {}) or {}
+    synth_ok      = sum(1 for r in results if r.get("generation", {}).get("answer"))
+    synth_failed  = sum(1 for r in results if r.get("generation", {}).get("error"))
+    faith_done    = sum(1 for r in results if r.get("generation", {}).get("faithfulness") is not None)
+
+    if args.retrieval_only or judge_fn is None:
+        integrity_lines = (
+            "- **Generation metrics:** not requested ("
+            + ("retrieval-only" if args.retrieval_only else "judge disabled") + ")"
+        )
+    else:
+        parts = [
+            f"- **Synthesis succeeded:** {synth_ok}/{n}",
+            f"- **Faithfulness computed:** {faith_done}/{n}",
+            f"- **Judge calls:** {judge_stats.get('calls', 0)} "
+            f"({judge_stats.get('failures', 0)} failed)",
+        ]
+        if synth_failed:
+            parts.append(
+                f"- ⚠️ **{synth_failed} quer{'y' if synth_failed == 1 else 'ies'} had no answer** — "
+                "the generator returned nothing, so generation metrics are unavailable there"
+            )
+        if judge_stats.get("failures"):
+            parts.append(f"- ⚠️ **Judge last error:** `{judge_stats.get('last_error', '')}`")
+        integrity_lines = "\n".join(parts)
+
     # Save results — single .md file (summary + per-query tables + config)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -813,16 +905,32 @@ def main():
         f"- **Elapsed:** {round(elapsed, 1)}s",
     ])
 
+    # The snapshot was built but never written — the artifact could not say which
+    # lanes were live. It is exactly the "which prerequisites were active" record.
+    snapshot_json = json.dumps(config_snapshot, indent=2, sort_keys=True)
+
     out_path.write_text(
         f"# {args.run_name}\n\n"
         f"**{timestamp}**\n\n"
         f"## Summary\n\n"
         f"{summary_tbl}\n\n"
+        f"## Run integrity\n\n"
+        f"{integrity_lines}\n\n"
         f"## Per-Query Results\n\n"
         f"{per_qry_tbl}\n\n"
         f"## Config\n\n"
-        f"{cfg_lines}\n"
+        f"{cfg_lines}\n\n"
+        f"<details>\n<summary>Full config snapshot</summary>\n\n"
+        f"```json\n{snapshot_json}\n```\n\n"
+        f"</details>\n"
     )
+
+    if synth_failed or judge_stats.get("failures"):
+        console.print(
+            f"\n[bold red]⚠️  RUN INTEGRITY WARNING[/bold red] — "
+            f"{synth_failed} queries with no answer, {judge_stats.get('failures', 0)} judge failures. "
+            f"Generation metrics are incomplete; see 'Run integrity' in the artifact."
+        )
 
     console.print(f"\n[green]Results saved to:[/] {out_path}")
     console.print(

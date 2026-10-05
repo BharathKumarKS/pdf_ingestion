@@ -3,6 +3,10 @@
 > **Living document.** This is *where we are right now*, not what the system is.
 > For the durable system map read `ARCHITECTURE.md`. For setup read `README.md`.
 > Keep this file short — it loads into every session in this directory.
+>
+> **Last updated: 2026-10-05** — P0 items 1–6 complete. If this date is old,
+> re-check `git log --oneline -5` and `git status --short` before trusting
+> "Current focus".
 
 ---
 
@@ -20,12 +24,55 @@ Do not add new `tenant_id` defaults either — see the trap list.
 
 ## Current focus
 
-**P0 item 1 — freeze and commit a reproducible eval baseline.**
+**P0 items 1–6 are DONE and validated (2026-10-05).** Next is **P1 item 7** —
+calibrate the 7 `visual` queries.
 
-Running `evaluate_rag.py` is not yet meaningful because the last recorded run is
-`data/eval_results/v9_fixed_lab_2026-08-27_0509.md`. The technical report quotes a
-"v10" figure of `Recall@100 = 0.847` that has **no artifact on disk**. Until a run is
-saved, every later metric has no baseline to compare against.
+| # | Item | Evidence |
+|---|---|---|
+| 1 | Reproducible baseline, committed | `6381f7b`; `data/eval_results/p0-*.md` |
+| 2 | Silent fallbacks killed | judge + faithfulness + ColBERT + dense_768 + classifier now log loudly and surface in the artifact ("Run integrity") |
+| 3 | sklearn pinned, classifier checked | `scikit-learn~=1.9`; type + `n_features_in_` schema check at load; pickle tracked in git |
+| 4 | Config-invariant tests | `tests/test_config_invariants.py` (6) |
+| 5 | Doc drift fixed | `reranker.py`, `.env.example`, `CLAUDE.md`, `README.md`, `ARCHITECTURE.md` |
+| 6 | Eval gate + CI | `scripts/eval_gate.py`, `.github/workflows/ci.yml` |
+
+Test suite: **151 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
+**pre-existing** — confirmed by stashing the P0 edits and re-running the same tests on
+clean source. They are NOT P0 regressions:
+
+- `tests/test_splade.py` (×2) hardcode `tests/data/sample_physics.pdf`, which does not
+  exist — the `sample_pdf` fixture generates it into a tmp dir instead.
+- 3 search tests return 0 results: `test_phase1::test_hybrid_search_includes_global`,
+  `test_phase2::test_search_still_works_after_phase2`,
+  `test_integration_real::test_semantic_search_returns_relevant_results`.
+
+### The finding item 2 fixed
+
+`compute_faithfulness` returned **`1.0` — a perfect score — whenever claim extraction
+failed or produced no claims**, i.e. whenever the LLM was down. `make_judge_fn` returned
+`""` on failure with only a `logger.warning`, and always sent an `Authorization` header
+even when the key was empty (which the gateway rejects with HTTP 500). So a dead judge
+did not merely go unmeasured — it **scored perfect**. Every historical Faithfulness
+number is untrustworthy. Now: failures are counted, logged at ERROR, and the artifact
+carries a **Run integrity** section (synthesis ok/failed, judge calls/failures).
+
+### Baselines — committed
+
+### Baseline — committed
+
+`data/eval_results/p0-baseline-oldK_2026-10-05_0635.md` (in `6381f7b`). 23/23 calibrated
+queries, cluster index, SPLADE + reranker on, elapsed 56.7s:
+
+| Scope | Recall@20 | MRR | P@6 | NDCG@6 |
+|---|---|---|---|---|
+| Overall | **0.636** | 0.365 | 0.174 | 0.377 |
+| factual | 0.775 | 0.506 | 0.217 | 0.594 |
+| overview | 0.580 | 0.218 | 0.139 | 0.237 |
+| multihop | 0.486 | 0.290 | 0.143 | 0.187 |
+
+⚠️ **The judge lane is still unmeasured in this baseline.** `Judge: none` — Faithfulness,
+Answer Relevance and Citation Accuracy are all `—`. Run with `--judge-from-env` or the
+artifact looks complete while three columns are unmeasured (the trap at "Fixed 2026-10-04").
 
 ### Prerequisite status (re-checked 2026-10-04 — `scripts/preflight.py`, 24/24 pass)
 
@@ -41,8 +88,8 @@ precedence over the file.
    ColBERT only runs against a server/cluster Qdrant.
 2. **Cluster endpoint** — ✅ `.70` live for rerank / sparse / multivector.
    ⚠️ But generation is broken by default — see the backend split below.
-3. **Intent classifier** — ✅ present (768d); still a gitignored pickle on a loose
-   `scikit-learn>=1.5` floor (P0 item 3).
+3. **Intent classifier** — ✅ present (768d), **tracked in git**, pinned `scikit-learn~=1.9`,
+   schema-checked at load (type + `n_features_in_`). P0 item 3 done.
 4. **Memgraph** — ✅ reachable; after cleanup 1 doc / 5,051 chunks / 7,815 concepts, and
    **0.0%** of graph chunk ids absent from Qdrant.
 
@@ -89,32 +136,43 @@ report's Precision@20 / NDCG@20 and the "reranker top-20" lift need re-checking.
 
 ### Other findings
 
-- `config.yaml` carries a **pre-existing uncommitted change** (`gpt-oss-20b` →
-  `gpt-oss-120b`, mtime Aug 24). Working tree ≠ HEAD — a reproducibility problem.
-- **pytest is not installed** in `.venv`, so the 141 tests can't run.
-  `uv sync --extra dev` (uv is at `~/.local/bin/uv`).
-
+- ✅ `config.yaml`'s Aug-24 `gpt-oss-20b` → `gpt-oss-120b` working-tree edit was the
+  regression that killed every LLM stage; reverted and committed in `6381f7b`.
+- ✅ **pytest** — install with `uv sync --extra dev` (uv at `~/.local/bin/uv`). Suite is
+  151 pass / 5 pre-existing failures (listed above).
+- **7 visual queries are still uncalibrated** — `colpali-001` … `colpali-007` all carry
+  `"calibrated": false` and `"relevant_pages": null` in `data/eval_queries.json`. They are
+  excluded from the 23/23 baseline. P1 item 7; `calibration_output.txt` is the working pass.
+- **`CardType` (8 members) is now the single source for the DA card-type list.** The index
+  script used to hardcode 5 types, so example / misconception / objective cards were
+  generated in Phase 2 but **never indexed** into `derivative_artifacts`. Fixed;
+  `tests/test_config_invariants.py` enforces it.
 
 ### Definition of done
 
-- `evaluate_rag.py` run and its artifact committed under `data/eval_results/`
-- the dataset revision pinned in the same commit (page count + chunk count)
-- a note of which of the four prerequisites were live, and which lanes were active
+**Item 1 — ACHIEVED 2026-10-05.** Artifact committed under `data/eval_results/`
+(`p0-baseline-oldK_2026-10-05_0635.md`, commit `6381f7b`), prerequisites recorded
+(24/24 preflight), lanes stated in the artifact Config block. Outstanding: the **judge
+lane was not run** — re-run with `--judge-from-env` to fill Faithfulness / Ans.Relevance
+/ Citation, then re-commit the artifact.
+
+**Item 2 — MET 2026-10-05.** Every silent fallback logs loudly and surfaces in the eval
+artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the behaviour;
+`pytest` is installed and the new tests pass.
+
 
 ---
 
 ## Priority plan (agreed)
 
 **P0 — make the numbers trustworthy**
-1. Reproducible baseline + committed artifact  ← *current*
-2. Kill silent fallbacks (classifier missing, dense_768 last-resort, ColBERT-skip)
-   — each must log loudly and surface a flag in the eval output
-3. Pin `scikit-learn~=1.9`; move the classifier artifact out of a gitignored pickle
-   into a registry (or ONNX/`skops`) with a schema check at load
-4. Config-invariant tests: embedder dim == `EMBEDDING_DIM`; `RERANKER_MODEL` == config;
-   `CardType` is the single source for `DA_CARD_TYPES`
-5. Fix doc drift (see verified facts below)
-6. CI eval gate on `evaluate_rag.py` — fails the build on recall regression
+1. ~~Reproducible baseline + committed artifact~~ ✅ **done 2026-10-05** (`6381f7b`)
+2. ~~Kill silent fallbacks~~ ✅ **done** — each logs loudly and surfaces in "Run integrity"
+3. ~~Pin `scikit-learn~=1.9`; classifier schema check~~ ✅ **done**
+4. ~~Config-invariant tests~~ ✅ **done** (`tests/test_config_invariants.py`)
+5. ~~Fix doc drift~~ ✅ **done**
+6. ~~CI eval gate on `evaluate_rag.py`~~ ✅ **done** (`scripts/eval_gate.py` + CI workflow)
+
 
 **P1 — then improve metrics**
 7. Calibrate the 7 `visual` queries (all currently `calibrated: false`, `relevant_pages: null`)
@@ -211,13 +269,13 @@ contaminated live traversal too. It hit the `multihop` lane (7 of 30 eval querie
 | Thing | Truth |
 |---|---|
 | Feynman Vol 1 PDF | **968 pages** (report says 940, README says 990) |
-| Chunk count | README says 5,047, report says 5,051 — **unresolved, pin it in item 1** |
-| Dense embedder | **Nomic 768d + 64d MRL** (`embedding_model` in `config.py`). `.env.example` still says Jina/1024d — **stale** |
-| Reranker | `BAAI/bge-reranker-v2-m3` (`cfg.reranker_model`). `reranker.py`'s docstring says ms-marco — **stale** |
+| Chunk count | **5,051** — RESOLVED 2026-10-03: report right, README's 5,047 wrong (see topology) |
+| Dense embedder | **Nomic 768d + 64d MRL** (`embedding_model` in `config.py`). `.env.example` fixed 2026-10-05 (was Jina/1024d) |
+| Reranker | `BAAI/bge-reranker-v2-m3` (`cfg.reranker_model`). `reranker.py` docstring fixed 2026-10-05 (was ms-marco) |
 | Chunker | `chonkie.SentenceChunker` (class is named `SemanticChunker`) |
 | RAPTOR clustering | `sklearn.mixture.GaussianMixture` + optional UMAP |
-| Intent classifier | 768d, sklearn `LogisticRegression`; venv has sklearn **1.9.0**, pyproject floor is `>=1.5` (too loose) |
-| Card types | **8** in `CardType` (docs say 7) |
+| Intent classifier | 768d `LogisticRegression`; pinned `scikit-learn~=1.9`, schema-checked at load |
+| Card types | **8** in `CardType` — now the single source for `DA_CARD_TYPES` |
 | Eval queries | 30 total = 23 calibrated non-visual + 7 uncalibrated visual |
 
 ## Traps
@@ -229,6 +287,8 @@ contaminated live traversal too. It hit the `multihop` lane (7 of 30 eval querie
 - `transformers` is pinned `<5.0` — the stated reason (Jina LoRA) is stale, so
   **check before bumping**, don't assume it's safe to remove
 - `store.py` is a 1350-LOC hub — per `CLAUDE.md` §3, do not refactor it as a side effect
+- A wider retrieval funnel is **not** a better system — `scripts/eval_gate.py` refuses
+  to diff artifacts measured at different K (the report once did exactly this)
 
 ---
 

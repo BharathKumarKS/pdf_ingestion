@@ -71,7 +71,7 @@ separate step. If card search returns nothing, check this first.
 | `colbert_embedder.py` | ColBERT v2.0 late-interaction multi-vector (3 impls: Stub / Cluster / fastembed ONNX) |
 | `colpali_embedder.py` | ColPali page-image embeddings, `vidore/colpali-v1.2` (Phase 3) |
 | `splade_embedder.py` | SPLADE sparse vectors, `SparseVector.to_qdrant()` (Phase 4) |
-| `reranker.py` | Cross-encoder `BAAI/bge-reranker-v2-m3` via `cfg.reranker_model` (Stub / local / cluster). ⚠️ the module docstring still says `ms-marco-MiniLM-L-6-v2` — stale, trust the config. |
+| `reranker.py` | Cross-encoder `BAAI/bge-reranker-v2-m3` via `cfg.reranker_model` (Stub / local / cluster). |
 | `image_store.py` | Page PNGs → local dir or MinIO (`IMAGE_STORE_BACKEND`) |
 | `graph_builder.py` | Memgraph concept graph via Bolt; `_extract_prerequisites()` derives PREREQUISITE_OF edges |
 | `raptor_tree.py` | `RaptorBuilder.build_tree()` — recursive cluster → LLM summary tree |
@@ -246,12 +246,12 @@ Feature flags that change storage schema (require re-ingest when flipped):
 1. **Flipping `SPLADE_ENABLED` adds a named vector → full re-ingest required.**
    The collection is created once with a fixed vector set; Qdrant cannot add a
    named vector to an existing collection.
-2. **`EMBEDDING_MODEL` / `EMBEDDING_DIM` drift is live right now.**
+2. **`EMBEDDING_MODEL` / `EMBEDDING_DIM` must match the embedder.**
    `src/pdf_ingestion/embedder.py` implements **Nomic** `nomic-embed-text-v1.5`
-   (768d + 64d MRL), but `.env.example` still advertises
-   `EMBEDDING_MODEL=jinaai/jina-embeddings-v3` / `EMBEDDING_DIM=1024`.
-   Verify the real `.env` before trusting either — mismatched dims fail at
-   Qdrant upsert time, not at import time.
+   (768d + 64d MRL); `config.py` and `.env.example` now agree (768/64).
+   Verify the real `.env` before trusting it — mismatched dims fail at
+   Qdrant upsert time, not at import time. Pinned by
+   `tests/test_config_invariants.py`.
 3. **`transformers` is pinned `<5.0`** in `pyproject.toml`. The stated reason
    is Jina v3's custom LoRA code. Since the active embedder is now Nomic, the
    pin may be legacy — **do not bump it without checking who still depends on

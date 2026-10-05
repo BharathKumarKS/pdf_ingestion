@@ -36,7 +36,12 @@ data/qdrant/
 # work (qdrant_client.local is a Python emulation, not the Rust server). 4.4 GB —
 # must never be committed.
 data/qdrant_server/
-data/models/
+# HF model caches are multi-GB and must never be committed — so ignore everything
+# under data/models/ EXCEPT the small trained intent-classifier pickle, which is
+# part of the reproducible baseline (P0 item 3). A missing classifier silently
+# degrades the router to prototype mode; tracking it makes that state explicit.
+data/models/*
+!data/models/intent_classifier.pkl
 data/user_uploads/
 data/base_textbooks/
 data/*.db

@@ -33,7 +33,10 @@ dependencies = [
     # Frontend
     "streamlit>=1.37",
     # Clustering (RAPTOR tree) — umap-learn is optional, GMM falls back to raw embeddings
-    "scikit-learn>=1.5",
+    # Pin the minor version: the trained intent classifier is a joblib pickle that
+    # only round-trips against a matching sklearn. A looser floor let a stray newer
+    # sklearn silently break classifier loading (→ prototype fallback).
+    "scikit-learn~=1.9",
     # Phase 3 — ColPali visual embeddings
     "colpali-engine>=0.3.1",
     "Pillow>=10.4",

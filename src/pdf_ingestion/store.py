@@ -60,6 +60,7 @@ class DocumentStore:
         self._cfg    = settings or get_settings()
         self._qdrant = get_qdrant(self._cfg)
         self._engine = get_engine(self._cfg)
+        self._warned_colbert_local = False  # log the inactive-lane warning once
 
     # ── Phase 1: write ────────────────────────────────────────────────────
 
@@ -312,7 +313,19 @@ class DocumentStore:
                     with_payload=True,
                 )
             except Exception as exc:
-                logger.warning("ColBERT query failed ({}), using dense+SPLADE", exc)
+                logger.error(
+                    "ColBERT query FAILED ({}); the colbert lane is inactive and "
+                    "results use dense+SPLADE only", exc,
+                )
+        elif cfg.colbert_enabled and query_text and not self._warned_colbert_local:
+            # Enabled in config but never attempted: file-backed Qdrant has no Rust
+            # MaxSim, so the ColBERT lane is silently absent. Make that visible.
+            self._warned_colbert_local = True
+            logger.warning(
+                "colbert_enabled=true but Qdrant is file-backed (no qdrant_host/url): "
+                "the ColBERT lane is INACTIVE and results use dense+SPLADE. Add a "
+                "server Qdrant endpoint to enable it."
+            )
 
         # No ColBERT: RRF over dense+SPLADE, or plain dense if SPLADE absent
         if len(prefetches) > 1:
@@ -369,8 +382,19 @@ class DocumentStore:
             elif isinstance(vectors_cfg, dict) and "dense" in vectors_cfg:
                 using = "dense"
             else:
+                logger.warning(
+                    "RAPTOR search: collection '{}' has no named 'dense_768'/'dense' "
+                    "vector (config: {}) — querying the collection default, which may "
+                    "be the wrong vector",
+                    self._cfg.qdrant_collection, type(vectors_cfg).__name__,
+                )
                 using = None
-        except Exception:
+        except Exception as exc:
+            logger.error(
+                "RAPTOR search: could not inspect vector config for '{}' ({}); "
+                "querying the collection default — results may be wrong",
+                self._cfg.qdrant_collection, exc,
+            )
             using = None
 
         response = self._qdrant.query_points(

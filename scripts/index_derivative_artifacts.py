@@ -2,7 +2,7 @@
 """
 Phase A: Index derivative artifacts (cards) into the `derivative_artifacts` Qdrant collection.
 
-Embeds definition, formula, and question cards from SQLite and upserts them with
+Embeds generated cards from SQLite (one per CardType) and upserts them with
 source_page_numbers in the payload. Chunks from non-chapter pages (preface, bibliography,
 index, TOC) are skipped via keyword filtering.
 
@@ -26,8 +26,13 @@ from rich.table import Table
 
 console = Console()
 
-# Card types to include in the DA retrieval lane
-DA_CARD_TYPES = ["summary", "definition", "formula", "question", "factoid"]
+# Card types to include in the DA retrieval lane.
+# Single source of truth is CardType (src/pdf_ingestion/card_generator.py). The
+# previous hand-maintained 5-item list had drifted from the enum's 8 types, so
+# example/misconception/objective cards were generated in Phase 2 but never indexed.
+from src.pdf_ingestion.card_generator import ALL_CARD_TYPES
+
+DA_CARD_TYPES = ALL_CARD_TYPES
 
 # Keywords that identify non-chapter content (checked in first 500 chars of chunk text)
 NON_CHAPTER_KEYWORDS = [

@@ -42,7 +42,13 @@ def call_llm(
                    response_format={"type":"json_object"} on OpenAI).
 
     Returns:
-        Raw response string from the model. Empty string on failure.
+        Raw response string from the model. **Empty string on failure.**
+
+    Note:
+        An empty return is indistinguishable from a genuinely empty completion,
+        so callers MUST NOT treat "" as a valid answer. Failures are logged at
+        ERROR. `scripts/evaluate_rag.py` counts them and records them in the
+        artifact rather than letting a dead backend look like a clean run.
     """
     cfg = settings or get_settings()
 
@@ -85,7 +91,11 @@ def _call_ollama(
         resp.raise_for_status()
         return resp.json().get("response", "")
     except Exception as exc:
-        logger.warning("Ollama call failed: {}", exc)
+        logger.error(
+            "LLM CALL FAILED (ollama {} @ {}): {} — returning empty string. "
+            "Callers must not treat '' as a valid answer.",
+            cfg.ollama_model, cfg.ollama_host, exc,
+        )
         return ""
 
 
@@ -131,8 +141,17 @@ def _call_openai(
         resp.raise_for_status()
         choices = resp.json().get("choices", [])
         if not choices:
+            logger.error(
+                "LLM CALL FAILED (openai {} @ {}): HTTP {} with no choices in the "
+                "response — returning empty string.",
+                cfg.openai_model, cfg.openai_api_base, resp.status_code,
+            )
             return ""
         return choices[0].get("message", {}).get("content", "")
     except Exception as exc:
-        logger.warning("OpenAI-compatible LLM call failed: {}", exc)
+        logger.error(
+            "LLM CALL FAILED (openai {} @ {}): {} — returning empty string. "
+            "Callers must not treat '' as a valid answer.",
+            cfg.openai_model, cfg.openai_api_base, exc,
+        )
         return ""

@@ -221,13 +221,21 @@ def check_classifier(cfg) -> None:
         return
     try:
         import joblib
+        from sklearn.linear_model import LogisticRegression
 
         model = joblib.load(path)
         width = getattr(model, "n_features_in_", None)
-        ok = width == cfg.embedding_dim
-        record("intent-classifier", ok,
-               f"loaded, n_features_in_={width} (embedder={cfg.embedding_dim})"
-               + ("" if ok else "  ← MISMATCH: predictions will be invalid"))
+        ok_type = isinstance(model, LogisticRegression)
+        ok = ok_type and width == cfg.embedding_dim
+        detail = (
+            f"loaded {type(model).__name__}, n_features_in_={width} "
+            f"(embedder={cfg.embedding_dim})"
+        )
+        if not ok_type:
+            detail = f"not a LogisticRegression ({type(model).__name__}) — predictions will be garbage"
+        elif width != cfg.embedding_dim:
+            detail += "  ← MISMATCH: predictions will be invalid"
+        record("intent-classifier", ok, detail)
     except Exception as exc:  # noqa: BLE001
         record("intent-classifier", False, f"failed to load: {type(exc).__name__}: {exc}")
 

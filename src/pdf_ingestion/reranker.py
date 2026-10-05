@@ -5,7 +5,8 @@ Re-scores retrieved chunks by jointly encoding (query, passage) pairs,
 catching relevance that embedding cosine similarity misses (e.g. vocabulary
 mismatch between query "Newton's first law" and Feynman's "law of inertia").
 
-Model: cross-encoder/ms-marco-MiniLM-L-6-v2  (~80 MB, CPU-friendly, <1s/query)
+Model: BAAI/bge-reranker-v2-m3 (cfg.reranker_model). Runs locally or is served by
+the cluster (SV_RERANK_URL); CPU-friendly, <1s/query.
 """
 from __future__ import annotations
 
@@ -23,8 +24,8 @@ class StubReranker:
 
 class CrossEncoderReranker:
     """
-    Loads cross-encoder/ms-marco-MiniLM-L-6-v2 once and re-scores
-    (query, passage) pairs. Higher score = more relevant.
+    Loads the configured cross-encoder (default BAAI/bge-reranker-v2-m3) once and
+    re-scores (query, passage) pairs. Higher score = more relevant.
     """
 
     def __init__(self, model_name: str) -> None:

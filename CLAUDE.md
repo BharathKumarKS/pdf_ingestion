@@ -102,17 +102,17 @@ uv run python scripts/run_phase3.py --doc-id <uuid> --graph-only   # rebuild gra
 
 ### Key architecture
 
-- **Phase 1** — Docling parser → Chonkie chunker → Jina v3 embedder → Qdrant `knowledge_base`
-- **Phase 2** — LLM card generation (7 types/chunk) + RAPTOR hierarchical summaries
+- **Phase 1** — Docling parser → Chonkie chunker → Nomic MRL embedder → Qdrant `knowledge_base`
+- **Phase 2** — LLM card generation (8 types/chunk, see `CardType`) + RAPTOR hierarchical summaries
 - **Phase 3** — ColPali page images → `visual_knowledge_base` + Memgraph concept graph + Qdrant `concept_embeddings`
 - **Phase 4** — Intent router (embedding-based) + SPLADE hybrid search (dense+sparse RRF) + cross-encoder re-ranker (next)
 
 ### Retrieval flow at query time
 
 ```
-query → Jina embed (q_vec)
+query → Nomic embed (q_vec)
       → Intent router (classify: factual|overview|multihop|visual)
-      → Qdrant hybrid search: dense (Jina) + sparse (SPLADE) → RRF → top-6 chunks
+      → Qdrant hybrid search: dense (Nomic) + sparse (SPLADE) → RRF → top-6 chunks
       → RAPTOR search (overview only) → 2 summary nodes
       → Qdrant concept_embeddings ANN → Memgraph Cypher → graph chunks (multihop only)
       → [next] cross-encoder re-rank top chunks
@@ -139,7 +139,7 @@ src/core/database.py            — Qdrant + SQLite bootstrap, migrations
 src/core/intent_router.py       — query intent classification (Phase 4)
 src/core/llm.py                 — shared LLM caller (Ollama or OpenAI-compatible)
 src/pdf_ingestion/store.py      — DocumentStore: save/search for all phases
-src/pdf_ingestion/embedder.py   — Jina v3 dense embedder
+src/pdf_ingestion/embedder.py   — Nomic MRL dense embedder (768d + 64d)
 src/pdf_ingestion/splade_embedder.py — SPLADE sparse embedder (Phase 4)
 src/pdf_ingestion/graph_builder.py  — Memgraph concept graph (Phase 3)
 src/pdf_ingestion/colpali_embedder.py — ColPali page embedder (Phase 3)
