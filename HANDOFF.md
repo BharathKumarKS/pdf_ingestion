@@ -4,9 +4,13 @@
 > For the durable system map read `ARCHITECTURE.md`. For setup read `README.md`.
 > Keep this file short — it loads into every session in this directory.
 >
-> **Last updated: 2026-10-05** — P0 items 1–6 complete. If this date is old,
-> re-check `git log --oneline -5` and `git status --short` before trusting
-> "Current focus".
+> **Last updated: 2026-10-05** — P0 items 1–7 complete and committed.
+> ⚠️ **Local only:** `main` is **6 ahead / 1 behind** `origin/main`. The remote commit
+> we lack — `6f56634` *"surface graph/RAPTOR errors in UI + fix visual search doc filter"* —
+> touches files this work also changed (`streamlit_app.py`, `config.py`, `intent_router.py`,
+> `llm.py`, `graph_builder.py`, `reranker.py`, `store.py`). **Merge/rebase and expect
+> conflicts before pushing.** If this date is old, re-check `git log --oneline -5` and
+> `git status --short` before trusting "Current focus".
 
 ---
 
