@@ -83,6 +83,12 @@ class Settings(BaseSettings):
     openai_api_key: str = "none"                      # "none" if no auth required
     openai_model: str = "meta-llama/Llama-3.2-8B-Instruct"
 
+    # Judge model for eval generation metrics (scripts/evaluate_rag.py).
+    # Empty → the judge uses the generator model above. Set it to a *different*
+    # family when running `--judge-from-env`: a model judging its own output
+    # scores itself preferentially, which is not a measurement.
+    judge_model: str = ""
+
     use_stub_llm: bool = False           # True -> skip all LLM calls in unit tests
 
     # Intent router — Phase 4

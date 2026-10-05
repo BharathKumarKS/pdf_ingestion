@@ -473,9 +473,17 @@ def make_judge_fn(args):
                 "max_tokens": 200,
                 "temperature": 0,
             }
+            # Mirror llm.py's /v1 normalisation: an OpenAI-compatible base may or
+            # may not carry the /v1 suffix, and the cluster gateway serves ONLY
+            # /v1/chat/completions (a bare /chat/completions is 404). Without this
+            # a --judge-from-env run posts to the wrong path and every verdict
+            # comes back empty.
+            base = args.judge_api_base.rstrip("/")
+            if base.endswith("/v1"):
+                base = base[:-3]
             try:
                 resp = httpx.post(
-                    f"{args.judge_api_base.rstrip('/')}/chat/completions",
+                    f"{base}/v1/chat/completions",
                     headers=headers,
                     json=payload,
                     timeout=30,
@@ -492,6 +500,26 @@ def make_judge_fn(args):
 
     _call_judge.stats = stats  # type: ignore[attr-defined]
     return _call_judge
+
+
+def resolve_judge_from_env(args, cfg) -> None:
+    """Fill the judge connection from the .env LLM settings, in place.
+
+    The judge must not be the generator: a model scoring its own output grades
+    itself preferentially, so the number stops measuring anything. ``JUDGE_MODEL``
+    therefore takes precedence over the generator model — with it unset the judge
+    falls back to the generator (correct for a cross-family setup where the
+    generator *is* the judge family, wrong when it is not).
+    """
+    if cfg.llm_backend == "ollama":
+        args.judge_backend = "ollama"
+        args.judge_api_base = cfg.ollama_host
+        args.judge_model = cfg.judge_model or cfg.ollama_model
+    else:
+        args.judge_backend = "openai"
+        args.judge_api_base = cfg.openai_api_base
+        args.judge_api_key = cfg.openai_api_key
+        args.judge_model = cfg.judge_model or cfg.openai_model
 
 
 # ── Per-query evaluation ──────────────────────────────────────────────────────
@@ -784,7 +812,8 @@ def parse_args():
                    help="Judge model (e.g. claude-3-haiku-20240307, gpt-4o-mini)")
     p.add_argument("--judge-from-env", action="store_true",
                    help="Auto-configure judge from LLM_BACKEND/OPENAI_API_BASE/OPENAI_MODEL in .env "
-                        "(skips --judge-backend/--judge-api-base/--judge-model flags)")
+                        "(skips --judge-backend/--judge-api-base/--judge-model flags). "
+                        "Set JUDGE_MODEL to judge with a model other than the generator.")
 
     return p.parse_args()
 
@@ -801,15 +830,7 @@ def main():
 
     # Auto-configure judge from .env LLM settings
     if getattr(args, "judge_from_env", False):
-        if cfg.llm_backend == "ollama":
-            args.judge_backend = "ollama"
-            args.judge_api_base = cfg.ollama_host
-            args.judge_model = cfg.ollama_model
-        else:
-            args.judge_backend = "openai"
-            args.judge_api_base = cfg.openai_api_base
-            args.judge_api_key = cfg.openai_api_key
-            args.judge_model = cfg.openai_model
+        resolve_judge_from_env(args, cfg)
 
     console.print("\n[bold blue]Synapse RAG Evaluation Pipeline[/]")
     console.print(f"  Query file:       {args.query_file}")

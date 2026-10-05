@@ -131,3 +131,78 @@ def test_judge_counts_failure_and_returns_empty(ev, openai_args, monkeypatch):
     assert fn("x") == ""
     assert fn.stats["failures"] == 1
     assert fn.stats["last_error"].startswith("RuntimeError")
+
+
+# ── Judge endpoint: /v1 normalisation (gateway 404s a bare /chat/completions) ─
+
+@pytest.mark.parametrize("base", ["http://10.0.10.70:8000", "http://10.0.10.70:8000/v1"])
+def test_judge_posts_to_v1_chat_completions(ev, openai_args, base, monkeypatch):
+    import httpx
+
+    openai_args.judge_api_base = base
+    seen = {}
+
+    class FakeResp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"choices": [{"message": {"content": "YES"}}]}
+
+    def fake_post(url, **kw):
+        seen["url"] = url
+        return FakeResp()
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    assert ev.make_judge_fn(openai_args)("x") == "YES"
+    # Exactly one /v1, regardless of whether the base carried one.
+    assert seen["url"] == "http://10.0.10.70:8000/v1/chat/completions"
+
+
+# ── --judge-from-env: the judge must not default to the generator ─────────────
+
+class _Cfg:
+    def __init__(self, **kw):
+        self.llm_backend = "openai"
+        self.openai_api_base = "http://10.0.10.70:8000"
+        self.openai_api_key = "none"
+        self.openai_model = "openai/gpt-oss-20b"
+        self.ollama_host = "http://localhost:11434"
+        self.ollama_model = "llama3.2"
+        self.judge_model = ""
+        self.__dict__.update(kw)
+
+
+def _judge_args(**kw):
+    return argparse.Namespace(
+        judge_backend="skip",
+        judge_model="gpt-4o-mini",
+        judge_api_base="https://api.openai.com/v1",
+        judge_api_key="",
+        **kw,
+    )
+
+
+def test_judge_from_env_uses_judge_model_when_set(ev):
+    """JUDGE_MODEL must win over the generator model, or the generator grades itself."""
+    args = _judge_args()
+    ev.resolve_judge_from_env(args, _Cfg(judge_model="Qwen/Qwen3-VL-8B-Instruct"))
+    assert args.judge_backend == "openai"
+    assert args.judge_model == "Qwen/Qwen3-VL-8B-Instruct"
+    assert args.judge_api_base == "http://10.0.10.70:8000"
+    assert args.judge_api_key == "none"
+
+
+def test_judge_from_env_falls_back_to_generator_model(ev):
+    args = _judge_args()
+    ev.resolve_judge_from_env(args, _Cfg())
+    assert args.judge_model == "openai/gpt-oss-20b"
+
+
+def test_judge_from_env_ollama_uses_judge_model_when_set(ev):
+    args = _judge_args()
+    cfg = _Cfg(llm_backend="ollama", judge_model="qwen2.5:7b")
+    ev.resolve_judge_from_env(args, cfg)
+    assert args.judge_backend == "ollama"
+    assert args.judge_api_base == "http://localhost:11434"
+    assert args.judge_model == "qwen2.5:7b"
