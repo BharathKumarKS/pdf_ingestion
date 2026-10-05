@@ -6,6 +6,11 @@ services:
       - "6333:6333"   # REST API
       - "6334:6334"   # gRPC
     volumes:
+      # NOTE: do NOT bind-mount ./data/qdrant_server here. qdrant-client's embedded
+      # "local" mode is a pure-Python emulation (qdrant_client.local), not the Rust
+      # server, and its on-disk format differs — the server panics on load with
+      # "invalid type: sequence, expected a map" (shard_key_mapping.json is an array).
+      # The embedded index must be migrated point-by-point via the client API instead.
       - qdrant_data:/qdrant/storage
     environment:
       QDRANT__SERVICE__HTTP_PORT: 6333

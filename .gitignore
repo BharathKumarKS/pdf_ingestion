@@ -22,11 +22,20 @@ env/
 # ── Secrets & local config ────────────────────────────────────────────────
 .env
 .env.local
+# Any backup of .env carries real credentials (MEMGRAPH_PASSWORD, QDRANT_API_KEY).
+# The bare `.env` pattern does NOT match these — they must be listed explicitly.
+.env.bak*
+.env.backup*
+.env.*.bak
 *.pem
 *.key
 
 # ── Data directories (large / generated at runtime) ──────────────────────
 data/qdrant/
+# Only ever produced by the embedded-storage bind-mount experiment, which cannot
+# work (qdrant_client.local is a Python emulation, not the Rust server). 4.4 GB —
+# must never be committed.
+data/qdrant_server/
 data/models/
 data/user_uploads/
 data/base_textbooks/
@@ -67,6 +76,10 @@ Thumbs.db
 .ipynb_checkpoints/
 data/page_images/
 data/intent_classifier/
-data/eval_results/
+# data/eval_results/ is deliberately NOT ignored — these artifacts ARE the regression
+# baseline the project compares against, and the "Definition of done" requires the run's
+# artifact to be committed. Ignoring this directory is why the report's "v10" figure had
+# no artifact on disk, and no past run (v7/v8/v9) could be diffed against a later one.
+# Whole history is ~660 KB across 43 files.
 data/ingest_log.txt
 minio/

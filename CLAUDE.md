@@ -1,5 +1,12 @@
 # CLAUDE.md
 
+> **Read `HANDOFF.md` first** (repo root) — where the work currently stands, what's
+> next, the settled scope decision (single-user now, multi-tenant later), and the
+> verified facts that override any stale doc. Then read `ARCHITECTURE.md` before
+> changing code: it maps the 4-phase pipeline, module responsibilities,
+> Qdrant/SQLite schemas, and an "Invariants and traps" section.
+> Claude Code: add `@HANDOFF.md` and `@ARCHITECTURE.md` to auto-import them.
+
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.

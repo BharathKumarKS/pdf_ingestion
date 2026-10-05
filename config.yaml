@@ -4,24 +4,43 @@
 #  LLM endpoints and model settings for each pipeline stage.
 #  API keys are read from environment / .env (OPENAI_API_KEY or API_KEY).
 #  Set base_url to empty string to use OpenAI-hosted models.
+#
+#  ENDPOINT NOTE (2026-10-03): repointed .51 -> .70.
+#  .51 answered SSH but had no inference service (every app port refused) while
+#  WireGuard was connected. Revert: swap each base_url back to http://10.0.10.51:8000/v1.
+#
+#  MODEL NOTE (2026-10-04): .70 fronts TWO backends and only one is up.
+#    owner=inference -> openai/gpt-oss-120b, Qwen/Qwen-Image, Wan2.2-T2V       [DOWN]
+#    owner=vllm      -> gpt-oss-20b, DeepSeek-R1-Distill-Qwen-7B, Qwen3-VL-8B  [UP]
+#  gpt-oss-120b answers on /v1/models but returns HTTP 502 on
+#  /v1/chat/completions ("Backend inference unreachable after 3 attempts"), so a
+#  liveness probe that only hits /v1/models reports a false all-clear — see
+#  scripts/preflight.py, which now performs a real completion per model.
+#  Everything here therefore uses gpt-oss-20b, verified to answer and to return a
+#  bare numeric score for the judge prompt. When the inference backend recovers,
+#  restore the commented `-120b` line in each section (a one-line swap).
 # =============================================================================
 
 card_generation:
   model: openai/gpt-oss-20b
-  base_url: http://10.0.10.51:8000/v1
+  # model: openai/gpt-oss-120b          # restore when the `inference` backend is back
+  base_url: http://10.0.10.70:8000/v1
   chunk_size: 512
   use_instructor: false   # model returns JSON in content (not tool calls) — skip instructor
 
 raptor_summarization:
   model: openai/gpt-oss-20b
-  base_url: http://10.0.10.51:8000/v1
+  # model: openai/gpt-oss-120b
+  base_url: http://10.0.10.70:8000/v1
   summary_min_tokens: 150
   summary_max_tokens: 400
 
 intent_classifier:
   model: openai/gpt-oss-20b
-  base_url: http://10.0.10.51:8000/v1
+  # model: openai/gpt-oss-120b
+  base_url: http://10.0.10.70:8000/v1
 
 evaluation:
   judge_model: openai/gpt-oss-20b
-  judge_base_url: http://10.0.10.51:8000/v1
+  # judge_model: openai/gpt-oss-120b
+  judge_base_url: http://10.0.10.70:8000/v1

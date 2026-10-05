@@ -1,0 +1,947 @@
+
+RAG Evaluation Results                                                  
+┏━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Scope      ┃ Recall@20 ┃   MRR ┃ Precision@6 ┃ NDCG@6 ┃ Faithfulness ┃ Ans.Relevance ┃ Citation Acc. ┃ n / calibrated ┃
+┡━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ Overall    │     0.355 │ 0.684 │       0.386 │  0.513 │            — │             — │             — │        19 / 19 │
+│   factual  │     0.384 │ 0.667 │       0.333 │  0.469 │            — │             — │             — │          8 / 8 │
+│   overview │     0.338 │ 0.800 │       0.500 │  0.653 │            — │             — │             — │          5 / 5 │
+│   multihop │     0.332 │ 0.611 │       0.361 │  0.456 │            — │             — │             — │          6 / 6 │
+└────────────┴───────────┴───────┴─────────────┴────────┴──────────────┴───────────────┴───────────────┴────────────────┘
+{
+  "run_name": "phase_a_v2_0.0",
+  "timestamp": "2026-08-23T12:57:26.939413+00:00",
+  "elapsed_s": 22.1,
+  "config": {
+    "tenant_id": "global",
+    "score_threshold": 0.0,
+    "embedding": {
+      "model": "jinaai/jina-embeddings-v3",
+      "dim": 1024
+    },
+    "retriever": {
+      "type": "dense",
+      "splade_enabled": false,
+      "fetch_k": 20,
+      "collection": "knowledge_base"
+    },
+    "reranker": {
+      "enabled": false,
+      "model": null,
+      "top_k": 6
+    },
+    "intent_router": {
+      "enabled": true,
+      "mode": "prototype",
+      "classifier_path": null
+    },
+    "raptor": {
+      "max_levels": 3,
+      "min_cluster_size": 2
+    },
+    "llm_generator": {
+      "backend": "openai",
+      "model": "openai/gpt-oss-120b"
+    },
+    "chunking": {
+      "chunk_size": 512,
+      "chunk_overlap": 64
+    },
+    "derivative_artifacts": {
+      "enabled": true,
+      "collection": "derivative_artifacts",
+      "card_types": [
+        "summary",
+        "definition",
+        "formula",
+        "question",
+        "factoid"
+      ]
+    },
+    "mmr": {
+      "enabled": true,
+      "lambda": 0.7,
+      "candidates": 50
+    }
+  },
+  "judge_model": null,
+  "summary_table": "| Scope | Recall@20 | MRR | Precision@6 | NDCG@6 | Faithfulness | Ans.Relevance | Citation Acc. | n / cal |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| Overall | 0.355 | 0.684 | 0.386 | 0.513 | \u2014 | \u2014 | \u2014 | 19/19 |\n|   factual | 0.384 | 0.667 | 0.333 | 0.469 | \u2014 | \u2014 | \u2014 | 8/8 |\n|   overview | 0.338 | 0.800 | 0.500 | 0.653 | \u2014 | \u2014 | \u2014 | 5/5 |\n|   multihop | 0.332 | 0.611 | 0.361 | 0.456 | \u2014 | \u2014 | \u2014 | 6/6 |",
+  "aggregated": {
+    "overall": {
+      "recall_at_20": 0.3553,
+      "mrr": 0.6842,
+      "precision_at_6": 0.386,
+      "ndcg_at_6": 0.5133,
+      "faithfulness": null,
+      "answer_relevance": null,
+      "citation_accuracy": null,
+      "n_queries": 19,
+      "n_calibrated": 19
+    },
+    "by_type": {
+      "factual": {
+        "recall_at_20": 0.3838,
+        "mrr": 0.6667,
+        "precision_at_6": 0.3333,
+        "ndcg_at_6": 0.4686,
+        "faithfulness": null,
+        "answer_relevance": null,
+        "citation_accuracy": null,
+        "n_queries": 8,
+        "n_calibrated": 8
+      },
+      "overview": {
+        "recall_at_20": 0.3375,
+        "mrr": 0.8,
+        "precision_at_6": 0.5,
+        "ndcg_at_6": 0.6533,
+        "faithfulness": null,
+        "answer_relevance": null,
+        "citation_accuracy": null,
+        "n_queries": 5,
+        "n_calibrated": 5
+      },
+      "multihop": {
+        "recall_at_20": 0.332,
+        "mrr": 0.6111,
+        "precision_at_6": 0.3611,
+        "ndcg_at_6": 0.4564,
+        "faithfulness": null,
+        "answer_relevance": null,
+        "citation_accuracy": null,
+        "n_queries": 6,
+        "n_calibrated": 6
+      }
+    }
+  },
+  "per_query": [
+    {
+      "id": "vec-001",
+      "query": "What is the formula for kinetic energy?",
+      "query_type": "factual",
+      "calibrated": true,
+      "relevant_pages": [
+        95,
+        252
+      ],
+      "metrics": {
+        "recall_at_20": 1.0,
+        "mrr": 1.0,
+        "precision_at_6": 0.5,
+        "ndcg_at_6": 1.1838
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 95,
+          "score": 0.6538,
+          "text": "Then to find the formula for kinetic energy for an object moving with velocity V , we must calculate the height that it could reach, and multiply by t"
+        },
+        {
+          "page": 276,
+          "score": 0.5813,
+          "text": "In these circumstances the kinetic energy in the entire system is simply the sum of the kinetic energies of all of the particular atoms or planets or "
+        },
+        {
+          "page": 252,
+          "score": 0.5765,
+          "text": "Now in our simple example the force is constant, equal to -mg , a vertical force (the minus sign means that it acts downward), and the velocity, of co"
+        }
+      ]
+    },
+    {
+      "id": "vec-002",
+      "query": "Define Newton's first law of motion",
+      "query_type": "factual",
+      "calibrated": true,
+      "relevant_pages": [
+        139,
+        140,
+        141,
+        5,
+        7
+      ],
+      "metrics": {
+        "recall_at_20": 0.2,
+        "mrr": 1.0,
+        "precision_at_6": 0.1667,
+        "ndcg_at_6": 0.3392
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 141,
+          "score": 0.5863,
+          "text": "That is the principle of inertia -if something is moving, with nothing touching it and completely undisturbed, it will go on forever, coasting at a un"
+        },
+        {
+          "page": 179,
+          "score": 0.546,
+          "text": "(9.1) can also be written as\n\n<!-- formula-not-decoded -->\n\nThe acceleration a is the rate of change of the velocity, and Newton's Second Law says mor"
+        },
+        {
+          "page": 283,
+          "score": 0.521,
+          "text": "## 15-1 The principle of relativity\n\nFor over 200 years the equations of motion enunciated by Newton were believed to describe nature correctly, and t"
+        }
+      ]
+    },
+    {
+      "id": "vec-003",
+      "query": "What is the value of Planck's constant?",
+      "query_type": "factual",
+      "calibrated": true,
+      "relevant_pages": [
+        521,
+        522,
+        523,
+        965,
+        118
+      ],
+      "metrics": {
+        "recall_at_20": 0.4,
+        "mrr": 0.5,
+        "precision_at_6": 0.3333,
+        "ndcg_at_6": 0.3452
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 763,
+          "score": 0.5435,
+          "text": "It is simply\n\n<!-- formula-not-decoded -->\n\nBut Planck has already told us that the formula must be (42.12). Therefore we can deduce something: First,"
+        },
+        {
+          "page": 965,
+          "score": 0.5346,
+          "text": "|     |        |\n| h               | 62606896 \u00d7 10 - 34 Js, 17-14 \u210f                                           |     |        |\n| \u210f               | red"
+        },
+        {
+          "page": 967,
+          "score": 0.4856,
+          "text": "P power, 24-2 P pressure, 39-4 P ( k, n ) Bernoulli or binomial probability, 6-8 P ( A ) probability of observing event A , 6-2 q electric charge, 12-"
+        }
+      ]
+    },
+    {
+      "id": "vec-004",
+      "query": "What does Feynman say about the principle of least action?",
+      "query_type": "factual",
+      "calibrated": true,
+      "relevant_pages": [
+        278,
+        279,
+        280,
+        281,
+        282
+      ],
+      "metrics": {
+        "recall_at_20": 0.0,
+        "mrr": 0.0,
+        "precision_at_6": 0.0,
+        "ndcg_at_6": 0.0
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 8,
+          "score": 0.5134,
+          "text": "Feynman was too slick-he knew tricks and what approximations could be made, and had intuition based on experience and genius that a beginning student "
+        },
+        {
+          "page": 3,
+          "score": 0.5,
+          "text": "Feynman wrote The Character of Physical Law and QED: The Strange Theory of Light and Matter . He also authored a number of advanced publications that "
+        },
+        {
+          "page": 18,
+          "score": 0.5103,
+          "text": "## Foreword\n\nThis book is based upon a course of lectures in introductory physics given by Prof. R. P. Feynman at the California Institute of Technolo"
+        }
+      ]
+    },
+    {
+      "id": "vec-005",
+      "query": "What is the difference between elastic and inelastic collisions?",
+      "query_type": "factual",
+      "calibrated": true,
+      "relevant_pages": [
+        159,
+        160,
+        161,
+        162,
+        163,
+        207,
+        208,
+        316
+      ],
+      "metrics": {
+        "recall_at_20": 0.375,
+        "mrr": 1.0,
+        "precision_at_6": 0.8333,
+        "ndcg_at_6": 0.8922
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 208,
+          "score": 0.6384,
+          "text": "Therefore, between very elementary objects, the collisions are always elastic or very nearly elastic. For instance, the collisions between atoms or mo"
+        },
+        {
+          "page": 207,
+          "score": 0.5924,
+          "text": "That the velocities of the bodies rebounding after a symmetrical collision are equal to and opposite each other , however, is a matter of conservation"
+        },
+        {
+          "page": 207,
+          "score": 0.581,
+          "text": "We might similarly analyze collisions between bodies of different masses, different initial velocities, and various degrees of elasticity, and determi"
+        }
+      ]
+    },
+    {
+      "id": "vec-006",
+      "query": "What is Newton's second law of motion?",
+      "query_type": "factual",
+      "calibrated": true,
+      "relevant_pages": [
+        139,
+        140,
+        141,
+        142,
+        7,
+        179,
+        181
+      ],
+      "metrics": {
+        "recall_at_20": 0.4286,
+        "mrr": 0.3333,
+        "precision_at_6": 0.5,
+        "ndcg_at_6": 0.3894
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 199,
+          "score": 0.6532,
+          "text": "In addition to the law of conservation of momentum, there is another interesting consequence of Newton's Second Law, to be proved later, but merely st"
+        },
+        {
+          "page": 182,
+          "score": 0.6438,
+          "text": "Newton's Second Law is given in complete form in Eq. (9.7). If we know the forces on an object and resolve them into x -, y -, and z -components, then"
+        },
+        {
+          "page": 181,
+          "score": 0.6134,
+          "text": "Similarly, we see that \u2206 v y = a y \u2206 t and \u2206 v z = a z \u2206 t . In these terms, we see that Newton's Second Law, in saying that the force is in the same "
+        }
+      ]
+    },
+    {
+      "id": "vec-007",
+      "query": "What is the formula for gravitational force?",
+      "query_type": "factual",
+      "calibrated": true,
+      "relevant_pages": [
+        98,
+        99,
+        100,
+        101,
+        242,
+        243
+      ],
+      "metrics": {
+        "recall_at_20": 0.3333,
+        "mrr": 1.0,
+        "precision_at_6": 0.1667,
+        "ndcg_at_6": 0.3026
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 243,
+          "score": 0.6312,
+          "text": "Can the same methods be applied to gravitation? The force between two masses m 1 and m 2 was expressed by Newton as F = -Gm 1 m 2 r /r 3 . But accordi"
+        },
+        {
+          "page": 91,
+          "score": 0.6059,
+          "text": "We call the sum of the weights times the heights gravitational potential energy -the energy which an object has because of its relationship in space, "
+        },
+        {
+          "page": 276,
+          "score": 0.5753,
+          "text": "(This is really not true for molecular forces, and the formula is somewhat more complicated; it certainly is true for Newtonian gravitation, and it is"
+        }
+      ]
+    },
+    {
+      "id": "vec-008",
+      "query": "Define momentum",
+      "query_type": "factual",
+      "calibrated": true,
+      "relevant_pages": [
+        159,
+        160,
+        178
+      ],
+      "metrics": {
+        "recall_at_20": 0.3333,
+        "mrr": 0.5,
+        "precision_at_6": 0.1667,
+        "ndcg_at_6": 0.2961
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 340,
+          "score": 0.5684,
+          "text": "The torque is also often called the moment of the force. The origin of this term is obscure, but it may be related to the fact that 'moment' is derive"
+        },
+        {
+          "page": 178,
+          "score": 0.554,
+          "text": "In this way we find a certain quantity of mass for every object. Now the momentum of an object is a product of two parts: its mass and its velocity . "
+        },
+        {
+          "page": 312,
+          "score": 0.5238,
+          "text": "Also, we shall assume that the momentum of a particle which is moving is a vector and is always directed in the direction of the velocity. However, we"
+        }
+      ]
+    },
+    {
+      "id": "raptor-001",
+      "query": "Give me an overview of how classical mechanics breaks down at atomic scales",
+      "query_type": "overview",
+      "calibrated": true,
+      "relevant_pages": [
+        520,
+        521,
+        522,
+        523,
+        524,
+        525,
+        526,
+        527,
+        528,
+        529,
+        530,
+        531,
+        349,
+        686,
+        693
+      ],
+      "metrics": {
+        "recall_at_20": 0.2,
+        "mrr": 1.0,
+        "precision_at_6": 0.6667,
+        "ndcg_at_6": 0.7409
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 686,
+          "score": 0.5959,
+          "text": "So we now understand why we do not fall through the floor. As we walk, our shoes with their masses of atoms push against the floor with its mass of at"
+        },
+        {
+          "page": 693,
+          "score": 0.5866,
+          "text": "The first thing to do is to get some idea, more or less, of what ought to happen in different circumstances, and then, later, when we know the laws be"
+        },
+        {
+          "page": 40,
+          "score": 0.5805,
+          "text": "The interesting point is that the material has a definite place for every atom , and you can easily appreciate that if somehow or other we were to hol"
+        }
+      ]
+    },
+    {
+      "id": "raptor-002",
+      "query": "Summarize the key themes in the chapter on conservation laws",
+      "query_type": "overview",
+      "calibrated": true,
+      "relevant_pages": [
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        159,
+        160,
+        161,
+        211,
+        212,
+        213,
+        84,
+        97,
+        98
+      ],
+      "metrics": {
+        "recall_at_20": 0.1875,
+        "mrr": 1.0,
+        "precision_at_6": 0.8333,
+        "ndcg_at_6": 0.8697
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 84,
+          "score": 0.5428,
+          "text": "The law is called the conservation of energy . It states that there is a certain quantity, which we call energy, that does not change in the manifold "
+        },
+        {
+          "page": 97,
+          "score": 0.4997,
+          "text": "Therefore conservation laws are very interesting. The question naturally arises as to what other conservation laws there are in physics. There are two"
+        },
+        {
+          "page": 98,
+          "score": 0.4877,
+          "text": "The laws which govern how much energy is available are called the laws of thermodynamics and involve a concept called entropy for irreversible thermod"
+        }
+      ]
+    },
+    {
+      "id": "raptor-003",
+      "query": "How does Feynman build up the concept of energy from mechanics to thermodynamics?",
+      "query_type": "overview",
+      "calibrated": true,
+      "relevant_pages": [
+        52,
+        53,
+        54,
+        55,
+        56,
+        565,
+        566,
+        591,
+        592
+      ],
+      "metrics": {
+        "recall_at_20": 0.0,
+        "mrr": 0.0,
+        "precision_at_6": 0.0,
+        "ndcg_at_6": 0.0
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 18,
+          "score": 0.5418,
+          "text": "## Foreword\n\nThis book is based upon a course of lectures in introductory physics given by Prof. R. P. Feynman at the California Institute of Technolo"
+        },
+        {
+          "page": 800,
+          "score": 0.5233,
+          "text": "I can think of the volume as a function of temperature and pressure, and the internal energy as a function of temperature and pressure, and so on.' Th"
+        },
+        {
+          "page": 3,
+          "score": 0.5155,
+          "text": "He also created a mathematical theory that accounts for the phenomenon of superfluidity in liquid helium. Thereafter, with Murray Gell-Mann, he did fu"
+        }
+      ]
+    },
+    {
+      "id": "raptor-004",
+      "query": "What are the main ideas connecting electricity and magnetism?",
+      "query_type": "overview",
+      "calibrated": true,
+      "relevant_pages": [
+        286,
+        484,
+        487
+      ],
+      "metrics": {
+        "recall_at_20": 1.0,
+        "mrr": 1.0,
+        "precision_at_6": 0.6667,
+        "ndcg_at_6": 1.2021
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 484,
+          "score": 0.6146,
+          "text": "For this culminating moment there was a long preparation in the gradual discovery and unfolding of the laws of electricity and magnetism. This story w"
+        },
+        {
+          "page": 487,
+          "score": 0.5975,
+          "text": "Next, the laws of electricity and magnetism, as known at the end of the 19th century, are these: the electrical forces acting on a charge q can be des"
+        },
+        {
+          "page": 286,
+          "score": 0.5902,
+          "text": "A long series of careful studies of these phenomena by many people culminated in Maxwell's equations of the electromagnetic field, which describe elec"
+        }
+      ]
+    },
+    {
+      "id": "raptor-005",
+      "query": "How does the textbook introduce probability into physics?",
+      "query_type": "overview",
+      "calibrated": true,
+      "relevant_pages": [
+        565,
+        566,
+        567,
+        568,
+        591,
+        592,
+        593,
+        670,
+        673,
+        693
+      ],
+      "metrics": {
+        "recall_at_20": 0.3,
+        "mrr": 1.0,
+        "precision_at_6": 0.3333,
+        "ndcg_at_6": 0.4539
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 693,
+          "score": 0.5589,
+          "text": "So this subject involves a knowledge of the theory of probability, and our mathematics is not yet quite ready and we do not want to strain it too hard"
+        },
+        {
+          "page": 18,
+          "score": 0.5075,
+          "text": "## Foreword\n\nThis book is based upon a course of lectures in introductory physics given by Prof. R. P. Feynman at the California Institute of Technolo"
+        },
+        {
+          "page": 670,
+          "score": 0.5318,
+          "text": "physics has given up. We do not know how to predict what would happen in a given circumstance , and we believe now that it is impossible, that the onl"
+        }
+      ]
+    },
+    {
+      "id": "graph-001",
+      "query": "Why does a satellite stay in orbit?",
+      "query_type": "multihop",
+      "calibrated": true,
+      "relevant_pages": [
+        98,
+        99,
+        100,
+        101,
+        102,
+        139,
+        140,
+        141,
+        142,
+        274
+      ],
+      "metrics": {
+        "recall_at_20": 0.2,
+        "mrr": 1.0,
+        "precision_at_6": 0.5,
+        "ndcg_at_6": 0.571
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 274,
+          "score": 0.5642,
+          "text": "<!-- formula-not-decoded -->\n\nAt what speed must a satellite travel in order to keep going around the earth? We worked this out long ago and found tha"
+        },
+        {
+          "page": 148,
+          "score": 0.4525,
+          "text": "These satellites were studied very carefully by Roemer, who noticed that the moons sometimes seemed to be ahead of schedule, and sometimes behind. (On"
+        },
+        {
+          "page": 274,
+          "score": 0.4377,
+          "text": "Therefore the first thing that was done historically with satellites was to get one to go around the earth, which requires a speed of five miles per s"
+        }
+      ]
+    },
+    {
+      "id": "graph-002",
+      "query": "What should I understand before learning about Maxwell's equations?",
+      "query_type": "multihop",
+      "calibrated": true,
+      "relevant_pages": [
+        487
+      ],
+      "metrics": {
+        "recall_at_20": 1.0,
+        "mrr": 0.3333,
+        "precision_at_6": 0.1667,
+        "ndcg_at_6": 0.5
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 286,
+          "score": 0.6266,
+          "text": "A long series of careful studies of these phenomena by many people culminated in Maxwell's equations of the electromagnetic field, which describe elec"
+        },
+        {
+          "page": 484,
+          "score": 0.5438,
+          "text": "Maxwell noted that the equations or the laws that had been discovered up to this time were mutually inconsistent when he tried to put them all togethe"
+        },
+        {
+          "page": 487,
+          "score": 0.5206,
+          "text": "Next, the laws of electricity and magnetism, as known at the end of the 19th century, are these: the electrical forces acting on a charge q can be des"
+        }
+      ]
+    },
+    {
+      "id": "graph-003",
+      "query": "How is simple harmonic motion related to wave propagation?",
+      "query_type": "multihop",
+      "calibrated": true,
+      "relevant_pages": [
+        340,
+        341,
+        342,
+        343,
+        344,
+        345,
+        384
+      ],
+      "metrics": {
+        "recall_at_20": 0.1429,
+        "mrr": 0.3333,
+        "precision_at_6": 0.1667,
+        "ndcg_at_6": 0.1513
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 841,
+          "score": 0.645,
+          "text": "Then, with the motion, the air is compressed and a change of pressure is produced which pushes on additional air. This air is in turn compressed, whic"
+        },
+        {
+          "page": 859,
+          "score": 0.5639,
+          "text": "In other words, if we added two waves, but these waves were not just oscillating, but also moving in space, then the resultant wave would move along a"
+        },
+        {
+          "page": 384,
+          "score": 0.5631,
+          "text": "Demonstration of the equivalence between simple harmonic motion and uniform circular motion.\n\n<!-- image -->\n\nHere we may point out that because unifo"
+        }
+      ]
+    },
+    {
+      "id": "graph-004",
+      "query": "How do conservation laws appear across different areas of physics?",
+      "query_type": "multihop",
+      "calibrated": true,
+      "relevant_pages": [
+        52,
+        53,
+        54,
+        55,
+        56,
+        159,
+        160,
+        161,
+        211,
+        212,
+        213,
+        97,
+        98,
+        922
+      ],
+      "metrics": {
+        "recall_at_20": 0.2857,
+        "mrr": 1.0,
+        "precision_at_6": 0.6667,
+        "ndcg_at_6": 0.7751
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 97,
+          "score": 0.6936,
+          "text": "Therefore conservation laws are very interesting. The question naturally arises as to what other conservation laws there are in physics. There are two"
+        },
+        {
+          "page": 922,
+          "score": 0.6351,
+          "text": "For a reason which we cannot make clear at the level of the present discussion-a fact that most physicists still find somewhat staggering, a most prof"
+        },
+        {
+          "page": 97,
+          "score": 0.6116,
+          "text": "Whether this is strictly true or not, we do not know. If we assume that it is true, and add the principles of quantum mechanics, then we can deduce th"
+        }
+      ]
+    },
+    {
+      "id": "graph-005",
+      "query": "Explain quantum tunnelling in terms of concepts I've already seen in classical physics",
+      "query_type": "multihop",
+      "calibrated": true,
+      "relevant_pages": [
+        520,
+        521,
+        522,
+        523,
+        524,
+        525
+      ],
+      "metrics": {
+        "recall_at_20": 0.0,
+        "mrr": 0.0,
+        "precision_at_6": 0.0,
+        "ndcg_at_6": 0.0
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 881,
+          "score": 0.5359,
+          "text": "The general motion can be described by giving the amplitude of each of these different energy states. This is the origin of energy levels in quantum m"
+        },
+        {
+          "page": 670,
+          "score": 0.518,
+          "text": "No one can 'explain' any more than we have just 'explained.' No one will give you any deeper representation of the situation. We have no ideas about a"
+        },
+        {
+          "page": 655,
+          "score": 0.4931,
+          "text": "In reality, it contains the only mystery. We cannot explain the mystery in the sense of 'explaining' how it works. We will tell you how it works. In t"
+        }
+      ]
+    },
+    {
+      "id": "graph-006",
+      "query": "What concepts connect thermodynamics and statistical mechanics?",
+      "query_type": "multihop",
+      "calibrated": true,
+      "relevant_pages": [
+        565,
+        566,
+        567,
+        591,
+        592,
+        593,
+        594,
+        70,
+        709,
+        715,
+        728
+      ],
+      "metrics": {
+        "recall_at_20": 0.3636,
+        "mrr": 1.0,
+        "precision_at_6": 0.6667,
+        "ndcg_at_6": 0.7409
+      },
+      "generation": {},
+      "top_chunks": [
+        {
+          "page": 709,
+          "score": 0.7095,
+          "text": "Or have they all the same speed exactly?\n\nWe limit ourselves for the present to conditions of thermal equilibrium, that is, to a subclass of all the p"
+        },
+        {
+          "page": 70,
+          "score": 0.706,
+          "text": "If we could analyze each collision, and be able to follow in detail the motion of each molecule, we might hope to figure out what would happen, but th"
+        },
+        {
+          "page": 30,
+          "score": 0.5899,
+          "text": "| 39-3 Compressibility of radiation . . . . . . . . . .    | . . . . . . . . . . . . . . . . 39-9   |\n| 39-4 Temperature and kinetic energy . . . . . "
+        }
+      ]
+    },
+    {
+      "id": "colpali-001",
+      "query": "Show me the diagram of the double-slit experiment",
+      "query_type": "visual",
+      "calibrated": false,
+      "relevant_pages": null,
+      "metrics": {},
+      "generation": {},
+      "top_chunks": [],
+      "skipped": "visual query, --skip-visual set"
+    },
+    {
+      "id": "colpali-002",
+      "query": "Find the page with the force-body diagram for an inclined plane",
+      "query_type": "visual",
+      "calibrated": false,
+      "relevant_pages": null,
+      "metrics": {},
+      "generation": {},
+      "top_chunks": [],
+      "skipped": "visual query, --skip-visual set"
+    },
+    {
+      "id": "colpali-003",
+      "query": "Which page shows the sinusoidal wave illustration?",
+      "query_type": "visual",
+      "calibrated": false,
+      "relevant_pages": null,
+      "metrics": {},
+      "generation": {},
+      "top_chunks": [],
+      "skipped": "visual query, --skip-visual set"
+    },
+    {
+      "id": "colpali-004",
+      "query": "Find the table comparing wavelengths of different electromagnetic radiation types",
+      "query_type": "visual",
+      "calibrated": false,
+      "relevant_pages": null,
+      "metrics": {},
+      "generation": {},
+      "top_chunks": [],
+      "skipped": "visual query, --skip-visual set"
+    },
+    {
+      "id": "colpali-005",
+      "query": "Show me the diagram explaining the photoelectric effect",
+      "query_type": "visual",
+      "calibrated": false,
+      "relevant_pages": null,
+      "metrics": {},
+      "generation": {},
+      "top_chunks": [],
+      "skipped": "visual query, --skip-visual set"
+    },
+    {
+      "id": "colpali-006",
+      "query": "Which page has the graph showing how pressure varies with volume in an ideal gas?",
+      "query_type": "visual",
+      "calibrated": false,
+      "relevant_pages": null,
+      "metrics": {},
+      "generation": {},
+      "top_chunks": [],
+      "skipped": "visual query, --skip-visual set"
+    },
+    {
+      "id": "colpali-007",
+      "query": "Find the circuit diagram showing a capacitor and resistor in series",
+      "query_type": "visual",
+      "calibrated": false,
+      "relevant_pages": null,
+      "metrics": {},
+      "generation": {},
+      "top_chunks": [],
+      "skipped": "visual query, --skip-visual set"
+    }
+  ]
+}

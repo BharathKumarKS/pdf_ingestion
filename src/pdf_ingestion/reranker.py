@@ -89,19 +89,27 @@ class ClusterCrossEncoderReranker:
             # Format B: [{"score": 0.9}, ...]                        — infinity-emb (no index, score-sorted)
             # Format C: [0.9, 0.23, ...]                             — raw score list in input order
             if results and isinstance(results[0], dict):
-                if "index" in results[0]:
-                    # Format A: results sorted by score, index maps back to input
-                    score_key = "relevance_score" if "relevance_score" in results[0] else "score"
-                    ranked = [chunks[r["index"]] for r in results]
+                score_key = "relevance_score" if "relevance_score" in results[0] else "score"
+                # The mapping back to the input chunk depends on the server's response shape.
+                # Prefer an explicit index field; ONLY fall back to positional mapping when the
+                # server returns scores in input order (no index field at all).
+                idx_key = next((k for k in ("corpus_id", "index", "id") if k in results[0]), None)
+                if idx_key is not None:
+                    # Server tells us which input document each score belongs to.
+                    ranked = []
+                    for r in results:
+                        i = r.get(idx_key)
+                        if isinstance(i, int) and 0 <= i < len(chunks):
+                            ranked.append(chunks[i])
+                        if len(ranked) >= top_k:
+                            break
                     top_score = results[0].get(score_key, 0)
                 else:
-                    # Format B: results already score-sorted, position = rank
-                    score_key = "relevance_score" if "relevance_score" in results[0] else "score"
-                    top_score = results[0].get(score_key, 0)
-                    # Results are in score order but we need to map back to chunks
-                    # Pair with original order using enumerate over input documents order
+                    # No index field: the server returned a score per input document, in input
+                    # order. Sorting by score is the only correct interpretation.
                     pairs = sorted(enumerate(results), key=lambda x: x[1].get(score_key, 0), reverse=True)
                     ranked = [chunks[i] for i, _ in pairs[:top_k]]
+                    top_score = pairs[0][1].get(score_key, 0) if pairs else 0
             else:
                 # Format C: list of floats in input order — sort chunks by score
                 scores = [float(r) for r in results]
@@ -115,7 +123,15 @@ class ClusterCrossEncoderReranker:
             )
             return ranked
         except Exception as exc:
-            logger.warning("Cluster reranker failed ({}), returning original order", exc)
+            # LOUD on purpose: this returns UNRANKED results. Downstream metrics (Precision@k,
+            # NDCG@k) are meaningless when this fires, and the artifact would otherwise still
+            # record reranker.enabled=true. Do not downgrade this to debug/warning.
+            logger.error(
+                "RERANKER DISABLED — cluster rerank call to {} failed ({}: {}). "
+                "Returning UNRANKED results in original retrieval order; "
+                "Precision@k/NDCG@k will be measured on unranked output.",
+                self._url, type(exc).__name__, exc,
+            )
             return chunks[:top_k]
 
 
