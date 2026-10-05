@@ -181,10 +181,17 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
    failure while sitting at its own ceiling. Replaced by `Recall@top_k` + `Hit@top_k`;
    `Recall@fetch_k − Recall@top_k` now quantifies what ranking discards.
 8. **Run the judge lane** — the first-ever measurement of answer quality. Faithfulness /
-   Ans.Relevance / Citation are `—` in every artifact ever produced. Generate with
-   `gpt-oss-20b`, judge with `DeepSeek-R1-Distill-Qwen-7B` (cross-family — **not**
-   Qwen3-VL, which produced the labels). Hand-score ~10 answers first to check the
-   judge's agreement before trusting the number.
+   Ans.Relevance / Citation are `—` in every artifact ever produced.
+   ⚠️ **Judge choice is constrained — checked 2026-10-05, do not re-litigate.**
+   `deepseek-ai/DeepSeek-R1-Distill-Qwen-7B` is **unusable**: it ignores every
+   "answer only YES/NO" instruction and returns a reasoning preamble, which the eval
+   scores as NOT faithful — faithfulness collapses to ~0 (the mirror of the P0-2 bug).
+   `openai/gpt-oss-120b` is still HTTP 502. That leaves `Qwen/Qwen3-VL-8B-Instruct`
+   (clean output; it made the labels, but faithfulness compares the answer to the
+   *passages*, not the labels, so that circularity does not apply) or `gpt-oss-20b` as
+   judge (self-preference bias — it is the generator). Use Qwen3-VL, label the numbers
+   **indicative**, and hand-score ~10 answers first to check judge agreement.
+   Model IDs need their full prefix (`deepseek-ai/…`, `Qwen/…`).
 9. **Rebuild the gold set** — the big one, and it gates all of P1. Target **~120–150
    queries** (23 can only detect ≥0.15 effects at 80% power; 0.05 needs ~200). Per-type
    generation: factual from a known page; overview from a topic + book-wide scan;
