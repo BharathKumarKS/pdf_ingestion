@@ -36,7 +36,7 @@ calibrate the 7 `visual` queries.
 | 5 | Doc drift fixed | `reranker.py`, `.env.example`, `CLAUDE.md`, `README.md`, `ARCHITECTURE.md` |
 | 6 | Eval gate + CI | `scripts/eval_gate.py`, `.github/workflows/ci.yml` |
 
-Test suite: **151 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
+Test suite: **153 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
 **pre-existing** — confirmed by stashing the P0 edits and re-running the same tests on
 clean source. They are NOT P0 regressions:
 
@@ -147,6 +147,13 @@ report's Precision@20 / NDCG@20 and the "reranker top-20" lift need re-checking.
   script used to hardcode 5 types, so example / misconception / objective cards were
   generated in Phase 2 but **never indexed** into `derivative_artifacts`. Fixed;
   `tests/test_config_invariants.py` enforces it.
+- **The graph lane had no connection timeout.** `graph_builder._get_driver()` built
+  its own neo4j driver, ignoring `database.get_memgraph()`, which sets
+  `connection_timeout=3` for exactly this reason. On the cluster — where
+  `concept_embeddings` is populated, so `graph_search` actually reaches the Bolt
+  query — a down Memgraph would block every multihop query on the neo4j default
+  (~30s). It now delegates to `get_memgraph`; measured **3.00s** to fail against a
+  black-hole IP. Pinned by `tests/test_graph_lane.py`.
 
 ### Definition of done
 

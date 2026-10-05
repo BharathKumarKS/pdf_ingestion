@@ -157,13 +157,19 @@ class GraphBuilder:
         self._driver = None
 
     def _get_driver(self):
+        """Return the shared Memgraph driver.
+
+        Delegates to ``database.get_memgraph``, which sets ``connection_timeout=3``.
+        This module used to build its own driver with no timeout, so a down
+        Memgraph blocked every multihop query on the neo4j default and made a
+        whole eval run look like it had hung (123s stubbed vs >420s hung).
+        """
         if self._driver is None:
-            from neo4j import GraphDatabase
-            uri = f"bolt://{self._cfg.memgraph_host}:{self._cfg.memgraph_port}"
-            self._driver = GraphDatabase.driver(
-                uri,
-                auth=(self._cfg.memgraph_user, self._cfg.memgraph_password),
-            )
+            from src.core.database import get_memgraph
+            driver = get_memgraph(self._cfg)
+            if driver is None:
+                raise RuntimeError("Memgraph driver unavailable (see get_memgraph)")
+            self._driver = driver
         return self._driver
 
     def ensure_schema(self) -> None:
@@ -419,7 +425,10 @@ class GraphBuilder:
         try:
             driver = self._get_driver()
         except Exception as exc:
-            logger.warning("Memgraph graph_search failed to connect: {}", exc)
+            logger.error(
+                "GRAPH SEARCH UNAVAILABLE — Memgraph connect failed ({}); the "
+                "multihop lane returns no results", exc,
+            )
             return []
 
         if query_vector is not None:
@@ -460,7 +469,10 @@ class GraphBuilder:
                 for r in records
             ]
         except Exception as exc:
-            logger.warning("Memgraph query failed: {}", exc)
+            logger.error(
+                "GRAPH SEARCH FAILED — Memgraph query error ({}); the multihop "
+                "lane returns no results", exc,
+            )
             return []
 
     def _upsert_concepts_to_qdrant(
