@@ -173,13 +173,14 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
 ## Priority plan (agreed)
 
 **P0 — make the numbers trustworthy**
-1–6 ✅ **done 2026-10-05** — baseline committed (`6381f7b`); silent fallbacks killed;
-   sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed;
-   eval gate + CI.
-7. **Fix the retrieval metric set.** `Precision@top_k` divided by a fixed `top_k`, capping
-   it at `min(|relevant|, top_k)/top_k` — ~0.10 for a median 2-page gold set. It read as
-   failure while sitting at its own ceiling. Replaced by `Recall@top_k` + `Hit@top_k`;
-   `Recall@fetch_k − Recall@top_k` now quantifies what ranking discards.
+1–6 ✅ **done 2026-10-05** (`6381f7b`, `c3a8727`) — baseline committed; silent fallbacks
+   killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift
+   fixed; eval gate + CI.
+7. ✅ **done 2026-10-05** (`1dad73f`) — **metric set fixed.** `Precision@top_k` divided by a
+   fixed `top_k`, capping it at `min(|relevant|, top_k)/top_k` — ~0.10 for a median 2-page
+   gold set; it read as failure while sitting at its own ceiling. Now `Recall@top_k` +
+   `Hit@top_k`; summary columns are `Recall@100 | Recall@20 | Hit@20 | MRR | NDCG@20`, and
+   `Recall@fetch_k − Recall@top_k` quantifies what ranking discards.
 8. **Run the judge lane** — the first-ever measurement of answer quality. Faithfulness /
    Ans.Relevance / Citation are `—` in every artifact ever produced.
    ⚠️ **Judge choice is constrained — checked 2026-10-05, do not re-litigate.**
