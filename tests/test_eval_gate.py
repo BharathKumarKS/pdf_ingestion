@@ -20,10 +20,10 @@ ARTIFACT = """# run-name
 
 ## Summary
 
-| Scope | Recall@100 | MRR | Precision@20 | NDCG@20 |
-| --- | --- | --- | --- | --- |
-| Overall | 0.795 | 0.361 | 0.096 | 0.413 |
-|   factual | 0.900 | 0.504 | 0.080 | 0.559 |
+| Scope | Recall@100 | Recall@20 | Hit@20 | MRR | NDCG@20 |
+| --- | --- | --- | --- | --- | --- |
+| Overall | 0.795 | 0.690 | 1.000 | 0.361 | 0.413 |
+|   factual | 0.900 | 0.800 | 1.000 | 0.504 | 0.559 |
 
 ## Config
 
@@ -95,3 +95,20 @@ def test_gate_refuses_missing_metric(gate, tmp_path, monkeypatch):
     a = _write(tmp_path, "a.md", ARTIFACT)
     b = _write(tmp_path, "b.md", "# empty\n\n## Summary\n\n| Scope | MRR |\n| --- | --- |\n| Overall | 0.5 |\n")
     assert _run(gate, monkeypatch, a, b) == 2
+
+
+def test_gate_k_filter_disambiguates_two_recall_columns(gate, tmp_path, monkeypatch):
+    """The summary carries Recall@100 (pool) and Recall@20 (final). --k picks one."""
+    a = _write(tmp_path, "a.md", ARTIFACT)
+    # candidate: pool recall unchanged, final top-20 recall drops 0.690 -> 0.500
+    b = _write(tmp_path, "b.md",
+               ARTIFACT.replace("| Overall | 0.795 | 0.690 |", "| Overall | 0.795 | 0.500 |"))
+
+    # default = first matching recall column (@100) -> no regression
+    monkeypatch.setattr(sys, "argv", ["eval_gate", "--baseline", str(a), "--candidate", str(b)])
+    assert gate.main() == 0
+
+    # --k 20 -> the final-ranking recall regressed by 0.19
+    monkeypatch.setattr(sys, "argv",
+                        ["eval_gate", "--baseline", str(a), "--candidate", str(b), "--k", "20"])
+    assert gate.main() == 1

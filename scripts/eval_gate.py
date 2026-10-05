@@ -63,14 +63,22 @@ def _summary_rows(text: str) -> tuple[list[str], dict[str, list[str]]]:
     return header, body
 
 
-def _metric(header: list[str], row: list[str], metric: str) -> tuple[float | None, int | None]:
-    """Return (value, k) for the metric in a header/row pair, or (None, k)."""
+def _metric(header: list[str], row: list[str], metric: str,
+            k_filter: int | None = None) -> tuple[float | None, int | None]:
+    """Return (value, k) for the metric in a header/row pair, or (None, k).
+
+    ``k_filter`` disambiguates a metric that appears at several k — the summary
+    now carries both Recall@<fetch_k> (candidate pool) and Recall@<top_k> (final
+    ranking), so ``--metric recall --k 20`` selects the latter.
+    """
     pat = _METRIC_PATTERNS[metric]
     for i, cell in enumerate(header):
         m = re.match(pat + r"$", cell.strip(), re.I)
         if not m:
             continue
         k = int(m.group(1)) if m.groups() else None
+        if k_filter is not None and k != k_filter:
+            continue
         raw = row[i] if i < len(row) else "—"
         if raw in ("—", "-", ""):
             return None, k
@@ -83,6 +91,10 @@ def main() -> int:
     p.add_argument("--baseline", required=True, help="reference artifact (.md)")
     p.add_argument("--candidate", required=True, help="artifact under test (.md)")
     p.add_argument("--metric", default="recall", choices=sorted(_METRIC_PATTERNS))
+    p.add_argument("--k", type=int, default=None,
+                   help="Disambiguate a metric that appears at several k "
+                        "(e.g. --metric recall --k 20 for the final top-k); "
+                        "default is the first matching column")
     p.add_argument("--scope", default="Overall", help="summary row to compare (default Overall)")
     p.add_argument("--tolerance", type=float, default=0.02,
                    help="allowed absolute drop before failing (default 0.02)")
@@ -100,8 +112,8 @@ def main() -> int:
               f"{'baseline' if args.scope not in b_body else 'candidate'}")
         return 2
 
-    b_val, b_k = _metric(b_head, b_body[args.scope], args.metric)
-    c_val, c_k = _metric(c_head, c_body[args.scope], args.metric)
+    b_val, b_k = _metric(b_head, b_body[args.scope], args.metric, args.k)
+    c_val, c_k = _metric(c_head, c_body[args.scope], args.metric, args.k)
 
     if b_val is None or c_val is None:
         print(f"CANNOT COMPARE: metric '{args.metric}' is absent/empty for scope "

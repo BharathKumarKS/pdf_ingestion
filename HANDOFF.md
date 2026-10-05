@@ -24,8 +24,8 @@ Do not add new `tenant_id` defaults either — see the trap list.
 
 ## Current focus
 
-**P0 items 1–6 are DONE and validated (2026-10-05).** Next is **P1 item 7** —
-calibrate the 7 `visual` queries.
+**P0 items 1–6 are DONE and validated (2026-10-05).** Next is **P0 item 7** — fix the
+retrieval metric set. See the priority plan below for the reordered P0/P1.
 
 | # | Item | Evidence |
 |---|---|---|
@@ -173,20 +173,31 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
 ## Priority plan (agreed)
 
 **P0 — make the numbers trustworthy**
-1. ~~Reproducible baseline + committed artifact~~ ✅ **done 2026-10-05** (`6381f7b`)
-2. ~~Kill silent fallbacks~~ ✅ **done** — each logs loudly and surfaces in "Run integrity"
-3. ~~Pin `scikit-learn~=1.9`; classifier schema check~~ ✅ **done**
-4. ~~Config-invariant tests~~ ✅ **done** (`tests/test_config_invariants.py`)
-5. ~~Fix doc drift~~ ✅ **done**
-6. ~~CI eval gate on `evaluate_rag.py`~~ ✅ **done** (`scripts/eval_gate.py` + CI workflow)
+1–6 ✅ **done 2026-10-05** — baseline committed (`6381f7b`); silent fallbacks killed;
+   sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed;
+   eval gate + CI.
+7. **Fix the retrieval metric set.** `Precision@top_k` divided by a fixed `top_k`, capping
+   it at `min(|relevant|, top_k)/top_k` — ~0.10 for a median 2-page gold set. It read as
+   failure while sitting at its own ceiling. Replaced by `Recall@top_k` + `Hit@top_k`;
+   `Recall@fetch_k − Recall@top_k` now quantifies what ranking discards.
+8. **Run the judge lane** — the first-ever measurement of answer quality. Faithfulness /
+   Ans.Relevance / Citation are `—` in every artifact ever produced. Generate with
+   `gpt-oss-20b`, judge with `DeepSeek-R1-Distill-Qwen-7B` (cross-family — **not**
+   Qwen3-VL, which produced the labels). Hand-score ~10 answers first to check the
+   judge's agreement before trusting the number.
+9. **Rebuild the gold set** — the big one, and it gates all of P1. Target **~120–150
+   queries** (23 can only detect ≥0.15 effects at 80% power; 0.05 needs ~200). Per-type
+   generation: factual from a known page; overview from a topic + book-wide scan;
+   multihop from the Memgraph concept graph. Graded relevance; human-verify a 20–30% sample.
 
-
-**P1 — then improve metrics**
-7. Calibrate the 7 `visual` queries (all currently `calibrated: false`, `relevant_pages: null`)
-8. NDCG@20 = 0.382 is the precision ceiling — hard-negative mining / reranker work
-9. Per-lane attribution in the eval report so we can see which lane moves which query type
-10. Test the fallback chains (stub tests structurally cannot reach them)
-11. `render_math()` golden-file test — ends the six-commit LaTeX patch cycle
+**P1 — then improve metrics** (all of it gated on P0-9)
+10. Ranking — overview MRR 0.191 is the one genuinely bad number. Cheapest first: config
+    (MMR λ / RRF), then the cross-encoder (zero-shot `bge-reranker-v2-m3` today), then
+    hard-negative fine-tuning (stage 3 of the retriever→reranker recipe).
+11. Calibrate the 7 `visual` queries — folds into P0-9 (they are 23% of the eval)
+12. Per-lane attribution in the eval report so we can see which lane moves which query type
+13. Test the fallback chains (stub tests structurally cannot reach them)
+14. `render_math()` golden-file test — ends the six-commit LaTeX patch cycle
 
 **P2** abstention · guardrails · PPR · semantic caching · OKF cards
 **P6 — kept, deferred to the very end** NiceGUI migration (`event-driven Vue.js` frontend,

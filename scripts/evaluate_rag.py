@@ -234,7 +234,7 @@ def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -
             mrr = 1.0 / rank
             break
 
-    # Precision@top_k and NDCG@top_k (reranked, binary relevance)
+    # Recall@top_k, Hit@top_k and NDCG@top_k (reranked, binary relevance)
     # Deduplicate by page: a relevant page counts only on its first occurrence.
     # Without this, multiple chunks from the same page inflate DCG above IDCG.
     seen_pages: set[int] = set()
@@ -248,7 +248,15 @@ def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -
             gains.append(0)
 
     n_relevant_hits = sum(gains)
-    precision = n_relevant_hits / cfg.reranker_top_k if cfg.reranker_top_k else None
+
+    # Recall@top_k — denominator is the GROUND-TRUTH size, not the slot count.
+    # This replaces Precision@top_k, which divided by a fixed top_k and was
+    # therefore capped at min(|relevant|, top_k)/top_k — about 0.10 for a gold set
+    # with a median of 2 labelled pages. It read as failure while sitting at its
+    # own ceiling. Recall@top_k is well-conditioned at any ground-truth size, and
+    # (Recall@fetch_k - Recall@top_k) directly quantifies what ranking discards.
+    recall_top = (n_relevant_hits / len(relevant)) if relevant else None
+    hit_top    = 1.0 if n_relevant_hits > 0 else 0.0
 
     dcg  = sum(g / np.log2(i + 2) for i, g in enumerate(gains))
     ideal_hits = min(len(relevant), cfg.reranker_top_k)
@@ -257,8 +265,9 @@ def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -
 
     return {
         f"recall_at_{cfg.reranker_fetch_k}": round(recall, 4) if recall is not None else None,
+        f"recall_at_{cfg.reranker_top_k}":   round(recall_top, 4) if recall_top is not None else None,
+        f"hit_at_{cfg.reranker_top_k}":      round(hit_top, 4),
         "mrr":                               round(mrr, 4),
-        f"precision_at_{cfg.reranker_top_k}": round(precision, 4) if precision is not None else None,
         f"ndcg_at_{cfg.reranker_top_k}":      round(ndcg, 4),
     }
 
@@ -568,9 +577,10 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
 
 def aggregate_metrics(results: list[dict], cfg) -> dict:
     """Average per-query metrics, broken down by query type."""
-    recall_k  = f"recall_at_{cfg.reranker_fetch_k}"
-    prec_k    = f"precision_at_{cfg.reranker_top_k}"
-    ndcg_k    = f"ndcg_at_{cfg.reranker_top_k}"
+    recall_k   = f"recall_at_{cfg.reranker_fetch_k}"
+    recall_top = f"recall_at_{cfg.reranker_top_k}"
+    hit_k      = f"hit_at_{cfg.reranker_top_k}"
+    ndcg_k     = f"ndcg_at_{cfg.reranker_top_k}"
 
     def _avg(vals):
         clean = [v for v in vals if v is not None]
@@ -587,10 +597,11 @@ def aggregate_metrics(results: list[dict], cfg) -> dict:
 
     def _type_agg(items):
         return {
-            recall_k:  _avg([i["metrics"].get(recall_k)  for i in items]),
-            "mrr":     _avg([i["metrics"].get("mrr")      for i in items]),
-            prec_k:    _avg([i["metrics"].get(prec_k)     for i in items]),
-            ndcg_k:    _avg([i["metrics"].get(ndcg_k)     for i in items]),
+            recall_k:   _avg([i["metrics"].get(recall_k)   for i in items]),
+            recall_top: _avg([i["metrics"].get(recall_top) for i in items]),
+            hit_k:      _avg([i["metrics"].get(hit_k)      for i in items]),
+            "mrr":      _avg([i["metrics"].get("mrr")      for i in items]),
+            ndcg_k:     _avg([i["metrics"].get(ndcg_k)     for i in items]),
             "faithfulness":      _avg([i["generation"].get("faithfulness")      for i in items]),
             "answer_relevance":  _avg([i["generation"].get("answer_relevance")  for i in items]),
             "citation_accuracy": _avg([i["generation"].get("citation_accuracy") for i in items]),
@@ -616,17 +627,18 @@ def _md_table(headers: list[str], rows: list[list[str]]) -> str:
 
 
 def build_summary_table(aggregated: dict, cfg) -> str:
-    recall_k = f"recall_at_{cfg.reranker_fetch_k}"
-    prec_k   = f"precision_at_{cfg.reranker_top_k}"
-    ndcg_k   = f"ndcg_at_{cfg.reranker_top_k}"
+    recall_k   = f"recall_at_{cfg.reranker_fetch_k}"
+    recall_top = f"recall_at_{cfg.reranker_top_k}"
+    hit_k      = f"hit_at_{cfg.reranker_top_k}"
+    ndcg_k     = f"ndcg_at_{cfg.reranker_top_k}"
 
     def _fmt(v):
         return f"{v:.3f}" if v is not None else "—"
 
     headers = [
         "Scope",
-        f"Recall@{cfg.reranker_fetch_k}", "MRR",
-        f"Precision@{cfg.reranker_top_k}", f"NDCG@{cfg.reranker_top_k}",
+        f"Recall@{cfg.reranker_fetch_k}", f"Recall@{cfg.reranker_top_k}",
+        f"Hit@{cfg.reranker_top_k}", "MRR", f"NDCG@{cfg.reranker_top_k}",
         "Faithfulness", "Ans.Relevance", "Citation Acc.", "n / cal",
     ]
 
@@ -635,8 +647,8 @@ def build_summary_table(aggregated: dict, cfg) -> str:
         nc = m.get("n_calibrated", 0)
         return [
             label,
-            _fmt(m.get(recall_k)), _fmt(m.get("mrr")),
-            _fmt(m.get(prec_k)), _fmt(m.get(ndcg_k)),
+            _fmt(m.get(recall_k)), _fmt(m.get(recall_top)), _fmt(m.get(hit_k)),
+            _fmt(m.get("mrr")), _fmt(m.get(ndcg_k)),
             _fmt(m.get("faithfulness")), _fmt(m.get("answer_relevance")),
             _fmt(m.get("citation_accuracy")), f"{n}/{nc}",
         ]
@@ -649,17 +661,18 @@ def build_summary_table(aggregated: dict, cfg) -> str:
 
 
 def build_per_query_table(results: list[dict], cfg) -> str:
-    recall_k = f"recall_at_{cfg.reranker_fetch_k}"
-    prec_k   = f"precision_at_{cfg.reranker_top_k}"
-    ndcg_k   = f"ndcg_at_{cfg.reranker_top_k}"
+    recall_k   = f"recall_at_{cfg.reranker_fetch_k}"
+    recall_top = f"recall_at_{cfg.reranker_top_k}"
+    hit_k      = f"hit_at_{cfg.reranker_top_k}"
+    ndcg_k     = f"ndcg_at_{cfg.reranker_top_k}"
 
     def _fmt(v):
         return f"{v:.3f}" if v is not None else "—"
 
     headers = [
         "ID", "Query", "Type",
-        f"Recall@{cfg.reranker_fetch_k}", "MRR",
-        f"P@{cfg.reranker_top_k}", f"NDCG@{cfg.reranker_top_k}",
+        f"Recall@{cfg.reranker_fetch_k}", f"Recall@{cfg.reranker_top_k}",
+        f"Hit@{cfg.reranker_top_k}", "MRR", f"NDCG@{cfg.reranker_top_k}",
         "Retrieved pages", "Labeled pages",
     ]
 
@@ -679,8 +692,8 @@ def build_per_query_table(results: list[dict], cfg) -> str:
             r["id"],
             r["query"][:55] + ("…" if len(r["query"]) > 55 else ""),
             r.get("query_type", ""),
-            _fmt(m.get(recall_k)), _fmt(m.get("mrr")),
-            _fmt(m.get(prec_k)), _fmt(m.get(ndcg_k)),
+            _fmt(m.get(recall_k)), _fmt(m.get(recall_top)), _fmt(m.get(hit_k)),
+            _fmt(m.get("mrr")), _fmt(m.get(ndcg_k)),
             top_pages or "—",
             labeled or "—",
         ])
@@ -689,9 +702,10 @@ def build_per_query_table(results: list[dict], cfg) -> str:
 
 
 def print_report(aggregated: dict, cfg):
-    recall_k = f"recall_at_{cfg.reranker_fetch_k}"
-    prec_k   = f"precision_at_{cfg.reranker_top_k}"
-    ndcg_k   = f"ndcg_at_{cfg.reranker_top_k}"
+    recall_k   = f"recall_at_{cfg.reranker_fetch_k}"
+    recall_top = f"recall_at_{cfg.reranker_top_k}"
+    hit_k      = f"hit_at_{cfg.reranker_top_k}"
+    ndcg_k     = f"ndcg_at_{cfg.reranker_top_k}"
 
     def _fmt(v):
         return f"{v:.3f}" if v is not None else "  —  "
@@ -699,8 +713,9 @@ def print_report(aggregated: dict, cfg):
     table = Table(title="RAG Evaluation Results", show_header=True, header_style="bold cyan")
     table.add_column("Scope",        style="bold")
     table.add_column(f"Recall@{cfg.reranker_fetch_k}", justify="right")
+    table.add_column(f"Recall@{cfg.reranker_top_k}", justify="right")
+    table.add_column(f"Hit@{cfg.reranker_top_k}", justify="right")
     table.add_column("MRR",          justify="right")
-    table.add_column(f"Precision@{cfg.reranker_top_k}", justify="right")
     table.add_column(f"NDCG@{cfg.reranker_top_k}", justify="right")
     table.add_column("Faithfulness",     justify="right")
     table.add_column("Ans.Relevance",    justify="right")
@@ -713,8 +728,9 @@ def print_report(aggregated: dict, cfg):
         table.add_row(
             label,
             _fmt(m.get(recall_k)),
+            _fmt(m.get(recall_top)),
+            _fmt(m.get(hit_k)),
             _fmt(m.get("mrr")),
-            _fmt(m.get(prec_k)),
             _fmt(m.get(ndcg_k)),
             _fmt(m.get("faithfulness")),
             _fmt(m.get("answer_relevance")),
@@ -841,8 +857,9 @@ def main():
                 color = "green" if m[recall_k] >= 0.6 else "red"
                 console.print(
                     f"        recall@{cfg.reranker_fetch_k}=[{color}]{m[recall_k]:.3f}[/] "
+                    f"recall@{cfg.reranker_top_k}={m.get(f'recall_at_{cfg.reranker_top_k}', 0):.3f} "
+                    f"hit@{cfg.reranker_top_k}={m.get(f'hit_at_{cfg.reranker_top_k}', 0):.3f} "
                     f"mrr={m.get('mrr', 0):.3f} "
-                    f"precision@{cfg.reranker_top_k}={m.get(f'precision_at_{cfg.reranker_top_k}', 0):.3f} "
                     f"ndcg@{cfg.reranker_top_k}={m.get(f'ndcg_at_{cfg.reranker_top_k}', 0):.3f}"
                 )
 
