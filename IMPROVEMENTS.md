@@ -97,6 +97,36 @@ Last updated: 2026-10-06
 - **Keep ColPali for its real strength:** "find the diagram that looks like this"
   (a student photographs a lecture-slide figure and wants the book's version).
 
+### F4. ColBERT: replace-with-RRF is the wrong comparison — **fuse** them instead
+- **Measured** (`scripts/why_colbert.py`, 23 queries, same 100-candidate union pool):
+
+  | ordering of the pool | recall@20 |
+  |---|---|
+  | RRF | **0.588** |
+  | dense_768 alone | 0.576 |
+  | ColBERT MaxSim | 0.551 |
+  | **RANDOM (the floor)** | **0.351** |
+
+- **"Is the pool uniform, so no reordering can help?"** — **No.** Random scores 0.351
+  against 0.588 for RRF, so ordering carries a lot of signal. The pool is not the
+  constraint.
+- **"Is 128-d too coarse?"** — **Partly.** ColBERT *does* separate candidates on a
+  labelled page from the rest (mean score gap **+0.40**), so it is not blind. But the gap
+  is only ~17% of the score spread (2.31), it is **negative for 2 of 23 queries**, and it
+  is fragile: the deficit is dominated by **raptor-002**, where ColBERT loses all 9
+  relevant pages. Excluding that one query the gap narrows from 0.037 to 0.018.
+- **The real explanation is structural.** RRF *fuses two rankers* (dense + sparse).
+  ColBERT *replaces* them with a single MaxSim score. So the comparison was never
+  "reranker vs reranker" — it was **fusion of two signals vs one signal**, and one signal
+  loses. ColBERT's own separation is too weak to make up for the fusion it discards.
+- **Actionable fix: don't replace RRF with ColBERT — add it as a third contributor.**
+  Qdrant's nested prefetch accepts a ColBERT prefetch alongside the dense and sparse ones,
+  so the outer `FusionQuery(RRF)` can fuse **three** rankings. ColBERT then contributes its
+  signal instead of overwriting the other two. This is testable with the existing harness
+  (one more `Prefetch` in `store._qdrant_search`).
+- **Also worth noting:** dense alone (0.576) is close to RRF (0.588), so the SPLADE branch
+  is adding little on top of dense here — consistent with B3's 0.885 vs B1's 0.895.
+
 ---
 
 ## C. Product — deferred by decision, not forgotten
