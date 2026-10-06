@@ -152,3 +152,170 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
 - **Within stage 3** there is still optional curriculum (easy/random negatives first, then
   hard) and optional **iterative re-mining** (train → re-mine with the improved reranker →
   retrain). That is iteration, not the bi-encoder's 1-2-3 phasing.
+
+---
+
+## E. Ingestion & chunking — closing the gap to the course pipeline
+
+The course's ingestion pipeline is: **Docling → parent chunks (markup/heading boundaries)
+→ a semantic chunker → semantic child chunks → then either contextual or late chunking.**
+This project does: **Docling → markdown → size-based sentence chunking → independent
+embedding.** The middle and back of that pipeline are missing.
+
+### E1. Semantic chunking instead of size-based sentence chunking ⚠️ requires re-ingest
+- **What:** swap `chonkie.SentenceChunker` (chunk_size 512 / overlap 64) for
+  `chonkie.SemanticChunker`, which cuts where consecutive-sentence similarity drops.
+- **Measured on the same text** (4,977 chars of Docling markdown):
+
+  | Chunker | chunks | avg chars |
+  |---|---|---|
+  | TokenChunker | 3 | 1,659 |
+  | **SentenceChunker (current)** | **12** | **436** |
+  | RecursiveChunker | 15 | 331 |
+  | **SemanticChunker** | **19** | **261** |
+
+  A sentence chunk ended mid-thought (*"…Now we would like to sho"*); the semantic chunk
+  was a complete, self-contained claim. Semantic chunks are smaller and topic-coherent —
+  which should raise **base retrieval recall** (the thing you asked about), because a
+  chunk that covers one idea matches a query about that idea more sharply.
+- **Does it require re-ingest?** **Yes.** Chunk boundaries change ⇒ new chunk ids, new
+  embeddings, new Qdrant points, new cards. Everything downstream is rebuilt.
+- **Caveat:** semantic chunking costs an embedding pass at ingest and its `threshold` is
+  a tuning knob. Smaller chunks also mean more of them (19 vs 12 here) — re-check the
+  funnel's candidate counts after switching.
+
+### E2. Parent/child hierarchy (hierarchical markdown → parent chunks) ⚠️ requires re-ingest
+- **What:** use Docling's markdown heading structure to define **parent** chunks
+  (section-level), with semantic chunks as **children** inside them.
+- **Why:** the hierarchy is what makes contextual/late chunking possible at all — both
+  need a parent to draw context from. Today the heading structure is parsed and then
+  discarded (only leaf chunks survive).
+- **Evidence:** Docling's output *is* hierarchical — on 3 pages of the Feynman PDF it
+  emitted `## Work and Potential Energy (A)` / `## 13-1 Energy of a falling body`, and
+  per-element provenance gives the page for each. The structure exists; nothing stores it.
+
+### E3. Late chunking or contextual chunking ⚠️ requires re-ingest
+- **What:** one of the two context-preserving methods, on top of E2's parents:
+  - **Late chunking** — embed the parent once, then mean-pool the token embeddings inside
+    each child's character span. No LLM calls at ingest; needs a long-context embedder
+    and per-token offsets. **`chonkie` 1.7 ships a `LateChunker`**, so this may not need
+    hand-rolling.
+  - **Contextual chunking** — an LLM rewrites each child to be self-standing.
+- **Demonstrated difference** on a chunk containing a dangling *"This"*:
+  - *before:* "The learning process … adjusting **these** weights … **This** is typically
+    done through backpropagation…"
+  - *after contextual chunking:* "…consisting of interconnected nodes called neurons that
+    process information through weighted connections. The learning process in **these
+    neural networks** involves adjusting the weights based on training data. …"
+  The pronoun was resolved and the chunk became self-standing — that is the context the
+  current pipeline loses.
+- **Boundary clarification (the mechanism, verified):** the boundaries are **not** chosen
+  in embedding space. The **chunker** chooses them as character spans; late chunking only
+  changes how each chunk's *vector* is computed. On a 104-token parent with a chunk span
+  of `[263, 610]`, 60 tokens overlapped the span; those 60 token embeddings (each already
+  carrying whole-parent context, because the parent was embedded once with
+  `truncation=False`) are mean-pooled into the chunk vector.
+- **Also a slip worth correcting in the course note:** the whole document goes to a
+  long-context *embedding* model, not an LLM.
+
+### E4. Stale docstrings describing a pipeline that was never built ✅ fixed
+- `chunker.py` claimed *"Chonkie-based semantic chunker"*, *"Two-pass chunking … Semantic
+  grouping via chonkie SemanticChunker"*, and *"span tracking for Jina late chunking"*.
+  None of it is true: the chunker is `SentenceChunker`, `SemanticChunker` is never
+  imported, and the embedder is Nomic and encodes chunks independently. Corrected.
+- **Why this matters beyond tidiness:** a docstring describing intent gets read as a
+  description of reality — exactly the failure mode `silent-failure-audit` warns about.
+  This is how the "semantic chunking" claim would have survived into the report.
+
+---
+
+## F. Card & graph lanes
+
+### F1. Embed the question only, not question+answer ✅ code changed ⚠️ requires re-ingest
+- **Was:** question cards embedded `content + "\n" + answer`.
+- **Now:** question only. The answer rides in the Qdrant payload as a new `answer` field —
+  it was **not** there before (only concatenated into `text`), so without this change
+  dropping it from the vector would have lost it from the lane entirely.
+- **Why:** a student's query resembles a *question*, not an answer. Mixing the answer into
+  the vector dilutes the question's signal and lets a query match text the student never
+  wrote. The course embeds queries (query–paraphrase pairs), never answers.
+- **Takes effect only after the DA collection is re-indexed.**
+
+### F2. Bring RAPTOR into the hybrid lane ⚠️ requires re-ingest
+- **What:** RAPTOR writes only `dense_64` + `dense_768` and queries only `dense_768` via a
+  plain `query_points` — no sparse lane, no ColBERT rescoring, no prefetch funnel.
+- **Why:** it is the **only** lane without hybrid retrieval, and it serves the *overview*
+  questions — the ones with the worst ranking (MRR 0.191). It is also a direct deviation
+  from the course's "hybrid is the default".
+- **Note:** no rationale exists in the code; this reads as an omission, not a decision.
+
+### F3. Graph lane contributes a 100-character preview
+- `graph_search` returns `text_preview = info["text"][:100]`, and the app appends
+  `f"[Concept-linked] {text_preview}"` **directly** to the LLM passages — no per-lane
+  summarization.
+- **Consequence:** the graph lane hands the model ~100 chars per hit while the chunk lane
+  supplies everything else. This is a plausible cause of the earlier observation that
+  graph answers "look like the retrieved chunks": the lane is barely contributing.
+- **Fix:** hydrate the full chunk text for graph hits, or summarize the subgraph properly.
+
+---
+
+## G. Graph — adopt the course's Memgraph analytics layer
+
+The course teaches a Memgraph concept-graph branch (three-layer memory, adjacency matrix,
+PPR, memory-guided QA) and a GraphRAG branch (entity-relationship extraction, community
+detection, global/local/drift query modes). This project has the *storage* model right
+(`Document/Page/Chunk/Concept` + `PART_OF/ON_PAGE/MENTIONS/RELATES_TO/PREREQUISITE_OF`)
+but none of the analytics built on top of it.
+
+| # | Item | Why it matters here |
+|---|---|---|
+| G1 | **PPR (personalized PageRank)** over the concept adjacency matrix | The course's answer to "which concepts actually matter for this query". Replaces the current fixed-hop walk. Already on the P2 list |
+| G2 | **Community detection + community summaries** | Gives *overview* questions graph support, which they currently have none of (they fall back to RAPTOR, the weakest lane) |
+| G3 | **Entity resolution** (merge duplicate concept nodes) | **This is the known bug**: `'orbit'` / `'Orbit'` / `'planetary orbit'` / `'Planetary Orbit'` are separate nodes, so most chunks tie at 1 matched concept. The course has a dedicated lab for exactly this step |
+| G4 | **global / local / drift query modes** | To brainstorm — the project has one traversal mode. Drift is the interesting one for multihop |
+| G5 | **Genuine multi-hop traversal** | `hop_distance` is currently a constant 0, so "multihop" is nominal |
+
+---
+
+## H. Course standards — compliance check (de-identified)
+
+Standards the course states explicitly for retrieval, and where this project stands.
+Architecturally the project is **at or beyond** the standard; the gaps are concentrated in
+the final precision stage and in measurement.
+
+| Standard | Status |
+|---|---|
+| Funnel: per-doc cost rises only as volume falls | ✅ (wider pools than the course's reference: 1000→500→250→100→20) |
+| One collection, named vectors, nested prefetch in a single round trip | ✅ |
+| Hybrid dense + sparse candidate generation in parallel | ✅ |
+| Late-interaction model as a common judge across branches | ✅ (inactive only on file-backed Qdrant, and it logs that) |
+| Cross-encoder last, and only ever sees a shortlist | ✅ |
+| Batch the reranker's scoring call | ✅ |
+| Cross-encoder trained on (query, passage) pairs with mined hard negatives | ❌ **zero-shot, never trained** — the one standard not met |
+| Measure recall@N at **each** funnel boundary | ⚠️ measures @100 and @20 only — cannot see which stage leaks |
+| Chunk sizes sane vs the reranker's 512-token window | ⚠️ 57 of 5,048 chunks exceed it (max 1,701) and are silently truncated |
+| Use a modern cross-encoder | ✅ already on the recommended upgrade (`bge-reranker-v2-m3`) |
+
+---
+
+## Re-ingest ordering — what must happen before what
+
+The question "do we re-ingest before fine-tuning?" — **yes, and the order is forced:**
+
+1. **Re-ingest first** (E1/E2/E3 + F1/F2). Every ingestion change alters chunk ids,
+   boundaries, embeddings and cards. Fine-tuning trains on *retrieved* passages, so
+   training on the current chunks means training against a corpus that is about to change
+   underneath it — the mined hard negatives would be mined from a retired index.
+2. **Then the training-set build** (D1) over the new corpus, with a held-out split.
+3. **Then the reranker fine-tune** (A1/D1).
+
+**What does NOT need re-ingest:** the docstring fixes (E4), the card-embed-text code change
+(F1 — code is done, it takes effect on the next index run), the metric/boundary work,
+the gold-set rebuild (P0-9), and the graph analytics (G — Memgraph is built from existing
+chunks; only entity resolution changes what is written).
+
+**One dependency to watch:** the gold set's `relevant_pages` are page-level, so a
+re-chunk does not invalidate them. But any query whose answer was only findable *because*
+of the old boundaries may change behaviour — re-run the baseline after re-ingest and
+re-record it, rather than comparing across the two.

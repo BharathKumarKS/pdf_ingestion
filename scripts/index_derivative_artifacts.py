@@ -68,10 +68,17 @@ def _is_chapter_chunk(text: str) -> bool:
 
 
 def _card_embed_text(card_type: str, title: str, content: str, answer: str | None) -> str:
-    """Build the text to embed for each card type."""
+    """Build the text to embed for each card type.
+
+    Question cards embed the QUESTION ONLY. The answer is kept in the payload instead
+    (see ``answer`` below) and is still shown to the student — it is simply not part of
+    the vector. Embedding it dilutes the signal: a student's query resembles a question,
+    not an answer, so mixing the answer in makes the card a weaker match for the very
+    query it exists to answer. The course embeds queries (query-paraphrase pairs), never
+    answers.
+    """
     if card_type == "question":
-        base = f"{content}"
-        return f"{base}\n{answer}" if answer else base
+        return f"{content}"
     return f"{title}: {content}"
 
 
@@ -175,6 +182,10 @@ def main() -> None:
                         "card_type":          card.card_type,
                         "title":              card.title,
                         "text":               embed_text,
+                        # The answer is NOT embedded for question cards (see
+                        # _card_embed_text), so it must ride in the payload or the
+                        # retrieval lane loses it entirely.
+                        "answer":             card.answer,
                         "source_page_numbers": page_numbers,
                         "source_type":        "derivative_artifact",
                     },

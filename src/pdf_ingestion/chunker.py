@@ -1,4 +1,14 @@
-"""Chonkie-based semantic chunker with span tracking for Jina late chunking."""
+"""Size-based sentence chunker (Chonkie ``SentenceChunker``) with char-span tracking.
+
+This is **not** semantic chunking. It splits on sentence boundaries to a token budget
+(``chunk_size`` / ``chunk_overlap``). Topic-aware splitting would be
+``chonkie.SemanticChunker`` — which this project does not use.
+
+Char spans are preserved on every chunk, but nothing currently consumes them for late
+chunking: the embedder encodes each chunk in isolation (see ``embedder.py``, "no
+late-chunking"). They are kept for page attribution, and as the hook a late-chunking
+implementation would need.
+"""
 from __future__ import annotations
 
 import uuid
@@ -29,12 +39,15 @@ class TextChunk:
 
 class SemanticChunker:
     """
-    Two-pass chunking:
-      1. SentenceChunker  — fast, sentence-boundary-aware splits
-      2. (Optional) Semantic grouping via chonkie SemanticChunker
+    Sentence-boundary chunking to a token budget.
 
-    Preserves char_start / char_end so the Jina embedder can reconstruct
-    late-chunking windows from the original document context.
+    Splits with ``chonkie.SentenceChunker`` (chunk_size / chunk_overlap), then merges
+    micro-chunks into the preceding chunk rather than dropping them. There is no second
+    semantic pass: an earlier design called for one, but only pass 1 was ever built.
+
+    Preserves char_start / char_end on every chunk. A previous docstring claimed these
+    feed "late-chunking windows" through a Jina embedder; that pipeline does not exist
+    (the embedder is Nomic and encodes each chunk independently).
     """
 
     def __init__(self, settings: Settings | None = None) -> None:
