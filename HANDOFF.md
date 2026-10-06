@@ -187,6 +187,37 @@ Verified after the fix, through `store.visual_search` with the configured thresh
 in-domain page → matches its own page (1031) and neighbours; noise / blank / gradient →
 **0 results**. Re-run `clean_stale_visual.py` after every Phase 3 re-ingest.
 
+### Phoenix observability enabled (2026-10-05)
+
+Tracing is now live and **verified persisting** (not just "endpoint answers"). Start the
+server — it must NOT use the default ports on this machine:
+
+```bash
+PHOENIX_PORT=6007 PHOENIX_GRPC_PORT=4319 phoenix serve     # UI at http://localhost:6007
+```
+
+Two port collisions to know: **6006 is busy** (which is why `.env` uses 6007) and
+**4317 is held by Docker Desktop**, so Phoenix's default gRPC port fails to bind and the
+whole server exits with `Failed to bind to address [::]:4317`.
+
+**The blocker was a corrupted database, not config.** `~/.phoenix/phoenix.db` had grown to
+2.7 GB and was malformed (`Tree 10 page 505326 cell 0: invalid page number 670390`). Phoenix
+accepted `POST /v1/traces` with **HTTP 200** and then failed to insert — so the app showed
+no error, the sidebar said nothing useful, and only Aug-22/24 spans were ever visible. Moved
+aside to `~/.phoenix/phoenix.db.corrupt-20261005`; a fresh DB fixed it.
+
+Verified end-to-end: a UI query produced the full retrieval trace — `query`,
+`retrieval.embed`, `intent_route`, `retrieval.vector_search`, `retrieval.rerank`,
+`retrieval.mmr`, `retrieval.da_lane` — with 0 insert errors. The sidebar now reads
+"🔭 Phoenix traces — active".
+
+⚠️ **Gap: LLM calls are NOT traced.** `telemetry.py` claims "Auto-instrumentation covers all
+OpenAI-compatible LLM calls", but `src/core/llm.py` posts with raw `httpx` and the `openai`
+SDK is imported **nowhere** in `src/` — so `OpenAIInstrumentor()` patches a library that is
+never used. Retrieval stages are traced; synthesis, card generation and RAPTOR are invisible,
+including their latency and token counts. Fix = either call through the `openai` SDK or emit
+manual spans around `call_llm`.
+
 ### Prerequisite status (re-checked 2026-10-04 — `scripts/preflight.py`, 24/24 pass)
 
 Point the eval at the **cluster** index: `QDRANT_HOST=10.0.10.65`. No `.env` edit is
@@ -319,6 +350,21 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
 12. Per-lane attribution in the eval report so we can see which lane moves which query type
 13. Test the fallback chains (stub tests structurally cannot reach them)
 14. `render_math()` golden-file test — ends the six-commit LaTeX patch cycle
+    (partly done: `tests/test_frontend_math.py` pins both converter bugs)
+15. **Graph lane is not multi-hop and is unranked** — `graph_search` hardcodes
+    `hop_distance = 0` (no traversal) and the Cypher has `LIMIT` with **no `ORDER BY`**,
+    so it returns arbitrary chunks that merely *mention* a matched concept (that is why
+    "satellite orbit" returns aberration/telescope-tilt chunks). Rank first (cheap), then
+    implement real 1-2 hop `RELATES_TO` traversal, then fix the caption that claims
+    multi-hop. Optionally synthesize in-tab.
+16. **Admin Status should report the STORES, not SQLite.** Three separate bugs today came
+    from local SQLite describing a different ingest than the index (visual readiness, the
+    sidebar badge, and the graph). A status panel driven by store counts would have caught
+    all three.
+17. **Phoenix does not trace LLM calls** — `llm.py` uses httpx, so `OpenAIInstrumentor()`
+    never fires. Synthesis/card-gen/RAPTOR latency and tokens are invisible.
+18. **Upload tab's "Topic" and "Difficulty" are inert** — persisted to the Document row and
+    chunk payload, but nothing filters or steers on them. Wire or remove.
 
 **P2** abstention · guardrails · PPR · semantic caching · OKF cards
 **P6 — kept, deferred to the very end** NiceGUI migration (`event-driven Vue.js` frontend,
@@ -449,6 +495,12 @@ contaminated live traversal too. It hit the `multihop` lane (7 of 30 eval querie
   store is populated — the two can describe different ingests. Ask the store.
 - **Re-run `scripts/clean_stale_visual.py` after every Phase 3 re-ingest**, or every page
   returns twice (same class as `clean_stale_graph.py`).
+- **Phoenix needs `PHOENIX_GRPC_PORT`** — Docker holds 4317, and the server exits entirely
+  if gRPC can't bind. 6006 is also taken; `.env` uses 6007.
+- **A 200 from Phoenix does not mean the span persisted.** A malformed `~/.phoenix/phoenix.db`
+  accepts `POST /v1/traces` and drops the span. Verify by reading spans back.
+- **LLM calls are invisible to Phoenix** — `llm.py` uses httpx, not the `openai` SDK, so the
+  OpenAI instrumentor never fires.
 
 ---
 
