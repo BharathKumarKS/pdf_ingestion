@@ -885,27 +885,41 @@ if tab_visual is not None:
                           if d.tenant_id in (tenant_id, cfg.global_tenant_id)]
             ready_docs   = [d for d in searchable if d.colpali_status == "ready"]
             pending_docs = [d for d in searchable if d.colpali_status in ("processing", "pending")]
+            # The VECTOR STORE decides whether visual search can run, not the
+            # per-document colpali_status flag. That flag belongs to whichever
+            # ingest wrote *this* SQLite file, which can be a different machine and
+            # a different Qdrant than the one we query. Seen live: local SQLite said
+            # "processing" with 0 page images while the cluster held 2,923 vectors —
+            # so this panel told the user to re-run Phase 3 against a full index.
+            visual_vectors = store.count_visual_vectors([tenant_id, cfg.global_tenant_id])
         except Exception as e:
             st.error(f"⚠️ Error loading visual search documents: {e}")
             ready_docs = []
             pending_docs = []
+            visual_vectors = 0
 
-        if pending_docs:
-            st.info(
-                f"⏳ Visual embeddings are being generated for "
-                f"{len(pending_docs)} document(s). Text search is available now — "
-                "come back shortly for visual search.",
-                icon="🔄",
-            )
-
-        if not ready_docs:
+        if visual_vectors == 0:
             st.warning(
-                "No documents have visual embeddings yet. "
+                "No visual embeddings are indexed for this tenant yet. "
                 "Run `scripts/run_phase3.py --tenant global` for the base textbook, "
                 "or upload a PDF — visual embeddings will be generated automatically.",
                 icon="💡",
             )
         else:
+            if not ready_docs:
+                st.caption(
+                    f"ℹ️ {visual_vectors:,} visual vectors are indexed. This machine's "
+                    "local metadata marks no document *visual ready* — it tracks a "
+                    "different ingest than the index being searched, so the count "
+                    "above comes from the vector store directly."
+                )
+            elif pending_docs:
+                st.info(
+                    f"⏳ Visual embeddings are being generated for "
+                    f"{len(pending_docs)} document(s). Text search is available now — "
+                    "come back shortly for visual search.",
+                    icon="🔄",
+                )
             query_image_file = st.file_uploader(
                 "Upload a query image (PNG, JPG)",
                 type=["png", "jpg", "jpeg"],
@@ -990,7 +1004,7 @@ if tab_visual is not None:
 
             st.divider()
             st.caption(
-                f"**{len(ready_docs)}** document(s) indexed for visual search.  "
+                f"**{visual_vectors:,}** visual vectors indexed for search.  "
                 "ColPali encodes visual structure, layout, diagrams, and equations."
             )
 

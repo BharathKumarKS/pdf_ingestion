@@ -159,6 +159,34 @@ the whole query.
 and the eval set has no negatives, so the metric is unmeasurable. Negative-query generation
 is folded into P0-9.
 
+### Visual search fixed (2026-10-05)
+
+Visual search was **unusable in the UI** and, when reachable, **returned wrong pages**.
+Three independent defects:
+
+1. **Readiness was read from the wrong store.** The panel gated the uploader on
+   `Document.colpali_status == "ready"` in **SQLite**, but the vectors live in Qdrant —
+   and this machine's SQLite tracks a *different* ingest than the cluster index. Live
+   state: SQLite held doc `5fcc9006` marked `processing` with 0 page images, while the
+   cluster held 2,923 visual vectors for `6d55c52b`/`abc7c100`. So the UI told the user
+   to re-run Phase 3 against a fully-populated index. Now `store.count_visual_vectors()`
+   asks Qdrant, and `store.visual_index_documents()` exposes which docs back the index.
+2. **The score threshold was three orders of magnitude off.** `visual_score_threshold`
+   was `0.15`, but ColPali MaxSim is **not** a 0-1 similarity: it sums the best match per
+   query patch over a fixed 1031-patch grid, so scores run to ~1031. Every result passed
+   — which is exactly why an out-of-domain image returned textbook pages. **Measured**
+   (in-domain page vs synthetic out-of-domain): in-domain 966–1031, out-of-domain
+   444–479, stable across image size (ColPali resizes to a fixed grid). Now `600`.
+3. **1,890 stale duplicate vectors.** A re-ingest minted `abc7c100` and nothing removed
+   the old run, so every page existed twice and **every visual result came back
+   duplicated**. Removed with the new `scripts/clean_stale_visual.py` (dry-run default,
+   refuses when the visual index shares no document id with `knowledge_base` — the
+   `clean_stale_graph.py` guard pattern). Collection: 2,923 → **1,033**.
+
+Verified after the fix, through `store.visual_search` with the configured threshold:
+in-domain page → matches its own page (1031) and neighbours; noise / blank / gradient →
+**0 results**. Re-run `clean_stale_visual.py` after every Phase 3 re-ingest.
+
 ### Prerequisite status (re-checked 2026-10-04 — `scripts/preflight.py`, 24/24 pass)
 
 Point the eval at the **cluster** index: `QDRANT_HOST=10.0.10.65`. No `.env` edit is
@@ -168,7 +196,8 @@ precedence over the file.
 1. **Qdrant** — ✅ cluster index `10.0.10.65` is the reference; the graph pairs with it,
    not with the laptop's file store. `knowledge_base` 5,135 pts
    (dense_64/dense_768/colbert/sparse), `derivative_artifacts` 81,837,
-   `visual_knowledge_base` 2,923, `concept_embeddings` 11,229.
+   `visual_knowledge_base` 1,033 (was 2,923 — see the visual-search fix below),
+   `concept_embeddings` 11,229.
    ⚠️ In **file** mode `store.py:301` skips the ColBERT lane (`not is_local` guard), so
    ColBERT only runs against a server/cluster Qdrant.
 2. **Cluster endpoint** — ✅ `.70` live for rerank / sparse / multivector.
@@ -320,7 +349,7 @@ Frontend stays Streamlit until then.
 |---|---|---|
 | `knowledge_base` | 5,135 | dense_64, dense_768, **colbert (multivec)**, **sparse** |
 | `derivative_artifacts` | 81,837 | 768 single |
-| `visual_knowledge_base` | 2,923 | colpali (multivec) |
+| `visual_knowledge_base` | 1,033 | colpali (multivec) |
 | `concept_embeddings` | **11,229** | 768 single |
 
 **Chunk count RESOLVED: 5,051 is correct** (report right, README's 5,047 wrong).
@@ -413,6 +442,13 @@ contaminated live traversal too. It hit the `multihop` lane (7 of 30 eval querie
   Formula-bearing claims then cannot be entailed by any passage — it caps faithfulness and
   `ctx_prec_judged` regardless of retrieval quality.
 - **Ports 8501/8502 are other projects** on this machine. Pick a free port for this app.
+- **ColPali MaxSim is not 0-1.** Scores run to ~1031 (fixed 1031-patch grid). Any
+  threshold copied from a cosine-similarity habit (0.15) filters nothing. In-domain
+  966-1031, out-of-domain 444-479 on this corpus.
+- A per-document `colpali_status`/`source` flag in SQLite is **not** evidence the vector
+  store is populated — the two can describe different ingests. Ask the store.
+- **Re-run `scripts/clean_stale_visual.py` after every Phase 3 re-ingest**, or every page
+  returns twice (same class as `clean_stale_graph.py`).
 
 ---
 

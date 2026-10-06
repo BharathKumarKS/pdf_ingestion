@@ -1006,6 +1006,62 @@ class DocumentStore:
             logger.warning("Visual search failed ({})", exc)
             return []
 
+    def count_visual_vectors(self, tenant_ids: list[str]) -> int:
+        """How many visual vectors exist for these tenants (server-side count).
+
+        This — not the per-document ``colpali_status`` column — is the source of
+        truth for "can visual search run". That column describes whatever ingest
+        wrote *this* SQLite file, which may have run on another machine against
+        another Qdrant. Observed live: local SQLite said ``processing`` with 0 page
+        images while the cluster held 2,923 visual vectors.
+        """
+        from qdrant_client.models import FieldCondition, Filter, MatchAny
+        try:
+            res = self._qdrant.count(
+                collection_name=self._cfg.colpali_collection,
+                count_filter=Filter(must=[
+                    FieldCondition(key="tenant_id", match=MatchAny(any=list(tenant_ids)))
+                ]),
+                exact=True,
+            )
+            return int(res.count)
+        except Exception as exc:
+            logger.warning("Visual index count failed ({})", exc)
+            return 0
+
+    def visual_index_documents(self, tenant_ids: list[str]) -> dict[str, int]:
+        """Document id -> visual-vector count, for the given tenants.
+
+        Exposes which documents actually back the visual index, so a retired
+        document's vectors are visible rather than silently returned as hits
+        (the same failure the graph lane had). Re-ingests mint a new document id
+        and the old vectors are never removed.
+        """
+        from qdrant_client.models import FieldCondition, Filter, MatchAny
+        counts: dict[str, int] = {}
+        try:
+            flt = Filter(must=[
+                FieldCondition(key="tenant_id", match=MatchAny(any=list(tenant_ids)))
+            ])
+            offset = None
+            while True:
+                points, offset = self._qdrant.scroll(
+                    collection_name=self._cfg.colpali_collection,
+                    scroll_filter=flt,
+                    limit=1000,
+                    offset=offset,
+                    with_payload=["document_id"],
+                    with_vectors=False,
+                )
+                for p in points:
+                    did = (p.payload or {}).get("document_id") or "?"
+                    counts[did] = counts.get(did, 0) + 1
+                if offset is None:
+                    break
+        except Exception as exc:
+            logger.warning("Visual index scan failed ({})", exc)
+        return counts
+
     def get_chunks_by_pages(
         self,
         document_id: str,
