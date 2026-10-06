@@ -122,15 +122,16 @@ class Settings(BaseSettings):
     page_images_dir: str = "./data/page_images"
     image_store_backend: str = "local"   # "local" | "minio"
     colpali_page_batch_size: int = 4     # pages per batch; increase to 16+ on GPU VM
-    # Min ColPali MaxSim score for a visual hit. NOT a 0-1 similarity: MaxSim sums
-    # the best match per QUERY patch, and ColPali resizes every image to a fixed
-    # 448 grid (constant 1031 patches), so scores run to ~1031. Measured on the
-    # Feynman index: an in-domain page scores 966-1031 (per-patch 0.94-1.00) whether
-    # the query is the native 417x556 page or a downscale/upscale of it, while
-    # out-of-domain images (noise, blank, unrelated text) score 444-479
-    # (per-patch 0.43-0.46). 600 sits in the gap. The previous value of 0.15
-    # filtered nothing at all, which is why out-of-domain images returned pages.
-    visual_score_threshold: float = 600.0
+    # Min MEAN BEST COSINE for a visual hit — a 0-1 similarity, like the dense lanes.
+    # ColPali patch vectors are L2-normalised, so a per-patch dot product is a cosine;
+    # Qdrant's MaxSim sums the best cosine per query patch over a fixed 1031-patch
+    # grid, and visual_search divides by that count to get the mean. Measured on the
+    # Feynman index: an in-domain page scores 0.94-1.00 whether the query is the
+    # native page or a downscale/upscale of it, while out-of-domain images (noise,
+    # blank, unrelated text) score 0.43-0.46. 0.58 sits in the gap.
+    # (The old value of 0.15 was applied to the RAW MaxSim sum, which runs to ~1031 —
+    # it filtered nothing, so out-of-domain images returned pages.)
+    visual_score_threshold: float = 0.58
 
     # Phase 3 — Concept embeddings (Qdrant collection for fast GraphRAG lookup)
     concept_collection: str = "concept_embeddings"

@@ -167,7 +167,16 @@ def _source_label(r: dict) -> str:
     page_str = f" · page {page}" if page else ""
     return f"*{title}*{page_str}"
 
-def _colpali_status_badge(status: str) -> str:
+def _colpali_status_badge(status: str, vectors: int | None = None) -> str:
+    """Status badge for the sidebar.
+
+    ``vectors`` is the count from the VECTOR STORE. When it is non-zero the index is
+    usable, whatever the per-document SQLite flag says: that flag belongs to whichever
+    ingest wrote this SQLite file, which may be a different machine/Qdrant than the one
+    we query (seen live: flag "processing", cluster holding a full visual index).
+    """
+    if vectors:
+        return f"✅ Visual ready ({vectors:,} vectors)"
     return {
         "ready":      "✅ Visual ready",
         "processing": "⏳ Visual processing…",
@@ -229,7 +238,11 @@ with st.sidebar:
                 c1, c2 = st.columns(2)
                 c1.metric("Cards",        len(cards))
                 c2.metric("RAPTOR nodes", len(nodes))
-                st.caption(_colpali_status_badge(doc.colpali_status))
+                try:
+                    visual_vectors = store.count_visual_vectors([cfg.global_tenant_id])
+                except Exception:
+                    visual_vectors = None
+                st.caption(_colpali_status_badge(doc.colpali_status, visual_vectors))
                 if not cards:
                     if st.button("⚡ Generate Phase 2 artifacts", use_container_width=True):
                         with st.spinner("Running…"):
@@ -995,7 +1008,7 @@ if tab_visual is not None:
                                     col.caption(str(img_err))
                                 col.caption(
                                     f"Page {r.get('page_number', '?')}  ·  "
-                                    f"score {r['score']:.3f}  ·  "
+                                    f"cosine {r.get('score_cosine', float('nan')):.3f}  ·  "
                                     f"doc: `{r.get('document_id','?')[:12]}…`"
                                 )
 

@@ -996,12 +996,26 @@ class DocumentStore:
                 limit=limit,
                 with_payload=True,
             )
+            # Normalise to a cosine-like 0-1 score. ColPali patch vectors are
+            # L2-normalised (verified: every stored patch has norm 1.000000), so a
+            # per-patch dot product IS a cosine, and Qdrant's MaxSim is the SUM of
+            # the best cosine per query patch. Dividing by the query patch count —
+            # a constant 1031, because ColPali resizes every image to a fixed grid —
+            # gives the MEAN best cosine: 1.0 is an identical page, ~0.45 an
+            # unrelated image. The threshold applies to this, so it reads like a
+            # cosine similarity and does not depend on the grid size.
             threshold = score_threshold if score_threshold is not None else self._cfg.visual_score_threshold
-            return [
-                {"score": h.score, **h.payload}
-                for h in response.points
-                if h.score >= threshold
-            ]
+            n_query_patches = max(1, len(query_patches))
+            results = []
+            for h in response.points:
+                cosine = h.score / n_query_patches
+                if cosine >= threshold:
+                    results.append({
+                        "score": h.score,                 # raw MaxSim (sum of cosines)
+                        "score_cosine": round(cosine, 4),  # mean best cosine, 0-1
+                        **(h.payload or {}),
+                    })
+            return results
         except Exception as exc:
             logger.warning("Visual search failed ({})", exc)
             return []
