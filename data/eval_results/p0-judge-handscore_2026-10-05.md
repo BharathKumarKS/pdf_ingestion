@@ -23,9 +23,13 @@ claims were checked by hand against the passage they were tested against.
 | graph-005 | 0.889 | 0.89 | exact |
 | **mean** | **0.650** | **~0.73** | **judge ≈0.08 low** |
 
-Exact agreement on 4/10. Every disagreement is in the same direction: the judge says NO
-where the passage does support the claim. **Faithfulness is a floor, not a point
-estimate.** Ans.Relevance and Citation Acc. were not systematically wrong.
+Exact agreement on 4/10 (vec-008, vec-010, raptor-004, graph-005); **6/10 within ±0.02**.
+Every disagreement is in the same direction: the judge says NO where the passage does
+support the claim. **Faithfulness is a floor, not a point estimate.** Ans.Relevance and
+Citation Acc. were not systematically wrong.
+
+Re-derive with `scripts/instrument_judge.py` from the `llm-judge-validation` skill:
+`summarize()` on the scores above returns mean delta −0.079 and "judge biased LOW".
 
 ## The three misses (with page evidence)
 

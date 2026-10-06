@@ -96,9 +96,9 @@ First generation metrics this repo has ever produced. Judge = `Qwen/Qwen3-VL-8B-
 
 ⚠️ **Faithfulness is indicative and biased LOW — treat 0.70 as a floor.** Hand-scored 10
 answers against the exact passages the judge saw (instrumented run, 406 judge calls, 0
-failures). Exact agreement on 4/10 (vec-008, vec-010, raptor-004, graph-005); the judge
-under-scored the rest, always in the same direction — judge mean ≈0.65 vs hand ≈0.73 on
-the sample, i.e. ~0.08 low. Full working: `data/eval_results/p0-judge-handscore_2026-10-05.md`.
+failures). Agreement 6/10 within ±0.02 (4/10 numerically identical: vec-008, vec-010,
+raptor-004, graph-005); every miss is one-directional — judge mean ≈0.65 vs hand ≈0.73,
+i.e. ~0.08 low. Full working: `data/eval_results/p0-judge-handscore_2026-10-05.md`.
 Three systematic misses:
 
 - **LaTeX vs mangled plaintext.** Claim `F = -G m₁m₂/r³ · r` → NO against p243, which
