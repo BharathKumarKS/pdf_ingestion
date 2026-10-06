@@ -79,6 +79,15 @@ def main() -> int:
     ap.add_argument("--hyde", action="store_true",
                     help="use HyDE for factual/overview (matches the deployed system "
                          "when HYDE_ENABLED=true)")
+    ap.add_argument("--hyde-cache", default=None,
+                    help="path to a JSON cache of generated hypotheticals. Reused across "
+                         "runs so an A/B sees IDENTICAL queries — call_llm hardcodes "
+                         "temperature 0.3, so HyDE is otherwise non-deterministic and "
+                         "swamps any effect smaller than ~0.07 recall.")
+    ap.add_argument("--no-reranker", action="store_true",
+                    help="skip the cross-encoder; B6 becomes the retriever's own top-20")
+    ap.add_argument("--no-colbert", action="store_true",
+                    help="skip ColBERT; the merge falls back to RRF")
     args = ap.parse_args()
 
     from qdrant_client.models import Fusion, FusionQuery, Prefetch
@@ -108,6 +117,13 @@ def main() -> int:
     from src.pdf_ingestion.reranker import get_reranker
     reranker = get_reranker(cfg)
 
+    # Pinned HyDE: reuse the same hypotheticals across runs so an A/B compares lanes,
+    # not two different LLM samples. call_llm hardcodes temperature 0.3.
+    hyde_cache: dict[str, str] = {}
+    if args.hyde_cache and Path(args.hyde_cache).exists():
+        hyde_cache = json.loads(Path(args.hyde_cache).read_text())
+        logger.info(f"HyDE cache loaded: {len(hyde_cache)} hypotheticals")
+
     BOUNDARIES = ["B1_dense64_1000", "B2_dense768_500", "B3_sparse_250",
                   "B4_rrf_union_100", "B5_colbert_100",
                   "B5b_retriever_top20", "B6_rerank_20"]
@@ -126,20 +142,24 @@ def main() -> int:
         # the dense search vector AND the cross-encoder's query. Measuring without it
         # measures a system that is not deployed.
         if args.hyde and qtype in ("factual", "overview"):
-            try:
-                from src.core.llm import call_llm
-                hyp = call_llm(
-                    prompt=(f"Write 2-3 sentences of physics textbook content "
-                            f"that directly answers: {text}"),
-                    system=("You are a physics textbook author. Write factual content only. "
-                            "No preamble, no 'Here is...', just the content itself."),
-                    settings=cfg,
-                )
-                if hyp:
-                    vec = np.asarray(embedder.embed_query(hyp), dtype=np.float32)
-                    rerank_query = hyp
-            except Exception as exc:
-                logger.warning(f"HyDE failed for {qid} ({exc}); using the raw query")
+            hyp = hyde_cache.get(qid)
+            if hyp is None:
+                try:
+                    from src.core.llm import call_llm
+                    hyp = call_llm(
+                        prompt=(f"Write 2-3 sentences of physics textbook content "
+                                f"that directly answers: {text}"),
+                        system=("You are a physics textbook author. Write factual content only. "
+                                "No preamble, no 'Here is...', just the content itself."),
+                        settings=cfg,
+                    )
+                    hyde_cache[qid] = hyp
+                except Exception as exc:
+                    logger.warning(f"HyDE failed for {qid} ({exc}); using the raw query")
+                    hyp = None
+            if hyp:
+                vec = np.asarray(embedder.embed_query(hyp), dtype=np.float32)
+                rerank_query = hyp
 
         vec_64 = vec[: cfg.embedding_dim_low].copy()
         vec_64 /= np.linalg.norm(vec_64) + 1e-9
@@ -173,10 +193,11 @@ def main() -> int:
         row["pages"]["B1_dense64_1000"] = pages_of(post(r))
 
         # B2 dense_64 -> dense_768 @500
-        r = q.query_points(collection_name=coll, prefetch=[dense_prefetch],
-                           query=vec.tolist(), using="dense_768", query_filter=filt,
-                           limit=500, with_payload=True).points
-        row["pages"]["B2_dense768_500"] = pages_of(post(r))
+        dense_b2_points = q.query_points(
+            collection_name=coll, prefetch=[dense_prefetch],
+            query=vec.tolist(), using="dense_768", query_filter=filt,
+            limit=500, with_payload=True).points
+        row["pages"]["B2_dense768_500"] = pages_of(post(dense_b2_points))
 
         # B3 sparse @250
         if sv is not None:
@@ -185,37 +206,34 @@ def main() -> int:
                                with_payload=True).points
             row["pages"]["B3_sparse_250"] = pages_of(post(r))
 
-        # B4 RRF union @100 (merge without late interaction)
+        # B4 RRF union @100 (merge WITHOUT late interaction)
+        rrf_points = []
         if len(prefetches) > 1:
-            r = q.query_points(collection_name=coll, prefetch=prefetches,
-                               query=FusionQuery(fusion=Fusion.RRF), query_filter=filt,
-                               limit=100, with_payload=True).points
-            row["pages"]["B4_rrf_union_100"] = pages_of(post(r))
+            rrf_points = q.query_points(
+                collection_name=coll, prefetch=prefetches,
+                query=FusionQuery(fusion=Fusion.RRF), query_filter=filt,
+                limit=100, with_payload=True).points
+            row["pages"]["B4_rrf_union_100"] = pages_of(post(rrf_points))
 
-        # B5 ColBERT over the merge @100 (what the app uses)
-        final_points = []
-        if colbert_on and not is_local:
+        # B5 — the merge the app uses: ColBERT MaxSim if available, else RRF.
+        use_colbert = colbert_on and not is_local and not args.no_colbert
+        colbert_points = []
+        if use_colbert:
             try:
                 from src.pdf_ingestion.colbert_embedder import get_colbert_embedder
                 cq = get_colbert_embedder(cfg).embed_query(text)
-                final_points = q.query_points(
+                colbert_points = q.query_points(
                     collection_name=coll, prefetch=prefetches, query=cq.tolist(),
                     using="colbert", query_filter=filt, limit=100,
                     with_payload=True).points
-                row["pages"]["B5_colbert_100"] = pages_of(post(final_points))
             except Exception as exc:
-                logger.error(f"ColBERT failed for {qid}: {exc}")
+                logger.error(f"ColBERT failed for {qid} ({exc}); falling back to RRF")
 
-        # B6 cross-encoder @20 — rerank whatever B5 produced (or B4 if no ColBERT)
-        pool = post(final_points)
+        pool = post(colbert_points) if colbert_points else post(rrf_points)
         if not pool:
-            if len(prefetches) > 1:
-                pool = q.query_points(collection_name=coll, prefetch=prefetches,
-                                      query=FusionQuery(fusion=Fusion.RRF),
-                                      query_filter=filt, limit=100,
-                                      with_payload=True).points
-            else:
-                pool = r
+            pool = post(dense_b2_points)
+        row["pages"]["B5_colbert_100"] = pages_of(pool)
+
         chunks = [{"text": p.payload.get("text", ""),
                    "page_number": p.payload.get("page_number"),
                    "score": p.score} for p in pool]
@@ -228,12 +246,15 @@ def main() -> int:
             if p.payload.get("page_number")
         }
 
-        if chunks:
-            ranked = reranker.rerank(rerank_query, chunks, top_k=TOP_K)
+        # B6 — cross-encoder, or the retriever's own order when the reranker is off.
+        if args.no_reranker:
+            top20 = chunks[:TOP_K]
+        elif chunks:
+            top20 = reranker.rerank(rerank_query, chunks, top_k=TOP_K)
         else:
-            ranked = []
-        top20 = [c for c in ranked][:TOP_K]
-        row["pages"]["B6_rerank_20"] = {c.get("page_number") for c in top20 if c.get("page_number")}
+            top20 = []
+        row["pages"]["B6_rerank_20"] = {c.get("page_number") for c in top20
+                                        if c.get("page_number")}
         row["top20_pages"] = [c.get("page_number") for c in top20]
         per_query.append(row)
 
@@ -295,10 +316,17 @@ def main() -> int:
         Path(args.json).write_text(json.dumps(
             {"boundaries": summary,
              "metrics": {k: statistics.mean(v) for k, v in agg.items()},
+             "config": {"hyde": bool(args.hyde), "no_reranker": bool(args.no_reranker),
+                        "no_colbert": bool(args.no_colbert),
+                        "hyde_cache": args.hyde_cache,
+                        "top_k": TOP_K, "n_queries": len(per_query)},
              "per_query": [{k: (list(v) if isinstance(v, set) else v)
                             for k, v in row.items()} for row in per_query]},
             indent=2, default=str))
         logger.info(f"wrote {args.json}")
+    if args.hyde_cache:
+        Path(args.hyde_cache).write_text(json.dumps(hyde_cache, indent=2))
+        logger.info(f"HyDE cache saved: {len(hyde_cache)} hypotheticals")
     return 0
 
 
