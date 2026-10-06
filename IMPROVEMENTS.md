@@ -131,6 +131,37 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   denominator over a 2-page ground truth → use Recall@k / R-precision / Hit@k, and report
   any precision number against its ceiling), then the judge lane, then ranking work.
 
+### D2. What the boundary measurement changes about fine-tuning (2026-10-06)
+- **The contrastive 3-phase curriculum fine-tunes the bi-encoder (the retriever)** — the
+  course's Week 11 lab trains a `SentenceEmbeddingModel`. It is **not** the reranker.
+- **Measured headroom, from `data/eval_results/funnel-boundary-recall_2026-10-06.md`:**
+  - retrieval gap (what a better bi-encoder could buy): recall 0.895 → 1.0 = **0.105**
+  - ranking gap (what a better reranker could buy): 0.561 → 0.895 = **0.334**
+  → ranking is the lever by ~3×. **Fine-tune the cross-encoder first.**
+- **So the bi-encoder fine-tune is deprioritised, not cancelled.** It addresses a 0.105 gap
+  and it requires a **full re-ingest** (re-embed 5,135 chunks + 82k cards + the visual lane).
+  The cross-encoder fine-tune needs **no re-embedding** — it is a separate model trained on
+  (query, passage) pairs drawn from the existing index.
+- **The two models use different objectives, and this was always true:**
+  | model | objective |
+  |---|---|
+  | bi-encoder (retriever) | contrastive / InfoNCE (in-batch, then mined hard negatives) → triplet |
+  | cross-encoder (reranker) | **binary relevance over (query, passage) pairs** with mined hard negatives — single stage |
+  So "fine-tune the reranker with contrastive loss" is a category error; the contrastive
+  phases belong to the bi-encoder.
+- **What the measurement gives the fine-tune:** a target. The reranker must beat **0.598**
+  (the retriever's own top-20) to be worth keeping. Today it scores 0.561 — it is not
+  earning its place, so the fine-tune has a concrete, measurable job.
+- **Order:** run the lane on/off A/B first (see below). If removing the reranker raises
+  Recall@20, "fine-tune it" becomes a choice — make it earn its place — rather than a
+  necessity, and the free option should be tested first.
+
+### D3. Pin HyDE before any A/B
+- Two identical runs of the same command gave Recall@20 of **0.631** and **0.561** — a 0.07
+  spread from LLM sampling alone. **Nothing below ~0.07 is currently measurable**, so any
+  lane on/off comparison is uninterpretable until HyDE is pinned (temperature 0 / fixed
+  seed, or cache the generated hypotheticals and reuse them across runs).
+
 ### D1. The reranker fine-tune needs a *training* set, not the eval set
 - **The eval set and the training set are different artifacts** and must not be conflated.
   The eval set is for **measuring** (small is fine); the training set is for **fitting**
