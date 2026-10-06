@@ -112,6 +112,38 @@ class ResponseParser:
 
     _SKIP = {"n/a", "none", "not applicable", "no formula", "null", ""}
 
+    # ── Value filter ──────────────────────────────────────────────────────────
+    # A study card has to stand on its own. The generator prompt requires *answers*
+    # to be "standalone and interpretable out of context" but says nothing about the
+    # *question*, so the model anchors questions to the source: "According to the
+    # passage, what shines through all of Feynman's work?" — meaningless to a student
+    # who never sees the chunk. Measured on the Feynman corpus: 8,503 cards (8.9%),
+    # 7,551 of them question cards.
+    #
+    # "passage of time" is deliberately NOT matched: a naive `the passage` regex would
+    # have deleted legitimate physics cards ("how might the passage of time have
+    # affected memories of Feynman's lectures?").
+    _SOURCE_REF_RE = re.compile(
+        r"(according to the (passage|text|author|excerpt)"
+        # verb agreement varies: "the text states" / "does the text state"
+        r"|the (passage|text|excerpt|author) (states?|says?|describes?|mentions?|discusses?"
+        r"|explains?|claims?|notes?|refers?|tells?)"
+        r"|in (this|the) (passage|excerpt|text)"
+        r"|(after )?reading (this|the) (passage|excerpt|text)"
+        r"|(this|the) (passage|excerpt) (about|describes?|discusses?|explains?|states?))",
+        re.I,
+    )
+    _MIN_CARD_CHARS = 20
+
+    @classmethod
+    def is_valuable(cls, *parts: str | None, min_chars: int | None = None) -> bool:
+        """False when a card is junk: too short, or it refers to its source instead
+        of standing alone. Callers pass every field a student would see."""
+        text = " ".join(p for p in parts if p).strip()
+        if len(text) < (cls._MIN_CARD_CHARS if min_chars is None else min_chars):
+            return False
+        return not cls._SOURCE_REF_RE.search(text)
+
     @classmethod
     def _clean(cls, raw: str) -> str:
         return re.sub(r"```(?:json)?", "", raw).strip()
@@ -138,13 +170,20 @@ class ResponseParser:
         content = str(data.get("content", "")).strip()
         if not content or content.lower() in cls._SKIP:
             return []
+        title = str(data.get("title", card_type.value.capitalize())).strip()
+        # Formula cards are exempt from the length floor — "E = mc²" is a valid card.
+        if not cls.is_valuable(
+            content, title,
+            min_chars=1 if card_type == CardType.FORMULA else None,
+        ):
+            return []
         return [GeneratedCard(
             card_id=str(uuid.uuid4()),
             chunk_id=chunk.chunk_id,
             document_id=chunk.document_id,
             tenant_id=chunk.tenant_id,
             card_type=card_type.value,
-            title=str(data.get("title", card_type.value.capitalize())).strip(),
+            title=title,
             content=content,
         )]
 
@@ -161,6 +200,8 @@ class ResponseParser:
             q = str(item.get("question", "")).strip()
             a = str(item.get("answer", "")).strip()
             if not q or not a or q.lower() in cls._SKIP:
+                continue
+            if not cls.is_valuable(q, a):
                 continue
             cards.append(GeneratedCard(
                 card_id=str(uuid.uuid4()),
@@ -184,6 +225,8 @@ class ResponseParser:
         for item in data:
             text = str(item).strip()
             if not text or text.lower() in cls._SKIP:
+                continue
+            if not cls.is_valuable(text):
                 continue
             cards.append(GeneratedCard(
                 card_id=str(uuid.uuid4()),
