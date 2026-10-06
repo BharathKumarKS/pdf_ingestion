@@ -117,22 +117,31 @@ class ResponseParser:
     # to be "standalone and interpretable out of context" but says nothing about the
     # *question*, so the model anchors questions to the source: "According to the
     # passage, what shines through all of Feynman's work?" — meaningless to a student
-    # who never sees the chunk. Measured on the Feynman corpus: 8,503 cards (8.9%),
-    # 7,551 of them question cards.
+    # who never sees the chunk.
     #
-    # "passage of time" is deliberately NOT matched: a naive `the passage` regex would
-    # have deleted legitimate physics cards ("how might the passage of time have
-    # affected memories of Feynman's lectures?").
+    # The first version of this matched a fixed verb list ("the passage states/says/...")
+    # and missed real cards: "does the passage *imply*", "in the *context of* the
+    # passage", "at the *end of* the passage". Any determiner + "passage/excerpt/
+    # paragraph/quote" is a source reference, so match that directly instead of trying
+    # to enumerate the verbs that can follow it.
+    #
+    # "the passage of time" is ordinary prose, not a reference — stripped before matching.
     _SOURCE_REF_RE = re.compile(
-        r"(according to the (passage|text|author|excerpt)"
-        # verb agreement varies: "the text states" / "does the text state"
-        r"|the (passage|text|excerpt|author) (states?|says?|describes?|mentions?|discusses?"
-        r"|explains?|claims?|notes?|refers?|tells?)"
-        r"|in (this|the) (passage|excerpt|text)"
-        r"|(after )?reading (this|the) (passage|excerpt|text)"
-        r"|(this|the) (passage|excerpt) (about|describes?|discusses?|explains?|states?))",
+        r"\b(this|the|that) (passage|excerpt|paragraph|quotation|quote)\b"
+        # "the text"/"the author" only when acting as a source ("the text states"),
+        # NOT when they are the subject of a content fact ("the author reached out to
+        # 17 students" is a self-contained statement about the preface).
+        r"|\bthe (text|author) (states?|says?|describes?|mentions?|discusses?|explains?|claims?"
+        r"|notes?|refers?|tells?|implies?|suggests?|provides?|presents?|characteri[sz]es?"
+        r"|writes?|argues?|addresses?|outlines?|reports?|indicates?)\b"
+        r"|\b(in|within|throughout) (this|the) (passage|excerpt|text)\b"
+        r"|\b(reading|read|end|beginning|context|start|middle|rest|part|section) of (this|the) (passage|excerpt|text)\b"
+        r"|\bmentioned (above|earlier|previously|below)\b"
+        r"|\bas (described|mentioned|stated|discussed|noted|shown) (above|earlier|previously|below)\b"
+        r"|\baccording to (the|this) (passage|text|author|excerpt)\b",
         re.I,
     )
+    _IDIOM_RE = re.compile(r"passage of time", re.I)
     _MIN_CARD_CHARS = 20
 
     @classmethod
@@ -142,7 +151,7 @@ class ResponseParser:
         text = " ".join(p for p in parts if p).strip()
         if len(text) < (cls._MIN_CARD_CHARS if min_chars is None else min_chars):
             return False
-        return not cls._SOURCE_REF_RE.search(text)
+        return not cls._SOURCE_REF_RE.search(cls._IDIOM_RE.sub("", text))
 
     @classmethod
     def _clean(cls, raw: str) -> str:

@@ -39,6 +39,15 @@ class TestIsValuable:
         "What does the author mention about momentum?",
         "This passage describes which phenomenon?",
         "What is explained in the text?",
+        # These slipped through the first version of the filter, which matched a fixed
+        # verb list and so missed any verb it did not enumerate.
+        "Does the passage suggest that the full differential equation approach is essential?",
+        "In the context of the passage, what is the speaker's overall view?",
+        "How does the passage view the effectiveness of doing assigned problems?",
+        "Who signed the acknowledgments at the end of the passage?",
+        "Does the excerpt provide a page number for the section?",
+        "What does the passage imply about the relationship between force and mass?",
+        "As mentioned above, what limits the accuracy of the classical law?",
     ])
     def test_rejects_each_banned_phrasing(self, question):
         from src.pdf_ingestion.card_generator import ResponseParser

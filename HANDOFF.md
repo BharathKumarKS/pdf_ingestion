@@ -388,11 +388,13 @@ motion". Backup at `data/synapse.db.bak-*`. Re-running is a no-op: it resolves t
 so it lacks objective/misconception/example (10,927 cards). Re-index from SQLite with
 `scripts/index_derivative_artifacts.py --clear` when the DA lane matters.
 
-`scripts/clean_cards.py --sqlite-only --apply` has been run: **10,074 cards removed**
-(9,829 not self-contained + 245 duplicates), 95,213 → **85,139**, all still joining to
-chunks, 0 non-valuable remaining. `--sqlite-only` exists because the DA collection is a
-different generation, so a card_id-keyed Qdrant delete matches nothing (0/10,074).
-Backup: `data/synapse.db.bak-preclean-*`.
+`scripts/clean_cards.py --sqlite-only --apply` has now run twice: **13,049 cards removed**,
+95,213 → **82,164**, all still joining to chunks, 0 non-valuable remaining. The second pass
+(2,975) closed a recall gap found by inspection, not by test: the filter's first version
+matched a fixed verb list, so it missed *"does the passage **imply**"*, *"in the **context
+of** the passage"*, *"at the **end of** the passage"*. Any determiner + passage/excerpt/
+paragraph/quote is now treated as a reference — enumerate verbs and you will always miss one.
+Backups: `data/synapse.db.bak-preclean-*`, `data/synapse.db.bak-refilter-*`.
 
 **Curation, not duplication:** 95,213 cards for a 968-page book (~19/page). Only 294 rows
 (0.3%) are junk-or-duplicate; a further 9,829 (10.3%) were source-referencing and are now
