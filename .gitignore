@@ -45,6 +45,9 @@ data/models/*
 data/user_uploads/
 data/base_textbooks/
 data/*.db
+# DB backups written by scripts/align_stores.py (and any future re-keying script) are
+# ~140 MB each and `data/*.db` does NOT match them — the name ends in the timestamp.
+data/*.db.bak-*
 data/test_*.db
 
 # ── Test artefacts ─────────────────────────────────────────────────────────

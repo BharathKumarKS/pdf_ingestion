@@ -371,18 +371,28 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
 
 **P2** abstention · guardrails · PPR · semantic caching · OKF cards
 
-**⚠️ Stale card index — found while cleaning duplicates; blocks card-lane metrics**
-`derivative_artifacts` (Qdrant, 81,837 points) shares **no card ids at all** with SQLite
-`cards` (95,213 rows): every id dangles in both directions. The collection was built from a
-**retired card generation**, so the card retrieval lane serves cards the UI no longer has,
-and any DA-lane metric is being measured against stale content. Fix:
-`uv run python scripts/index_derivative_artifacts.py --clear` (re-embeds every card).
-`scripts/clean_cards.py` refuses to delete until that is done, by design (0/294 ids matched
-— a silent no-op delete is worse than a refusal).
+**✅ Store divergence resolved (2026-10-06) — `scripts/align_stores.py`**
+The app retrieves from Qdrant but renders cards from SQLite, and the two were ingested
+separately: KB doc `6d55c52b` (5,135 points) vs SQLite doc `5fcc9006` (5,048 chunks) with
+**zero ID overlap**. Every retrieval→SQLite join therefore failed, which is why "Key Facts"
+and question-scoped "Study Cards" were *always* empty — not a matching problem, an ID one.
 
-Also note: 95,213 cards for a 968-page book (~19 per page) is a **curation** problem, not a
-duplication one — only 294 rows (0.3%) are junk or duplicate. The student-facing fix is
-question-scoped cards (done), not mass deletion.
+Fixed by renaming SQLite's IDs to the cluster's (cluster = source of truth, settled), matched
+by chunk text: 4,962 exact + 82 by `chunk_index` = **99.9%**; 4 chunks keep their old ids
+(their twins carry identical text). Verified: cards joining to chunks **95,213/95,213** (was
+0/95,213), and the Study Cards tab returns 6 on-topic formula cards for "newtons laws of
+motion". Backup at `data/synapse.db.bak-*`. Re-running is a no-op: it resolves the same
+5,044 chunks to the same ids, so a second pass rewrites identical values (verified).
+
+**Still stale, but separate:** `derivative_artifacts` was built by the OLD 5-type card list,
+so it lacks objective/misconception/example (10,927 cards). Re-index from SQLite with
+`scripts/index_derivative_artifacts.py --clear` when the DA lane matters.
+
+`scripts/clean_cards.py` can now be applied — its cross-store id guard passes.
+
+**Curation, not duplication:** 95,213 cards for a 968-page book (~19/page). Only 294 rows
+(0.3%) are junk-or-duplicate; a further 9,829 (10.3%) were source-referencing and are now
+filtered at generation. Mass deletion is not the lever — question-scoped cards are.
 
 **Deferred (agreed — do not lose these)**
 - **Key Facts panel** — keep it, but *measure* whether it helps before removing or expanding.
