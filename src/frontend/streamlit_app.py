@@ -167,6 +167,29 @@ def _source_label(r: dict) -> str:
     page_str = f" · page {page}" if page else ""
     return f"*{title}*{page_str}"
 
+def _clean_text(text: str) -> str:
+    """Strip parser artefacts from stored chunk text before display.
+
+    Docling leaves an HTML comment where it failed to decode a formula
+    (``<!-- formula-not-decoded -->``), and sometimes the literal words "Formula not
+    decoded". Streamlit's markdown does NOT strip HTML comments, so they render as
+    visible noise in every passage panel. Collapses the blank-line runs the parser
+    emits as well.
+    """
+    import re
+    text = re.sub(r'<!--.*?-->', ' ', text, flags=re.S)
+    text = re.sub(r'(?i)\bformula\s+not\s+decoded\b', ' ', text)
+    text = re.sub(r'[ \t]{2,}', ' ', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+
+def _cited_pages(answer: str) -> set[int]:
+    """Page numbers the ANSWER actually cites, e.g. ``[Page 846]`` or ``(page 846)``."""
+    import re
+    return {int(n) for n in re.findall(r'(?:\[Page\s*|\(page\s*)(\d+)', answer, re.IGNORECASE)}
+
+
 def _colpali_status_badge(status: str, vectors: int | None = None) -> str:
     """Status badge for the sidebar.
 
@@ -622,11 +645,16 @@ with tab_search:
                     })
 
                     if not is_admin:
-                        # Student: compact citation line + collapsed passages
-                        if pages:
-                            sources_str = ", ".join(f"p. {p}" for p in pages)
+                        # Student: cite what the ANSWER used, not everything retrieved.
+                        # Listing all ~20 retrieved pages reads as noise beside a
+                        # three-page answer.
+                        cited = _cited_pages(synthesis or "")
+                        shown = sorted(cited) if cited else pages
+                        if shown:
+                            sources_str = ", ".join(f"p. {p}" for p in shown)
                             works_str   = "  ·  ".join(titles) if titles else "Knowledge base"
-                            st.caption(f"📄 Sources: {works_str}  —  {sources_str}")
+                            prefix = "Sources cited" if cited else "Sources retrieved"
+                            st.caption(f"📄 {prefix}: {works_str}  —  {sources_str}")
                         n_total = (
                             len(chunk_results)
                             + (len(raptor_results) if raptor_results else 0)
@@ -640,7 +668,7 @@ with tab_search:
                                         f"#{i}  {_source_label(r)}"
                                         + (f"  ·  p. {pg}" if pg else "")
                                     )
-                                    st.markdown(r.get("text", ""))
+                                    st.markdown(_clean_text(r.get("text", "")))
                     else:
                         # Admin: full technical detail, open by default
                         with st.expander(
@@ -654,7 +682,7 @@ with tab_search:
                                 st.markdown("**Topic summaries**")
                                 for r in raptor_results:
                                     with st.container(border=True):
-                                        st.markdown(r.get("text", ""))
+                                        st.markdown(_clean_text(r.get("text", "")))
                                         st.caption(
                                             f"RAPTOR L{r.get('raptor_level','?')} · "
                                             f"score={r['score']:.3f} · "
@@ -665,9 +693,10 @@ with tab_search:
                                 st.markdown("**Concept-connected passages**")
                                 for gr in graph_results:
                                     with st.container(border=True):
-                                        concepts = " → ".join(gr.get("concept_path", []))
-                                        st.caption(f"Concepts: {concepts}  |  hops: {gr.get('hop_distance', '?')}")
-                                        st.markdown(gr.get("text_preview", ""))
+                                        concepts = ", ".join(gr.get("concept_path", []))
+                                        n_m = gr.get("matched_concepts", len(gr.get("concept_path", [])))
+                                        st.caption(f"{n_m} concept(s) matched: {concepts}")
+                                        st.markdown(_clean_text(gr.get("text_preview", "")))
 
                             if chunk_results:
                                 st.markdown("**Matched passages**")
@@ -679,7 +708,7 @@ with tab_search:
                                     f"page {r.get('page_number','?')}"
                                 )
                                 with st.expander(label, expanded=False):
-                                    st.markdown(r.get("text", ""))
+                                    st.markdown(_clean_text(r.get("text", "")))
                                     st.caption(
                                         f"tenant={r.get('tenant_id','')}  "
                                         f"model={r.get('embedding_version','')}  "
@@ -850,7 +879,7 @@ if tab_raptor is not None:
                     st.subheader("Root summaries")
                     for n in root:
                         with st.container(border=True):
-                            st.markdown(n.summary)
+                            st.markdown(_clean_text(n.summary))
                             child_count = len(_json.loads(n.child_ids_json))
                             st.caption(
                                 f"Level {n.level} · cluster {n.cluster_id} · "
@@ -865,7 +894,7 @@ if tab_raptor is not None:
                         f"Cluster {n.cluster_id}  ({len(child_ids)} source chunks)",
                         expanded=False,
                     ):
-                        st.markdown(n.summary)
+                        st.markdown(_clean_text(n.summary))
                         st.caption(
                             f"Qdrant: `{n.qdrant_point_id[:12]}…`  "
                             f"parent: `{(n.parent_id or 'none')[:12]}…`  "
@@ -990,7 +1019,7 @@ if tab_visual is not None:
                                             settings=cfg,
                                         )
                                         st.subheader("📝 What these pages show")
-                                        st.markdown(synthesis)
+                                        st.markdown(_convert_braces_to_math(_latex_delims_to_dollars(synthesis)))
                                         st.divider()
                                     except Exception:
                                         pass
@@ -1029,8 +1058,8 @@ if tab_graph is not None:
     with tab_graph:
         st.header("🕸️ Concept Graph Search")
         st.caption(
-            "GraphRAG finds passages connected through concept relationships — "
-            "multi-hop reasoning that vector search alone misses. "
+            "Finds passages that mention the concepts your question matches — a "
+            "single-hop concept lookup that vector search alone misses. "
             "Requires Memgraph (`docker compose --profile phase3 up`)."
         )
 
@@ -1063,12 +1092,17 @@ if tab_graph is not None:
                         )
                     else:
                         st.subheader(f"Found {len(results)} concept-connected passage(s)")
+                        st.caption(
+                            "Ranked by how many of the query's concepts each passage "
+                            "matches. This is a single-hop lookup, not a multi-hop traversal."
+                        )
                         for i, r in enumerate(results, 1):
                             with st.container(border=True):
                                 if show_concepts:
-                                    concepts = " → ".join(r.get("concept_path", []))
-                                    st.caption(f"🔗 Concept path: **{concepts}**  |  hops: {r.get('hop_distance', '?')}")
-                                st.markdown(r.get("text_preview", ""))
+                                    concepts = ", ".join(r.get("concept_path", []))
+                                    n_matched = r.get("matched_concepts", len(r.get("concept_path", [])))
+                                    st.caption(f"🔗 {n_matched} concept(s) matched: **{concepts}**")
+                                st.markdown(_clean_text(r.get("text_preview", "")))
                                 st.caption(f"chunk_id: `{r.get('chunk_id','?')}`")
 
                 except Exception as e:

@@ -332,3 +332,53 @@ Tests: 141 test functions across 10 files. `test_phase1/2/3` map to the phases;
 - **The gateway returns HTTP 500 for an empty `Authorization: Bearer` header.** Any
   client that sends the header with no key breaks — this is why the eval judge scored
   nothing until it was given a non-empty key.
+
+---
+
+## 12. Guardrails (planned — P2 spec)
+
+**Status: not built.** Recorded here so the P2 work is a decision rather than an
+improvisation. Referenced by `README.md` Phase 5 ("DeBERTa guardrails + answer leakage
+guard") and HANDOFF P2. Nothing in `src/` enforces any of this today: the synthesis system
+prompt's "if the passages are irrelevant, say so" is an *instruction the model may ignore*,
+not a guardrail.
+
+### Why this is gated on P0-9
+
+Abstention cannot be **measured** without negatives. Every query in the current eval set is
+answerable, so there is nothing to score a refusal against. The gold-set rebuild (P0-9)
+must include unanswerable / out-of-scope queries (~15–20%) before any abstention guardrail
+can be evaluated — otherwise it ships unmeasurable.
+
+### Input guardrails (before retrieval)
+
+| Check | Failure it prevents | Cheap signal |
+|---|---|---|
+| Prompt injection / jailbreak | User text steering the system prompt or tool use | Pattern + classifier; query text is never executed as instructions |
+| Off-topic / non-physics | Confident answers to questions the corpus cannot address | The intent router already classifies; extend it with an `out_of_scope` class |
+| PII in the query | User PII persisted into traces and the SQLite log | Regex + NER pass before persisting |
+| Oversized / degenerate input | Cost blowups, empty or 100k-char queries | Length caps (partly handled in the UI already) |
+
+### Output guardrails (after synthesis)
+
+| Check | Failure it prevents | Cheap signal |
+|---|---|---|
+| Grounding / faithfulness | Ungrounded claims reaching a student | The judge lane already computes claim-level faithfulness (0.70, a floor). Caveat or block below a threshold. |
+| Answer leakage | Revealing eval-set answers or hidden keys | Scan the answer against the held-out eval answers and secret patterns |
+| Citation validity | Citing pages that were not retrieved | `compute_citation_accuracy` already does exactly this (1.000 today, because the generator only cites retrieved pages) |
+| Unsafe / harmful content | Domain policy breach | Classifier — a DeBERTa head is the stated plan |
+| PII in the answer | Echoing user PII back | Same pass as input |
+
+### Design constraints
+
+- **Fail-open vs fail-closed is an explicit per-guardrail decision.** Failing open turns an
+  outage into silently low-quality answers; failing closed turns it into a hard stop.
+  Neither default is safe by accident — choose per check and record the choice.
+- **Latency budget.** A guardrail that adds a full LLM call per query doubles cost. Prefer a
+  small classifier (the DeBERTa plan) or reuse an existing signal (faithfulness, citation
+  accuracy) before adding a call.
+- **The guardrail itself needs precision/recall numbers**, measured on a labelled sample. A
+  guardrail nobody measured is indistinguishable from a broken one — the same failure mode
+  as the silent fallbacks in §8.
+- **Record the decision in the artifact.** "Blocked" vs "not blocked" must be counted, or
+  the guardrail's effect on the metrics is invisible.

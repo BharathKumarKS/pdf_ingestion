@@ -1,0 +1,9 @@
+# Streamlit theme.
+#
+# primaryColor defaults to #FF4B4B (red). Every `type="primary"` button then renders as a
+# full-width red bar — the Search button on the Ask-a-Question page sits directly between
+# the question box and the answer, so it reads as an error banner rather than a call to
+# action. Blue is neutral and matches the "learning platform" framing.
+[theme]
+base = "light"
+primaryColor = "#2563EB"

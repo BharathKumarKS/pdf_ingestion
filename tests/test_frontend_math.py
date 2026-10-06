@@ -66,3 +66,32 @@ def test_answer_path_end_to_end(app):
     assert "$m_1$" in out and "$m_2$" in out and r"$r=|\mathbf{r}|$" in out
     assert "\\[" not in out and "\\]" not in out and "\\(" not in out
     assert r"$r^{3}$" not in out  # display maths must not have been brace-split
+
+
+# ── Display hygiene: parser artefacts and citation extraction ────────────────
+
+def test_clean_text_strips_formula_comment(app):
+    """Docling leaves this HTML comment; Streamlit markdown renders it visibly."""
+    assert app._clean_text("Before <!-- formula-not-decoded --> after") == "Before after"
+
+
+def test_clean_text_strips_literal_formula_not_decoded(app):
+    out = app._clean_text("text Formula not decoded more")
+    assert "ormula not decoded" not in out
+
+
+def test_clean_text_collapses_blank_runs(app):
+    assert app._clean_text("a\n\n\n\n\nb") == "a\n\nb"
+
+
+def test_clean_text_is_safe_on_empty(app):
+    assert app._clean_text("") == ""
+
+
+def test_cited_pages_reads_both_citation_formats(app):
+    ans = "as shown [Page 141] and again (page 274); see also p. 99"
+    assert app._cited_pages(ans) == {141, 274}
+
+
+def test_cited_pages_empty_when_no_citations(app):
+    assert app._cited_pages("an answer with no citations at all") == set()

@@ -432,30 +432,37 @@ class GraphBuilder:
             return []
 
         if query_vector is not None:
-            query_concepts = self._find_concepts_by_embedding(
-                query_vector, top_k=8
-            )
+            scored_concepts = self._find_concepts_scored(query_vector, top_k=8)
         else:
-            query_concepts = self._extract_query_concepts(query_text)
+            scored_concepts = [(n, 1.0) for n in self._extract_query_concepts(query_text)]
 
-        if not query_concepts:
+        if not scored_concepts:
             return []
 
+        # Rank by how many DISTINCT query concepts a chunk matches, then by how
+        # similar those concepts are to the query. Without any ORDER BY this
+        # returned an arbitrary LIMIT — Memgraph's storage order — so a question
+        # about satellite orbits came back with chunks that merely mention "orbit"
+        # (aberration, telescope tilt). Note this is a single-hop concept lookup:
+        # no traversal happens, which is why hop_distance is the constant 0 and is
+        # no longer surfaced to the user as "hops".
         cypher = """
-        UNWIND $concepts AS concept_name
-        MATCH (k:Concept {name: concept_name})
-        MATCH (c:Chunk)-[:MENTIONS]->(k)
-        WHERE c.tenant_id IN [$tenant_id, 'global']
-        WITH c, collect(k.name) AS direct_concepts, 0 AS hop
-        RETURN c.id AS chunk_id, direct_concepts AS concept_path,
-               hop AS hop_distance, c.chunk_text AS text_preview
+        UNWIND $concepts AS c
+        MATCH (k:Concept {name: c.name})
+        MATCH (ch:Chunk)-[:MENTIONS]->(k)
+        WHERE ch.tenant_id IN [$tenant_id, 'global']
+        WITH ch, collect(DISTINCT k.name) AS matched, sum(c.score) AS concept_score
+        RETURN ch.id AS chunk_id, matched AS concept_path,
+               size(matched) AS matched_concepts, concept_score,
+               ch.chunk_text AS text_preview
+        ORDER BY matched_concepts DESC, concept_score DESC
         LIMIT $limit
         """
         try:
             with driver.session() as session:
                 records = session.run(
                     cypher,
-                    concepts=query_concepts,
+                    concepts=[{"name": n, "score": s} for n, s in scored_concepts],
                     tenant_id=tenant_id,
                     limit=limit,
                 ).data()
@@ -463,7 +470,9 @@ class GraphBuilder:
                 {
                     "chunk_id":     r["chunk_id"],
                     "concept_path": r["concept_path"],
-                    "hop_distance": r["hop_distance"],
+                    "matched_concepts": r["matched_concepts"],
+                    "concept_score": r["concept_score"],
+                    "hop_distance": 0,   # single-hop by construction; see above
                     "text_preview": (r["text_preview"] or "")[:200],
                 }
                 for r in records
@@ -519,16 +528,19 @@ class GraphBuilder:
             len(points), self._cfg.concept_collection,
         )
 
-    def _find_concepts_by_embedding(
+    def _find_concepts_scored(
         self,
         query_vector: np.ndarray,
         top_k: int = 8,
-    ) -> list[str]:
-        """
-        Find the top-k most semantically similar concepts to the query vector
-        using Qdrant ANN search (~5ms) instead of fetching embeddings from
-        Memgraph over Bolt (~500ms+).
-        No LLM call, no Bolt round-trip — just a single Qdrant query.
+    ) -> list[tuple[str, float]]:
+        """Top-k concepts by similarity to the query, WITH their scores.
+
+        The scores are the point. Without them the graph lane can only rank by how
+        many concept names a chunk matches — and the concept vocabulary holds
+        near-duplicates ('orbit' / 'Orbit' / 'planetary orbit' / 'Planetary Orbit',
+        "Earth's orbit" / "Earth's orbital motion") that are separate Concept nodes,
+        so almost every chunk ties at 1 and an ORDER BY cannot discriminate. Ranking
+        on the similarity of the best-matched concept does.
         """
         try:
             from src.core.database import get_qdrant
@@ -539,12 +551,25 @@ class GraphBuilder:
                 limit=top_k,
                 with_payload=True,
             )
-            names = [p.payload["name"] for p in response.points if p.payload.get("name")]
-            logger.debug("Concept Qdrant search: top={}", names)
-            return names
+            scored: list[tuple[str, float]] = []
+            for p in response.points:
+                payload = p.payload or {}
+                name = payload.get("name")
+                if name:
+                    scored.append((name, float(p.score)))
+            logger.debug("Concept Qdrant search: top={}", [n for n, _ in scored])
+            return scored
         except Exception as exc:
             logger.warning("Concept Qdrant search failed ({}), falling back to LLM", exc)
             return []
+
+    def _find_concepts_by_embedding(
+        self,
+        query_vector: np.ndarray,
+        top_k: int = 8,
+    ) -> list[str]:
+        """Concept names only — kept for callers that do not rank on similarity."""
+        return [name for name, _ in self._find_concepts_scored(query_vector, top_k)]
 
     def close(self) -> None:
         if self._driver:

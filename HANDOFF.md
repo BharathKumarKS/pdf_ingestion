@@ -351,12 +351,15 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
 13. Test the fallback chains (stub tests structurally cannot reach them)
 14. `render_math()` golden-file test — ends the six-commit LaTeX patch cycle
     (partly done: `tests/test_frontend_math.py` pins both converter bugs)
-15. **Graph lane is not multi-hop and is unranked** — `graph_search` hardcodes
-    `hop_distance = 0` (no traversal) and the Cypher has `LIMIT` with **no `ORDER BY`**,
-    so it returns arbitrary chunks that merely *mention* a matched concept (that is why
-    "satellite orbit" returns aberration/telescope-tilt chunks). Rank first (cheap), then
-    implement real 1-2 hop `RELATES_TO` traversal, then fix the caption that claims
-    multi-hop. Optionally synthesize in-tab.
+15. ⏳ **Graph lane — ranking DONE, traversal still missing.** `graph_search` now orders by
+    distinct concepts matched, then by concept similarity (the scores were previously
+    thrown away), and the tab caption no longer claims multi-hop. Measured: ranking now
+    discriminates (`'Law of Conservation of Energy'` 1.519 ranks above `'laws of physics'`).
+    **Still missing:** real 1–2 hop `RELATES_TO` traversal — `hop_distance` remains the
+    constant 0. **Root cause of the poor relevance:** the concept vocabulary holds
+    near-duplicates as *separate nodes* ('orbit' / 'Orbit' / 'planetary orbit' /
+    'Planetary Orbit', "Earth's orbit" / "Earth's orbital motion"), so nearly every chunk
+    ties at 1 distinct concept. Deduplicating concept names is the bigger lever than ranking.
 16. **Admin Status should report the STORES, not SQLite.** Three separate bugs today came
     from local SQLite describing a different ingest than the index (visual readiness, the
     sidebar badge, and the graph). A status panel driven by store counts would have caught
