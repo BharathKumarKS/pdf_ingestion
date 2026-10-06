@@ -4,12 +4,12 @@
 > For the durable system map read `ARCHITECTURE.md`. For setup read `README.md`.
 > Keep this file short — it loads into every session in this directory.
 >
-> **Last updated: 2026-10-05** — P0 items 1–7 complete and committed.
-> ⚠️ **Local only:** `main` is **6 ahead / 1 behind** `origin/main`. The remote commit
-> we lack — `6f56634` *"surface graph/RAPTOR errors in UI + fix visual search doc filter"* —
-> touches files this work also changed (`streamlit_app.py`, `config.py`, `intent_router.py`,
-> `llm.py`, `graph_builder.py`, `reranker.py`, `store.py`). **Merge/rebase and expect
-> conflicts before pushing.** If this date is old, re-check `git log --oneline -5` and
+> **Last updated: 2026-10-05** — P0 items 1–8 complete and committed.
+> **`main` is in sync with `origin/main`** (rebased + pushed at `dce5efd`). The earlier
+> "6 ahead / 1 behind — expect conflicts" warning was **wrong**: the two sides touched
+> disjoint files (the remote commit `6f56634` changes only `streamlit_app.py`, which no
+> local commit touches) and the rebase was clean.
+> If this date is old, re-check `git log --oneline -5` and
 > `git status --short` before trusting "Current focus".
 
 ---
@@ -28,8 +28,8 @@ Do not add new `tenant_id` defaults either — see the trap list.
 
 ## Current focus
 
-**P0 items 1–6 are DONE and validated (2026-10-05).** Next is **P0 item 7** — fix the
-retrieval metric set. See the priority plan below for the reordered P0/P1.
+**P0 items 1–8 are DONE and validated (2026-10-05).** Next is **P0 item 9** — rebuild the
+gold set (~120–150 queries); it gates all of P1. See the priority plan below.
 
 | # | Item | Evidence |
 |---|---|---|
@@ -39,8 +39,10 @@ retrieval metric set. See the priority plan below for the reordered P0/P1.
 | 4 | Config-invariant tests | `tests/test_config_invariants.py` (6) |
 | 5 | Doc drift fixed | `reranker.py`, `.env.example`, `CLAUDE.md`, `README.md`, `ARCHITECTURE.md` |
 | 6 | Eval gate + CI | `scripts/eval_gate.py`, `.github/workflows/ci.yml` |
+| 7 | Metric set fixed | `1dad73f` — `Precision@k` → `Recall@k` + `Hit@k` |
+| 8 | Judge lane measured | `p0-judge-canonical_*.md`; `JUDGE_MODEL` path fixed (`dce5efd`) |
 
-Test suite: **153 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
+Test suite: **164 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
 **pre-existing** — confirmed by stashing the P0 edits and re-running the same tests on
 clean source. They are NOT P0 regressions:
 
@@ -77,6 +79,50 @@ queries, cluster index, SPLADE + reranker on, elapsed 56.7s:
 ⚠️ **The judge lane is still unmeasured in this baseline.** `Judge: none` — Faithfulness,
 Answer Relevance and Citation Accuracy are all `—`. Run with `--judge-from-env` or the
 artifact looks complete while three columns are unmeasured (the trap at "Fixed 2026-10-04").
+
+### P0-8 — the judge lane, measured (2026-10-05)
+
+First generation metrics this repo has ever produced. Judge = `Qwen/Qwen3-VL-8B-Instruct`
+(cross-family: the generator is `openai/gpt-oss-20b`), cluster index, SPLADE + reranker on,
+**1040 judge calls, 0 failures**, 23/23 calibrated queries. Artifact
+`data/eval_results/p0-judge-canonical_2026-10-06_0010.md`.
+
+| Scope | Recall@100 | Recall@20 | Hit@20 | MRR | NDCG@20 | Faithfulness | Ans.Relevance | Citation Acc. |
+|---|---|---|---|---|---|---|---|---|
+| Overall | 0.795 | 0.636 | 1.000 | 0.361 | 0.432 | **0.701** | **0.927** | **1.000** |
+| factual | 0.900 | 0.775 | 1.000 | 0.504 | 0.573 | 0.752 | 0.867 | 1.000 |
+| overview | 0.771 | 0.560 | 1.000 | 0.192 | 0.366 | 0.645 | 1.000 | 1.000 |
+| multihop | 0.665 | 0.502 | 1.000 | 0.302 | 0.288 | 0.676 | 0.952 | 1.000 |
+
+⚠️ **Faithfulness is indicative and biased LOW — treat 0.70 as a floor.** Hand-scored 10
+answers against the exact passages the judge saw (instrumented run, 406 judge calls, 0
+failures). Exact agreement on 4/10 (vec-008, vec-010, raptor-004, graph-005); the judge
+under-scored the rest, always in the same direction — judge mean ≈0.65 vs hand ≈0.73 on
+the sample, i.e. ~0.08 low. Full working: `data/eval_results/p0-judge-handscore_2026-10-05.md`.
+Three systematic misses:
+
+- **LaTeX vs mangled plaintext.** Claim `F = -G m₁m₂/r³ · r` → NO against p243, which
+  states `F = -Gm 1 m 2 r /r 3`. Claim `K = ½mv²` → NO against p228's `1 2 mv 2`.
+- **Near-verbatim paraphrase.** raptor-002's "energy appears in electrical, mechanical,
+  radiant, heat forms" → NO against p209, which lists exactly those forms.
+- **Meta/citation claims.** Claim extraction emits "This value appears on page 965"; no
+  passage can *state* that, so it is always NO. An ill-formed claim, not a retrieval miss,
+  and it drags the metric down.
+
+Ans.Relevance (0.927) and Citation Acc. (1.000) look well-calibrated — citation is 1.000
+because answers cite only retrieved pages, so it is a weak signal as currently defined.
+
+Two harness residuals (not pipeline bugs):
+
+1. **Claim extraction JSON is intermittently unparseable** — one run lost 2/23 queries
+   (vec-003, graph-003) to `Invalid \escape` (LaTeX backslashes) and scored `None`; the
+   canonical run lost 0. So ~0–9% of the measurement, run-dependent. That is P0-2 working
+   as designed (logged, not silently 1.0). A tolerant parse (or JSON-safe escaping in the
+   prompt) would remove the variance.
+2. **`--judge-from-env` was doubly broken; fixed in `dce5efd`.** It set the judge model to
+   the *generator* (self-preference bias), and posted to `/chat/completions` — the gateway
+   serves only `/v1/chat/completions` (bare path → 404). Now `JUDGE_MODEL` overrides the
+   generator model and the `/v1` suffix is normalised like `llm.py`.
 
 ### Prerequisite status (re-checked 2026-10-04 — `scripts/preflight.py`, 24/24 pass)
 
@@ -143,7 +189,7 @@ report's Precision@20 / NDCG@20 and the "reranker top-20" lift need re-checking.
 - ✅ `config.yaml`'s Aug-24 `gpt-oss-20b` → `gpt-oss-120b` working-tree edit was the
   regression that killed every LLM stage; reverted and committed in `6381f7b`.
 - ✅ **pytest** — install with `uv sync --extra dev` (uv at `~/.local/bin/uv`). Suite is
-  151 pass / 5 pre-existing failures (listed above).
+  164 pass / 5 pre-existing failures (listed above).
 - **7 visual queries are still uncalibrated** — `colpali-001` … `colpali-007` all carry
   `"calibrated": false` and `"relevant_pages": null` in `data/eval_queries.json`. They are
   excluded from the 23/23 baseline. P1 item 7; `calibration_output.txt` is the working pass.
@@ -185,18 +231,14 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
    gold set; it read as failure while sitting at its own ceiling. Now `Recall@top_k` +
    `Hit@top_k`; summary columns are `Recall@100 | Recall@20 | Hit@20 | MRR | NDCG@20`, and
    `Recall@fetch_k − Recall@top_k` quantifies what ranking discards.
-8. **Run the judge lane** — the first-ever measurement of answer quality. Faithfulness /
-   Ans.Relevance / Citation are `—` in every artifact ever produced.
-   ⚠️ **Judge choice is constrained — checked 2026-10-05, do not re-litigate.**
-   `deepseek-ai/DeepSeek-R1-Distill-Qwen-7B` is **unusable**: it ignores every
-   "answer only YES/NO" instruction and returns a reasoning preamble, which the eval
-   scores as NOT faithful — faithfulness collapses to ~0 (the mirror of the P0-2 bug).
-   `openai/gpt-oss-120b` is still HTTP 502. That leaves `Qwen/Qwen3-VL-8B-Instruct`
-   (clean output; it made the labels, but faithfulness compares the answer to the
-   *passages*, not the labels, so that circularity does not apply) or `gpt-oss-20b` as
-   judge (self-preference bias — it is the generator). Use Qwen3-VL, label the numbers
-   **indicative**, and hand-score ~10 answers first to check judge agreement.
-   Model IDs need their full prefix (`deepseek-ai/…`, `Qwen/…`).
+8. ✅ **done 2026-10-05** (`dce5efd` + `p0-judge-canonical_2026-10-06_0010.md`) — **judge
+   lane measured.** Faithfulness 0.701 / Ans.Relevance 0.927 / Citation 1.000, 1040 judge
+   calls, 0 failures.
+   Judge is `Qwen/Qwen3-VL-8B-Instruct`; the numbers are **indicative** — hand-scoring 10
+   answers showed a systematic ~0.08 low bias on formula/paraphrase claims (see P0-8 above).
+   Judge choice is settled: `DeepSeek-R1-Distill-Qwen-7B` ignores YES/NO instructions and
+   collapses faithfulness to ~0; `gpt-oss-120b` is still HTTP 502; `gpt-oss-20b` is the
+   generator (self-preference). **Do not re-litigate.**
 9. **Rebuild the gold set** — the big one, and it gates all of P1. Target **~120–150
    queries** (23 can only detect ≥0.15 effects at 80% power; 0.05 needs ~200). Per-type
    generation: factual from a known page; overview from a topic + book-wide scan;
@@ -319,6 +361,14 @@ contaminated live traversal too. It hit the `multihop` lane (7 of 30 eval querie
 - `store.py` is a 1350-LOC hub — per `CLAUDE.md` §3, do not refactor it as a side effect
 - A wider retrieval funnel is **not** a better system — `scripts/eval_gate.py` refuses
   to diff artifacts measured at different K (the report once did exactly this)
+- `--judge-from-env` judges with the **generator** unless `JUDGE_MODEL` is set. A model
+  scoring its own output is not a measurement. The gateway also serves only
+  `/v1/chat/completions` — a bare `/chat/completions` is 404.
+- Retrieval is **not bit-reproducible**: HyDE generates a hypothetical at temperature 0.3,
+  so two runs of identical config differ (Recall@20 0.636 → 0.628 across the two
+  2026-10-05 runs). Compare artifacts with `eval_gate.py`'s tolerance, never single numbers.
+- Faithfulness is a **floor**, not a point estimate: the judge under-scores formula and
+  paraphrase claims (see P0-8). A faithfulness drop of <0.05 between runs is judge noise.
 
 ---
 

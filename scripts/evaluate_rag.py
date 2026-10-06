@@ -15,8 +15,13 @@ Retrieval metrics (computed per query):
                     what wasn't retrieved)
   mrr@fetch_k     — mean reciprocal rank before threshold, where did the
                     first relevant result appear?
-  precision@top_k — with score threshold — of the reranked top_k, how many
-                    pages are relevant?
+  recall@top_k    — of the labelled pages, how many reached the reranked
+                    top_k? Denominator is |relevant|, so it is well-conditioned
+                    at any gold-set size. (Replaced precision@top_k, which
+                    divided by a fixed top_k and was capped at
+                    min(|relevant|, top_k)/top_k ≈ 0.10 here.)
+  hit@top_k       — did ANY labelled page reach the reranked top_k? Binary
+                    per query; "did the student get something useful".
   ndcg@top_k      — normalised discounted cumulative gain, ranking quality
                     within the reranked top_k
 
