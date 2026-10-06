@@ -776,6 +776,68 @@ class DocumentStore:
             stmt = stmt.limit(limit)
             return session.exec(stmt).all()
 
+    # ── Card maintenance (scripts/clean_cards.py) ─────────────────────────
+
+    def list_cards_for_cleanup(self) -> list[tuple[str, str, str, str]]:
+        """Every card as (id, card_type, content, document_id) — for offline auditing."""
+        with Session(self._engine) as session:
+            return [
+                (c.id, c.card_type, c.content, c.document_id)
+                for c in session.exec(select(Card)).all()
+            ]
+
+    def card_ids_present_in_qdrant(self, card_ids: list[str]) -> set[str]:
+        """Which of these card ids exist as points in ``derivative_artifacts``.
+
+        Matching on ``payload.card_id`` rather than the point id, so this stays honest
+        if the indexer ever stops using the card id as the point id. An empty result for
+        a non-empty input means the collection is a different card generation — the
+        caller must refuse to delete rather than silently no-op.
+        """
+        found: set[str] = set()
+        wanted = set(card_ids)
+        offset = None
+        while True:
+            points, offset = self._qdrant.scroll(
+                collection_name=self._cfg.da_collection,
+                limit=1000,
+                offset=offset,
+                with_payload=["card_id"],
+                with_vectors=False,
+            )
+            for p in points:
+                cid = (p.payload or {}).get("card_id")
+                if cid in wanted:
+                    found.add(cid)
+            if offset is None:
+                break
+        return found
+
+    def delete_cards_by_id(self, card_ids: list[str]) -> int:
+        """Delete ``derivative_artifacts`` points whose ``payload.card_id`` is in card_ids."""
+        if not card_ids:
+            return 0
+        from qdrant_client.models import FieldCondition, Filter, MatchAny
+
+        self._qdrant.delete(
+            collection_name=self._cfg.da_collection,
+            points_selector=Filter(
+                must=[FieldCondition(key="card_id", match=MatchAny(any=list(card_ids)))]
+            ),
+        )
+        return len(card_ids)
+
+    def delete_cards_by_id_sqlite(self, card_ids: list[str]) -> int:
+        """Delete the SQLite rows for these cards. Returns the number actually removed."""
+        if not card_ids:
+            return 0
+        with Session(self._engine) as session:
+            cards = session.exec(select(Card).where(Card.id.in_(card_ids))).all()
+            for c in cards:
+                session.delete(c)
+            session.commit()
+            return len(cards)
+
     # ── Phase 2: RAPTOR ───────────────────────────────────────────────────
 
     def save_raptor_tree(

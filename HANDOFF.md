@@ -371,6 +371,19 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
 
 **P2** abstention · guardrails · PPR · semantic caching · OKF cards
 
+**⚠️ Stale card index — found while cleaning duplicates; blocks card-lane metrics**
+`derivative_artifacts` (Qdrant, 81,837 points) shares **no card ids at all** with SQLite
+`cards` (95,213 rows): every id dangles in both directions. The collection was built from a
+**retired card generation**, so the card retrieval lane serves cards the UI no longer has,
+and any DA-lane metric is being measured against stale content. Fix:
+`uv run python scripts/index_derivative_artifacts.py --clear` (re-embeds every card).
+`scripts/clean_cards.py` refuses to delete until that is done, by design (0/294 ids matched
+— a silent no-op delete is worse than a refusal).
+
+Also note: 95,213 cards for a 968-page book (~19 per page) is a **curation** problem, not a
+duplication one — only 294 rows (0.3%) are junk or duplicate. The student-facing fix is
+question-scoped cards (done), not mass deletion.
+
 **Deferred (agreed — do not lose these)**
 - **Key Facts panel** — keep it, but *measure* whether it helps before removing or expanding.
 - **Feedback capture** (thumbs / "was this helpful?") — the only real-user signal available;
