@@ -124,6 +124,41 @@ Two harness residuals (not pipeline bugs):
    serves only `/v1/chat/completions` (bare path → 404). Now `JUDGE_MODEL` overrides the
    generator model and the `/v1` suffix is normalised like `llm.py`.
 
+### Frontend verified + metrics extended (2026-10-05)
+
+Streamlit app driven end-to-end against the cluster. **Run it on a free port — 8501 and
+8502 belong to other projects** (`genies-kitchen`, `strange-lamp`); verifying against them
+would QA the wrong application. Ask a Question works: retrieval → HyDE → intent router →
+SPLADE+ColBERT → rerank → synthesis → answer + cited sources + expandable passages.
+
+Three real defects found; two fixed:
+
+1. **Phoenix tracing is enabled but its endpoint is down.** `.env` sets
+   `PHOENIX_ENABLED=true` / `PHOENIX_ENDPOINT=http://localhost:6007` and nothing listens
+   there, so every request retries span export (0.87s → 2.12s → 3.84s → "Failed to export
+   span batch") — ~21 retry blocks per query, turning a ~10s retrieval into ~70s. Launch
+   with `PHOENIX_ENABLED=false` (env var; no `.env` edit needed) or start Phoenix.
+2. **The answer's LaTeX was not rendered** — `st.markdown(synthesis)` bypassed the math
+   converter the cards use, and the generator emits `\[...\]` / `\(...\)`, which Markdown
+   escapes to a literal `[ ... ]`. Fixed: `_latex_delims_to_dollars()`, plus a `$$...$$`
+   fix in `_convert_braces_to_math` Pass 2 (it treated a display block's `$$` as an empty
+   inline span, then brace-converted the maths inside it). Verified rendered in the app.
+3. **Formulas are missing from the indexed passages** — they read
+   `<!-- formula-not-decoded -->` where the formula should be. This is *why* formula claims
+   score low on faithfulness: the judge is asked whether a passage supports
+   `F = -Gm₁m₂/r³` and the passage contains no formula at all. A data-quality issue, not a
+   judge error — it also depresses `ctx_prec_judged`.
+
+**New metrics** (`scripts/evaluate_rag.py`): `ctx_precision` (page-level, chunk units —
+diagnostic only, measured 0.05–0.10) and `ctx_prec_judged` (RAGAS-style, rank-weighted,
+behind `--judged-context-precision`; needs no gold labels, so it can cover visual queries
+too). Claim extraction now survives LaTeX backslashes (`_parse_claims`) rather than losing
+the whole query.
+
+**Abstention / guardrail precision: deferred to P2 as agreed** — the features do not exist
+and the eval set has no negatives, so the metric is unmeasurable. Negative-query generation
+is folded into P0-9.
+
 ### Prerequisite status (re-checked 2026-10-04 — `scripts/preflight.py`, 24/24 pass)
 
 Point the eval at the **cluster** index: `QDRANT_HOST=10.0.10.65`. No `.env` edit is
@@ -243,6 +278,9 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
    queries** (23 can only detect ≥0.15 effects at 80% power; 0.05 needs ~200). Per-type
    generation: factual from a known page; overview from a topic + book-wide scan;
    multihop from the Memgraph concept graph. Graded relevance; human-verify a 20–30% sample.
+   **Must also include unanswerable / out-of-scope negatives (~15–20%)** — abstention
+   precision (P2) is unmeasurable without them: there is currently nothing to score a
+   refusal against.
 
 **P1 — then improve metrics** (all of it gated on P0-9)
 10. Ranking — overview MRR 0.191 is the one genuinely bad number. Cheapest first: config
@@ -369,6 +407,12 @@ contaminated live traversal too. It hit the `multihop` lane (7 of 30 eval querie
   2026-10-05 runs). Compare artifacts with `eval_gate.py`'s tolerance, never single numbers.
 - Faithfulness is a **floor**, not a point estimate: the judge under-scores formula and
   paraphrase claims (see P0-8). A faithfulness drop of <0.05 between runs is judge noise.
+- **Phoenix is enabled by default with no collector running** — it silently adds ~60s of
+  retry latency per query. `PHOENIX_ENABLED=false` for any latency-sensitive run.
+- Passages contain `<!-- formula-not-decoded -->` where Docling failed to decode a formula.
+  Formula-bearing claims then cannot be entailed by any passage — it caps faithfulness and
+  `ctx_prec_judged` regardless of retrieval quality.
+- **Ports 8501/8502 are other projects** on this machine. Pick a free port for this app.
 
 ---
 

@@ -90,15 +90,18 @@ def _convert_braces_to_math(text: str) -> str:
     i = 0
     while i < len(text):
         if text[i] == '$':
-            # Already in math — copy through to closing $ without re-processing
-            result.append(text[i])
-            i += 1
-            while i < len(text) and text[i] != '$':
-                result.append(text[i])
-                i += 1
-            if i < len(text):
-                result.append(text[i])
-                i += 1
+            # Already in math — copy the whole span through untouched. Must handle
+            # $$...$$ (display) as well as $...$: treating the two dollars of a
+            # display block as an empty inline span let the {expr} pass corrupt
+            # the block's braces (e.g. \frac{GMm}{r^{2}} became \frac{GMm}{$r^{2}$}).
+            if text.startswith('$$', i):
+                close = text.find('$$', i + 2)
+                end = len(text) if close == -1 else close + 2
+            else:
+                close = text.find('$', i + 1)
+                end = len(text) if close == -1 else close + 1
+            result.append(text[i:end])
+            i = end
         elif text[i] == '{':
             depth, j = 1, i + 1
             while j < len(text) and depth > 0:
@@ -117,6 +120,20 @@ def _convert_braces_to_math(text: str) -> str:
             result.append(text[i])
             i += 1
     return ''.join(result)
+
+
+def _latex_delims_to_dollars(text: str) -> str:
+    """Convert the LaTeX delimiters the synthesis model emits into KaTeX's $ forms.
+
+    The generator writes display math as \\[...\\] and inline as \\(...\\). Markdown
+    treats a backslash as an escape, so those render as literal '[ ... ]' and the
+    raw LaTeX shows through in the answer. Streamlit renders math via KaTeX, which
+    wants $$...$$ and $...$.
+    """
+    import re
+    text = re.sub(r'\\\[(.+?)\\\]', lambda m: f'$${m.group(1).strip()}$$', text, flags=re.S)
+    text = re.sub(r'\\\((.+?)\\\)', lambda m: f'${m.group(1).strip()}$', text, flags=re.S)
+    return text
 
 
 def render_math(text: str, card_type: str = "") -> None:
@@ -546,7 +563,7 @@ with tab_search:
 
                     if synthesis:
                         st.subheader("💡 Answer")
-                        st.markdown(synthesis)
+                        st.markdown(_convert_braces_to_math(_latex_delims_to_dollars(synthesis)))
                         st.divider()
 
                     # ── Key Facts panel (student only) ────────────────────

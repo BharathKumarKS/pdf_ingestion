@@ -22,6 +22,12 @@ Retrieval metrics (computed per query):
                     min(|relevant|, top_k)/top_k ≈ 0.10 here.)
   hit@top_k       — did ANY labelled page reach the reranked top_k? Binary
                     per query; "did the student get something useful".
+  ctx_precision   — of the chunks handed to the generator, what fraction come
+                    from a labelled-relevant page? Diagnostic of how much of the
+                    context window is not gold (measured 0.05-0.10 here).
+  ctx_prec_judged — RAGAS-style, rank-weighted, judge-scored per chunk. Needs
+                    --judged-context-precision; needs no gold labels, and unlike
+                    ctx_precision it can move.
   ndcg@top_k      — normalised discounted cumulative gain, ranking quality
                     within the reranked top_k
 
@@ -254,6 +260,18 @@ def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -
 
     n_relevant_hits = sum(gains)
 
+    # Context precision (page-level, CHUNK units): of the chunks the generator is
+    # handed, what fraction come from a labelled-relevant page? This is a
+    # DIAGNOSTIC, not a score with headroom — measured 0.05-0.10 on this corpus,
+    # because top_k=20 pulls chunks from ~10-15 pages while the gold set labels
+    # 1-3 of them. That is the useful part: it quantifies how little of the
+    # context window is gold, which is what motivates reranking/compression. (The
+    # removed Precision@k was the same ratio against a fixed slot count.) For a
+    # metric that can actually move, use the judged RAGAS-style variant.
+    n_chunks = len(reranked)
+    relevant_chunk_hits = sum(1 for h in reranked if h.get("page_number") in relevant)
+    context_precision = (relevant_chunk_hits / n_chunks) if n_chunks else None
+
     # Recall@top_k — denominator is the GROUND-TRUTH size, not the slot count.
     # This replaces Precision@top_k, which divided by a fixed top_k and was
     # therefore capped at min(|relevant|, top_k)/top_k — about 0.10 for a gold set
@@ -272,6 +290,7 @@ def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -
         f"recall_at_{cfg.reranker_fetch_k}": round(recall, 4) if recall is not None else None,
         f"recall_at_{cfg.reranker_top_k}":   round(recall_top, 4) if recall_top is not None else None,
         f"hit_at_{cfg.reranker_top_k}":      round(hit_top, 4),
+        "context_precision":                 round(context_precision, 4) if context_precision is not None else None,
         "mrr":                               round(mrr, 4),
         f"ndcg_at_{cfg.reranker_top_k}":      round(ndcg, 4),
     }
@@ -339,6 +358,15 @@ Return only the single digit, nothing else.
 Question: {question}
 Answer: {answer}"""
 
+_CONTEXT_USEFUL_PROMPT = """\
+Is the passage below useful for answering the student's question?
+Answer YES if it contains information that helps answer the question, or NO otherwise.
+Only YES or NO on the first line.
+
+Question: {question}
+
+Passage: {passage}"""
+
 
 # Faithfulness cost is O(claims x passages) judge calls. Uncapped and sequential
 # this was ~200-300 calls per query — the reason a full judged run was still
@@ -347,6 +375,37 @@ Answer: {answer}"""
 _MAX_CLAIMS    = 12
 _MAX_PASSAGES  = 8
 _JUDGE_WORKERS = 8
+
+
+def _parse_claims(raw: str) -> list[str] | None:
+    """Parse a claim-extraction reply into a list of claims.
+
+    Strict JSON first, then a repair pass for the common LLM failure of emitting a
+    raw LaTeX backslash inside a JSON string (`\\hbar`, `\\frac`), which is an
+    invalid escape and makes `json.loads` reject the whole reply — losing that
+    query's faithfulness entirely (observed intermittently: 2/23 in one run, 0/23
+    in another). Returns None when neither parse yields claims, so the caller
+    records the metric as *unavailable* rather than scoring it.
+    """
+    if not raw:
+        return None
+    start, end = raw.find("["), raw.rfind("]") + 1
+    if start == -1 or end <= start:
+        return None
+    segment = raw[start:end]
+
+    # Pass 2 escapes any backslash that does not begin a valid JSON escape.
+    repaired = re.sub(r'\\(?!["\\/bfnrtu])', r"\\\\", segment)
+    for candidate in (segment, repaired):
+        try:
+            parsed = json.loads(candidate)
+        except Exception:
+            continue
+        if isinstance(parsed, list):
+            claims = [str(c).strip() for c in parsed if str(c).strip()]
+            if claims:
+                return claims
+    return None
 
 
 def compute_faithfulness(answer: str, chunks: list[dict], judge_fn) -> float | None:
@@ -374,11 +433,12 @@ def compute_faithfulness(answer: str, chunks: list[dict], judge_fn) -> float | N
         return None
 
     try:
-        start = raw.find("[")
-        end   = raw.rfind("]") + 1
-        claims = json.loads(raw[start:end]) if start != -1 else []
-    except Exception as exc:
-        logger.error("Faithfulness: claim extraction was not valid JSON ({}) — metric unavailable", exc)
+        claims = _parse_claims(raw)
+    except Exception as exc:  # defensive: never let a parse bug kill the run
+        logger.error("Faithfulness: claim parsing raised ({}) — metric unavailable", exc)
+        return None
+    if claims is None:
+        logger.error("Faithfulness: claim extraction was not parseable — metric unavailable")
         return None
 
     claims = [str(c).strip() for c in claims if str(c).strip()][:_MAX_CLAIMS]
@@ -422,6 +482,36 @@ def compute_citation_accuracy(answer: str, chunks: list[dict]) -> float:
         return 1.0  # no citations — not penalised (no false claims)
     retrieved_pages = {c.get("page_number") for c in chunks}
     return round(len(cited & retrieved_pages) / len(cited), 4)
+
+
+def compute_context_precision_judged(question: str, chunks: list[dict], judge_fn) -> float | None:
+    """RAGAS-style context precision: rank-weighted precision of the retrieved chunks.
+
+    Each chunk is judged useful/not for the question; the score is the mean of
+    precision@k over the positions where a useful chunk appears, so early useful
+    chunks score higher than late ones. Unlike the page-level column it needs no
+    gold labels, so it also covers the uncalibrated (visual) queries. Costs one
+    judge call per chunk — hence the `--judged-context-precision` flag.
+    """
+    passages = [c.get("text", "") for c in chunks if c.get("text")]
+    if not passages:
+        return None
+
+    def _useful(p: str) -> bool:
+        verdict = judge_fn(_CONTEXT_USEFUL_PROMPT.format(question=question, passage=p[:800]))
+        return verdict.strip().upper().startswith("YES")
+
+    with ThreadPoolExecutor(max_workers=_JUDGE_WORKERS) as pool:
+        rel = list(pool.map(_useful, passages))
+
+    if not any(rel):
+        return 0.0
+    running, precisions = 0, []
+    for i, is_rel in enumerate(rel, start=1):
+        if is_rel:
+            running += 1
+            precisions.append(running / i)
+    return round(sum(precisions) / len(precisions), 4)
 
 
 # ── Judge LLM factory ─────────────────────────────────────────────────────────
@@ -602,6 +692,13 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
             result["generation"]["citation_accuracy"] = compute_citation_accuracy(
                 answer, retrieval["reranked"]
             )
+            # Optional: RAGAS-style judged context precision (one judge call per
+            # chunk). Off by default — it is the only generation metric that needs
+            # no gold labels, so it is also the one that can cover visual queries.
+            if getattr(args, "judged_context_precision", False):
+                result["generation"]["context_precision_judged"] = compute_context_precision_judged(
+                    query_text, retrieval["reranked"], judge_fn
+                )
 
     return result
 
@@ -633,11 +730,15 @@ def aggregate_metrics(results: list[dict], cfg) -> dict:
             recall_k:   _avg([i["metrics"].get(recall_k)   for i in items]),
             recall_top: _avg([i["metrics"].get(recall_top) for i in items]),
             hit_k:      _avg([i["metrics"].get(hit_k)      for i in items]),
+            "context_precision": _avg([i["metrics"].get("context_precision") for i in items]),
             "mrr":      _avg([i["metrics"].get("mrr")      for i in items]),
             ndcg_k:     _avg([i["metrics"].get(ndcg_k)     for i in items]),
             "faithfulness":      _avg([i["generation"].get("faithfulness")      for i in items]),
             "answer_relevance":  _avg([i["generation"].get("answer_relevance")  for i in items]),
             "citation_accuracy": _avg([i["generation"].get("citation_accuracy") for i in items]),
+            "context_precision_judged": _avg(
+                [i["generation"].get("context_precision_judged") for i in items]
+            ),
             "n_queries": len(items),
             "n_calibrated": sum(1 for i in items if i.get("calibrated")),
         }
@@ -668,11 +769,17 @@ def build_summary_table(aggregated: dict, cfg) -> str:
     def _fmt(v):
         return f"{v:.3f}" if v is not None else "—"
 
+    has_judged = any(
+        m.get("context_precision_judged") is not None
+        for m in [aggregated["overall"], *aggregated["by_type"].values()]
+    )
     headers = [
         "Scope",
         f"Recall@{cfg.reranker_fetch_k}", f"Recall@{cfg.reranker_top_k}",
-        f"Hit@{cfg.reranker_top_k}", "MRR", f"NDCG@{cfg.reranker_top_k}",
-        "Faithfulness", "Ans.Relevance", "Citation Acc.", "n / cal",
+        f"Hit@{cfg.reranker_top_k}", "Ctx.Prec", "MRR", f"NDCG@{cfg.reranker_top_k}",
+        "Faithfulness", "Ans.Relevance", "Citation Acc.",
+        *(["Ctx.Prec(J)"] if has_judged else []),
+        "n / cal",
     ]
 
     def _row(label, m):
@@ -681,9 +788,11 @@ def build_summary_table(aggregated: dict, cfg) -> str:
         return [
             label,
             _fmt(m.get(recall_k)), _fmt(m.get(recall_top)), _fmt(m.get(hit_k)),
-            _fmt(m.get("mrr")), _fmt(m.get(ndcg_k)),
+            _fmt(m.get("context_precision")), _fmt(m.get("mrr")), _fmt(m.get(ndcg_k)),
             _fmt(m.get("faithfulness")), _fmt(m.get("answer_relevance")),
-            _fmt(m.get("citation_accuracy")), f"{n}/{nc}",
+            _fmt(m.get("citation_accuracy")),
+            *([_fmt(m.get("context_precision_judged"))] if has_judged else []),
+            f"{n}/{nc}",
         ]
 
     rows = [_row("Overall", aggregated["overall"])]
@@ -705,7 +814,7 @@ def build_per_query_table(results: list[dict], cfg) -> str:
     headers = [
         "ID", "Query", "Type",
         f"Recall@{cfg.reranker_fetch_k}", f"Recall@{cfg.reranker_top_k}",
-        f"Hit@{cfg.reranker_top_k}", "MRR", f"NDCG@{cfg.reranker_top_k}",
+        f"Hit@{cfg.reranker_top_k}", "Ctx.Prec", "MRR", f"NDCG@{cfg.reranker_top_k}",
         "Retrieved pages", "Labeled pages",
     ]
 
@@ -726,7 +835,7 @@ def build_per_query_table(results: list[dict], cfg) -> str:
             r["query"][:55] + ("…" if len(r["query"]) > 55 else ""),
             r.get("query_type", ""),
             _fmt(m.get(recall_k)), _fmt(m.get(recall_top)), _fmt(m.get(hit_k)),
-            _fmt(m.get("mrr")), _fmt(m.get(ndcg_k)),
+            _fmt(m.get("context_precision")), _fmt(m.get("mrr")), _fmt(m.get(ndcg_k)),
             top_pages or "—",
             labeled or "—",
         ])
@@ -748,6 +857,7 @@ def print_report(aggregated: dict, cfg):
     table.add_column(f"Recall@{cfg.reranker_fetch_k}", justify="right")
     table.add_column(f"Recall@{cfg.reranker_top_k}", justify="right")
     table.add_column(f"Hit@{cfg.reranker_top_k}", justify="right")
+    table.add_column("Ctx.Prec",     justify="right")
     table.add_column("MRR",          justify="right")
     table.add_column(f"NDCG@{cfg.reranker_top_k}", justify="right")
     table.add_column("Faithfulness",     justify="right")
@@ -763,6 +873,7 @@ def print_report(aggregated: dict, cfg):
             _fmt(m.get(recall_k)),
             _fmt(m.get(recall_top)),
             _fmt(m.get(hit_k)),
+            _fmt(m.get("context_precision")),
             _fmt(m.get("mrr")),
             _fmt(m.get(ndcg_k)),
             _fmt(m.get("faithfulness")),
@@ -819,6 +930,9 @@ def parse_args():
                    help="Auto-configure judge from LLM_BACKEND/OPENAI_API_BASE/OPENAI_MODEL in .env "
                         "(skips --judge-backend/--judge-api-base/--judge-model flags). "
                         "Set JUDGE_MODEL to judge with a model other than the generator.")
+    p.add_argument("--judged-context-precision", action="store_true",
+                   help="Also compute RAGAS-style context precision (one judge call per "
+                        "retrieved chunk). Off by default: it is O(chunks) judge calls.")
 
     return p.parse_args()
 

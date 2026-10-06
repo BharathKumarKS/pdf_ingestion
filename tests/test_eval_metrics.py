@@ -79,3 +79,50 @@ def test_pool_vs_final_recall_gap_is_visible(ev, cfg):
     m = ev.compute_retrieval_metrics(retrieval, [1, 5], cfg)
     assert m["recall_at_100"] == 1.0  # p5 is in the candidate pool
     assert m["recall_at_20"] == 0.5   # ...but ranking discarded it
+
+
+# ── Context precision: CHUNK units, so not pinned at the page-count ceiling ───
+
+def test_context_precision_counts_chunks_not_pages(ev, cfg):
+    """Denominator is the retrieved chunks; the unit is the chunk.
+
+    This does NOT lift the metric far on a real corpus: measured 0.05-0.10, because
+    top_k=20 pulls chunks from many pages while the gold set labels 1-3 of them. It
+    is a diagnostic of how much of the context window is not gold, not a score with
+    headroom. The judged (RAGAS-style) variant is the one that can move.
+    """
+    m = ev.compute_retrieval_metrics(_retrieval([5, 5, 9, 9]), [5, 9], cfg)
+    assert m["context_precision"] == 1.0          # every chunk from a labelled page
+    assert m["recall_at_20"] == 1.0
+
+    m2 = ev.compute_retrieval_metrics(_retrieval([5, 9, 1, 2]), [5, 9], cfg)
+    assert m2["context_precision"] == 0.5         # 2 of 4 chunks
+
+
+def test_context_precision_zero_when_nothing_relevant(ev, cfg):
+    m = ev.compute_retrieval_metrics(_retrieval([1, 2, 3, 4]), [50], cfg)
+    assert m["context_precision"] == 0.0
+
+
+def test_context_precision_none_without_chunks(ev, cfg):
+    m = ev.compute_retrieval_metrics(_retrieval([]), [50], cfg)
+    assert m["context_precision"] is None
+
+
+# ── Judged (RAGAS-style) context precision ───────────────────────────────────
+
+def test_judged_context_precision_all_and_none(ev):
+    chunks = [{"text": f"c{i}"} for i in range(4)]
+    assert ev.compute_context_precision_judged("q", chunks, lambda p: "YES") == 1.0
+    assert ev.compute_context_precision_judged("q", chunks, lambda p: "NO") == 0.0
+
+
+def test_judged_context_precision_is_rank_weighted(ev):
+    """Only the 4th chunk useful -> precision@4 = 1/4, and that is the only term."""
+    chunks = [{"text": f"c{i}"} for i in range(4)]
+    judge = lambda p: "YES" if p.rstrip().endswith("c3") else "NO"  # noqa: E731
+    assert ev.compute_context_precision_judged("q", chunks, judge) == 0.25
+
+
+def test_judged_context_precision_none_without_chunks(ev):
+    assert ev.compute_context_precision_judged("q", [], lambda p: "YES") is None

@@ -133,6 +133,37 @@ def test_judge_counts_failure_and_returns_empty(ev, openai_args, monkeypatch):
     assert fn.stats["last_error"].startswith("RuntimeError")
 
 
+# ── Tolerant claim-extraction parse (LaTeX backslashes break strict JSON) ────
+
+def test_parse_claims_strict_json(ev):
+    assert ev._parse_claims('["a", "b"]') == ["a", "b"]
+
+
+def test_parse_claims_repairs_latex_backslash(ev):
+    """gpt-oss-20b emits raw \\hbar / \\frac inside JSON strings — invalid escapes
+    that made json.loads reject the whole reply and lose the query's faithfulness."""
+    raw = r'Here you go: ["Planck constant is \hbar", "the value is \frac{1}{2}"]'
+    claims = ev._parse_claims(raw)
+    assert claims is not None and len(claims) == 2
+
+
+def test_parse_claims_returns_none_on_garbage(ev):
+    assert ev._parse_claims("no array here") is None
+    assert ev._parse_claims("") is None
+    assert ev._parse_claims("[not json at all") is None
+
+
+def test_faithfulness_survives_latex_claims(ev, monkeypatch):
+    """End to end: a LaTeX-bearing extraction reply now yields a score, not None."""
+    import src.core.llm as llm
+
+    monkeypatch.setattr(
+        llm, "call_llm",
+        lambda **kw: r'["mass is \frac{m}", "speed is v"]',
+    )
+    assert ev.compute_faithfulness("ans", [{"text": "p"}], lambda p: "YES") == 1.0
+
+
 # ── Judge endpoint: /v1 normalisation (gateway 404s a bare /chat/completions) ─
 
 @pytest.mark.parametrize("base", ["http://10.0.10.70:8000", "http://10.0.10.70:8000/v1"])
