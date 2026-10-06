@@ -130,3 +130,25 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
 - **Then:** metric fixes (Precision@20 is pinned at its ~0.10 ceiling by a fixed ÷20
   denominator over a 2-page ground truth → use Recall@k / R-precision / Hit@k, and report
   any precision number against its ceiling), then the judge lane, then ranking work.
+
+### D1. The reranker fine-tune needs a *training* set, not the eval set
+- **The eval set and the training set are different artifacts** and must not be conflated.
+  The eval set is for **measuring** (small is fine); the training set is for **fitting**
+  (small is fatal).
+- **Scale:** a cross-encoder reranker is normally trained on **thousands** of
+  (query, positive, hard-negative) triples. n=23 — and even the ~120–150 target — will
+  overfit immediately. Fine-tuning the reranker is therefore **blocked on a training-set
+  build**, not on the eval set.
+- **Sources for it:** the same per-type generator that builds the eval set, run at much
+  larger scale with a **held-out split** (train/eval never share queries); LLM-generated
+  queries per passage (the approach in `scripts/generate_gold_dataset.py`); and generously
+  mined negatives — for each query, every retrieved-but-not-labelled passage is a negative,
+  so one query yields many triples.
+- **Recipe placement:** the phases (in-batch negatives → mined hard negatives) belong to
+  the **bi-encoder** (stages 1–2). The **cross-encoder is stage 3** — a single training run
+  on triples. Fine-tuning *only* the reranker means **skipping stages 1–2** and going
+  straight to stage 3, which is legitimate: mine the triples with the current untrained
+  retriever, then train.
+- **Within stage 3** there is still optional curriculum (easy/random negatives first, then
+  hard) and optional **iterative re-mining** (train → re-mine with the improved reranker →
+  retrain). That is iteration, not the bi-encoder's 1-2-3 phasing.
