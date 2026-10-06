@@ -67,6 +67,36 @@ Last updated: 2026-10-06
 - **Fix:** re-measure against real figure crops and unrelated-but-document-like images;
   show the score and an honest "no page matched" message rather than silence.
 
+### B4. Visual search cannot handle images that aren't book pages ⚠️ verified
+- **What:** uploading a synthetic/redrawn figure (e.g. a clean render of the
+  Boltzmann–Gibbs relation) returns "the book has no such image", even though the book
+  explains the concept.
+- **Why it fails — two independent reasons:**
+  1. **Wrong input modality for the model.** `colpali_embedder` exposes only
+     `embed_query_image`; the visual lane has *no text-query path*. But
+     `vidore/colpali-v1.2` is trained on **(text query, page image)** pairs — its query
+     encoder expects text. Feeding it an image is off-distribution, so even a genuine
+     crop of a real figure is being asked a question the model was never trained on.
+  2. **Visual similarity ≠ concept similarity.** ColPali matches appearance/layout
+     (typography, page furniture, figure shape), not meaning. A synthetic render shares
+     no visual features with a 1960s scanned page even when the concept is on it, so
+     MaxSim stays low and the 600 threshold correctly reports no match.
+- **The threshold is not the bug** — it is what stopped the earlier "confidently returns
+  unrelated pages" defect. Lowering it reintroduces that.
+- **Fix (image → text → retrieve → synthesize):**
+  1. VLM reads the image (`Qwen3-VL-8B-Instruct` is already on the cluster) → caption +
+     equation as LaTeX + concept names.
+  2. Use that text as the query for the **existing hybrid text lane** (Nomic + SPLADE +
+     reranker) — the same path as Ask a Question. LaTeX is a strong lexical signal for
+     SPLADE; the caption is a strong dense signal.
+  3. Synthesize from the retrieved passages, reusing the Ask-a-Question synthesis, so the
+     output explains the image *and* cites the book.
+- **Bonus:** the same VLM caption can be used as a **text query for ColPali**, which is
+  how ColPali is designed to be used — so both lanes work as intended and can be fused
+  (RRF): ColPali finds the *figure* page, the text lane finds the *explanation* page.
+- **Keep ColPali for its real strength:** "find the diagram that looks like this"
+  (a student photographs a lecture-slide figure and wants the book's version).
+
 ---
 
 ## C. Product — deferred by decision, not forgotten
