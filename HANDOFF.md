@@ -388,7 +388,11 @@ motion". Backup at `data/synapse.db.bak-*`. Re-running is a no-op: it resolves t
 so it lacks objective/misconception/example (10,927 cards). Re-index from SQLite with
 `scripts/index_derivative_artifacts.py --clear` when the DA lane matters.
 
-`scripts/clean_cards.py` can now be applied — its cross-store id guard passes.
+`scripts/clean_cards.py --sqlite-only --apply` has been run: **10,074 cards removed**
+(9,829 not self-contained + 245 duplicates), 95,213 → **85,139**, all still joining to
+chunks, 0 non-valuable remaining. `--sqlite-only` exists because the DA collection is a
+different generation, so a card_id-keyed Qdrant delete matches nothing (0/10,074).
+Backup: `data/synapse.db.bak-preclean-*`.
 
 **Curation, not duplication:** 95,213 cards for a 968-page book (~19/page). Only 294 rows
 (0.3%) are junk-or-duplicate; a further 9,829 (10.3%) were source-referencing and are now

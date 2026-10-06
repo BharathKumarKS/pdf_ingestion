@@ -778,11 +778,11 @@ class DocumentStore:
 
     # ── Card maintenance (scripts/clean_cards.py) ─────────────────────────
 
-    def list_cards_for_cleanup(self) -> list[tuple[str, str, str, str]]:
-        """Every card as (id, card_type, content, document_id) — for offline auditing."""
+    def list_cards_for_cleanup(self) -> list[tuple[str, str, str, str | None, str, str]]:
+        """Every card as (id, card_type, content, answer, title, document_id) for auditing."""
         with Session(self._engine) as session:
             return [
-                (c.id, c.card_type, c.content, c.document_id)
+                (c.id, c.card_type, c.content, c.answer, c.title, c.document_id)
                 for c in session.exec(select(Card)).all()
             ]
 

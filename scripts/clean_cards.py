@@ -8,12 +8,15 @@ deletion here is applied to both.
 
 Two rules, both deliberately conservative — only unambiguous garbage:
 
-  1. junk      : ``content`` is a placeholder ("n/a", "none", ...) or shorter than
-                 ``--min-chars`` after stripping. Measured on the Feynman corpus: 36 rows.
+  1. junk      : the card does not stand on its own — it refers to its source
+                 ("according to the passage", "the text states") or is shorter than
+                 ``--min-chars``. This is the SAME filter the generator applies
+                 (``ResponseParser.is_valuable``), so the corpus matches what extraction
+                 would produce today. Measured on the Feynman corpus: 9,829 rows, 8,864
+                 of them question cards.
   2. duplicate : same ``(document_id, card_type)`` with identical content after
-                 case/punctuation/whitespace normalisation; the lowest ``id`` is kept
-                 (ids are UUID4 strings, so "lowest" is arbitrary but *stable*).
-                 Measured: 258 rows. Note this is 0.3% of 95,213 cards — duplication is
+                 case/punctuation/whitespace normalisation; the first ``id`` is kept.
+                 Measured: 245 rows. Note this is 0.3% of 95,213 cards — duplication is
                  NOT what makes the card set unusable; volume is (95k cards for one book).
 
 This script does NOT re-embed anything. If the ``derivative_artifacts`` collection was
@@ -47,8 +50,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from loguru import logger
 
-PLACEHOLDERS = {"n/a", "na", "none", "null", "not applicable", "unknown", ""}
-
 
 def normalise(text: str) -> str:
     """Case/punctuation/whitespace-insensitive form used to detect duplicates."""
@@ -58,17 +59,27 @@ def normalise(text: str) -> str:
 
 
 def classify(rows: list[tuple], min_chars: int) -> tuple[list[tuple], list[tuple]]:
-    """Return (junk_rows, duplicate_rows). Each row is (id, card_type, content)."""
-    junk = [
-        r for r in rows
-        if (r[2] or "").strip().lower() in PLACEHOLDERS
-        or len((r[2] or "").strip()) < min_chars
-    ]
-    junk_ids = {r[0] for r in junk}
+    """Return (junk_rows, duplicate_rows). Rows are
+    (id, card_type, content, answer, title, document_id).
+
+    The junk rule is the SAME filter the generator now applies
+    (``ResponseParser.is_valuable``), so the backfilled corpus matches what extraction
+    would produce today rather than drifting from it. Duplicates are identical content
+    within one (document, card_type) after case/punctuation normalisation; first id wins.
+    """
+    from src.pdf_ingestion.card_generator import ResponseParser
+
+    junk: list[tuple] = []
+    junk_ids: set[str] = set()
+    for cid, card_type, content, answer, title, _doc in rows:
+        floor = 1 if card_type == "formula" else min_chars
+        if not ResponseParser.is_valuable(content, answer, title, min_chars=floor):
+            junk.append((cid, card_type, content))
+            junk_ids.add(cid)
 
     seen: dict[tuple, str] = {}
     duplicates: list[tuple] = []
-    for cid, card_type, content, doc_id in rows:
+    for cid, card_type, content, _answer, _title, doc_id in rows:
         if cid in junk_ids:
             continue  # already going; do not double-report
         key = (doc_id, card_type, normalise(content))
@@ -83,8 +94,13 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--apply", action="store_true", help="actually delete (default: dry run)")
-    ap.add_argument("--min-chars", type=int, default=15,
-                    help="content shorter than this (after strip) counts as junk (default 15)")
+    ap.add_argument("--min-chars", type=int, default=20,
+                    help="content shorter than this (after strip) counts as junk (default 20, "
+                         "matching the generator's own floor)")
+    ap.add_argument("--sqlite-only", action="store_true",
+                    help="delete only the SQLite rows. Use when derivative_artifacts is a "
+                         "different card generation (a stale index that will be rebuilt from "
+                         "SQLite) — a card_id-keyed Qdrant delete would match nothing.")
     ap.add_argument("--qdrant-host", default=None, help="override QDRANT_HOST")
     args = ap.parse_args()
 
@@ -102,10 +118,10 @@ def main() -> int:
     junk, duplicates = classify(rows, args.min_chars)
     targets = junk + duplicates
 
-    print(f"\n  cards in SQLite        : {len(rows):,}")
-    print(f"  junk (placeholder/short): {len(junk):,}")
-    print(f"  duplicates (same content): {len(duplicates):,}")
-    print(f"  → to remove            : {len(targets):,}")
+    print(f"\n  cards in SQLite              : {len(rows):,}")
+    print(f"  junk (not self-contained/short): {len(junk):,}")
+    print(f"  duplicates (same content)     : {len(duplicates):,}")
+    print(f"  → to remove                   : {len(targets):,}")
     if junk:
         print(f"    junk by type   : {dict(Counter(r[1] for r in junk))}")
     if duplicates:
@@ -123,18 +139,25 @@ def main() -> int:
     present = store.card_ids_present_in_qdrant(target_ids)
     print(f"  target ids found in Qdrant: {len(present):,} / {len(target_ids):,}")
     if not present:
-        logger.error(
-            "no target card id exists in derivative_artifacts — the collection is a "
-            "different card generation (stale). Re-index with "
-            "`scripts/index_derivative_artifacts.py --clear` before cleaning."
+        if not args.sqlite_only:
+            logger.error(
+                "no target card id exists in derivative_artifacts — the collection is a "
+                "different card generation (stale). Re-index with "
+                "`scripts/index_derivative_artifacts.py --clear`, or pass --sqlite-only to "
+                "clean SQLite now and rebuild the collection from it afterwards."
+            )
+            return 2
+        logger.warning(
+            "derivative_artifacts is a stale generation (no id overlap) — deleting SQLite "
+            "rows only; rebuild the collection from SQLite afterwards with "
+            "`scripts/index_derivative_artifacts.py --clear`."
         )
-        return 2
 
     if not args.apply:
-        logger.warning("dry run — re-run with --apply to delete from BOTH stores")
+        logger.warning("dry run — re-run with --apply to delete")
         return 0
 
-    deleted_qdrant = store.delete_cards_by_id(target_ids)
+    deleted_qdrant = store.delete_cards_by_id(target_ids) if present else 0
     deleted_sqlite = store.delete_cards_by_id_sqlite(target_ids)
     logger.success(
         f"removed {deleted_sqlite:,} SQLite rows and {deleted_qdrant:,} Qdrant points"
