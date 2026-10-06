@@ -400,7 +400,8 @@ Backups: `data/synapse.db.bak-preclean-*`, `data/synapse.db.bak-refilter-*`.
 (0.3%) are junk-or-duplicate; a further 9,829 (10.3%) were source-referencing and are now
 filtered at generation. Mass deletion is not the lever — question-scoped cards are.
 
-**Deferred (agreed — do not lose these)**
+**Deferred (agreed — do not lose these)** — full tracked backlog in [`IMPROVEMENTS.md`](IMPROVEMENTS.md)
+(queued work, UI/UX fixes incl. the verified formula-rendering bug, and the product deferrals).
 - **Key Facts panel** — keep it, but *measure* whether it helps before removing or expanding.
 - **Feedback capture** (thumbs / "was this helpful?") — the only real-user signal available;
   the gold set is 23 queries and a judge, with no student input at all. Deferred.
