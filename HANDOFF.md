@@ -370,6 +370,15 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
     chunk payload, but nothing filters or steers on them. Wire or remove.
 
 **P2** abstention · guardrails · PPR · semantic caching · OKF cards
+
+**Deferred (agreed — do not lose these)**
+- **Key Facts panel** — keep it, but *measure* whether it helps before removing or expanding.
+- **Feedback capture** (thumbs / "was this helpful?") — the only real-user signal available;
+  the gold set is 23 queries and a judge, with no student input at all. Deferred.
+- **Question history** — each question currently replaces the page; students iterate on a
+  topic and have to re-ask. Deferred.
+- **Topic / Difficulty** — removed as inert (they were persisted but never read). Revisit as
+  a real feature: scoped card generation at a chosen level.
 **P6 — kept, deferred to the very end** NiceGUI migration (`event-driven Vue.js` frontend,
 per report §11). **Explicitly wanted — not dropped.** Do not remove it from the plan and do
 not start it early: it waits until metrics (P0/P1), guardrails and abstention (P2) are done.

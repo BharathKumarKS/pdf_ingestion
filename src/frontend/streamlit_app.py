@@ -143,7 +143,7 @@ def render_math(text: str, card_type: str = "") -> None:
     markdown parser interference.
     Other cards: convert {expr} / (expr) → $expr$ for inline math in markdown.
     """
-    stripped = text.strip()
+    stripped = _clean_text(text).strip()
     if card_type == "formula":
         # Extract the LaTeX expression — strip outer {}, (), or $$ wrappers if present
         import re
@@ -218,7 +218,13 @@ with st.sidebar:
         st.caption("🔧 **Admin mode** — [exit admin](/?)")
 
     st.subheader("Your Profile")
-    tenant_id = st.text_input("User ID", value="demo_user")
+    if is_admin:
+        tenant_id = st.text_input("User ID", value="demo_user")
+    else:
+        # Students do not pick a tenant. There is no authentication (single-user mode,
+        # see HANDOFF scope decision) and a free-text "User ID" box reads like a login
+        # that isn't one. The admin box stays for testing tenant isolation.
+        tenant_id = "demo_user"
 
     # ── Source toggle ─────────────────────────────────────────────────────
     st.subheader("Study mode")
@@ -303,11 +309,13 @@ if is_admin:
         "🕸️ Concept Graph",
         "📊 Admin Status",
     ])
+    tab_figure = None
 else:
-    tab_upload, tab_search, tab_cards = st.tabs([
+    (tab_upload, tab_search, tab_cards, tab_figure) = st.tabs([
         "📄 Upload PDF",
         "🔍 Ask a Question",
         "🃏 Study Cards",
+        "🖼️ Find a Figure",
     ])
     tab_raptor  = None
     tab_visual  = None
@@ -336,14 +344,10 @@ with tab_upload:
 
     uploaded = st.file_uploader("Choose a PDF", type=["pdf"])
 
-    if not is_admin:
-        col1, col2 = st.columns(2)
-        with col1:
-            subject = st.text_input("Topic (optional)", placeholder="e.g. Quantum mechanics")
-        with col2:
-            difficulty = st.slider("Difficulty", 1, 10, 5)
-    else:
-        subject, difficulty = None, None
+    # Topic/Difficulty were collected here and persisted to the Document row and chunk
+    # payload, but nothing ever filtered or steered on them — they looked functional and
+    # did nothing. Removed; revisit as a real feature (scoped card generation) later.
+    subject, difficulty = None, None
 
     if uploaded and st.button("Upload & Ingest", type="primary", use_container_width=True):
         effective_tenant = cfg.global_tenant_id if upload_as_base else tenant_id
@@ -544,6 +548,13 @@ with tab_search:
                 if not chunk_results and not raptor_results and not graph_results:
                     st.info("No results found — try rephrasing your question.")
                 else:
+                    # Remember what was asked, so the Study Cards tab can filter to it
+                    # instead of showing an arbitrary slice of 95k cards.
+                    st.session_state["last_query"] = query
+                    st.session_state["last_chunk_ids"] = [
+                        r["chunk_id"] for r in chunk_results if r.get("chunk_id")
+                    ]
+
                     # ── Build passages for LLM context ────────────────────
                     all_passages = []
                     for r in chunk_results:
@@ -599,7 +610,7 @@ with tab_search:
 
                     if synthesis:
                         st.subheader("💡 Answer")
-                        st.markdown(_convert_braces_to_math(_latex_delims_to_dollars(synthesis)))
+                        st.markdown(_convert_braces_to_math(_latex_delims_to_dollars(_clean_text(synthesis))))
                         st.divider()
 
                     # ── Key Facts panel (student only) ────────────────────
@@ -740,17 +751,17 @@ def _dedup_cards(card_list):
 def _render_card(card, ct, is_admin):
     with st.container(border=True):
         if ct == "question":
-            st.markdown(f"**{card.content}**")
+            st.markdown(f"**{_clean_text(card.content)}**")
             if card.answer:
                 with st.expander("Reveal answer"):
-                    st.success(card.answer)
+                    st.success(_clean_text(card.answer))
         elif ct == "factoid":
             render_math(card.content, ct)
         elif ct == "objective":
-            st.caption(card.title)
+            st.caption(_clean_text(card.title))
             render_math(card.content, ct)
         else:
-            st.markdown(f"**{card.title}**")
+            st.markdown(f"**{_clean_text(card.title)}**")
             render_math(card.content, ct)
         if is_admin:
             st.caption(
@@ -787,7 +798,43 @@ with tab_cards:
         docs_with_cards = [d for d in all_docs if store.get_cards(d.id, card_type="summary") or
                            store.get_cards(d.id, card_type="definition")]
 
-        if not docs_with_cards:
+        # Student: default to cards from the passages of the question they just asked,
+        # instead of an arbitrary slice of the whole document. 95k cards are not
+        # browsable, but "the 12 cards behind the answer I just read" are.
+        last_q   = st.session_state.get("last_query")
+        last_ids = st.session_state.get("last_chunk_ids") or []
+        focus = False
+        if not is_admin and last_q and last_ids:
+            choice = st.radio(
+                "Show cards for",
+                [f"My last question — “{last_q[:60]}”", "Browse all material"],
+                index=0,
+                label_visibility="collapsed",
+            )
+            focus = choice.startswith("My last")
+
+        if focus:
+            focused = _dedup_cards(
+                store.get_cards_for_chunks(last_ids, card_types=_STUDENT_CARD_TYPES, limit=80)
+            )
+            if not focused:
+                st.info("No study cards were generated for that question yet.", icon="💡")
+            else:
+                by_type: dict[str, list] = {}
+                for c in focused:
+                    by_type.setdefault(c.card_type, []).append(c)
+                for ct, group in by_type.items():
+                    icon = CARD_ICONS.get(ct, "📌")
+                    with st.expander(
+                        f"{icon} {CARD_LABELS.get(ct, ct.capitalize())}s  ({len(group)})",
+                        expanded=True,
+                    ):
+                        for card in group[:_CARDS_PER_TYPE]:
+                            _render_card(card, ct, is_admin)
+                st.caption(
+                    "Generated from the passages retrieved for your last question."
+                )
+        elif not docs_with_cards:
             st.info(
                 "No study cards yet."
                 + (" Cards are generated automatically after PDF ingestion."
@@ -909,6 +956,131 @@ if tab_raptor is not None:
 
 
 # ══════════════════════════════════════════════════════════════════════════
+# Visual search — shared core (admin "Visual Search" + student "Find a Figure")
+# ══════════════════════════════════════════════════════════════════════════
+
+def _visual_search_and_explain(cfg, store, image_file, n_results: int,
+                               tenant_id: str, source_type_filter):
+    """Embed a query image, find matching pages, and explain them.
+
+    Shared by the admin Visual Search tab and the student "Find a Figure" tab so the
+    two cannot drift apart. Returns (results, synthesis). Callers render the images
+    themselves — admin adds debug detail, students do not.
+    """
+    import io
+    from PIL import Image
+    from src.pdf_ingestion.colpali_embedder import get_colpali_embedder
+
+    query_image = Image.open(io.BytesIO(image_file.read()))
+    q_patches = get_colpali_embedder(cfg).embed_query_image(query_image)
+    results = store.visual_search(
+        query_patches=q_patches, tenant_id=tenant_id,
+        source_type=source_type_filter, limit=n_results,
+    )
+    if not results:
+        return [], None
+
+    page_numbers = [r["page_number"] for r in results if r.get("page_number")]
+    doc_ids = list({r["document_id"] for r in results if r.get("document_id")})
+    context_chunks = []
+    for doc_id in doc_ids:
+        context_chunks.extend(store.get_chunks_by_pages(doc_id, page_numbers, limit_per_page=2))
+    if not context_chunks:
+        return results, None
+
+    from src.core.llm import call_llm
+    context_text = "\n\n".join(
+        f"[Page {c.page_number}] {_clean_text(c.text)}" for c in context_chunks
+    )
+    synthesis = call_llm(
+        prompt=(
+            "The user uploaded an image to search a physics knowledge base. The most "
+            "visually similar pages were retrieved. Using the text from those pages, "
+            "explain clearly what the image shows and the physics behind it.\n\n"
+            f"Retrieved page content:\n{context_text}"
+        ),
+        system=(
+            "You are a physics tutor. Answer concisely and accurately based only on the "
+            "provided content. Use $...$ for inline math and $$...$$ for display equations."
+        ),
+        settings=cfg,
+    )
+    return results, synthesis
+
+
+def _render_visual_results(cfg, results, is_admin: bool) -> None:
+    from src.pdf_ingestion.image_store import get_image_store
+
+    image_store = get_image_store(cfg)
+    st.subheader(f"📄 Matching page{'s' if len(results) > 1 else ''}")
+    cols = st.columns(min(3, len(results)))
+    for i, r in enumerate(results):
+        col = cols[i % 3]
+        try:
+            col.image(image_store.get(r["image_key"]), use_container_width=True)
+        except Exception as img_err:
+            col.caption(f"⚠️ Page image unavailable: `{r.get('image_key', '?')}`")
+            if is_admin:
+                col.caption(str(img_err))
+        if is_admin:
+            col.caption(
+                f"Page {r.get('page_number', '?')}  ·  "
+                f"cosine {r.get('score_cosine', float('nan')):.3f}  ·  "
+                f"doc: `{r.get('document_id','?')[:12]}…`"
+            )
+        else:
+            col.caption(f"Page {r.get('page_number', '?')}")
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# Student tab — Find a Figure  (same core as the admin Visual Search tab)
+# ══════════════════════════════════════════════════════════════════════════
+if tab_figure is not None:
+    with tab_figure:
+        st.header("🖼️ Find a Figure")
+        st.caption(
+            "Upload a diagram, figure, or a photo of a page and Synapse will find the "
+            "matching pages in the textbook and explain what they show."
+        )
+        try:
+            store    = DocumentStore(cfg)
+            n_visual = store.count_visual_vectors([tenant_id, cfg.global_tenant_id])
+        except Exception as e:
+            st.error(f"⚠️ Error checking the visual index: {e}")
+            store, n_visual = None, 0
+
+        if not n_visual:
+            st.info("Visual search isn't available for this material yet.", icon="💡")
+        else:
+            img_file  = st.file_uploader(
+                "Upload an image (PNG, JPG)", type=["png", "jpg", "jpeg"], key="student_figure",
+            )
+            n_results = st.slider("Pages to show", 1, 5, 3)
+            if img_file and st.button("Find the page", type="primary"):
+                with st.spinner("Looking for matching pages… (the first run loads the model)"):
+                    try:
+                        results, synthesis = _visual_search_and_explain(
+                            cfg, store, img_file, n_results, tenant_id, source_type_filter,
+                        )
+                    except Exception as e:
+                        st.error(f"Visual search error: {e}")
+                        results, synthesis = [], None
+
+                if not results:
+                    st.info(
+                        "No page in the textbook matched this image — that usually means "
+                        "the image isn't from this book.",
+                        icon="🔍",
+                    )
+                else:
+                    if synthesis:
+                        st.subheader("📝 What this shows")
+                        st.markdown(_convert_braces_to_math(_latex_delims_to_dollars(_clean_text(synthesis))))
+                        st.divider()
+                    _render_visual_results(cfg, results, is_admin=False)
+
+
+# ══════════════════════════════════════════════════════════════════════════
 # TAB 5 — Visual Search (Phase 3)  [admin only]
 # ══════════════════════════════════════════════════════════════════════════
 if tab_visual is not None:
@@ -972,77 +1144,25 @@ if tab_visual is not None:
             if query_image_file and st.button("Search by Image", type="primary"):
                 with st.spinner("Embedding query image… (first run is slow on CPU)"):
                     try:
-                        from PIL import Image
-                        import io
-                        from src.pdf_ingestion.colpali_embedder import get_colpali_embedder
-                        from src.pdf_ingestion.image_store import get_image_store
-
-                        query_image = Image.open(io.BytesIO(query_image_file.read()))
-                        colpali     = get_colpali_embedder(cfg)
-                        q_patches   = colpali.embed_query_image(query_image)
-
-                        results = store.visual_search(
-                            query_patches=q_patches,
-                            tenant_id=tenant_id,
-                            source_type=source_type_filter,
-                            limit=n_results,
+                        results, synthesis = _visual_search_and_explain(
+                            cfg, store, query_image_file, n_results,
+                            tenant_id, source_type_filter,
                         )
-
-                        if not results:
-                            st.info("No visual matches found.")
-                        else:
-                            page_numbers = [r["page_number"] for r in results if r.get("page_number")]
-                            doc_ids      = list({r["document_id"] for r in results if r.get("document_id")})
-
-                            context_chunks = []
-                            for doc_id in doc_ids:
-                                context_chunks.extend(
-                                    store.get_chunks_by_pages(doc_id, page_numbers, limit_per_page=2)
-                                )
-
-                            if context_chunks:
-                                with st.spinner("Synthesizing answer…"):
-                                    try:
-                                        from src.core.llm import call_llm
-                                        context_text = "\n\n".join(
-                                            f"[Page {c.page_number}] {c.text}" for c in context_chunks
-                                        )
-                                        synthesis = call_llm(
-                                            prompt=(
-                                                f"The user uploaded an image to search a physics knowledge base. "
-                                                f"The most visually similar pages were retrieved. "
-                                                f"Based on the text from those pages, provide a clear, "
-                                                f"educational response explaining what is shown.\n\n"
-                                                f"Retrieved page content:\n{context_text}"
-                                            ),
-                                            system="You are a physics tutor. Answer concisely and accurately based only on the provided content. Use $...$ for inline math and $$...$$ for display equations.",
-                                            settings=cfg,
-                                        )
-                                        st.subheader("📝 What these pages show")
-                                        st.markdown(_convert_braces_to_math(_latex_delims_to_dollars(synthesis)))
-                                        st.divider()
-                                    except Exception:
-                                        pass
-
-                            image_store = get_image_store(cfg)
-                            st.subheader(f"📄 Top {len(results)} matching pages")
-                            cols = st.columns(min(3, len(results)))
-                            for i, r in enumerate(results):
-                                col = cols[i % 3]
-                                try:
-                                    img_bytes = image_store.get(r["image_key"])
-                                    col.image(img_bytes, use_container_width=True)
-                                except Exception as img_err:
-                                    col.caption(f"⚠️ Image file not found: `{r.get('image_key', '?')}`")
-                                    col.caption(str(img_err))
-                                col.caption(
-                                    f"Page {r.get('page_number', '?')}  ·  "
-                                    f"cosine {r.get('score_cosine', float('nan')):.3f}  ·  "
-                                    f"doc: `{r.get('document_id','?')[:12]}…`"
-                                )
-
                     except Exception as e:
                         st.error(f"Visual search error: {e}")
+                        results, synthesis = [], None
+
+                if not results:
+                    st.info(
+                        "No page matched this image. The index holds the course textbook "
+                        "only, so an out-of-domain image will not match."
+                    )
+                else:
+                    if synthesis:
+                        st.subheader("📝 What these pages show")
+                        st.markdown(_convert_braces_to_math(_latex_delims_to_dollars(_clean_text(synthesis))))
+                        st.divider()
+                    _render_visual_results(cfg, results, is_admin=True)
 
             st.divider()
             st.caption(
