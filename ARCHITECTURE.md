@@ -185,6 +185,79 @@ query
 `DocumentStore.search_with_das()` binds the DA lane into the main funnel
 (DA joins the candidate pool **before** dedup + MMR — see commit `3a7e954`).
 
+#### The funnel inside `store.search()` — merge changed 2026-10-06
+
+The funnel runs server-side as **one nested Qdrant prefetch**. The `prefetch` entries are
+the *voters* (their rankings get combined); the outer `query` is the *judge* (it produces
+the final ordering). Which role ColBERT plays is what changed.
+
+**BEFORE — ColBERT was the judge**, so it *replaced* the dense+sparse fusion:
+
+```
+corpus ─ dense_64 ──────────────► 1000 ─┐
+                                        ├─► dense_768 ─────────► 500 ─┐
+         sparse (SPLADE) ────────────────────────────────────► 250 ─┤
+                                                                     ▼
+                        ┌──────────────────────────────────────────────────┐
+                        │ OUTER QUERY = ColBERT MaxSim                     │
+                        │ (a single score REPLACES the two rankings above) │
+                        └──────────────────────────────────────────────────┘
+                                                                     ▼
+                                                     100 ──► cross-encoder ──► 20
+```
+
+**AFTER — ColBERT is a third voter**, and RRF fuses all three rankings:
+
+```
+corpus ─ dense_64 ──────────────► 1000 ─┐
+                                        ├─► dense_768 ─────────► 500 ─┐
+         sparse (SPLADE) ────────────────────────────────────► 250 ─┤
+         colbert (MaxSim) ───────────────────────────────────► 250 ─┤
+                                                                     ▼
+                        ┌──────────────────────────────────────────────────┐
+                        │ OUTER QUERY = RRF over the three rankings        │
+                        └──────────────────────────────────────────────────┘
+                                                                     ▼
+                                                     100 ──► cross-encoder ──► 20
+```
+
+Measured (23 queries, pinned HyDE) — the retriever's own top-20 recall:
+
+| merge | retriever top-20 |
+|---|---|
+| ColBERT as outer query (**before**) | 0.598 |
+| RRF over dense+sparse | 0.615 |
+| **RRF over dense+sparse+ColBERT (after)** | **0.651** |
+
+RRF wins because it combines *independent* rankings; a single MaxSim score cannot. ColBERT
+is worth keeping — as a voter, not as the judge.
+
+⚠️ **The cross-encoder then destroys that ordering**: 0.651 → 0.569, and its harm scales
+with the quality of its input (+0.002 / −0.026 / −0.082 across the three merge modes).
+**The merge change must therefore ship together with a reranker decision** — applied alone
+it is a regression. See `IMPROVEMENTS.md` §F4 and
+`data/eval_results/funnel-merge-ab_2026-10-06.md`.
+
+Note also that the funnel boundaries are `1000 → 500 → 250(x2, x3) → 100 → 20`, and only
+`@100` and `@20` were ever measured. Per-boundary recall lives in
+`scripts/funnel_boundary_recall.py`; the first run is
+`data/eval_results/funnel-boundary-recall_2026-10-06.md`.
+
+#### Other architecture changes in the same session (2026-10-06)
+
+Not part of the funnel diagram, but they change what the system does:
+
+| Change | Where | Effect |
+|---|---|---|
+| **Card embed text: question only** | `scripts/index_derivative_artifacts.py` | Was `question + "\n" + answer`. A student's query resembles a question, not an answer; the answer diluted the vector. The answer now rides in the payload as a new `answer` field (it was **not** there before — only concatenated into `text`), so it is still shown but no longer embedded. **Takes effect only on the next DA re-index.** |
+| **Card value filter at generation** | `card_generator.py` (`ResponseParser.is_valuable`) | Rejects cards that refer to their source ("according to the passage") or are too short, so junk never reaches the DB. Backfilled: 95,213 → 82,164 cards. |
+| **SQLite IDs realigned to the cluster** | `scripts/align_stores.py` | A migration, not an architecture change: the two stores had been ingested separately and shared **zero** IDs, so every retrieval→SQLite join failed. SQLite chunk/document IDs were renamed to the cluster's (99.9% by chunk text). |
+| **Student panel** | `src/frontend/streamlit_app.py` | New "Find a Figure" tab (visual search + synthesis); Study Cards default to the passages of the last question asked; removed the inert "User ID", "Topic" and "Difficulty" controls. |
+
+**Still stale, and known:** the `derivative_artifacts` collection predates the card-lane
+changes — it holds 5 of the 8 card types and shares no card IDs with SQLite. Re-indexing it
+is required for the card-lane changes to take effect. See `IMPROVEMENTS.md` §A2.
+
 ---
 
 ## 6. Backend abstraction pattern (follow this when adding a dependency)
