@@ -94,3 +94,9 @@ minio/
 
 # SV cluster access sample package (vendored, not ours to version)
 sv_ray_cluster_access/
+
+# Hermes agent session artifacts. Plans are deliverables (HANDOFF.md points a fresh
+# session at them), so they are tracked; anything else Hermes writes here is churn.
+.hermes/*
+!.hermes/plans/
+!.hermes/plans/**
