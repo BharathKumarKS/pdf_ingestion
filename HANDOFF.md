@@ -4,13 +4,16 @@
 > For the durable system map read `ARCHITECTURE.md`. For setup read `README.md`.
 > Keep this file short — it loads into every session in this directory.
 >
-> **Last updated: 2026-10-05** — P0 items 1–8 complete and committed.
-> **`main` is in sync with `origin/main`** (rebased + pushed at `dce5efd`). The earlier
-> "6 ahead / 1 behind — expect conflicts" warning was **wrong**: the two sides touched
-> disjoint files (the remote commit `6f56634` changes only `streamlit_app.py`, which no
-> local commit touches) and the rebase was clean.
+> **Last updated: 2026-10-07** — P0 items 1–8 complete; **P0-9 (gold set) is the active
+> critical path and is NOT started.** Between 2026-10-05 and now, five separate conclusions
+> were measured and **all five came back unresolvable at n=23** — see "Why P0-9 blocks
+> everything" below. `main` is in sync with `origin/main` at `a9ae28f`.
 > If this date is old, re-check `git log --oneline -5` and
 > `git status --short` before trusting "Current focus".
+>
+> **Session hygiene:** this file exists so work can resume in a FRESH session. The previous
+> session reached ~271k tokens/call with 2 lossy compactions behind it. Start P0-9 in a new
+> session; do not continue it in a compacted one.
 
 ---
 
@@ -42,15 +45,77 @@ gold set (~120–150 queries); it gates all of P1. See the priority plan below.
 | 7 | Metric set fixed | `1dad73f` — `Precision@k` → `Recall@k` + `Hit@k` |
 | 8 | Judge lane measured | `p0-judge-canonical_*.md`; `JUDGE_MODEL` path fixed (`dce5efd`) |
 
-Test suite: **164 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
-**pre-existing** — confirmed by stashing the P0 edits and re-running the same tests on
-clean source. They are NOT P0 regressions:
+Test suite: **211 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
+**pre-existing** — re-confirmed 2026-10-07 by stashing the change and re-running the full
+suite on clean source: **205 pass / 5 fail, identical names**. They are NOT regressions:
 
 - `tests/test_splade.py` (×2) hardcode `tests/data/sample_physics.pdf`, which does not
   exist — the `sample_pdf` fixture generates it into a tmp dir instead.
 - 3 search tests return 0 results: `test_phase1::test_hybrid_search_includes_global`,
   `test_phase2::test_search_still_works_after_phase2`,
   `test_integration_real::test_semantic_search_returns_relevant_results`.
+
+### Why P0-9 blocks everything — five conclusions, all unresolvable at n=23
+
+Measured power on the existing 23-query set: **σ_d = 0.2315** (SD of the per-query
+difference), so `SE ≈ 0.05` and **N_min = 31** to detect the observed 0.083 effect at 80%
+power. General form: **`N = 0.4206/δ²`** (43 for δ=0.10, 66 for 0.083, 170 for 0.05).
+Every ranking experiment below landed inside that noise band:
+
+| # | question | measured | verdict |
+|---|---|---|---|
+| 1 | does the cross-encoder help? | 0.651 → 0.569 (**−0.082**) | blocked |
+| 2 | is ColBERT better as voter or judge? | 0.598 (judge) vs 0.651 (voter) | blocked |
+| 3 | did the ColBERT `is_query` fix help? | −0.022 / −0.049 | blocked |
+| 4 | abstention precision | **unmeasurable** — zero negatives | blocked |
+| 5 | any per-query-type claim | ~5 queries/type | blocked |
+
+**Do not run another A/B on the 23-query set.** Four were run in the last session and every
+one produced a result the sample could not resolve. More measurements here generate more
+unresolvable numbers, not more knowledge.
+
+### ColBERT `is_query` bug — fixed 2026-10-07 (`b4cb637`), **no re-ingest needed**
+
+`ClusterColBERTEmbedder` sent `encoding_type`; the cluster endpoint takes **`is_query`**
+(bool) and **silently ignores `encoding_type`**. So every query we ever encoded went through
+the **document** encoder — discarding the query/document asymmetry late interaction exists
+for. Live proof: `encoding_type='query'` → 8×128 (identical to the document encoding),
+`is_query=True` → 32×128. After the fix `embed_query()` returns `(32, 128)`.
+
+**This invalidates F4's fairness, not its conclusion.** F4 ("RRF beats ColBERT because RRF is
+a fusion and ColBERT is one signal") was measured on a mis-encoded ColBERT. Re-measured on
+the fixed code, ColBERT scores marginally *lower* — but −0.049 is ~1 SE, so **F4 is neither
+confirmed nor overturned**. Keep the fix regardless: a query should be query-encoded, and a
+mis-encoding scoring marginally higher on 23 queries is not a reason to preserve a bug.
+
+**No re-ingest:** documents were sent *without* `is_query`, so the server default
+(`is_query=False`) gave them the correct encoding **by accident**. Only the query side was
+broken. This is the one lane upgrade in the backlog that costs nothing.
+
+Also fixed in the same sweep: `_post` ignored `item["index"]` (reordered batches would
+silently mis-assign embeddings); `scripts/preflight.py` probed with the same wrong params, so
+its health checks never exercised the real call shape; `reranker.py` sent `top_n`, which the
+rank endpoint ignores (harmless — `rerank()` slices to `top_k` itself).
+
+**Test gap that let it live:** `tests/test_colbert_embedder.py` covered only the STUB, never
+the cluster class. New `tests/test_colbert_cluster_payload.py` (6) pins the payload contract,
+the response-order contract, and the 8-input batch limit.
+
+### Cluster model inventory — what we can and cannot upgrade
+
+**Chat: nothing better is actually serving.** `openai/gpt-oss-120b` is listed in
+`/v1/models` but **HTTP 502s** ("Backend inference unreachable"). The SDK's documented 72B
+inference server (`10.0.10.66:8123`) is **unreachable** from here. Ceiling is `gpt-oss-20b`.
+
+**Embedders: every lane has something newer** — but all four need a full re-ingest:
+`nomic-embed-text-v1.5 → v2.5`; `colbertv2.0 → lightonai/GTE-ModernColBERT-v1` (also 128-dim,
+so drop-in); `Splade_PP_en_v1 → Qdrant/bm42-all-minilm-l6-v2-attentions`;
+`colpali-v1.2 → TomoroAI/tomoro-colqwen3-embed-4b`. **Cross-encoder: we already have the best
+of the five offered** (`bge-reranker-v2-m3`).
+
+**`sv_ray_cluster_access/` is gitignored and must stay that way** — its own header declares
+it SupportVectors IP, not for reuse or sharing. It is also not importable here (needs
+`svlearn`), and every endpoint it documents is unreachable. Keep as reference only.
 
 ### The finding item 2 fixed
 
@@ -284,7 +349,7 @@ report's Precision@20 / NDCG@20 and the "reranker top-20" lift need re-checking.
 - ✅ `config.yaml`'s Aug-24 `gpt-oss-20b` → `gpt-oss-120b` working-tree edit was the
   regression that killed every LLM stage; reverted and committed in `6381f7b`.
 - ✅ **pytest** — install with `uv sync --extra dev` (uv at `~/.local/bin/uv`). Suite is
-  164 pass / 5 pre-existing failures (listed above).
+  **211 pass / 5 pre-existing failures** (listed above).
 - **7 visual queries are still uncalibrated** — `colpali-001` … `colpali-007` all carry
   `"calibrated": false` and `"relevant_pages": null` in `data/eval_queries.json`. They are
   excluded from the 23/23 baseline. P1 item 7; `calibration_output.txt` is the working pass.
@@ -334,13 +399,30 @@ artifact's "Run integrity" section; `tests/test_eval_integrity.py` pins the beha
    Judge choice is settled: `DeepSeek-R1-Distill-Qwen-7B` ignores YES/NO instructions and
    collapses faithfulness to ~0; `gpt-oss-120b` is still HTTP 502; `gpt-oss-20b` is the
    generator (self-preference). **Do not re-litigate.**
-9. **Rebuild the gold set** — the big one, and it gates all of P1. Target **~120–150
-   queries** (23 can only detect ≥0.15 effects at 80% power; 0.05 needs ~200). Per-type
-   generation: factual from a known page; overview from a topic + book-wide scan;
-   multihop from the Memgraph concept graph. Graded relevance; human-verify a 20–30% sample.
-   **Must also include unanswerable / out-of-scope negatives (~15–20%)** — abstention
-   precision (P2) is unmeasurable without them: there is currently nothing to score a
-   refusal against.
+9. ⛔ **Rebuild the gold set — ACTIVE CRITICAL PATH, NOT STARTED.** Gates all of P1.
+   **Full plan: `.hermes/plans/2026-10-06_174001-p0-9-gold-dataset-v2.md`** (950 lines,
+   decisions D1–D10 — read it before implementing; do not re-derive it).
+   - **Size:** sequential design — start at **40**, extend in blocks of 30, stop when the CI
+     excludes 0. Plan-for **170**. `N = 0.4206/δ²`; **N_min = 31** for the observed 0.083
+     effect. Per-category minimums: ranking **31**, per-type **25** (detecting a 0.10 gap
+     *between* types needs 71/type = 213), negatives **35**.
+   - **Split at 170:** factual 45 · overview 50 · multihop 40 · visual 15 · negatives 20.
+   - **Tradeoff:** ranking power wants negatives OUT, abstention precision wants them IN.
+     At 170 you cannot have both — decide before seeing numbers (pre-register the rule).
+   - **Three non-circularity rules:** (1) generate questions FROM known pages, never find
+     pages FOR questions; (2) negatives must be *verified* absent (full two-pass scan finds
+     zero YES); (3) pre-register the decision rule.
+   - **Must include unanswerable negatives (~15–20%)** — abstention precision (P2) is
+     unmeasurable without them; there is currently nothing to score a refusal against.
+   - **Open before the ~30k-call label scan (D8–D10):** PARTIAL verdicts counted as relevant?
+     (v1 includes them, `scan_query()` keeps YES-only → v2 would not be comparable);
+     `extract_page_text()` returns **`text[:800]`** so only the first third of a Feynman page
+     is judged and figures are invisible — **scan the page as an IMAGE instead** (cluster
+     calls are free); `gpt-oss-20b` is a reasoning model and `max_tokens:512` with a silent
+     `return []` can produce an empty batch.
+   - **Config trap:** `cfg.judge_model` is **empty** in `.env` — set
+     `JUDGE_MODEL=Qwen/Qwen3-VL-8B-Instruct` explicitly or `evaluate_rag.py --judge-from-env`
+     falls back to the generator grading itself.
 
 **P1 — then improve metrics** (all of it gated on P0-9)
 10. Ranking — overview MRR 0.191 is the one genuinely bad number. Cheapest first: config
@@ -496,7 +578,7 @@ contaminated live traversal too. It hit the `multihop` lane (7 of 30 eval querie
 | Thing | Truth |
 |---|---|
 | Feynman Vol 1 PDF | **968 pages** (report says 940, README says 990) |
-| Chunk count | **5,051** — RESOLVED 2026-10-03: report right, README's 5,047 wrong (see topology) |
+| Chunk count | **SQLite `chunks` = 5,048**; cluster `knowledge_base` = **5,135 points**. An earlier note claimed 5,051 as "the truth" — that is **unconfirmed**; re-measure, don't trust it. The 5,135−5,048 gap is unexplained. |
 | Dense embedder | **Nomic 768d + 64d MRL** (`embedding_model` in `config.py`). `.env.example` fixed 2026-10-05 (was Jina/1024d) |
 | Reranker | `BAAI/bge-reranker-v2-m3` (`cfg.reranker_model`). `reranker.py` docstring fixed 2026-10-05 (was ms-marco) |
 | Chunker | `chonkie.SentenceChunker` (class is named `SemanticChunker`) |
