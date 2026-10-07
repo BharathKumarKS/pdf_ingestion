@@ -181,6 +181,90 @@ reranker must beat is now 0.651, not 0.598.**
 2. *Does a fine-tuned cross-encoder beat the raw fusion?* — needs the training set (D1).
 Question 1 is the cheaper one and gates question 2.
 
+#### F5. ColBERT queries were never query-encoded — F4's comparison was unfair
+
+**Found 2026-10-06, fixed in `b4cb637`.** `ClusterColBERTEmbedder` sent the parameter
+`encoding_type`; the SV cluster endpoint takes **`is_query`** (bool) and **silently ignores
+`encoding_type` entirely.** Measured against the live cluster:
+
+| payload | query matrix |
+|---|---|
+| `encoding_type='query'` (what we sent) | 8×128 — identical to the document encoding |
+| `encoding_type='document'` | 8×128 |
+| **`is_query=True`** (correct) | **32×128** — query padding + augmentation |
+| `is_query=False` | 8×128 |
+
+`query-encoded == doc-encoded` → **True**. So every query we ever encoded went through the
+**document** encoder, discarding precisely the query/document asymmetry late interaction
+exists to exploit. After the fix `embed_query()` returns `(32, 128)` live.
+
+**Why this matters beyond the bug:** F4's conclusion — *"RRF beats ColBERT because RRF is a
+fusion and ColBERT is one signal"* — was measured with ColBERT's queries mis-encoded.
+**That was not a fair comparison**, and the conclusion needs re-measuring on the fixed code
+(see F5a). The three-way-RRF decision may still be right; we can no longer claim ColBERT was
+given a fair run.
+
+**No re-ingest required.** Documents were sent *without* `is_query`, so the server default
+(`is_query=False`) gave them the correct document encoding **by accident**. Only the query
+side was wrong — so this is a pure query-time fix. This is the one lane upgrade in the
+current backlog that costs nothing to adopt.
+
+**Two more defects from the same sweep:**
+- `_post` iterated `resp.json()["data"]` **by position and ignored `item["index"]`**, which
+  the server does return. A reordered batch would have silently attached embeddings to the
+  wrong texts. Now sorted by index.
+- `scripts/preflight.py` probed the same endpoints with the same wrong parameters
+  (`encoding_type`, `top_n`), so its ColBERT and rerank checks were not exercising the real
+  call shape.
+- `reranker.py` sent `top_n`; the rank endpoint ignores it (`top_n=2` over 6 documents
+  returned all 6, while `top_k=2` returns 2). **Not a correctness bug** — `rerank()` slices
+  to `top_k` itself — but it moved every candidate over the wire. Fixed.
+
+**Test gap that let it survive:** `tests/test_colbert_embedder.py` covered only
+`StubColBERTEmbedder`, never the cluster class. New `tests/test_colbert_cluster_payload.py`
+(6 tests) pins the payload contract, the response-order contract, and the documented
+8-input batch limit.
+
+#### F5a. Re-measured after the fix — the fix is correct, the effect is unresolvable
+
+Same 23 queries, same pinned HyDE cache, merge A/B re-run on the fixed code:
+
+| merge | R@20 after fix | R@20 before | delta |
+|---|---|---|---|
+| ColBERT as outer query | 0.578 | 0.600 | **−0.022** |
+| RRF dense+sparse *(no ColBERT)* | **0.589** | **0.589** | **±0.000** |
+| RRF dense+sparse+ColBERT | 0.567 | 0.569 | −0.002 |
+| RRF 3-way, no reranker | 0.602 | 0.651 | **−0.049** |
+
+**The sanity check passes:** `rrf2` is byte-identical (0.589 → 0.589), exactly as it must be
+— that lane contains no ColBERT at all. So the harness is measuring the change and only the
+change.
+
+**The fix is verifiably correct.** The corrected query matrix is `(32, 128)` with **every row
+unit-norm, 24 distinct rows in the tail, and mean pairwise cosine 0.56** — i.e. genuine
+**query augmentation** (ColBERT appends `[MASK]` tokens and the model fills them with learned
+expansion terms). Those rows are *meant* to participate in MaxSim. This is not padding to be
+stripped; `num_tokens` reports 32 because all 32 are real. So the code now does what ColBERT
+does.
+
+**But recall moved slightly DOWN, and that is not resolvable at n=23.** The largest move
+(−0.049) is roughly one standard error for this query set (`σ_d = 0.23`, so `SE ≈ 0.05`).
+The honest reading:
+
+- **F4's conclusion is neither confirmed nor overturned.** It was measured on a mis-encoded
+  ColBERT, and the corrected ColBERT scores marginally *lower* on this sample — but the
+  sample cannot distinguish −0.05 from 0.
+- **Keep the fix regardless.** A query should be query-encoded; a mis-encoding scoring
+  marginally higher on 23 queries is not a reason to preserve a bug. If the powered gold set
+  later shows augmented query encoding consistently *hurts* on physics prose, that is a real
+  finding about ColBERT-on-this-domain — but it must be shown on n≥120, not inferred here.
+- A plausible mechanism worth testing later: augmentation adds generic expansion terms that
+  may **flatten** the ranking for short factual queries. Untested.
+
+**This is now the fifth conclusion blocked by n = 23** (reranker, merge/F4, ColBERT
+encoding, abstention, and every per-type claim). The gold set (P0-9) is the bottleneck for
+all of them.
+
 ---
 
 ## C. Product — deferred by decision, not forgotten
