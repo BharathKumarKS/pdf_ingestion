@@ -127,6 +127,60 @@ Last updated: 2026-10-06
 - **Also worth noting:** dense alone (0.576) is close to RRF (0.588), so the SPLADE branch
   is adding little on top of dense here — consistent with B3's 0.885 vs B1's 0.895.
 
+#### F4a. What the course materials actually say (checked 2026-10-06)
+
+Asked to verify the recollection that the lecture notes propose a three-way RRF. **They do
+not — as far as the notes record it.** `Labs/week_9/retrieval_funnel_ablation_study/` is
+explicit about the merge:
+
+- `docs/concepts/retrieval_funnel_philosophy.md:74` presents **two** resolutions to the
+  incomparable-scores problem, and names **rank-based fusion (RRF)** first:
+  *"Cheap, robust, no model needed; but it only reshuffles existing opinions, **adding no
+  new evidence**."* The second is *"Rescoring with a stronger common judge — **the
+  notebook's choice**"* (ColBERT, then the cross-encoder).
+- `docs/architecture.md:240` files RRF under *"Fusion alternatives"*: *"An alternative shown
+  in the Qdrant documentation is Reciprocal Rank Fusion (RRF) — a good discussion point
+  **for when no strong reranker is available**."*
+
+So the course's *documented* design is ColBERT-rescore (what this repo did before the
+change), with RRF as the cheap fallback. **But the course's stated philosophy supports the
+decision below**, because it frames the merge as the cheap half of one operation: *"merge
+**and rerank** is one phrase in the funnel philosophy, not two: a merged pool without a
+common judge is just a pile."* Fuse cheaply, let the strong judge do the real ranking —
+which is exactly three-way RRF followed by a cross-encoder.
+
+**And the course already documents our reranker finding.** Its self-assessment Q8 is titled
+*"Cross-Encoder: Friend or Foe?"* and asks students to find the configuration where the
+cross-encoder causes the **most noticeable F1 drop** (green bar shorter than blue). A
+cross-encoder that reduces F1 is therefore an *expected* result in this course's own
+ablation study, not an anomaly. That materially strengthens the case for testing the
+reranker properly rather than removing it on n=23.
+
+#### F4b. Decision (2026-10-06) — keep 3-way RRF **with** the reranker; defer the call
+
+**Settled:** the funnel stays as three-way RRF **plus** the cross-encoder. The reranker is
+**not** switched off. The final decision is deferred to a properly powered test after the
+gold set (P0-9), the re-ingest, and reranker fine-tuning — on significance, not on n=23.
+
+**Consequence, accepted knowingly:** the app's measured R@20 is therefore **0.569**, below
+the 0.600 it was before the merge change. This is a deliberate intermediate state, not an
+oversight — the merge is a strict improvement to the *retriever* (0.598 → 0.651) and the
+reranker question is what is unresolved.
+
+**Why deferring is the right call:** three independent measurements now say the zero-shot
+reranker is a liability, but all three are on 23 queries, and the course's own ablation
+study shows the cross-encoder's effect is *configuration-dependent* (sometimes helping,
+sometimes dropping F1). One untrained reranker on a tiny sample cannot distinguish "the
+reranker is wrong for physics text" from "this reranker is wrong because nobody trained it".
+Fine-tuning + a powered gold set separates those two questions. **The target a fine-tuned
+reranker must beat is now 0.651, not 0.598.**
+
+**Two separable questions, worth not conflating:**
+1. *Does a cross-encoder help at all here?* — answerable on the gold set with the **current
+   zero-shot** reranker; needs no fine-tuning.
+2. *Does a fine-tuned cross-encoder beat the raw fusion?* — needs the training set (D1).
+Question 1 is the cheaper one and gates question 2.
+
 ---
 
 ## C. Product — deferred by decision, not forgotten
