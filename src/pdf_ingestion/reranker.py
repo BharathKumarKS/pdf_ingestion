@@ -56,11 +56,16 @@ class ClusterCrossEncoderReranker:
     Fixes the HuggingFace lock-file issue permanently.
 
     RANK endpoint (sorted results):
-        POST http://10.0.10.51:8000/rerank/v1/rank
+        POST http://10.0.10.70:8000/rerank/v1/rank
         {"model": "BAAI/bge-reranker-v2-m3",
-         "query": "...", "documents": ["doc1", ...], "top_n": 20}
+         "query": "...", "documents": ["doc1", ...], "top_k": 20}
     Response:
-        {"results": [{"index": 0, "relevance_score": 0.95, "document": {"text": "..."}}, ...]}
+        {"results": [{"corpus_id": 0, "score": 0.95, "text": "..."}, ...]}
+
+    NOTE: the truncation parameter is `top_k`, NOT `top_n` — verified against the live
+    cluster 2026-10-06: with `top_n=2` over 6 documents the server returned all 6 (the key
+    is ignored), while `top_k=2` returned 2. Harmless here only because `rerank()` below
+    slices to `top_k` itself; sending `top_n` just moves every candidate over the wire.
     """
 
     def __init__(self, url: str, model: str) -> None:
@@ -77,7 +82,7 @@ class ClusterCrossEncoderReranker:
             "model":     self._model,
             "query":     query,
             "documents": documents,
-            "top_n":     min(top_k, len(chunks)),
+            "top_k":     min(top_k, len(chunks)),
         }
         try:
             resp = httpx.post(self._url, json=payload, timeout=30)

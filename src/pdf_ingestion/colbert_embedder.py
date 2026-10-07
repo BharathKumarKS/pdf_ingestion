@@ -51,10 +51,16 @@ class StubColBERTEmbedder:
 class ClusterColBERTEmbedder:
     """
     Calls the SV cluster ColBERT endpoint.
-    URL: http://10.0.10.51:8000/embed-text/v1/multivector-embeddings
+    URL: http://10.0.10.70:8000/embed-text/v1/multivector-embeddings
 
-    Request:  {"model": "colbert-ir/colbertv2.0", "input": [...], "encoding_type": "document"|"query"}
+    Request:  {"model": "colbert-ir/colbertv2.0", "input": [...], "is_query": true|false}
     Response: {"data": [{"embedding": [[...token vecs...]], "index": 0}, ...]}
+
+    NOTE: the parameter is `is_query` (bool), NOT `encoding_type`. The server SILENTLY
+    IGNORES `encoding_type`, so sending it made every query go through the DOCUMENT
+    encoder — discarding the query/document asymmetry late interaction exists for.
+    Verified against the live cluster 2026-10-06: `is_query=True` returns a padded
+    32-token query matrix, while the document encoding returns a variable-length one.
     """
 
     def __init__(self, settings: Settings | None = None) -> None:
@@ -62,18 +68,23 @@ class ClusterColBERTEmbedder:
         self._url   = cfg.sv_colbert_url
         self._model = cfg.colbert_model
 
-    def _post(self, texts: list[str], encoding_type: str, batch_size: int = 4) -> list[np.ndarray]:
+    def _post(self, texts: list[str], is_query: bool, batch_size: int = 4) -> list[np.ndarray]:
         import httpx
         results = []
         for i in range(0, len(texts), batch_size):
             batch = texts[i : i + batch_size]
             resp = httpx.post(
                 self._url,
-                json={"model": self._model, "input": batch, "encoding_type": encoding_type},
+                json={"model": self._model, "input": batch, "is_query": is_query},
                 timeout=120,
             )
             resp.raise_for_status()
-            for item in resp.json()["data"]:
+            items = resp.json()["data"]
+            # The server returns `index`; honour it instead of trusting array order.
+            # A reordered batch would otherwise attach embeddings to the wrong texts —
+            # silently, and only for some requests.
+            ordered = sorted(items, key=lambda it: it.get("index", 0))
+            for item in ordered:
                 mat = np.array(item["embedding"], dtype=np.float32)
                 if mat.ndim == 1:
                     mat = mat[np.newaxis, :]  # cluster returns (dim,) for query
@@ -82,10 +93,10 @@ class ClusterColBERTEmbedder:
         return results
 
     def embed_passages(self, texts: list[str]) -> list[np.ndarray]:
-        return self._post(texts, "document")
+        return self._post(texts, is_query=False)
 
     def embed_query(self, text: str) -> np.ndarray:
-        return self._post([text], "query")[0]
+        return self._post([text], is_query=True)[0]
 
 
 # -- fastembed ONNX (local, CPU-friendly) -------------------------------------

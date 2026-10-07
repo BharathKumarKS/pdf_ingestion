@@ -264,10 +264,11 @@ def check_endpoints(cfg) -> None:
         return
     _probe("llm.models", f"{base}/v1/models")
     _probe("llm.rerank", cfg.sv_rerank_url or "",
-           {"model": cfg.reranker_model, "query": "x", "documents": ["a", "b"], "top_n": 2}, "post")
-    _probe("llm.sparse", cfg.sv_sparse_url or "", {"input": ["x"]}, "post")
+           {"model": cfg.reranker_model, "query": "x", "documents": ["a", "b"], "top_k": 2}, "post")
+    _probe("llm.sparse", cfg.sv_sparse_url or "",
+           {"model": cfg.splade_model, "input": ["x"]}, "post")
     _probe("llm.multivector", cfg.sv_colbert_url or "",
-           {"input": ["x"], "encoding_type": "query"}, "post")
+           {"model": cfg.colbert_model, "input": ["x"], "is_query": True}, "post")
 
 
 def check_completions(pipeline: dict) -> None:
