@@ -91,3 +91,6 @@ data/intent_classifier/
 # Whole history is ~660 KB across 43 files.
 data/ingest_log.txt
 minio/
+
+# SV cluster access sample package (vendored, not ours to version)
+sv_ray_cluster_access/
