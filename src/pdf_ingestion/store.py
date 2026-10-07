@@ -295,22 +295,28 @@ class DocumentStore:
             except Exception as exc:
                 logger.warning("SPLADE encode failed ({}), skipping sparse lane", exc)
 
-        # Stage 4: ColBERT MaxSim outer query over merged prefetch candidates.
-        # Skipped on local file Qdrant — Python MaxSim implementation has a bug
-        # with real collections; server Qdrant (Rust) handles it correctly.
+        # Stage 4: ColBERT joins the fusion as a THIRD CONTRIBUTOR.
+        #
+        # It used to be the OUTER query — MaxSim over the merged candidates — which made
+        # it *replace* the dense+sparse fusion rather than add to it. Measured 2026-10-06
+        # (23 queries, pinned HyDE, `scripts/funnel_boundary_recall.py --merge`):
+        #
+        #   ColBERT as outer query  -> retriever top-20 recall 0.598
+        #   RRF over dense+sparse   -> 0.615
+        #   RRF over dense+sparse+ColBERT -> 0.651   <- best
+        #
+        # RRF wins because it combines two independent rankings; a single MaxSim score
+        # cannot. So ColBERT is worth keeping — as a voter, not as the judge.
+        #
+        # Skipped on local file Qdrant: the Python MaxSim implementation has a bug with
+        # real collections; server Qdrant (Rust) handles it correctly.
         is_local = not cfg.qdrant_host and not cfg.qdrant_url
         if cfg.colbert_enabled and query_text and not is_local:
             try:
                 from src.pdf_ingestion.colbert_embedder import get_colbert_embedder
                 colbert_q = get_colbert_embedder(cfg).embed_query(query_text)
-                return self._qdrant.query_points(
-                    collection_name=cfg.qdrant_collection,
-                    prefetch=prefetches,
-                    query=colbert_q.tolist(),
-                    using="colbert",
-                    query_filter=filter_,
-                    limit=limit,
-                    with_payload=True,
+                prefetches.append(
+                    Prefetch(query=colbert_q.tolist(), using="colbert", limit=250)
                 )
             except Exception as exc:
                 logger.error(
@@ -327,7 +333,7 @@ class DocumentStore:
                 "server Qdrant endpoint to enable it."
             )
 
-        # No ColBERT: RRF over dense+SPLADE, or plain dense if SPLADE absent
+        # Fuse whatever lanes are live by reciprocal rank; plain dense if it is alone.
         if len(prefetches) > 1:
             return self._qdrant.query_points(
                 collection_name=cfg.qdrant_collection,

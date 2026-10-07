@@ -87,8 +87,15 @@ def main() -> int:
     ap.add_argument("--no-reranker", action="store_true",
                     help="skip the cross-encoder; B6 becomes the retriever's own top-20")
     ap.add_argument("--no-colbert", action="store_true",
-                    help="skip ColBERT; the merge falls back to RRF")
+                    help="alias for --merge rrf2")
+    ap.add_argument("--merge", choices=["colbert", "rrf2", "rrf3"], default="colbert",
+                    help="how to merge the candidate lanes: 'colbert' = ColBERT MaxSim as "
+                         "the outer query (current app behaviour); 'rrf2' = RRF over "
+                         "dense+sparse; 'rrf3' = RRF over dense+sparse+ColBERT, i.e. "
+                         "ColBERT fused as a contributor rather than replacing the others")
     args = ap.parse_args()
+    if args.no_colbert:
+        args.merge = "rrf2"
 
     from qdrant_client.models import Fusion, FusionQuery, Prefetch
 
@@ -215,21 +222,38 @@ def main() -> int:
                 limit=100, with_payload=True).points
             row["pages"]["B4_rrf_union_100"] = pages_of(post(rrf_points))
 
-        # B5 — the merge the app uses: ColBERT MaxSim if available, else RRF.
-        use_colbert = colbert_on and not is_local and not args.no_colbert
-        colbert_points = []
-        if use_colbert:
+        # B5 — the merge. Three modes:
+        #   colbert : ColBERT MaxSim as the OUTER query (what the app does today)
+        #   rrf2    : RRF over dense + sparse
+        #   rrf3    : RRF over dense + sparse + ColBERT — ColBERT as a CONTRIBUTOR, so
+        #             its signal is fused with the other two instead of replacing them.
+        #             This is the fix for the finding that RRF (a fusion of two rankers)
+        #             beats ColBERT (a single score): give the fusion three rankers.
+        can_colbert = colbert_on and not is_local
+        cq = None
+        if can_colbert:
             try:
                 from src.pdf_ingestion.colbert_embedder import get_colbert_embedder
                 cq = get_colbert_embedder(cfg).embed_query(text)
-                colbert_points = q.query_points(
-                    collection_name=coll, prefetch=prefetches, query=cq.tolist(),
-                    using="colbert", query_filter=filt, limit=100,
-                    with_payload=True).points
             except Exception as exc:
-                logger.error(f"ColBERT failed for {qid} ({exc}); falling back to RRF")
+                logger.error(f"ColBERT query encode failed for {qid} ({exc})")
 
-        pool = post(colbert_points) if colbert_points else post(rrf_points)
+        merge_points = []
+        if args.merge == "colbert" and cq is not None:
+            merge_points = q.query_points(
+                collection_name=coll, prefetch=prefetches, query=cq.tolist(),
+                using="colbert", query_filter=filt, limit=100,
+                with_payload=True).points
+        elif args.merge == "rrf3" and cq is not None:
+            pre3 = prefetches + [Prefetch(query=cq.tolist(), using="colbert", limit=250)]
+            merge_points = q.query_points(
+                collection_name=coll, prefetch=pre3,
+                query=FusionQuery(fusion=Fusion.RRF), query_filter=filt,
+                limit=100, with_payload=True).points
+        else:  # rrf2, or ColBERT unavailable
+            merge_points = rrf_points
+
+        pool = post(merge_points)
         if not pool:
             pool = post(dense_b2_points)
         row["pages"]["B5_colbert_100"] = pages_of(pool)
