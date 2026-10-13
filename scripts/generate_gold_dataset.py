@@ -7,11 +7,18 @@ This avoids circular calibration (finding pages for questions):
   - For each chunk, ask the LLM to generate physics questions answerable from that page
   - Save with relevant_pages pre-populated from the source chunk
 
+Two generation strategies:
+  - single-page (default): a question answerable from one sampled chunk.
+  - multi-page (--multipage-count N): an overview/multihop question that requires
+    connecting THREE distant passages and cannot be answered from any one of them
+    (D5). The single-passage prompt structurally cannot produce these.
+
 Output: data/eval_queries_gold.json
 
 Usage:
     uv run python scripts/generate_gold_dataset.py --tenant global
     uv run python scripts/generate_gold_dataset.py --tenant global --n-chunks 40 --questions-per-chunk 2
+    uv run python scripts/generate_gold_dataset.py --tenant global --multipage-count 20
     uv run python scripts/generate_gold_dataset.py --tenant global --dry-run
 """
 from __future__ import annotations
@@ -19,6 +26,7 @@ from __future__ import annotations
 import json
 import random
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -31,6 +39,14 @@ from rich.progress import track
 console = Console()
 
 _QUESTION_TYPES = ["factual", "overview", "multihop"]
+
+# D10: 512 truncated multi-question batches (the model was cut off mid-array and the
+# parser then saw an unterminated JSON array and returned []). 2048 gives a full
+# {n}-question array plus headroom.
+_MAX_TOKENS = 2048
+
+# D10: bounded retry for a generation call that fails or returns an unusable batch.
+_GEN_RETRIES = 3
 
 _PROMPT = """\
 You are building a physics RAG evaluation dataset.
@@ -47,6 +63,32 @@ Requirements:
 
 Passage:
 {text}
+
+Output format:
+["question 1", "question 2", ...]"""
+
+_MULTI_PROMPT = """\
+You are building a physics RAG evaluation dataset.
+
+Below are passages from THREE DIFFERENT, DISTANT parts of a physics textbook.
+
+Your task: write {n} questions that CANNOT be answered from any single passage alone --
+each must require connecting ideas from at least two of them.
+
+Requirements:
+- The question must name or imply both concepts, but must not say "passage" or "excerpt".
+- It must be answerable from these passages COMBINED, and only from them.
+- Prefer questions a student would actually ask, e.g. "How does X relate to Y?"
+- Output ONLY a JSON array of strings.
+
+Passage A (page {pa}):
+{ta}
+
+Passage B (page {pb}):
+{tb}
+
+Passage C (page {pc}):
+{tc}
 
 Output format:
 ["question 1", "question 2", ...]"""
@@ -73,6 +115,26 @@ def sample_chunks_stratified(chunks: list, n: int, seed: int = 42) -> list:
     return [chunks_sorted[i] for i in indices]
 
 
+def sample_distant_triples(chunks: list, n: int, min_gap: int = 60) -> list[list]:
+    """n triples of chunks from widely separated pages.
+
+    `min_gap` forces the pages apart so the questions genuinely span the book rather than
+    three neighbouring paragraphs (which would be answerable from one page).
+    """
+    rng = random.Random(1234)
+    pool = [c for c in chunks if c.page_number]
+    pool.sort(key=lambda c: c.page_number)
+    triples, tries = [], 0
+    while len(triples) < n and tries < n * 200:
+        tries += 1
+        a, b, c = rng.sample(pool, 3)
+        pages = sorted([a.page_number, b.page_number, c.page_number])
+        if pages[1] - pages[0] < min_gap or pages[2] - pages[1] < min_gap:
+            continue
+        triples.append([a, b, c])
+    return triples
+
+
 def call_llm_raw(prompt: str, cfg) -> str:
     """Call the configured LLM and return raw text."""
     import httpx
@@ -91,13 +153,63 @@ def call_llm_raw(prompt: str, cfg) -> str:
             json={
                 "model": cfg.openai_model,
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 512,
+                "max_tokens": _MAX_TOKENS,
                 "temperature": 0.7,
             },
-            timeout=60,
+            timeout=120,
         )
         resp.raise_for_status()
         return resp.json()["choices"][0]["message"]["content"].strip()
+
+
+def _extract_questions(raw: str) -> list[str]:
+    """Pull a JSON array of non-empty strings out of a raw LLM response."""
+    start = raw.find("[")
+    end = raw.rfind("]") + 1
+    if start == -1 or end == 0:
+        return []
+    try:
+        parsed = json.loads(raw[start:end])
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(parsed, list):
+        return []
+    return [q.strip() for q in parsed if isinstance(q, str) and q.strip()]
+
+
+def _generate_batch(prompt: str, cfg, context: str) -> list[str]:
+    """Call the LLM and parse a JSON array of questions. Bounded retry.
+
+    D10: an empty/unparseable batch is **loud and asserted**, never a silent ``[]``.
+    The old code returned ``[]`` on any failure, so a truncated or refused generation
+    was indistinguishable from "the model chose to write no questions" — the run
+    reported success with a quietly short dataset. Now every empty batch logs the raw
+    response, retries a bounded number of times, and then raises, so a bad run fails
+    visibly instead of under-populating the gold set.
+    """
+    last_raw = ""
+    for attempt in range(1, _GEN_RETRIES + 1):
+        try:
+            last_raw = call_llm_raw(prompt, cfg)
+            questions = _extract_questions(last_raw)
+        except Exception as exc:
+            questions = []
+            logger.error(
+                "Generation call failed ({}) — attempt {}/{}: {}",
+                context, attempt, _GEN_RETRIES, exc,
+            )
+        if questions:
+            return questions
+        logger.error(
+            "Empty generation batch ({}) — attempt {}/{}, raw response {} chars: {!r}",
+            context, attempt, _GEN_RETRIES, len(last_raw), last_raw[:500],
+        )
+        if attempt < _GEN_RETRIES:
+            time.sleep(min(2 ** attempt, 10))
+    raise RuntimeError(
+        f"Generation produced no questions for {context} after {_GEN_RETRIES} "
+        f"attempts. Raw response: {last_raw[:500]!r}"
+    )
 
 
 def classify_question(question: str, cfg) -> str:
@@ -116,18 +228,19 @@ def generate_questions_for_chunk(chunk, n: int, cfg) -> list[str]:
         n=n,
         text=chunk.text[:1200],  # cap to avoid token limit
     )
-    try:
-        raw = call_llm_raw(prompt, cfg)
-        # Extract JSON array from response
-        start = raw.find("[")
-        end   = raw.rfind("]") + 1
-        if start == -1 or end == 0:
-            return []
-        questions = json.loads(raw[start:end])
-        return [q.strip() for q in questions if isinstance(q, str) and q.strip()]
-    except Exception as exc:
-        logger.warning("Question generation failed for chunk {}: {}", chunk.id, exc)
-        return []
+    return _generate_batch(prompt, cfg, context=f"chunk {chunk.id} (page {chunk.page_number})")
+
+
+def generate_multipage_questions(triple: list, n: int, cfg) -> list[str]:
+    """Ask the LLM for overview/multihop questions spanning three distant passages."""
+    a, b, c = triple
+    prompt = _MULTI_PROMPT.format(
+        n=n,
+        pa=a.page_number, pb=b.page_number, pc=c.page_number,
+        ta=a.text[:700], tb=b.text[:700], tc=c.text[:700],
+    )
+    pages = sorted({a.page_number, b.page_number, c.page_number})
+    return _generate_batch(prompt, cfg, context=f"triple pages {pages}")
 
 
 def main():
@@ -137,6 +250,9 @@ def main():
                    help="Number of chunks to sample (default: 30)")
     p.add_argument("--questions-per-chunk", type=int, default=2,
                    help="Questions generated per chunk (default: 2)")
+    p.add_argument("--multipage-count", type=int, default=0,
+                   help="How many overview/multihop questions to generate from distant "
+                        "page triples. 0 = skip (the old behaviour).")
     p.add_argument("--min-chunk-tokens", type=int, default=80,
                    help="Skip chunks with fewer tokens (default: 80)")
     p.add_argument("--output", default="data/eval_queries_gold.json")
@@ -189,11 +305,31 @@ def main():
                 "id": f"gold-{qid_counter:03d}",
                 "query": q,
                 "query_type": qt,
+                "expected_route": "vector",
                 "relevant_pages": [chunk.page_number] if chunk.page_number else [],
                 "calibrated": True,
+                "answerable": True,
                 "calibration_note": f"Generated from chunk {chunk.id} (page {chunk.page_number})",
             })
             qid_counter += 1
+
+    if args.multipage_count > 0:
+        triples = sample_distant_triples(chunks, args.multipage_count)
+        console.print(f"Sampling [cyan]{len(triples)}[/] distant page triples…")
+        for triple in track(triples, description="Generating multi-page questions…"):
+            for q in generate_multipage_questions(triple, 1, cfg):
+                pages = sorted({c.page_number for c in triple})
+                entries.append({
+                    "id": f"gold-{qid_counter:03d}",
+                    "query": q,
+                    "query_type": "multihop",
+                    "expected_route": "vector",
+                    "relevant_pages": pages,
+                    "calibrated": True,
+                    "answerable": True,
+                    "calibration_note": f"Multi-page, generated from pages {pages}",
+                })
+                qid_counter += 1
 
     console.print(f"\nGenerated [bold green]{len(entries)}[/] questions from {len(sampled)} chunks")
 
