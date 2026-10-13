@@ -350,6 +350,37 @@ Feature flags that change storage schema (require re-ingest when flipped):
    on the GPU VM (or vice versa). Check the flag before assuming.
 10. **`store.py` is 1350 LOC and pre-existing.** Per `CLAUDE.md` §3
     (Surgical Changes), do not refactor it as a side effect of another task.
+11. **A wider retrieval funnel is not a better system.** `scripts/eval_gate.py`
+    refuses to diff artifacts measured at different K — the report once compared
+    a K=100 run against a K=20 one.
+12. **Retrieval is not bit-reproducible.** HyDE generates a hypothetical at
+    temperature 0.3, so two identical runs differ (Recall@20 0.636 vs 0.628 on
+    2026-10-05). Compare artifacts with `eval_gate.py`'s tolerance, never single
+    numbers. Anything below ~0.07 is unmeasurable until HyDE is pinned.
+13. **Faithfulness is a floor, not a point estimate.** The judge under-scores
+    formula and paraphrase claims (hand-scored ~0.08 low). A drop <0.05 between
+    runs is judge noise.
+14. **ColPali MaxSim is not 0-1.** Scores run to ~1031 (fixed 1031-patch grid):
+    in-domain 966-1031, out-of-domain 444-479. A threshold copied from a
+    cosine-similarity habit (0.15) filters nothing; the configured value is 600.
+15. **A per-document `colpali_status`/`source` flag in SQLite is not evidence the
+    vector store is populated** — the two can describe different ingests. Ask the
+    store (`store.count_visual_vectors()`).
+16. **Re-run `scripts/clean_stale_visual.py` after every Phase 3 re-ingest**, or
+    every page returns twice (same class as `clean_stale_graph.py`).
+17. **Passages contain `<!-- formula-not-decoded -->`** where Docling failed to
+    decode a formula. Formula-bearing claims then cannot be entailed by any
+    passage — this caps faithfulness and `ctx_prec_judged` regardless of
+    retrieval quality.
+18. **`--judge-from-env` judges with the generator unless `JUDGE_MODEL` is set.**
+    A model scoring its own output is not a measurement. `cfg.judge_model` is
+    empty in `.env`; set `JUDGE_MODEL=Qwen/Qwen3-VL-8B-Instruct` explicitly.
+19. **`search_with_das(tenant_id="global")` is a fail-open default** — pass the
+    tenant explicitly.
+20. **ColBERT runs only against a server/cluster Qdrant.** `store.py:301` gates on
+    `not is_local`, so it is skipped in laptop file mode.
+21. **A 23-query gold set cannot resolve an effect below ~0.15** (σ_d=0.2315,
+    SE≈0.05). Do not run another A/B on it — see `HANDOFF.md` P0-9.
 
 ---
 
@@ -402,9 +433,26 @@ Tests: 141 test functions across 10 files. `test_phase1/2/3` map to the phases;
   unreachable after 3 attempts"** on every `chat/completions` call. A liveness probe
   against `/v1/models` therefore reports all-clear on a pipeline that cannot generate a
   single token; `scripts/preflight.py` issues a real completion instead.
-- **The gateway returns HTTP 500 for an empty `Authorization: Bearer` header.** Any
+- **The gateway returns HTTP 500 for an empty `Authorization: *** header.** Any
   client that sends the header with no key breaks — this is why the eval judge scored
   nothing until it was given a non-empty key.
+- **Phoenix observability.** Enabled by default with no collector running → every
+  request retries span export (~21 retry blocks/query, ~10s → ~70s). Launch with
+  `PHOENIX_ENABLED=false` for latency-sensitive runs. To run it:
+  `PHOENIX_PORT=6007 PHOENIX_GRPC_PORT=4319 phoenix serve` — **6006 is taken** and
+  **4317 is held by Docker Desktop**, and the server exits entirely if gRPC can't
+  bind. A 200 from Phoenix does **not** mean the span persisted (a malformed
+  `~/.phoenix/phoenix.db` accepts `POST /v1/traces` and drops it — verify by reading
+  spans back). **LLM calls are invisible to Phoenix**: `src/core/llm.py` posts with
+  raw `httpx`, so `OpenAIInstrumentor()` patches a library never used.
+- **Ports 8501/8502 belong to other projects** on this machine (`genies-kitchen`,
+  `strange-lamp`). Pick a free port for this app or you QA the wrong application.
+- **`.65` is a shared Qdrant** hosting ~29 collections from other bootcamp projects;
+  `knowledge_base` / `concept_embeddings` are generic names on a shared host.
+- **Memgraph is local, reached by the VM through a reverse SSH tunnel**
+  (`ssh -R 7687:localhost:7687 …`); start it with
+  `docker compose --profile phase3 up -d memgraph` — the `--profile phase3` flag is
+  required or it silently does nothing.
 
 ---
 

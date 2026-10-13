@@ -498,6 +498,66 @@ the final precision stage and in measurement.
 
 ---
 
+## I. Lane upgrades, observability, UI — carried over from HANDOFF P1 (2026-10-12)
+
+Cost class noted per item. **Every embedder upgrade needs a full re-ingest.**
+
+### I1. Embedder upgrades — each lane has something newer ⚠️ requires re-ingest
+
+| Lane | Current | Newer available |
+|---|---|---|
+| dense | `nomic-embed-text-v1.5` | `nomic-embed-text-v2.5` |
+| ColBERT | `colbertv2.0` | `lightonai/GTE-ModernColBERT-v1` (also 128-dim → drop-in) |
+| sparse | `Splade_PP_en_v1` | `Qdrant/bm42-all-minilm-l6-v2-attentions` |
+| visual | `colpali-v1.2` | `TomoroAI/tomoro-colqwen3-embed-4b` |
+
+Cross-encoder: already on the best of the five offered (`bge-reranker-v2-m3`) — nothing to do.
+Chat: nothing better is actually serving — `gpt-oss-120b` HTTP 502s; the ceiling is `gpt-oss-20b`.
+
+### I2. Graph lane — 1–2 hop traversal still missing ⚠️ no re-ingest
+
+`graph_search` now ranks by distinct concepts matched, then concept similarity (the scores were
+previously discarded). **Still missing:** real 1–2 hop `RELATES_TO` traversal — `hop_distance`
+remains the constant 0. **Root cause of poor relevance:** the concept vocabulary holds
+near-duplicates as *separate nodes* ('orbit' / 'Orbit' / 'planetary orbit' / "Earth's orbit"),
+so nearly every chunk ties at 1 distinct concept. **Deduplicating concept names is the bigger
+lever than ranking.**
+
+### I3. Admin Status should report the STORES, not SQLite
+
+Three separate bugs came from local SQLite describing a different ingest than the index (visual
+readiness, the sidebar badge, the graph). A status panel driven by store counts would have caught
+all three.
+
+### I4. Phoenix does not trace LLM calls
+
+`src/core/llm.py` posts with raw `httpx`, and the `openai` SDK is imported **nowhere** in `src/`,
+so `OpenAIInstrumentor()` patches a library that is never used. Retrieval stages are traced;
+synthesis, card generation and RAPTOR are invisible — including their latency and token counts.
+Fix: call through the `openai` SDK, or emit manual spans around `call_llm`.
+
+### I5. Upload tab's "Topic" and "Difficulty" are inert
+
+Persisted to the Document row and the chunk payload, but nothing filters or steers on them.
+Wire or remove.
+
+### I6. Test the fallback chains
+
+Stub tests structurally cannot reach the fallback paths (stub embedder/LLM/ColPali/graph/SPLADE).
+A lane that silently falls back to a stub in production is a silent-failure class P0-2 did not cover.
+
+### I7. `render_math()` golden-file test
+
+Would end the six-commit LaTeX patch cycle. Partly done — `tests/test_frontend_math.py` pins the
+two converter bugs, but there is no golden-file end-to-end check.
+
+### I8. `sv_ray_cluster_access/` — reference only, keep gitignored
+
+Its own header declares it SupportVectors IP, not for reuse or sharing. Not importable here
+(needs `svlearn`), and every endpoint it documents is unreachable. Keep as reference only.
+
+---
+
 ## Re-ingest ordering — what must happen before what
 
 The question "do we re-ingest before fine-tuning?" — **yes, and the order is forced:**
