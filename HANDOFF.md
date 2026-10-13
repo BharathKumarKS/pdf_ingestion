@@ -4,9 +4,10 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-12** · `feat/p0-9-gold-dataset-v2` @ `668cd0f` (branched from `main`
-> `b7f8361`) · P0 items 1–8 done; **P0-9 (gold set) in progress — Sessions 1–2 done (required-`N`
-> measured; the three tools built and probed); next is Session 3 — run the scan.**
+> **Last updated: 2026-10-13** · `feat/p0-9-gold-dataset-v2` @ `8e81572` (branched from `main`
+> `b7f8361`) · P0 items 1–8 done; **P0-9 (gold set) — Sessions 1–3 done (scan run complete; the
+> three artifacts are on disk and committed). Session 4 (assemble & decide) is next — but read the
+> negatives caveat below first: `data/eval_negatives.json` is NOT yet trustworthy.**
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -42,6 +43,34 @@ Verified: each tool passes `--dry-run` and a stubbed `--limit`/`--n` probe; the 
 judged once, not twice; a re-run makes zero judge calls. **D9 verified live** against the cluster
 VLM (p254 → YES "½mv² is kinetic energy", p3 → NO copyright page, ~0.8 s/call). Suite at the
 floor: **211 pass / 5 fail / 5 skip**.
+
+### Session 3 delivered 2026-10-13 — the scan ran (all three steps, exit 0)
+
+Judge `Qwen/Qwen3-VL-8B-Instruct` @ `http://10.0.10.70:8000`, `--workers 8` (ramp-probe knee:
+4.21 calls/s, 0 errors; 16/32 collapse to ~1.2/s from queueing). Commits `1870dc9`, `8e81572`.
+
+| Artifact | Content |
+|---|---|
+| `data/eval_queries_gold.json` | 103 questions — 55 factual / 8 overview / 40 multihop |
+| `data/eval_queries_gold_expanded.json` | 66/103 queries widened to >1 page (max 134), scan-expanded |
+| `data/eval_negatives.json` | 24 negatives, 8 per tier — **see caveat** |
+
+**Four blockers had to be fixed first** (Session 2 only ran `--dry-run`/stubs, so they survived):
+the run-order command omits `--judge-backend openai` (defaults to Anthropic → 401); `call_llm_raw`
+posted to `{base}/chat/completions` (gateway serves only `/v1/...` → 404); 2048 `max_tokens` was
+still too small for `gpt-oss-20b`'s reasoning trace (content came back null/truncated → raised to
+8192); and the model's LaTeX (`\(m v\)`, `\frac`, `\theta`) is not valid JSON (`\f`,`\t`,`\n`,`\b`
+even decode to control characters) → `_extract_questions` now escapes every backslash but `\"`/`\\`.
+
+> ⚠️ **Negatives are NOT trustworthy — resolve before Session 4 uses them.** `generate_negatives`
+> accepted **24/24, including 8/8 near_miss**, but the plan predicted near_miss would *mostly be
+> rejected* (Vol 1 does discuss these topics). Acceptance rests on the coarse pass (stride 15 = 63
+> of ~938 pages) plus a dense pass that only fires around a coarse hit; for 5 of 8 near_miss no
+> coarse page was even PARTIAL, so only 63 pages were judged. Term-bearing content pages were never
+> seen — p107 (radioactivity → the carbon-14 half-life question), p754 (tungsten), p103/562/763/898
+> (laser) have **no cache entry at all**. "A full scan found no YES page" is not a full scan.
+> **Fix before trusting:** re-verify negatives with a full/stride-1 scan (or dense passes around all
+> term matches), or accept that this tier needs Session 5 human review.
 
 ### Decisions settled 2026-10-12 (do not re-litigate)
 
@@ -84,7 +113,7 @@ unresolvable numbers, not more knowledge.
 | 1–6 | baseline committed; silent fallbacks killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed; eval gate + CI | `6381f7b`, `c3a8727` |
 | 7 | metric set fixed (`Precision@k` → `Recall@k` + `Hit@k`) | `1dad73f` |
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
-| 9 | **gold-set rebuild** | Sessions 1–2 done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) on `feat/p0-9-gold-dataset-v2`; **next: Session 3 — run the scan** |
+| 9 | **gold-set rebuild** | Sessions 1–3 done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) on `feat/p0-9-gold-dataset-v2`; **next: Session 4 — assemble & decide (negatives need re-verification first)** |
 
 Test suite: **211 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
