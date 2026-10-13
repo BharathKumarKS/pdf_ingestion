@@ -1,0 +1,822 @@
+
+Eval Query Calibration
+For each query, review the retrieved pages and update eval_queries.json.
+
+
+━━ vec-001: What is the formula for kinetic energy? ━━
+   Current relevant_pages: [211, 212, 213]
+
+  #1  page=95  score=0.6538
+  Then to find the formula for kinetic energy for an object moving with velocity V , we must calculate the height that it could reach, and 
+multiply by the weight. We shall soon find that we can write it this way:
+
+<!-- formula-not-decoded -->
+
+Of course, the fact that motion has energy has nothing to do with the fact that we are in a gravitational field. It makes no difference where 
+the motion came from. This is a general formula for various velocities.
+
+  #2  page=276  score=0.5813
+  In these circumstances the kinetic energy in the entire system is simply the sum of the kinetic energies of all of the particular atoms or 
+planets or whatever, and the potential energy of the system is the sum, over the pairs of particles, of the potential energy of mutual 
+interaction of a single pair, as though the others were not there.
+
+  #3  page=252  score=0.5765
+  Now in our simple example the force is constant, equal to -mg , a vertical force (the minus sign means that it acts downward), and the 
+velocity, of course, is the rate of change of the vertical position, or height h , with time. Thus the rate of change of the kinetic energy is 
+-mg ( dh/dt ), which quantity, miracle of miracles, is minus the rate of change of something else! It is minus the time rate of change of mgh !
+
+  #4  page=95  score=0.5692
+  It is easy to say what it is. The kinetic energy at the bottom equals the weight times the height that it could go, corresponding to its 
+velocity: K.E. = WH . What we need is the formula which tells us the height by some rule that has to do with the motion of objects. If we start 
+something out with a certain velocity, say straight up, it will reach a certain height; we do not know what it is yet, but it depends on the 
+velocity-there is a formula for that.
+
+  #5  page=276  score=0.5610
+  If, for example, we analyze a system like that great globular star cluster that we saw a picture of, with the thousands of stars all 
+interacting, then the formula for the total potential energy is simply one term plus another term, etc., summed over all pairs of stars, and the
+kinetic energy is the sum of the kinetic energies of all the individual stars.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ vec-002: Define Newton's first law of motion ━━
+   Current relevant_pages: [139, 140, 141]
+
+  #1  page=7  score=0.6270
+  <!-- image -->
+
+<!-- image -->
+
+<!-- image -->
+
+http://www.youtube.com/watch?v=NnYG2cnRwgQ
+
+## Newton's Three Laws
+
+1. Newton's First Law of Motion: An object remains at rest or in a state of uniform motion unless acted upon by an unbalanced force.
+2. Newton's Second Law of Motion: The acceleration, a , that an object experiences is directly proportional to the net force acting on the 
+object, F or ( Fnet ) , upon it and inversely proportional to its mass, m . F = Fnet = Ma
+3.
+
+  #2  page=5  score=0.6047
+  These will be studied in other contexts.
+
+A net force is not a type of force, but rather the combination of all the forces on a given object.
+
+## Newton's First Law: Inertia
+
+Galileo formulated what we now call Newton's First Law of Motion.
+
+## Newton's First Law of Motion: An object remains at rest or in a state of uniform motion unless acted upon by an unbalanced force.
+
+A very important idea is implicit in Galileo's statement.
+
+  #3  page=141  score=0.5863
+  That is the principle of inertia -if something is moving, with nothing touching it and completely undisturbed, it will go on forever, coasting
+at a uniform speed in a straight line. ( Why does it keep on coasting? We do not know, but that is the way it is.)
+
+Newton modified this idea, saying that the only way to change the motion of a body is to use force . If the body speeds up, a force has been 
+applied in the direction of motion .
+
+  #4  page=179  score=0.5460
+  (9.1) can also be written as
+
+<!-- formula-not-decoded -->
+
+The acceleration a is the rate of change of the velocity, and Newton's Second Law says more than that the effect of a given force varies 
+inversely as the mass; it says also that the direction of the change in the velocity and the direction of the force are the same.
+
+  #5  page=181  score=0.5348
+  Similarly, we see that ∆ v y = a y ∆ t and ∆ v z = a z ∆ t . In these terms, we see that Newton's Second Law, in saying that the force is in 
+the same direction as the acceleration, is really three laws, in the sense that the component of the force in the x -, y -, or z -direction is 
+equal to the mass times the rate of change of the corresponding component of velocity:
+
+Fig. 9-2. A change in velocity in which both the magnitude and direction change.
+
+<!-- image -->
+
+<!-- formula-not-decoded -->
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ vec-003: What is the value of Planck's constant? ━━
+   Current relevant_pages: [521, 522, 523]
+
+  #1  page=763  score=0.5435
+  It is simply
+
+<!-- formula-not-decoded -->
+
+But Planck has already told us that the formula must be (42.12). Therefore we can deduce something: First, that B nm must equal B mn , since 
+otherwise we cannot get the ( e ℏ ω/kT -1). So Einstein discovered some things that he did not know how to calculate, namely that the induced 
+emission probability and the absorption probability must be equal . This is interesting. And furthermore, in order for (42.17) and (42.12) to 
+agree,
+
+<!-- formula-not-decoded -->
+
+  #2  page=965  score=0.5346
+  |     |        |
+| h               | 62606896 × 10 - 34 Js, 17-14 ℏ                                           |     |        |
+| ℏ               | reduced Planck constant, = h/ 2 π , 2-9                                  |     |        |
+| H               | magnetizing field vector, II-32-7                                        |     |        |
+| i               | imaginary unit, 22-11                                                    |     |        |
+
+  #3  page=965  score=0.5107
+  |                 | × - 23 J/K, 39-16                                                        |     |        |
+|                 | Boltzmann's constant, k = 1 . 3806504 10                                 |     |        |
+| k               |                                                                          |     |        |
+|                 | intensity, 30-2                                                          |     |        |
+
+  #4  page=739  score=0.4936
+  Suppose that the permitted energy levels of a harmonic oscillator were equally spaced at ℏ ω 0 apart, so that the oscillator could take on 
+only these different
+
+Planck studied this curve. He first determined the answer empirically, by fitting the observed curve with a nice function that fitted very well.
+Thus he had an empirical formula for the average energy of a harmonic oscillator as a function of frequency.
+
+  #5  page=962  score=0.4898
+  | ϵ 0                               | dielectric constant or permittivity of vacuum, ϵ 0 = 8 . 854187817 × 10 - 12 F/m, 12-12                 
+|
+| κ                                 | Boltzmann's constant, κ = 1 . 3806504 × 10 - 23 J/K, III-14-7                                             
+|
+| κ                                 | relative permittivity, II-10-8                                                                            
+|
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ vec-004: What does Feynman say about the principle of least action? ━━
+   Current relevant_pages: [278, 279, 280, 281, 282]
+
+  #1  page=8  score=0.5134
+  Feynman was too slick-he knew tricks and what approximations could be made, and had intuition based on experience and genius that a beginning 
+student does not possess.' Feynman and colleagues, aware of this flaw in the course, addressed it in part with materials that have been 
+incorporated into Feynman's Tips on Physics: three problem-solving lectures by Feynman, and a set of exercises and answers assembled by Robert 
+B. Leighton and Rochus Vogt.
+
+  #2  page=18  score=0.5103
+  ## Foreword
+
+This book is based upon a course of lectures in introductory physics given by Prof. R. P. Feynman at the California Institute of Technology 
+during the academic year 1961-62; it covers the first year of the two-year introductory course taken by all Caltech freshmen and sophomores, and
+was followed in 1962-63 by a similar series covering the second year. The lectures constitute a major part of a fundamental revision of the 
+introductory course, carried out over a four-year period.
+
+  #3  page=3  score=0.5000
+  Feynman wrote The Character of Physical Law and QED: The Strange Theory of Light and Matter . He also authored a number of advanced 
+publications that have become classic references and textbooks for researchers and students.
+
+Richard Feynman was a constructive public man. His work on the Challenger commission is well known, especially his famous demonstration of the 
+susceptibility of the O-rings to cold, an elegant experiment which required nothing more than a glass of ice water and a C-clamp.
+
+  #4  page=466  score=0.4996
+  In other words, the principle is that light takes a path such that there are many other paths nearby which take almost exactly the same time.
+
+The following is another difficulty with the principle of least time, and one which people who do not like this kind of a theory could never 
+stomach. With Snell's theory we can 'understand' light. Light goes along, it sees a surface, it bends because it does something at the surface.
+
+  #5  page=3  score=0.4962
+  He also created a mathematical theory that accounts for the phenomenon of superfluidity in liquid helium. Thereafter, with Murray Gell-Mann, 
+he did fundamental work in the area of weak interactions such as beta decay. In later years Feynman played a key role in the development of 
+quark theory by putting forward his parton model of high energy proton collision processes.
+
+Feynman was a remarkably effective educator.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ vec-005: What is the difference between elastic and inelastic collisions? ━━
+   Current relevant_pages: [159, 160, 161, 162, 163]
+
+  #1  page=208  score=0.6384
+  Therefore, between very elementary objects, the collisions are always elastic or very nearly elastic. For instance, the collisions between 
+atoms or molecules in a gas are said to be perfectly elastic. Although this is an excellent approximation, even such collisions are not 
+perfectly elastic; otherwise one could not understand how energy in the form of light or heat radiation could come out of a gas.
+
+  #2  page=207  score=0.5924
+  That the velocities of the bodies rebounding after a symmetrical collision are equal to and opposite each other , however, is a matter of 
+conservation of momentum.
+
+Elastic collisions are especially interesting for systems that have no internal 'gears, wheels, or parts. ' Then when there is a collision there
+is nowhere for the energy to be impounded, because the objects that move apart are in the same condition as when they collided.
+
+  #3  page=207  score=0.5810
+  We might similarly analyze collisions between bodies of different masses, different initial velocities, and various degrees of elasticity, and
+determine the final velocities and the loss of kinetic energy, but we shall not go into the details of these processes.
+
+That the speeds before and after an elastic collision are equal is not a matter of conservation of momentum, but a matter of conservation of 
+kinetic energy .
+
+  #4  page=208  score=0.5699
+  Once in a while, in a gas collision, a low-energy infrared ray is emitted, but this occurrence is very rare and the energy emitted is very 
+small. So, for most purposes, collisions of molecules in gases are considered to be perfectly elastic.
+
+Another example of an almost elastic interaction is magnetism.
+
+  #5  page=316  score=0.5559
+  So we see that the conservation of mass which we have deduced above is equivalent to the conservation of energy, and therefore there is no 
+place in the theory of relativity for strictly inelastic collisions, as there was in Newtonian mechanics. According to Newtonian mechanics it is
+all right for two things to collide and so form an object of mass 2 m 0 which is in no way distinct from the one that would result from putting 
+them together slowly.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ vec-006: What is Newton's second law of motion? ━━
+   Current relevant_pages: [139, 140, 141, 142]
+
+  #1  page=199  score=0.6532
+  In addition to the law of conservation of momentum, there is another interesting consequence of Newton's Second Law, to be proved later, but 
+merely stated now. This principle is that the laws of physics will look the same whether we are standing still or moving with a uniform speed in
+a straight line. For example, a child bouncing a ball in an airplane finds that the ball bounces the same as though he were bouncing it on the 
+ground.
+
+  #2  page=182  score=0.6438
+  Newton's Second Law is given in complete form in Eq. (9.7). If we know the forces on an object and resolve them into x -, y -, and z 
+-components, then we can find the motion of the object from these equations. Let us consider a simple example. Suppose there are no forces in 
+the y - and z -directions, the only force being in the x -direction, say vertically. Equation (9.7) tells us that there would be changes in the 
+velocity in the vertical direction, but no changes in the horizontal direction.
+
+  #3  page=7  score=0.6295
+  <!-- image -->
+
+<!-- image -->
+
+<!-- image -->
+
+http://www.youtube.com/watch?v=NnYG2cnRwgQ
+
+## Newton's Three Laws
+
+1. Newton's First Law of Motion: An object remains at rest or in a state of uniform motion unless acted upon by an unbalanced force.
+2. Newton's Second Law of Motion: The acceleration, a , that an object experiences is directly proportional to the net force acting on the 
+object, F or ( Fnet ) , upon it and inversely proportional to its mass, m . F = Fnet = Ma
+3.
+
+  #4  page=179  score=0.6140
+  (9.1) can also be written as
+
+<!-- formula-not-decoded -->
+
+The acceleration a is the rate of change of the velocity, and Newton's Second Law says more than that the effect of a given force varies 
+inversely as the mass; it says also that the direction of the change in the velocity and the direction of the force are the same.
+
+  #5  page=181  score=0.6134
+  Similarly, we see that ∆ v y = a y ∆ t and ∆ v z = a z ∆ t . In these terms, we see that Newton's Second Law, in saying that the force is in 
+the same direction as the acceleration, is really three laws, in the sense that the component of the force in the x -, y -, or z -direction is 
+equal to the mass times the rate of change of the corresponding component of velocity:
+
+Fig. 9-2. A change in velocity in which both the magnitude and direction change.
+
+<!-- image -->
+
+<!-- formula-not-decoded -->
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ vec-007: What is the formula for gravitational force? ━━
+   Current relevant_pages: [98, 99, 100, 101]
+
+  #1  page=243  score=0.6312
+  Can the same methods be applied to gravitation? The force between two masses m 1 and m 2 was expressed by Newton as F = -Gm 1 m 2 r /r 3 . But
+according to the field concept, we may say that m 1 creates a field C in all the surrounding space, such that the force on m 2 is given by
+
+<!-- formula-not-decoded -->
+
+By complete analogy with the electrical case,
+
+<!-- formula-not-decoded -->
+
+and the gravitational field produced by several masses is
+
+<!-- formula-not-decoded -->
+
+  #2  page=91  score=0.6059
+  We call the sum of the weights times the heights gravitational potential energy -the energy which an object has because of its relationship in
+space, relative to the earth. The formula for gravitational energy, then, so long as we are not too far from the earth (the force weakens as we 
+go higher) is
+
+<!-- formula-not-decoded -->
+
+It is a very beautiful line of reasoning. The only problem is that perhaps it is not true.
+
+  #3  page=276  score=0.5753
+  (This is really not true for molecular forces, and the formula is somewhat more complicated; it certainly is true for Newtonian gravitation, 
+and it is true as an approximation for molecular forces.
+
+  #4  page=87  score=0.5487
+  I wish to discuss the formula for gravitational energy near the surface of the Earth, and I wish to derive this formula in a way which has 
+nothing to do with history but is simply a line of reasoning invented for this particular lecture to give you an illustration of the remarkable 
+fact that a great deal about nature can be extracted from a few facts and close reasoning. It is an illustration of the kind of work theoretical
+physicists become involved in.
+
+  #5  page=242  score=0.5444
+  It is desirable to have some way to remember what happened previously. If the force upon some charge depends upon where another charge
+
+In the case of gravitation, we can do exactly the same thing. In this case, where the force F = -Gm 1 m 2 r /r 3 , we can make an analogous 
+analysis, as follows: the force on a body in a gravitational field is the mass of that body times the field C . The force on m 2 is the mass m 2
+times the field C produced by m 1 ; that is, F = m 2 C .
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ vec-008: Define momentum ━━
+   Current relevant_pages: [159, 160]
+
+  #1  page=340  score=0.5684
+  The torque is also often called the moment of the force. The origin of this term is obscure, but it may be related to the fact that 'moment' 
+is derived from the Latin movimentum , and that the capability of a force to move an object (using the force on a lever or crowbar) increases 
+with the length of the lever arm. In mathematics 'moment' means weighted by how far away it is from an axis.
+
+There is still a third formula for the torque which is very interesting.
+
+  #2  page=178  score=0.5540
+  In this way we find a certain quantity of mass for every object. Now the momentum of an object is a product of two parts: its mass and its 
+velocity . Thus Newton's Second Law may be written mathematically this way:
+
+Momentum is not the same as velocity . A lot of words are used in physics, and they all have precise meanings in physics, although they may not 
+have such precise meanings in everyday language. Momentum is an example, and we must define it precisely.
+
+  #3  page=312  score=0.5238
+  Also, we shall assume that the momentum of a particle which is moving is a vector and is always directed in the direction of the velocity. 
+However, we shall not assume that the momentum is a constant times the velocity, as Newton did, but only that it is some function of velocity. 
+We thus write the momentum vector as a certain coefficient times the vector velocity:
+
+<!-- formula-not-decoded -->
+
+  #4  page=210  score=0.4870
+  Light can exert pressure by bombarding an object; this pressure is very small, but with sufficiently delicate apparatus it is measurable.
+
+Now in quantum mechanics it turns out that momentum is a different thingit is no longer mv . It is hard to define exactly what is meant by the 
+velocity of a particle, but momentum still exists.
+
+  #5  page=299  score=0.4782
+  Now let us see how momentum varies with speed. In Newtonian mechanics it is proportional to the speed and, according (15.10), over a 
+considerable range of speed, but small compared with c , it is nearly the same in relativistic mechanics, because the square-root expression 
+differs only slightly from 1. But when v is almost equal to c , the square-root expression approaches zero, and the momentum therefore goes 
+toward infinity.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ raptor-001: Give me an overview of how classical mechanics breaks down at atomic scales ━━
+   Current relevant_pages: [520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531]
+
+  #1  page=686  score=0.5959
+  So we now understand why we do not fall through the floor. As we walk, our shoes with their masses of atoms push against the floor with its 
+mass of atoms. In order to squash the atoms closer together, the electrons would be confined to a smaller space and, by the uncertainty 
+principle, their momenta would have to be higher on the average, and that means high energy; the resistance to atomic compression is a 
+quantum-mechanical effect and not a classical effect.
+
+  #2  page=693  score=0.5866
+  The first thing to do is to get some idea, more or less, of what ought to happen in different circumstances, and then, later, when we know the
+laws better, we will formulate them better.
+
+Secondly, and more important from a physical standpoint, the actual behavior of the atoms is not according to classical mechanics, but according
+to quantum mechanics, and a correct understanding of the subject cannot be attained until we understand quantum mechanics.
+
+  #3  page=349  score=0.5822
+  In fact, it turns out that the fundamental atomic laws, which we call quantum mechanics, are quite different from Newton's laws, and are 
+difficult to understand because all our direct experiences are with large-scale objects and the small-scale atoms behave like nothing we see on 
+a large scale. So we cannot say, 'An atom is just like a planet going around the sun,' or anything like that. It is like nothing we are familiar
+with because there is nothing like it .
+
+  #4  page=40  score=0.5805
+  The interesting point is that the material has a definite place for every atom , and you can easily appreciate that if somehow or other we 
+were to hold all the atoms at one end of the drop in a certain arrangement, each atom in a certain place, then because of the structure of 
+interconnections, which is rigid, the other end miles away (at our magnified scale) will have a
+
+Let us consider another situation. Suppose that the piston moves inward, so that the atoms are slowly compressed into a smaller space.
+
+  #5  page=349  score=0.5721
+  Suppose that the true laws of motion of atoms were given by some strange equation which does not have the property that when we go to a larger
+scale we reproduce the same law, but instead has the property that if we go to a larger scale, we can approximate it by a certain expression 
+such that, if we extend that expression up and up, it keeps reproducing itself on a larger and larger scale. That is possible, and in fact that 
+is the way it works.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ raptor-002: Summarize the key themes in the chapter on conservation laws ━━
+   Current relevant_pages: [52, 53, 54, 55, 56, 57, 58, 159, 160, 161, 211, 212, 213]
+
+  #1  page=84  score=0.5428
+  The law is called the conservation of energy . It states that there is a certain quantity, which we call energy, that does not change in the 
+manifold changes which nature undergoes. That is a most abstract idea, because it is a mathematical principle; it says that there is a numerical
+quantity which does not change when something happens.
+
+  #2  page=97  score=0.4997
+  Therefore conservation laws are very interesting. The question naturally arises as to what other conservation laws there are in physics. There
+are two other conservation laws which are analogous to the conservation of energy. One is called the conservation of linear momentum. The other 
+is called the conservation of angular momentum. We will find out more about these later. In the last analysis, we do not understand the 
+conservation laws deeply. We do not understand the conservation of energy.
+
+  #3  page=98  score=0.4877
+  The laws which govern how much energy is available are called the laws of thermodynamics and involve a concept called entropy for irreversible
+thermodynamic processes.
+
+These are the six conservation laws, three of them subtle, involving space and time, and three of them simple, in the sense of counting 
+something.
+
+Finally, we remark on the question of where we can get our supplies of energy today. Our supplies of energy are from the sun, rain, coal, 
+uranium, and hydrogen.
+
+  #4  page=196  score=0.4796
+  In the situations in which we cannot follow details, we need to know some general properties, that is, general theorems or principles which 
+are consequences of Newton's laws. One of these is the principle of conservation of energy, which was discussed in Chapter 4. Another is the 
+principle of conservation of momentum, the subject of this chapter.
+
+  #5  page=84  score=0.4763
+  ## Conservation of Energy
+
+## 4-1 What is energy?
+
+In this chapter, we begin our more detailed study of the different aspects of physics, having finished our description of things in general. To 
+illustrate the ideas and the kind of reasoning that might be used in theoretical physics, we shall now examine one of the most basic laws of 
+physics, the conservation of energy.
+
+Imagine a child, perhaps 'Dennis the Menace,' who has blocks which are absolutely indestructible, and cannot be divided into pieces.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ raptor-003: How does Feynman build up the concept of energy from mechanics to thermodynamics? ━━
+   Current relevant_pages: [52, 53, 54, 55, 56, 211, 212, 213, 565, 566, 591, 592]
+
+  #1  page=18  score=0.5418
+  ## Foreword
+
+This book is based upon a course of lectures in introductory physics given by Prof. R. P. Feynman at the California Institute of Technology 
+during the academic year 1961-62; it covers the first year of the two-year introductory course taken by all Caltech freshmen and sophomores, and
+was followed in 1962-63 by a similar series covering the second year. The lectures constitute a major part of a fundamental revision of the 
+introductory course, carried out over a four-year period.
+
+  #2  page=800  score=0.5233
+  I can think of the volume as a function of temperature and pressure, and the internal energy as a function of temperature and pressure, and so
+on.' That is why thermodynamics is hard, because everyone uses a different approach. If we could only sit down once and decide on our variables,
+and stick to them, it would be fairly easy.
+
+We begin.
+
+  #3  page=3  score=0.5155
+  He also created a mathematical theory that accounts for the phenomenon of superfluidity in liquid helium. Thereafter, with Murray Gell-Mann, 
+he did fundamental work in the area of weak interactions such as beta decay. In later years Feynman played a key role in the development of 
+quark theory by putting forward his parton model of high energy proton collision processes.
+
+Feynman was a remarkably effective educator.
+
+  #4  page=786  score=0.5153
+  That was the question to which Carnot addressed himself, and one of the by-products was the discovery of the type of relationship that we have
+just explained above.
+
+In fact, the science of thermodynamics began with an analysis, by the great engineer Sadi Carnot, of the problem of how to build the best and 
+most efficient engine, and this constitutes one of the few famous cases in which engineering has contributed fundamentally to physical theory.
+
+  #5  page=3  score=0.5052
+  Beyond these achievements, Dr. Feynman introduced basic new computational techniques and notations into physics-above all, the ubiquitous 
+Feynman diagrams that, perhaps more than any other formalism in recent scientific history, have changed the way in which basic physical 
+processes are conceptualized and calculated.
+
+Dr. Feynman won his Nobel Prize for successfully resolving problems with the theory of quantum electrodynamics.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ raptor-004: What are the main ideas connecting electricity and magnetism? ━━
+   Current relevant_pages: None
+
+  #1  page=484  score=0.6146
+  For this culminating moment there was a long preparation in the gradual discovery and unfolding of the laws of electricity and magnetism. This
+story we shall reserve for detailed study next year. However, the story is, briefly, as follows. The gradually discovered properties of 
+electricity and magnetism, of electric forces of attraction and repulsion, and of magnetic forces, showed that although these forces were rather
+complex, they all fell off inversely as the square of the distance.
+
+  #2  page=487  score=0.5975
+  Next, the laws of electricity and magnetism, as known at the end of the 19th century, are these: the electrical forces acting on a charge q 
+can be described by two fields, called E and B , and the velocity v of the charge q , by the equation
+
+<!-- formula-not-decoded -->
+
+To complete this law, we have to say what the formulas for E and B are in a given circumstance: if a number of charges are present, E and the B 
+are each the sum of contributions, one from each individual charge.
+
+  #3  page=286  score=0.5902
+  A long series of careful studies of these phenomena by many people culminated in Maxwell's equations of the electromagnetic field, which 
+describe electricity, magnetism, and light in one uniform system. However, the Maxwell equations did not seem to obey the principle of 
+relativity.
+
+  #4  page=487  score=0.5549
+  We shall not study all the pieces now; we only write it down to give an impression, to show that it can be written, and so that we can see 
+ahead of time roughly what it looks like. As a matter of fact, the most useful way to write the correct laws of electricity and magnetism is not
+the way we shall now write them, but involves what are called field equations , which we shall learn about next year.
+
+  #5  page=243  score=0.5509
+  A spot of light glows in the center of the screen where the electrons strike, and this enables us to trace the electron path. On the
+
+Equations (12.6) and (12.10) express what is known as the principle of superposition of fields. This principle states that the total field due 
+to all the sources is the sum of the fields due to each source. So far as we know today, for electricity this is an absolutely guaranteed law, 
+which is true even when the force law is complicated because of the motions of the charges.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ raptor-005: How does the textbook introduce probability into physics? ━━
+   Current relevant_pages: [565, 566, 567, 568, 591, 592, 593]
+
+  #1  page=693  score=0.5589
+  So this subject involves a knowledge of the theory of probability, and our mathematics is not yet quite ready and we do not want to strain it 
+too hard.
+
+Why do we deal with the subject now at all? Why not wait half a year, or a year, until we know the mathematics of probability better, and we 
+learn a little quantum mechanics, and then we can do it in a more fundamental way? The answer is that it is a difficult subject, and the best 
+way to learn is to do it slowly!
+
+  #2  page=670  score=0.5318
+  physics has given up. We do not know how to predict what would happen in a given circumstance , and we believe now that it is impossible, that
+the only thing that can be predicted is the probability of different events. It must be recognized that this is a retrenchment in our earlier 
+ideal of understanding nature. It may be a backward step, but no one has seen a way to avoid it.
+
+  #3  page=18  score=0.5075
+  ## Foreword
+
+This book is based upon a course of lectures in introductory physics given by Prof. R. P. Feynman at the California Institute of Technology 
+during the academic year 1961-62; it covers the first year of the two-year introductory course taken by all Caltech freshmen and sophomores, and
+was followed in 1962-63 by a similar series covering the second year. The lectures constitute a major part of a fundamental revision of the 
+introductory course, carried out over a four-year period.
+
+  #4  page=673  score=0.4994
+  First of all, we know that the new way of representing the world in quantum mechanics-the new framework-is to give an amplitude for every 
+event that can occur, and if the event involves the reception of one particle then we can give the amplitude to find that one particle at 
+different places and at different times. The probability of finding the particle is then proportional to the absolute square of the amplitude.
+
+  #5  page=467  score=0.4942
+  The law for that chance is the following very strange one. Take any path and find the time for that path; then make a complex number, or draw 
+a little complex vector, ρe iθ , whose angle θ is proportional to the time . The number of turns per second is the frequency of the light. Now 
+take another path; it has, for instance, a different time, so the vector for it is turned through a different angle-the angle being always 
+proportional to the time.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ graph-001: Why does a satellite stay in orbit? ━━
+   Current relevant_pages: [98, 99, 100, 101, 102, 139, 140, 141, 142]
+
+  #1  page=274  score=0.5642
+  <!-- formula-not-decoded -->
+
+At what speed must a satellite travel in order to keep going around the earth? We worked this out long ago and found that v 2 = GM/a . Therefore
+to go away from the earth, we need √ 2 times the velocity we need to just go around the earth near its surface. We need, in other words, twice 
+as much energy (because energy goes as the square of the velocity) to leave the earth as we do to go around it.
+
+  #2  page=7  score=0.5006
+  As long as the towing ship is moving with constant velocity, there is no reason to keep towing. The disabled ship's inertia will maintain the 
+same velocity since there is negligible friction in deep space. In reality, we can send unmanned probes into deep space with only enough fuel to
+break out of Earth's orbit. Once the probe is moving fast enough to escape the Earth's gravity, its thrusters are turned off for months or years
+depending upon how far the journey.
+
+<!-- image -->
+
+## FIGURE 1.2
+
+  #3  page=148  score=0.4525
+  These satellites were studied very carefully by Roemer, who noticed that the moons sometimes seemed to be ahead of schedule, and sometimes 
+behind. (One can find their schedules by waiting a very long time and finding out how long it takes on the average for the moons to go around.) 
+Now they were ahead when Jupiter was particularly close to the earth and they were behind when Jupiter was farther from the earth.
+
+  #4  page=274  score=0.4377
+  Therefore the first thing that was done historically with satellites was to get one to go around the earth, which requires a speed of five 
+miles per second. The next thing was to send a satellite away from the earth permanently; this required twice the energy, or about seven miles 
+per second.
+
+If we sketch the curve of the potential energy U ( r ) as in Fig.
+
+  #5  page=148  score=0.3973
+  This force is not really strong, since the sun is much more massive than Saturn, but there is some pull, so the orbit of Jupiter should not be
+a perfect ellipse, and it is not; it is slightly off, and 'wobbles' around the correct elliptical orbit. Such a motion is a little more 
+complicated. Attempts were made to analyze the motions of Jupiter, Saturn, and Uranus on the basis of the law of gravitation.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ graph-002: What should I understand before learning about Maxwell's equations? ━━
+   Current relevant_pages: None
+
+  #1  page=286  score=0.6266
+  A long series of careful studies of these phenomena by many people culminated in Maxwell's equations of the electromagnetic field, which 
+describe electricity, magnetism, and light in one uniform system. However, the Maxwell equations did not seem to obey the principle of 
+relativity.
+
+  #2  page=484  score=0.5438
+  Maxwell noted that the equations or the laws that had been discovered up to this time were mutually inconsistent when he tried to put them all
+together, and in order for the whole system to be consistent, he had to add another term to his equations. With this new term there came an 
+amazing prediction, which was that a part of the electric and magnetic fields would fall off
+
+Perhaps the most dramatic moment in the development of physics during the 19th century occurred to J. C.
+
+  #3  page=691  score=0.5303
+  In the case of mechanics and in the case of light, we were able to begin with a precise statement of some laws, like Newton's laws, or the 
+formula for the field produced by an accelerating charge, from which a whole host of phenomena could be essentially understood, and which would 
+produce a basis for our understanding of mechanics and of light from that time on.
+
+  #4  page=286  score=0.5267
+  One of the consequences of Maxwell's equations is that if there is a disturbance in the field such that light is generated, these 
+electromagnetic waves go out in all directions equally and at the same speed c , or 186 , 000 mi/sec. Another consequence of the equations is 
+that if the source of the disturbance is moving, the light emitted goes through space at the same speed c . This is analogous to the case of 
+sound, the speed of sound waves being likewise independent of the motion of the source.
+
+  #5  page=487  score=0.5206
+  Next, the laws of electricity and magnetism, as known at the end of the 19th century, are these: the electrical forces acting on a charge q 
+can be described by two fields, called E and B , and the velocity v of the charge q , by the equation
+
+<!-- formula-not-decoded -->
+
+To complete this law, we have to say what the formulas for E and B are in a given circumstance: if a number of charges are present, E and the B 
+are each the sum of contributions, one from each individual charge.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ graph-003: How is simple harmonic motion related to wave propagation? ━━
+   Current relevant_pages: [340, 341, 342, 343, 344, 345]
+
+  #1  page=841  score=0.6450
+  Then, with the motion, the air is compressed and a change of pressure is produced which pushes on additional air. This air is in turn 
+compressed, which leads again to an extra pressure, and a wave is propagated.
+
+As we said, we shall consider the wave in one dimension. We can do this if we are sufficiently far from the source that what we call the 
+wavefronts are very nearly planes. We thus make our argument simpler by taking the least complicated example.
+
+  #2  page=859  score=0.5639
+  In other words, if we added two waves, but these waves were not just oscillating, but also moving in space, then the resultant wave would move
+along also, at the same speed.
+
+Now we would like to generalize this to the case of waves in which the relationship between the frequency and the wave number k is not so 
+simple. Example: material having an index of refraction.
+
+  #3  page=384  score=0.5631
+  Demonstration of the equivalence between simple harmonic motion and uniform circular motion.
+
+<!-- image -->
+
+Here we may point out that because uniform motion in a circle is so closely related mathematically to oscillatory up-and-down motion, we can 
+analyze oscillatory motion in a simpler way if we imagine it to be a projection of something going in a circle. In other words, although the 
+distance y means nothing in the oscillator problem, we may still artificially supplement Eq.
+
+  #4  page=891  score=0.5510
+  <!-- formula-not-decoded -->
+
+<!-- formula-not-decoded -->
+
+In earlier chapters it was convenient to use the exponential notation for representing simple harmonic motion. Instead of cos ωt we used Re e 
+iωt , the real part of the exponential function. We have used cosine and sine functions in this chapter because it made the derivations perhaps 
+a little clearer. Our final result of Eq. (50.13) can, however, be written in the compact form
+
+<!-- formula-not-decoded -->
+
+  #5  page=898  score=0.5467
+  That is indeed a very good approximation. It is only within the last few years that light sources have been devised (lasers) which produce an 
+intensity of light strong enough so that nonlinear effects can be observed. It is now possible to generate harmonics of light frequencies. When 
+a strong red light passes through a piece of glass, a little bit of blue light-second harmonic-comes out!
+
+## Waves
+
+## 51-1 Bow waves
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ graph-004: How do conservation laws appear across different areas of physics? ━━
+   Current relevant_pages: [52, 53, 54, 55, 56, 159, 160, 161, 211, 212, 213]
+
+  #1  page=97  score=0.6936
+  Therefore conservation laws are very interesting. The question naturally arises as to what other conservation laws there are in physics. There
+are two other conservation laws which are analogous to the conservation of energy. One is called the conservation of linear momentum. The other 
+is called the conservation of angular momentum. We will find out more about these later. In the last analysis, we do not understand the 
+conservation laws deeply. We do not understand the conservation of energy.
+
+  #2  page=922  score=0.6351
+  For a reason which we cannot make clear at the level of the present discussion-a fact that most physicists still find somewhat staggering, a 
+most profound and beautiful thing, is that, in quantum mechanics, for each of the rules of symmetry there is a corresponding conservation law; 
+there is a definite connection between the laws of conservation and the symmetries of physical laws. We can only state this at present, without 
+any attempt at explanation.
+
+  #3  page=97  score=0.6116
+  Whether this is strictly true or not, we do not know. If we assume that it is true, and add the principles of quantum mechanics, then we can 
+deduce the principle of the conservation of energy. It is a rather subtle and interesting thing, and it is not easy to explain. The other 
+conservation laws are also linked together. The conservation of momentum is associated in quantum mechanics with the proposition that it makes 
+no difference where you do the experiment, the results will always be the same.
+
+  #4  page=98  score=0.5904
+  The first of the three is the conservation of charge , and that merely means that you count how many positive, minus how many negative 
+electrical charges you have, and the number is never changed. You may get rid of a positive with a negative, but you do not create any net 
+excess of positives over negatives. Two other laws are analogous to this one-one is called the conservation of baryons . There are a number of 
+strange particles, a neutron and a proton are examples, which are called baryons.
+
+  #5  page=62  score=0.5633
+  In this one theory we have the basic rules for all ordinary phenomena except for gravitation and nuclear processes. For example, out of 
+quantum electrodynamics come all known electrical, mechanical, and chemical laws: the laws for the collision of billiard balls, the motions of 
+wires in magnetic fields, the specific heat of carbon monoxide, the color of neon signs, the density of salt, and the reactions of hydrogen and 
+oxygen to make water are all consequences of this one law.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ graph-005: Explain quantum tunnelling in terms of concepts I've already seen in classical physics ━━
+   Current relevant_pages: [520, 521, 522, 523, 524, 525]
+
+  #1  page=881  score=0.5359
+  The general motion can be described by giving the amplitude of each of these different energy states. This is the origin of energy levels in 
+quantum mechanics. Since quantum mechanics is represented by waves, in the circumstance in which the electron does not have enough energy to 
+ultimately escape from the proton, they are confined waves . Like the confined waves of a string, there are definite frequencies for the 
+solution of the wave equation for quantum mechanics.
+
+  #2  page=670  score=0.5180
+  No one can 'explain' any more than we have just 'explained.' No one will give you any deeper representation of the situation. We have no ideas
+about a more basic mechanism from which these results can be deduced.
+
+We would like to emphasize a very important difference between classical and quantum mechanics . We have been talking about the probability that
+an electron will arrive in a given circumstance.
+
+  #3  page=655  score=0.4931
+  In reality, it contains the only mystery. We cannot explain the mystery in the sense of 'explaining' how it works. We will tell you how it 
+works. In telling you how it works we will have told you about the basic peculiarities of all quantum mechanics.
+
+## 37-2 An experiment with bullets
+
+  #4  page=655  score=0.4888
+  So we have to learn about them in a sort of abstract or imaginative fashion and not by connection with our direct experience.
+
+In this chapter we shall tackle immediately the basic element of the mysterious behavior in its most strange form. We choose to examine a 
+phenomenon which is impossible, absolutely impossible, to explain in any classical way, and which has in it the heart of quantum mechanics. In 
+reality, it contains the only mystery.
+
+  #5  page=652  score=0.4836
+  'Quantum mechanics' is the description of the behavior of matter in all its details and, in particular, of the happenings on an atomic scale. 
+Things on a very small scale behave like nothing that you have any direct experience about. They do not behave like waves, they do not behave 
+like particles, they do not behave like clouds, or billiard balls, or weights on springs, or like anything that you have ever seen.
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+━━ graph-006: What concepts connect thermodynamics and statistical mechanics? ━━
+   Current relevant_pages: [565, 566, 567, 591, 592, 593, 594]
+
+  #1  page=709  score=0.7095
+  Or have they all the same speed exactly?
+
+We limit ourselves for the present to conditions of thermal equilibrium, that is, to a subclass of all the phenomena of nature. The laws of 
+mechanics which apply just to thermal equilibrium are called statistical mechanics , and in this section we want to become acquainted with some 
+of the central theorems of this subject.
+
+  #2  page=70  score=0.7060
+  If we could analyze each collision, and be able to follow in detail the motion of each molecule, we might hope to figure out what would 
+happen, but the many numbers needed to keep track of all these molecules exceeds so enormously the capacity of any computer, and certainly the 
+capacity of the mind, that it was important to develop a method for dealing with such complicated situations. Statistical mechanics, then, is 
+the science of the phenomena of heat, or thermodynamics.
+
+  #3  page=715  score=0.6064
+  Thermal equilibrium cannot exist if the external forces on the atoms are not conservative.) Equation (40.3), known as Boltzmann's law , is 
+another of the principles of statistical mechanics: that the probability of finding molecules in a given spatial arrangement varies 
+exponentially with the negative of the potential energy of that arrangement, divided by kT .
+
+  #4  page=728  score=0.6062
+  The simple result we have in classical mechanics, that n = n 0 e -energy /kT , becomes the following very important theorem: If the energies 
+of the set of molecular states are called, say, E 0 , E 1 , E 2 , . . . , E i , . . . , then in thermal equilibrium the probability of finding a
+molecule in the particular state of having energy E i is proportional to e -E i /kT . That gives the probability of being in various states.
+
+  #5  page=30  score=0.5899
+  | 39-3 Compressibility of radiation . . . . . . . . . .    | . . . . . . . . . . . . . . . . 39-9   |
+| 39-4 Temperature and kinetic energy . . . . . . . .      | . . . . . . . . . . . . . . . . 39-10  |
+| 39-5 The ideal gas law . . . . . . . . . . . . . . . .   | . . . . . . . . . . . . . . . . 39-16  |
+| Chapter 40. The Principles of Statistical Mechanics      |                                        |
+| 40-1 The exponential atmosphere . . . . . . . . . .      | . . . . . . . . . . . . . . . . 40-1   |
+
+  → Mark relevant_pages with the page numbers whose text above actually answers the query. Set calibrated=true when done.
+
+────────────────────────────────────────────────────────────────────────────────
+
+Calibration guidance:
+1. For each query, identify which retrieved pages actually contain the answer.
+2. Update relevant_pages in data/eval_queries.json with the correct page numbers.
+3. Set calibrated=true for that query.
+4. Re-run: uv run python scripts/evaluate_rag.py --retrieval-only --skip-visual
