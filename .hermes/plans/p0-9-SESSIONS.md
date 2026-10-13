@@ -15,6 +15,8 @@ HANDOFF refresh, then `/new`.
 | 1 | Measure | 0, 1, 2 | no |
 | 2 | Build the tools | 3, 4a, 5 (code only) | no |
 | 3 | **Run the scan** | 4, 5 (execution) | **yes — background job** |
+| 3b | **Fix the scan output** (negatives + index-page hits) | new — see below | no |
+| 3c | **Extend the gold set** (overview + visual) | new — see below | medium (generation) |
 | 4 | Assemble & decide | 6, 8 | medium |
 | 5 | Human verification | 7 | no (manual) |
 
@@ -141,6 +143,40 @@ The plan's `http://10.0.10.51:8000` is **dead**. `JUDGE_MODEL` is unset in `.env
 `--judge-from-env` alone would judge with the text-only `openai/gpt-oss-20b`, which cannot see
 the page. Set `--workers` from `--ramp-probe` (100 throwaway page-judgements at concurrency
 1/4/8/16/32) — do not guess. The verdict cache makes a re-run bit-identical and resumable.
+
+## Session 3b — Fix the scan output (before Session 4)
+
+- **Scope:** two defects found after the Session 3 run. Both must land **before** Session 4's A/B
+  series, or the reranker comparison is measured through them.
+- **Deliverable (1):** `data/eval_negatives.json` pruned and re-verified. `neg-nea-004` is
+  **answerable** — p107 states *"Carbon-14 has a half-life of 5000 years."*; `neg-in_-001` returned
+  YES on an index page. Re-verify the term-bearing survivors with a full `--scan-stride 1` scan, or
+  route them to Session 5.
+- **Deliverable (2):** index-page false hits stopped — tighten the judge criterion (YES = *this page
+  contains the answer*; index / contents / cross-reference pages are PARTIAL at most) **and** add a
+  deterministic structural gate. Do not fix this by prompt alone: the 8B VLM said NO on the index
+  for one question and YES for another.
+- **Why it blocks:** negatives are the only source of the abstention metric; index pages inflate
+  recall in the real eval.
+- **Watch:** the `_NON_CHAPTER` list already in `store.py` is wired only into the RAPTOR rebuild,
+  and retrieval filters `min_content_page` as a **lower bound only** — back matter is not excluded.
+- **Handoff:** commit each fix; `/new`.
+
+## Session 3c — Extend the gold set (overview + visual)
+
+- **Scope:** the type mix is *emergent, not designed*. 8 `overview` vs 40 `multihop`, because there
+  is no overview or visual prompt — `classify_question()` labels after the fact, and the multipage
+  prompt asks for connection-type questions, so the classifier says `multihop`.
+- **Deliverable (1):** an **overview** generation path — book-spanning summary/comparison questions
+  (the kind the RAPTOR summary nodes answer) — targeting ~40, matching multihop.
+- **Deliverable (2):** a **visual** generation path targeting 30–40, **with labels** (v1's 7 carry
+  `pages=None`, i.e. unmeasurable) and a D8 judge variant for questions with no text answer. The
+  corpus supports it: 426 chunks carry image markers and there is a `page_images` table.
+- **Definition of done:** target N per type **pre-registered before generating** (D1); negatives
+  scaled to keep ≥15% of the total; every new query scan-labelled.
+- **Watch:** ≈70 new queries × ~63 judge calls ≈ 4,400 calls (~20 min), plus Session 5 human review
+  — that review is the user's own time. Prefer verified labels over hitting the number exactly.
+- **Handoff:** commit the new prompts + artifacts; `/new`.
 
 ## Session 4 — Assemble & decide (Tasks 6, 8)
 

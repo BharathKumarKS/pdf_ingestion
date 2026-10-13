@@ -88,6 +88,12 @@ even decode to control characters) → `_extract_questions` now escapes every ba
    (p944 → YES for a Schrödinger question), and index pages are retrievable, so this inflates
    recall in the *real* eval too — not just the negatives. Fix **before** the Session 4 A/B series,
    or the reranker comparison is measured through it. See "Index-page false hits" below.
+3. **Extend the gold set — more `overview`, and `visual` from scratch.** The type mix is *emergent*,
+   not designed: 8 overview vs 40 multihop, because there is no overview or visual prompt — the type
+   is a post-hoc LLM label (`classify_question()`). Add two generation paths — **overview**
+   (book-spanning summary/comparison, the RAPTOR lane) → ~40, **visual** → 30–40 (v1's 7 carry
+   `pages=None`, i.e. unlabelled). Pre-register target N per type (D1); scale negatives to keep
+   ≥15%; D8's judge criterion needs a visual variant. Own session — `p0-9-SESSIONS.md` 3c.
 
 ### Index-page false hits (why + where)
 
