@@ -4,9 +4,9 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-12** · `feat/p0-9-gold-dataset-v2` @ `52d2179` (branched from `main`
-> `b7f8361`) · P0 items 1–8 done; **P0-9 (gold set) in progress — Session 1 (Tasks 0–2) done and
-> the required-`N` number measured; next is Session 2 (Tasks 3/4a/5).**
+> **Last updated: 2026-10-12** · `feat/p0-9-gold-dataset-v2` @ `668cd0f` (branched from `main`
+> `b7f8361`) · P0 items 1–8 done; **P0-9 (gold set) in progress — Sessions 1–2 done (required-`N`
+> measured; the three tools built and probed); next is Session 3 — run the scan.**
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -20,7 +20,7 @@ and do not add new `tenant_id` defaults.
 
 ---
 
-## Current focus — P0-9, the gold-set rebuild (Session 1 done; Session 2 next)
+## Current focus — P0-9, the gold-set rebuild (Sessions 1–2 done; Session 3 next)
 
 Gates all of P1. **Required-`N` is now measured** (Session 1, below). Two documents, both committed:
 
@@ -28,6 +28,20 @@ Gates all of P1. **Required-`N` is now measured** (Session 1, below). Two docume
 |---|---|
 | `.hermes/plans/2026-10-06_174001-p0-9-gold-dataset-v2.md` | Full plan: tasks 0–8, decisions D1–D10, power analysis. **Read only your task's section** — do not load all 1044 lines. |
 | `.hermes/plans/p0-9-SESSIONS.md` | The session split: which tasks belong in which fresh session. |
+
+### Session 2 delivered 2026-10-12 — the tools exist (no large LLM spend)
+
+| Tool | What it does now |
+|---|---|
+| `scripts/generate_gold_dataset.py` | + `--multipage-count`: overview/multihop questions from distant page triples (`min_gap` 60). D10 applied — `max_tokens` 512→2048, and an empty generation batch retries, logs the raw response and **raises** instead of silently returning `[]`. |
+| `scripts/validate_eval_calibration.py` | Parallelized (Task 4a): one open PDF + per-page image/text cache, disk verdict cache keyed by (query_id, page, model, prompt-hash), thread pool (`--workers`, default 8), one shared `httpx.Client`. D9 — each page judged from its rendered **image** plus full text, not `text[:800]`. New `--ramp-probe`. |
+| `scripts/expand_gold_labels.py` | Widens `relevant_pages` to every page that answers the question, via the two-pass scan. `--dry-run` / `--limit N`. |
+| `scripts/generate_negatives.py` | Three-tier negatives, accepted only if a full scan finds no YES page. `--dry-run` / `--n N`. |
+
+Verified: each tool passes `--dry-run` and a stubbed `--limit`/`--n` probe; the hot pages are
+judged once, not twice; a re-run makes zero judge calls. **D9 verified live** against the cluster
+VLM (p254 → YES "½mv² is kinetic energy", p3 → NO copyright page, ~0.8 s/call). Suite at the
+floor: **211 pass / 5 fail / 5 skip**.
 
 ### Decisions settled 2026-10-12 (do not re-litigate)
 
@@ -70,7 +84,7 @@ unresolvable numbers, not more knowledge.
 | 1–6 | baseline committed; silent fallbacks killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed; eval gate + CI | `6381f7b`, `c3a8727` |
 | 7 | metric set fixed (`Precision@k` → `Recall@k` + `Hit@k`) | `1dad73f` |
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
-| 9 | **gold-set rebuild** | **Session 1 (Tasks 0–2) done** — `ca3324e`, `52d2179` on `feat/p0-9-gold-dataset-v2`; required-N measured; **next: Session 2** |
+| 9 | **gold-set rebuild** | Sessions 1–2 done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) on `feat/p0-9-gold-dataset-v2`; **next: Session 3 — run the scan** |
 
 Test suite: **211 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
@@ -124,6 +138,7 @@ gates), with cost classes and re-ingest ordering: [`IMPROVEMENTS.md`](IMPROVEMEN
 | Eval queries | 30 = 23 calibrated non-visual + 7 uncalibrated `visual` |
 | Baseline (v1, 23 q) | Recall@20 **0.636** · MRR 0.365 · NDCG@6 0.377 |
 | Judge lane (v1, 23 q) | Faithfulness **0.701 (a floor)** · Ans.Relevance 0.927 · Citation 1.000 |
+| Judge gateway | **`http://10.0.10.70:8000`** — serves `Qwen/Qwen3-VL-8B-Instruct` (the D9 VLM) among 6 models; ~0.8 s per page judgment at concurrency 1. The P0-9 plan's `10.0.10.51:8000` is **dead**. |
 
 ---
 
@@ -137,6 +152,10 @@ your first change. The three that matter most for P0-9:
   after every re-ingest), or every page returns twice.
 - **Retrieval is not bit-reproducible** (HyDE at temperature 0.3) — nothing below ~0.07 is
   measurable until HyDE is pinned. Pin it before any P0-9 A/B.
+- **The judge must be a VLM, and `JUDGE_MODEL` is unset in `.env`.** The D9 scan sends the page
+  **image**, so `--judge-from-env` alone judges with `openai/gpt-oss-20b` — text-only, it cannot
+  see the page. Pass `--judge-model Qwen/Qwen3-VL-8B-Instruct` (and `--judge-api-base
+  http://10.0.10.70:8000`) explicitly for the Session 3 scan.
 
 ---
 

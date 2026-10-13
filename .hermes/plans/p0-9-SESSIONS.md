@@ -85,7 +85,7 @@ need most of it.
   prerequisites here, not later.
 - **Handoff:** commit each tool, `/new`.
 
-### Task 4a — parallelize the scanner (new; do this before the big run)
+### Task 4a — parallelize the scanner (new; do this before the big run) ✅ done 2026-10-12
 
 `scripts/validate_eval_calibration.py` is fully sequential — one page, wait, next. Four changes,
 mirroring the pattern already in `scripts/evaluate_rag.py:377` (`_JUDGE_WORKERS = 8`):
@@ -111,6 +111,36 @@ server batches, and above its limit you get queueing or 429/503.
 - **Expected:** ~25k calls; ~1–2h parallelized (see Task 4a's ramp probe), ~14h sequential.
 - **Handoff:** nothing to write mid-run — the artifacts are the handoff. Start session 4 when the
   notification fires.
+
+**Run order — three steps, each feeding the next.** The sessions table does not assign the
+*generation* run, but Task 4 has no input without it:
+
+```bash
+# 1. generate the gold questions  -> data/eval_queries_gold.json
+uv run python scripts/generate_gold_dataset.py --tenant global \
+    --n-chunks 40 --questions-per-chunk 2 --multipage-count 20
+
+# 2. scan-expand the labels       -> data/eval_queries_gold_expanded.json
+uv run python scripts/expand_gold_labels.py --workers <knee>
+
+# 3. verified negatives           -> data/eval_negatives.json
+uv run python scripts/generate_negatives.py --n 24 --workers <knee>
+```
+
+**Judge for steps 2 and 3 — it must be a VLM** (D9 sends the page image):
+
+```
+--judge-api-base http://10.0.10.70:8000 --judge-model Qwen/Qwen3-VL-8B-Instruct
+```
+
+Step 1 takes no judge flags — it generates from `.env`'s LLM settings (`OPENAI_API_BASE`
+`http://10.0.10.70:8000`, `OPENAI_MODEL` `openai/gpt-oss-20b`), which is correct: the generator
+needs no page image.
+
+The plan's `http://10.0.10.51:8000` is **dead**. `JUDGE_MODEL` is unset in `.env`, so
+`--judge-from-env` alone would judge with the text-only `openai/gpt-oss-20b`, which cannot see
+the page. Set `--workers` from `--ramp-probe` (100 throwaway page-judgements at concurrency
+1/4/8/16/32) — do not guess. The verdict cache makes a re-run bit-identical and resumable.
 
 ## Session 4 — Assemble & decide (Tasks 6, 8)
 
