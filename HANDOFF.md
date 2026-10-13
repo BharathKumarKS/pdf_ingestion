@@ -105,6 +105,12 @@ the product too (needs a re-ingest — its own item, honour the `clean_stale_*` 
 visible — an index-page probe in the test suite, and/or a "fraction of retrieved pages that are
 back matter" metric.
 
+**Hypothesis (unverified) — index pages may explain the overview number.** Overview queries are the
+ones an index page looks superficially good for, and overview MRR **0.191** is the one genuinely bad
+number (P1 item 10). Cheap test: count back-matter pages (≥ ~940) in the retrieved sets for the
+overview queries — if they are over-represented, the index is polluting the metric and the ranking
+work in item 10 should not start until it is excluded.
+
 ### Decisions settled 2026-10-12 (do not re-litigate)
 
 | # | Decision |
@@ -169,7 +175,9 @@ handoff steps.
 
 **P1 — then improve metrics** (all gated on P0-9)
 10. Ranking — overview MRR 0.191 is the one genuinely bad number. Cheapest first: config
-    (MMR λ / RRF) → the cross-encoder → hard-negative fine-tuning.
+    (MMR λ / RRF) → the cross-encoder → hard-negative fine-tuning. **First check the index-page
+    hypothesis in "Index-page false hits" above** — if back-matter pages are polluting overview
+    retrieval, fix that before tuning ranking.
 11. Calibrate the 7 `visual` queries (folds into P0-9).
 12. Per-lane attribution in the eval report (which lane moves which query type).
 13. Test the fallback chains — stub tests cannot reach them.
