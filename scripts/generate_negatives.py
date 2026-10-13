@@ -149,7 +149,10 @@ def main() -> int:
     print(f"wrote {args.output}")
 
     cache = vec._get_verdict_cache(args)
-    print(f"verdict cache: {cache.hits} hits / {cache.misses} misses -> {cache.path}")
+    if cache is not None:
+        print(f"verdict cache: {cache.hits} hits / {cache.misses} misses -> {cache.path}")
+    else:
+        print("verdict cache: disabled (--no-cache)")
 
     # A wholly-rejected near_miss tier is a finding about the book's coverage, not a bug —
     # Feynman Vol 1 is comprehensive. But ZERO accepted overall means the scanner is broken.

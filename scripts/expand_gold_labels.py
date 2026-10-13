@@ -109,7 +109,10 @@ def main() -> int:
     print(f"expanded {expanded}/{len(queries)} queries; {zero} showed (+0)")
 
     cache = vec._get_verdict_cache(args)
-    print(f"verdict cache: {cache.hits} hits / {cache.misses} misses -> {cache.path}")
+    if cache is not None:
+        print(f"verdict cache: {cache.hits} hits / {cache.misses} misses -> {cache.path}")
+    else:
+        print("verdict cache: disabled (--no-cache)")
     if queries and zero == len(queries):
         print("\n!! EVERY query showed (+0) — the scan is not finding anything. "
               "Stop and debug before using this output.")

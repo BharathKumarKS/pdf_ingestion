@@ -250,8 +250,15 @@ def _get_page_store(pdf_path: str, args) -> PageStore:
         return store
 
 
-def _get_verdict_cache(args) -> VerdictCache:
-    path = str(getattr(args, "cache_file", _DEFAULT_CACHE) or _DEFAULT_CACHE)
+def _get_verdict_cache(args) -> VerdictCache | None:
+    """The process-wide verdict cache, or None when caching is disabled.
+
+    ``--no-cache`` must return None here: mapping the disabled sentinel back onto
+    ``_DEFAULT_CACHE`` (via a falsy check) silently re-enabled the cache.
+    """
+    if getattr(args, "no_cache", False):
+        return None
+    path = str(getattr(args, "cache_file", "") or _DEFAULT_CACHE)
     with _LOCK:
         cache = _CACHES.get(path)
         if cache is None:
@@ -652,8 +659,6 @@ def main():
         console.print(f"[red]PDF not found: {pdf_path}[/]")
         sys.exit(1)
 
-    if args.no_cache:
-        args.cache_file = ""
     resolve_judge(args)
 
     try:
