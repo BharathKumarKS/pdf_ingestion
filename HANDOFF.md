@@ -78,6 +78,33 @@ even decode to control characters) → `_extract_questions` now escapes every ba
 > **Fix before trusting:** re-verify negatives with a full/stride-1 scan (or dense passes around all
 > term matches), or accept that this tier needs Session 5 human review.
 
+### Next actions before Session 4 (ordered — do in a FRESH session)
+
+1. **Prune + re-verify the negatives** (`data/eval_negatives.json`) — see the caveat above. Drop
+   `neg-nea-004` (answerable on p107); decide `neg-in_-001` (index-page YES); re-verify the
+   term-bearing survivors (full `--scan-stride 1`, or Session 5 human review). **Blocks Session 4**,
+   because negatives are the only source of the abstention metric.
+2. **Stop index/back-matter pages counting as hits.** The VLM returns YES on the book's index
+   (p944 → YES for a Schrödinger question), and index pages are retrievable, so this inflates
+   recall in the *real* eval too — not just the negatives. Fix **before** the Session 4 A/B series,
+   or the reranker comparison is measured through it. See "Index-page false hits" below.
+
+### Index-page false hits (why + where)
+
+Retrieval excludes front matter but **not back matter**: `store.py` filters on
+`min_content_page` as a **lower bound only** (`page_number >= min_content_page` — lines 193, 228),
+so the index/bibliography at pages ~940–968 stays retrievable. A `_NON_CHAPTER` keyword list
+already exists in `store.py` (`"## subject index"`, `"## index\n"`, `"bibliography"`, …) but is
+wired **only** into the RAPTOR rebuild path, not retrieval or the scan. Layered fix, cheapest first:
+(a) judge criterion — YES means "this page contains the answer", index/contents/cross-reference
+pages are PARTIAL at most (fits D8's graded 0/1/2, so the strict YES-only primary is unaffected);
+(b) deterministic backstop — detect index pages by structure and gate them, don't trust an 8B VLM
+(it said NO on the index for one question and YES for another); (c) corpus hygiene — an upper bound
+(`max_content_page`) or exclude non-chapter pages at ingest, which removes the false-hit surface for
+the product too (needs a re-ingest — its own item, honour the `clean_stale_*` ordering); (d) make it
+visible — an index-page probe in the test suite, and/or a "fraction of retrieved pages that are
+back matter" metric.
+
 ### Decisions settled 2026-10-12 (do not re-litigate)
 
 | # | Decision |
