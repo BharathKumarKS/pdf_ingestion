@@ -12,6 +12,12 @@ Two generation strategies:
   - multi-page (--multipage-count N): an overview/multihop question that requires
     connecting THREE distant passages and cannot be answered from any one of them
     (D5). The single-passage prompt structurally cannot produce these.
+  - overview (--overview-count N): a book-spanning summary/comparison question, one
+    per TOPIC, where the topics are derived from the book's own section headings
+    (3c, the plan's §D method). Labels are NOT taken from the source — an overview
+    question is not answered by any one page — so they are filled by an exhaustive
+    book-wide scan (scripts/expand_gold_labels.py). Written to a separate file so
+    the already-scanned single/multi-page set is never regenerated.
 
 Output: data/eval_queries_gold.json
 
@@ -19,12 +25,15 @@ Usage:
     uv run python scripts/generate_gold_dataset.py --tenant global
     uv run python scripts/generate_gold_dataset.py --tenant global --n-chunks 40 --questions-per-chunk 2
     uv run python scripts/generate_gold_dataset.py --tenant global --multipage-count 20
+    uv run python scripts/generate_gold_dataset.py --tenant global --overview-count 40 \
+        --overview-output data/eval_queries_gold_overview.json
     uv run python scripts/generate_gold_dataset.py --tenant global --dry-run
 """
 from __future__ import annotations
 
 import json
 import random
+import re
 import sys
 import time
 from pathlib import Path
@@ -98,6 +107,43 @@ Passage C (page {pc}):
 
 Output format:
 ["question 1", "question 2", ...]"""
+
+# 3c: the overview path. One LLM call picks book-spanning TOPICS from the book's own
+# section headings; one call per topic writes the question. The question must not be
+# answerable from a single page — that is the whole point of the lane.
+_OVERVIEW_TOPIC_PROMPT = """\
+You are designing overview questions for a physics RAG evaluation set built on \
+The Feynman Lectures on Physics, Volume 1.
+
+Below are the book's section titles (markdown "##" headings), one per line.
+
+Propose {n} book-spanning TOPICS for overview questions: concepts that recur across \
+several chapters, or that the book develops over its whole length (for example \
+conservation of energy, the atomic theory of matter, symmetry and invariance). \
+Avoid narrow topics confined to a single section.
+
+Output ONLY a JSON array of {n} short topic strings, no other text.
+
+Section titles:
+{titles}
+
+Output format:
+["topic 1", "topic 2", ...]"""
+
+_OVERVIEW_QUESTION_PROMPT = """\
+You are building a physics RAG evaluation dataset from The Feynman Lectures on \
+Physics, Volume 1.
+
+Topic: {topic}
+
+Write ONE overview question about this topic whose answer is a synthesis spanning \
+the whole book — a summary, a comparison, or a "how does the book develop X" \
+question. It must NOT be answerable from any single page.
+
+Output ONLY a JSON array containing the one question string, no other text.
+
+Output format:
+["question"]"""
 
 _TYPE_PROMPT = """\
 Classify this physics question into one of: factual, overview, multihop.
@@ -304,16 +350,87 @@ def generate_multipage_questions(triple: list, n: int, cfg) -> list[str]:
     return _generate_batch(prompt, cfg, context=f"triple pages {pages}")
 
 
+# ── 3c: overview lane — topics from the book's own headings, labels from the scan ──
+
+_HEADING_RE = re.compile(r"^\s*#{1,3}\s+(.+?)\s*$")
+# Front/back matter and table headings are not physics topics.
+_SKIP_TITLE_PREFIXES = ("table ", "preface", "foreword", "acknowledg", "index",
+                        "contents", "the feynman", "chapter ")
+
+
+def extract_section_titles(chunks: list, max_titles: int = 250) -> list[str]:
+    """Distinct section titles from the chunks' markdown headings, in page order.
+
+    Grounded topic source: the chunker emits the book's own headings
+    ("## 4-1 What is energy?", "## Conservation of Energy"). Section numbering is
+    stripped, front/back matter and table headings are dropped, and titles are
+    deduped case-insensitively with order preserved.
+    """
+    titles: list[str] = []
+    seen: set[str] = set()
+    for c in sorted(chunks, key=lambda c: c.page_number or 0):
+        for line in (c.text or "").splitlines():
+            m = _HEADING_RE.match(line)
+            if not m:
+                continue
+            title = re.sub(r"^\d+-\d+\s+", "", m.group(1)).strip()
+            if not (4 <= len(title) <= 70):
+                continue
+            low = title.lower()
+            if any(low.startswith(p) for p in _SKIP_TITLE_PREFIXES):
+                continue
+            if low in seen:
+                continue
+            seen.add(low)
+            titles.append(title)
+            if len(titles) >= max_titles:
+                return titles
+    return titles
+
+
+def generate_overview_questions(chunks: list, n: int, cfg) -> list[tuple[str, str]]:
+    """(topic, question) pairs for the overview lane.
+
+    One LLM call proposes ``n`` book-spanning topics from the section titles; one call
+    per topic writes the question. The question is pre-labelled ``overview`` — it is
+    NOT run through ``classify_question``, which is exactly what mislabelled the
+    multipage questions as ``multihop``.
+    """
+    titles = extract_section_titles(chunks)
+    if not titles:
+        raise RuntimeError("no section titles found in the corpus — cannot derive overview topics")
+    topics = _generate_batch(
+        _OVERVIEW_TOPIC_PROMPT.format(n=n, titles="\n".join(titles)),
+        cfg, context="overview topics",
+    )
+    pairs: list[tuple[str, str]] = []
+    for topic in topics[:n]:
+        qs = _generate_batch(
+            _OVERVIEW_QUESTION_PROMPT.format(topic=topic),
+            cfg, context=f"overview topic {topic!r}",
+        )
+        if qs:
+            pairs.append((topic, qs[0]))
+    return pairs
+
+
 def main():
     p = argparse.ArgumentParser(description="Generate gold evaluation dataset from known pages")
     p.add_argument("--tenant", default="global")
     p.add_argument("--n-chunks", type=int, default=30,
-                   help="Number of chunks to sample (default: 30)")
+                   help="Number of chunks to sample (default: 30). 0 = skip single-page "
+                        "generation entirely (an overview-only run).")
     p.add_argument("--questions-per-chunk", type=int, default=2,
                    help="Questions generated per chunk (default: 2)")
     p.add_argument("--multipage-count", type=int, default=0,
                    help="How many overview/multihop questions to generate from distant "
                         "page triples. 0 = skip (the old behaviour).")
+    p.add_argument("--overview-count", type=int, default=0,
+                   help="How many book-spanning overview questions to generate from topics "
+                        "derived from the book's section headings. 0 = skip.")
+    p.add_argument("--overview-output", default="data/eval_queries_gold_overview.json",
+                   help="Where overview entries are written (kept separate from --output so "
+                        "the already-scanned set is not regenerated)")
     p.add_argument("--min-chunk-tokens", type=int, default=80,
                    help="Skip chunks with fewer tokens (default: 80)")
     p.add_argument("--output", default="data/eval_queries_gold.json")
@@ -344,14 +461,24 @@ def main():
 
     console.print(f"[cyan]{len(chunks)}[/] chunks available after filtering")
 
-    sampled = sample_chunks_stratified(chunks, args.n_chunks)
-    console.print(f"Sampled [cyan]{len(sampled)}[/] chunks across page range "
-                  f"[dim](pages {min(c.page_number or 0 for c in sampled)}–"
-                  f"{max(c.page_number or 0 for c in sampled)})[/]")
+    sampled = sample_chunks_stratified(chunks, args.n_chunks) if args.n_chunks > 0 else []
+    if sampled:
+        console.print(f"Sampled [cyan]{len(sampled)}[/] chunks across page range "
+                      f"[dim](pages {min(c.page_number or 0 for c in sampled)}–"
+                      f"{max(c.page_number or 0 for c in sampled)})[/]")
+    else:
+        console.print("[dim]No single-page sampling requested (--n-chunks 0).[/]")
 
     if args.dry_run:
         for c in sampled:
             console.print(f"  p{c.page_number}: {c.text[:80]}…")
+        if args.overview_count > 0:
+            titles = extract_section_titles(chunks)
+            console.print(f"\n[cyan]{len(titles)}[/] section titles extracted; first 10:")
+            for t in titles[:10]:
+                console.print(f"  · {t}")
+            console.print(f"would pick [cyan]{args.overview_count}[/] topics, "
+                          f"then 1 question per topic")
         return
 
     # Generate questions
@@ -394,11 +521,16 @@ def main():
 
     console.print(f"\nGenerated [bold green]{len(entries)}[/] questions from {len(sampled)} chunks")
 
-    # Save
-    out = Path(args.output)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(entries, indent=2, ensure_ascii=False))
-    console.print(f"Saved to [bold]{out}[/]")
+    # Save — but never clobber an existing gold file when this run asked for no
+    # single/multi-page entries. An overview-only run (--n-chunks 0 --overview-count N)
+    # must not overwrite the already-scanned data/eval_queries_gold.json.
+    if entries:
+        out = Path(args.output)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(entries, indent=2, ensure_ascii=False))
+        console.print(f"Saved to [bold]{out}[/]")
+    else:
+        console.print("[dim]No single/multi-page entries generated — --output left untouched.[/]")
 
     # Summary by type
     by_type: dict[str, int] = {}
@@ -406,6 +538,33 @@ def main():
         by_type[e["query_type"]] = by_type.get(e["query_type"], 0) + 1
     for qt, n in by_type.items():
         console.print(f"  {qt}: {n}")
+
+    # 3c: overview lane — written to its own file, labels filled by the book-wide scan.
+    if args.overview_count > 0:
+        console.print("\nDeriving overview topics from the book's section headings…")
+        pairs = generate_overview_questions(chunks, args.overview_count, cfg)
+        overview_entries = [
+            {
+                "id": f"ovw-{i:03d}",
+                "query": q,
+                "query_type": "overview",
+                "expected_route": "raptor",
+                "topic": topic,
+                "relevant_pages": [],
+                "calibrated": False,
+                "answerable": True,
+                "calibration_note": (
+                    f"Overview, topic {topic!r} (topics derived from the book's section "
+                    "headings); labels pending exhaustive book-wide scan"
+                ),
+            }
+            for i, (topic, q) in enumerate(pairs, 1)
+        ]
+        oout = Path(args.overview_output)
+        oout.parent.mkdir(parents=True, exist_ok=True)
+        oout.write_text(json.dumps(overview_entries, indent=2, ensure_ascii=False))
+        console.print(f"Saved [bold green]{len(overview_entries)}[/] overview entries "
+                      f"to [bold]{oout}[/]")
 
 
 if __name__ == "__main__":

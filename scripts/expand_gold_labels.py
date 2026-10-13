@@ -98,6 +98,11 @@ def main() -> int:
         print(f"    pages {sorted(before)} -> {after}  (+{gain})")
         q = dict(q)
         q["relevant_pages"] = after
+        # 3c: a scan that found nothing is not a calibration — leave the entry
+        # uncalibrated so it cannot pass the v2 schema test by accident.
+        q["calibrated"] = bool(after)
+        if not after:
+            print(f"    WARNING: {q['id']} has no pages after the scan — left uncalibrated")
         q["calibration_note"] = (
             (q.get("calibration_note") or "") +
             f" | scan-expanded: {len(after)} pages"

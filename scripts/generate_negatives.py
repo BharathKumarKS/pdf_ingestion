@@ -43,6 +43,10 @@ _SEEDS = {
         "What is the population of Tokyo?",
         "Which company makes the iPhone?",
         "What language is spoken in Brazil?",
+        "What is the tallest mountain in the world?",
+        "Who painted the Mona Lisa?",
+        "How do you change a car tyre?",
+        "What is the capital of Australia?",
     ],
     "in_domain_absent": [
         "What does the book say about the Schrödinger equation for the hydrogen atom?",
@@ -53,6 +57,10 @@ _SEEDS = {
         "What is the book's derivation of the Navier-Stokes equations?",
         "What does the book say about superconductivity and the BCS theory?",
         "What is the book's treatment of the Fourier transform in signal processing?",
+        "What does the book say about the quantum Hall effect?",
+        "What is the book's treatment of the strong nuclear force?",
+        "What does the book say about gravitational waves?",
+        "What is the book's explanation of black hole thermodynamics?",
     ],
     "near_miss": [
         "What numerical value does the book give for the electron's magnetic moment?",
@@ -63,6 +71,10 @@ _SEEDS = {
         "What does the book say the speed of sound in seawater is?",
         "What does the book list as the melting point of tungsten?",
         "How many moons does the book say Jupiter has?",
+        "What value does the book give for the mass of the proton?",
+        "What does the book state as the age of the universe?",
+        "What does the book give as the boiling point of liquid nitrogen?",
+        "Which year does the book give for the discovery of the neutron?",
     ],
 }
 

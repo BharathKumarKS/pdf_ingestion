@@ -83,6 +83,42 @@ _DEFAULT_WORKERS = 8
 # readable image for the VLM at a size the gateway accepts.
 _RENDER_DPI = 110
 
+# 3c: an overview question is answered by no single page, so it is scanned far more
+# densely than the default stride-15 coarse pass (see scan_query).
+_OVERVIEW_STRIDE = 4
+
+# Content words ignored when building a question's key terms for the term-bearing sweep.
+_TERM_STOPWORDS = {
+    "the", "a", "an", "of", "and", "or", "to", "in", "on", "for", "is", "are", "was",
+    "were", "be", "been", "with", "that", "this", "these", "those", "it", "its", "as",
+    "at", "by", "from", "how", "does", "do", "did", "what", "which", "why", "when",
+    "where", "who", "book", "feynman", "lectures", "physics", "volume", "across",
+    "whole", "between", "into", "over", "their", "there", "they", "you", "your", "can",
+    "could", "would", "should", "may", "might", "more", "most", "than", "then", "also",
+    "such", "not", "but", "all", "any", "each", "other", "some", "use", "used", "using",
+    "explain", "explains", "describe", "describes", "summarize", "summarise", "compare",
+    "comparison", "develop", "develops", "development", "discuss", "discusses",
+    "treatment", "chapter", "chapters", "according",
+}
+
+
+def key_terms(text: str, limit: int = 8) -> list[str]:
+    """Content words of a question, for the term-bearing page sweep.
+
+    Same idea as the Session 3b negative re-scan: the coarse stride can skip the very
+    pages that carry the topic, so every page containing one of these terms is judged.
+    """
+    out: list[str] = []
+    seen: set[str] = set()
+    for w in re.findall(r"[a-z][a-z\-]{2,}", text.lower()):
+        if w in _TERM_STOPWORDS or w in seen:
+            continue
+        seen.add(w)
+        out.append(w)
+        if len(out) >= limit:
+            break
+    return out
+
 _DEFAULT_CACHE = "data/eval_results/.scan_verdict_cache.jsonl"
 
 _JUDGE_PROMPT = """\
@@ -105,6 +141,37 @@ Reply with exactly one of:
   YES   — page directly answers or strongly supports the question
   PARTIAL — page is related but only partially relevant
   NO    — page does not meaningfully help answer the question
+
+Then on the next line, one sentence explaining why.
+Reply format (two lines only):
+<YES|PARTIAL|NO>
+<one sentence reason>"""
+
+# 3c: the overview variant. The standard prompt asks "is this page useful for answering
+# the question", which is the wrong test for a question no single page answers — every
+# page would come back PARTIAL. This asks whether the page *contributes* to the synthesis.
+_OVERVIEW_JUDGE_PROMPT = """\
+You are an expert physics educator deciding whether a textbook page contributes to \
+answering a BOOK-SPANNING question.
+
+Question (its answer is a synthesis across the whole book, not any single page):
+{query}
+
+You are shown page {page_number} as an IMAGE (the rendered page) together with its \
+extracted text below. Use both — the image carries formulas, figures and layout the \
+text extraction may miss.
+
+Page {page_number} text:
+---
+{page_text}
+---
+
+Does this page contribute to answering the question above — does it discuss the topic, \
+or establish material the synthesis would draw on?
+Reply with exactly one of:
+  YES     — the page substantively discusses the topic / would be drawn on for the answer
+  PARTIAL — the page mentions the topic only in passing
+  NO      — the page does not bear on the topic
 
 Then on the next line, one sentence explaining why.
 Reply format (two lines only):
@@ -499,7 +566,12 @@ def apply_page_gate(page_number: int, text: str, verdict: str, reason: str,
 def _judge_page(query: dict, page_num: int, store: PageStore, args, cache: VerdictCache | None) -> dict:
     """Judge one page for one query, with disk caching and a bounded retry."""
     text = store.text(page_num)
-    prompt = _JUDGE_PROMPT.format(
+    # 3c: an overview question gets the "contributes to the synthesis" criterion; every
+    # other type gets the standard "is this page useful" one. The prompt hash is part of
+    # the cache key, so the two variants can never be served each other's verdicts.
+    template = (_OVERVIEW_JUDGE_PROMPT
+                if query.get("query_type") == "overview" else _JUDGE_PROMPT)
+    prompt = template.format(
         query=query["query"], page_number=page_num, page_text=text,
     )
     key = VerdictCache.key(query["id"], page_num, args.judge_model, prompt)
@@ -586,8 +658,13 @@ def scan_query(query: dict, pdf_path: str, args) -> list[dict]:
     # the same scan as this script's own CLI.
     start  = max(int(getattr(args, "page_start", 30)), 1)
     end    = min(int(getattr(args, "page_end", 968)), store.n_pages)
-    stride = int(getattr(args, "scan_stride", 15))
     window = int(getattr(args, "scan_window", 8))
+
+    # 3c: an overview question is answered by no single page, so it is scanned
+    # exhaustively — a much smaller coarse stride, plus a term-bearing sweep below.
+    overview = query.get("query_type") == "overview"
+    stride = (int(getattr(args, "overview_stride", _OVERVIEW_STRIDE)) if overview
+              else int(getattr(args, "scan_stride", 15)))
 
     # Pass 1: coarse
     coarse_pages = list(range(start, end + 1, stride))
@@ -595,6 +672,19 @@ def scan_query(query: dict, pdf_path: str, args) -> list[dict]:
                   f"{len(coarse_pages)} pages, {workers} workers)…")
     store.prewarm(coarse_pages)
     pass1 = _run_pool(coarse_pages, query, store, args, cache, workers)
+
+    # 3c: term-bearing sweep (overview only) — every page carrying a key term of the
+    # question, which the coarse stride can miss entirely. Same trick that recovered the
+    # negatives in Session 3b.
+    if overview:
+        terms = key_terms(query["query"])
+        term_pages = [
+            p for p in range(start, end + 1)
+            if p not in set(coarse_pages) and any(t in store.text(p).lower() for t in terms)
+        ]
+        console.print(f"  Term sweep — {len(term_pages)} pages carry any of {terms}…")
+        store.prewarm(term_pages)
+        pass1 += _run_pool(term_pages, query, store, args, cache, workers)
 
     hot_pages = {r["page"] for r in pass1 if r["verdict"] in ("YES", "PARTIAL")}
     for r in pass1:
@@ -606,12 +696,12 @@ def scan_query(query: dict, pdf_path: str, args) -> list[dict]:
         console.print("  [yellow]No hot zones found in coarse pass.[/]")
         return []
 
-    # Pass 2: dense around hot zones (hot pages themselves already judged in pass 1)
+    # Pass 2: dense around hot zones (hot pages themselves already judged above)
     dense_candidates: set[int] = set()
     for hp in hot_pages:
         for p in range(max(start, hp - window), min(end, hp + window) + 1):
             dense_candidates.add(p)
-    dense_candidates -= set(coarse_pages)
+    dense_candidates -= {r["page"] for r in pass1}  # coarse + term pages already judged
 
     dense_pages = sorted(dense_candidates)
     console.print(f"  Pass 2 — dense ({len(dense_pages)} pages around "
@@ -677,6 +767,10 @@ def add_scan_args(p: argparse.ArgumentParser) -> None:
     """
     p.add_argument("--scan-stride", type=int, default=15,
                    help="Coarse pass: check every Nth page (default 15)")
+    p.add_argument("--overview-stride", type=int, default=_OVERVIEW_STRIDE,
+                   help=f"Coarse pass for overview queries only — denser, because an "
+                        f"overview question is answered by no single page "
+                        f"(default {_OVERVIEW_STRIDE})")
     p.add_argument("--scan-window", type=int, default=8,
                    help="Dense pass: pages ± this many around each hot zone (default 8)")
     p.add_argument("--page-start", type=int, default=30,
