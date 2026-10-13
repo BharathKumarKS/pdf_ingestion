@@ -43,7 +43,13 @@ _QUESTION_TYPES = ["factual", "overview", "multihop"]
 # D10: 512 truncated multi-question batches (the model was cut off mid-array and the
 # parser then saw an unterminated JSON array and returned []). 2048 gives a full
 # {n}-question array plus headroom.
-_MAX_TOKENS = 2048
+#
+# Session 3 (2026-10-13): 2048 was STILL too small for `openai/gpt-oss-20b` — it is a
+# reasoning model, so the reasoning trace is billed against max_tokens. On page 403 the
+# content came back null twice (finish_reason=length, everything spent on reasoning) and
+# truncated to a 26-char partial array once. Raised to 8192 so the trace plus the answer
+# array both fit.
+_MAX_TOKENS = 8192
 
 # D10: bounded retry for a generation call that fails or returns an unusable batch.
 _GEN_RETRIES = 3
@@ -147,9 +153,19 @@ def call_llm_raw(prompt: str, cfg) -> str:
         resp.raise_for_status()
         return resp.json().get("response", "").strip()
     else:
+        # Mirror src/core/llm.py: strip a trailing /v1 (so a base that already
+        # carries it is not doubled) and post to /v1/chat/completions. The cluster
+        # gateway only serves the /v1 path — posting to /chat/completions 404s.
+        base = cfg.openai_api_base.rstrip("/")
+        if base.endswith("/v1"):
+            base = base[:-3]
+        headers = {"Content-Type": "application/json"}
+        key = (cfg.openai_api_key or "").strip()
+        if key and key.lower() != "none":
+            headers["Authorization"] = f"Bearer {key}"
         resp = httpx.post(
-            f"{cfg.openai_api_base.rstrip('/')}/chat/completions",
-            headers={"Authorization": f"Bearer {cfg.openai_api_key}"},
+            f"{base}/v1/chat/completions",
+            headers=headers,
             json={
                 "model": cfg.openai_model,
                 "messages": [{"role": "user", "content": prompt}],
@@ -159,7 +175,51 @@ def call_llm_raw(prompt: str, cfg) -> str:
             timeout=120,
         )
         resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"].strip()
+        choice = resp.json()["choices"][0]
+        content = choice.get("message", {}).get("content")
+        if not content:
+            # Reasoning models (gpt-oss, R1, Qwen3-thinking) return content=null when the
+            # token budget went entirely to the reasoning trace. Say so, rather than dying
+            # on `None.strip()` — the bounded retry in _generate_batch then applies.
+            raise RuntimeError(
+                f"empty content from {cfg.openai_model} "
+                f"(finish_reason={choice.get('finish_reason')!r}) — the reasoning trace "
+                f"likely consumed max_tokens={_MAX_TOKENS}"
+            )
+        return content.strip()
+
+
+def _sanitize_json_backslashes(s: str) -> str:
+    """Escape backslashes that are not the ``\\"`` or ``\\\\`` the model needs.
+
+    Physics questions come back carrying LaTeX, and several LaTeX commands collide with
+    *legal* JSON escapes — ``\\f`` in ``\\frac``, ``\\t`` in ``\\theta``, ``\\n`` in
+    ``\\nu``, ``\\b`` in ``\\beta``, ``\\r`` in ``\\rangle``, ``\\u`` in ``\\underline``.
+    A strict ``json.loads`` therefore either rejects the array (``\\(m v\\)``) or silently
+    decodes the command into a control character (``\\frac`` → formfeed + ``rac``). Both
+    corrupt the gold set, so we escape every backslash except ``\\"`` (the in-string quote)
+    and ``\\\\`` (a literal backslash), then parse.
+    """
+    out: list[str] = []
+    i = 0
+    n = len(s)
+    while i < n:
+        c = s[i]
+        if c == "\\":
+            nxt = s[i + 1] if i + 1 < n else ""
+            if nxt in ("\\", '"'):
+                # The two escapes the model actually needs — keep them intact.
+                out.append(c)
+                out.append(nxt)
+                i += 2
+                continue
+            # A lone backslash (LaTeX) or a trailing one — escape it.
+            out.append("\\\\")
+            i += 1
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
 
 
 def _extract_questions(raw: str) -> list[str]:
@@ -168,8 +228,9 @@ def _extract_questions(raw: str) -> list[str]:
     end = raw.rfind("]") + 1
     if start == -1 or end == 0:
         return []
+    body = raw[start:end]
     try:
-        parsed = json.loads(raw[start:end])
+        parsed = json.loads(_sanitize_json_backslashes(body))
     except json.JSONDecodeError:
         return []
     if not isinstance(parsed, list):
