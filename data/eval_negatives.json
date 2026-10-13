@@ -1,0 +1,218 @@
+[
+  {
+    "id": "neg-out-001",
+    "query": "What is the capital of France?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+  },
+  {
+    "id": "neg-out-002",
+    "query": "Who wrote Pride and Prejudice?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+  },
+  {
+    "id": "neg-out-003",
+    "query": "What is the boiling point of mercury in Fahrenheit?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+  },
+  {
+    "id": "neg-out-004",
+    "query": "What are the rules of cricket?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+  },
+  {
+    "id": "neg-out-005",
+    "query": "How do you bake sourdough bread?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+  },
+  {
+    "id": "neg-out-006",
+    "query": "What is the population of Tokyo?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+  },
+  {
+    "id": "neg-out-007",
+    "query": "Which company makes the iPhone?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+  },
+  {
+    "id": "neg-out-008",
+    "query": "What language is spoken in Brazil?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+  },
+  {
+    "id": "neg-in_-001",
+    "query": "What does the book say about the Schrödinger equation for the hydrogen atom?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+  },
+  {
+    "id": "neg-in_-002",
+    "query": "What is the book's treatment of general relativity and curved spacetime?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+  },
+  {
+    "id": "neg-in_-003",
+    "query": "What does the book say about the Higgs boson and electroweak symmetry breaking?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+  },
+  {
+    "id": "neg-in_-004",
+    "query": "What is the book's explanation of quantum entanglement and Bell's theorem?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+  },
+  {
+    "id": "neg-in_-005",
+    "query": "What does the book say about the Standard Model of particle physics?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+  },
+  {
+    "id": "neg-in_-006",
+    "query": "What is the book's derivation of the Navier-Stokes equations?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+  },
+  {
+    "id": "neg-in_-007",
+    "query": "What does the book say about superconductivity and the BCS theory?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+  },
+  {
+    "id": "neg-in_-008",
+    "query": "What is the book's treatment of the Fourier transform in signal processing?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+  },
+  {
+    "id": "neg-nea-001",
+    "query": "What numerical value does the book give for the electron's magnetic moment?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (near_miss); full scan found no YES page"
+  },
+  {
+    "id": "neg-nea-002",
+    "query": "What does the book say the mass of the top quark is?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (near_miss); full scan found no YES page"
+  },
+  {
+    "id": "neg-nea-003",
+    "query": "Which year does the book state that the laser was invented?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (near_miss); full scan found no YES page"
+  },
+  {
+    "id": "neg-nea-004",
+    "query": "What does the book give as the half-life of carbon-14?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (near_miss); full scan found no YES page"
+  },
+  {
+    "id": "neg-nea-005",
+    "query": "What value does the book use for the cosmological constant?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (near_miss); full scan found no YES page"
+  },
+  {
+    "id": "neg-nea-006",
+    "query": "What does the book say the speed of sound in seawater is?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (near_miss); full scan found no YES page"
+  },
+  {
+    "id": "neg-nea-007",
+    "query": "What does the book list as the melting point of tungsten?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (near_miss); full scan found no YES page"
+  },
+  {
+    "id": "neg-nea-008",
+    "query": "How many moons does the book say Jupiter has?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (near_miss); full scan found no YES page"
+  }
+]

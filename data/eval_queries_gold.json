@@ -1,0 +1,1284 @@
+[
+  {
+    "id": "gold-001",
+    "query": "In what year did Richard Feynman receive the Oersted Medal for Teaching?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      3
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 87f31634-159a-43eb-bd01-1f2e5b6757b5 (page 3)"
+  },
+  {
+    "id": "gold-002",
+    "query": "How did a reviewer in Scientific American describe the Feynman Lectures on Physics when they were first published?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      3
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 87f31634-159a-43eb-bd01-1f2e5b6757b5 (page 3)"
+  },
+  {
+    "id": "gold-003",
+    "query": "Which section number is titled 'Thermionic emission'?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      30
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 262c3449-2f19-4fc2-82bd-b639d22fd50b (page 30)"
+  },
+  {
+    "id": "gold-004",
+    "query": "What is the title of section 42-4?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      30
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 262c3449-2f19-4fc2-82bd-b639d22fd50b (page 30)"
+  },
+  {
+    "id": "gold-005",
+    "query": "According to the passage, is it easy to learn all the rules of chess?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      52
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk bc5bf476-77da-4cd1-8909-1c93e5966204 (page 52)"
+  },
+  {
+    "id": "gold-006",
+    "query": "Why does the passage say we might not be able to understand why a particular move is made in chess?",
+    "query_type": "overview",
+    "expected_route": "vector",
+    "relevant_pages": [
+      52
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk bc5bf476-77da-4cd1-8909-1c93e5966204 (page 52)"
+  },
+  {
+    "id": "gold-007",
+    "query": "What is the most remarkable discovery in all of astronomy?",
+    "query_type": "overview",
+    "expected_route": "vector",
+    "relevant_pages": [
+      79
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 0f4d03b1-ddb0-441d-beeb-1255e87fb905 (page 79)"
+  },
+  {
+    "id": "gold-008",
+    "query": "How did astronomers discover that stars are made of atoms of the same kind as those on Earth?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      79
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 0f4d03b1-ddb0-441d-beeb-1255e87fb905 (page 79)"
+  },
+  {
+    "id": "gold-009",
+    "query": "According to the passage, how many quarts of water per second are said to provide an amount of energy equal to all of the electrical power generated in the United States?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      99
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk bcd66abf-be2a-482f-b5ab-46a34b1d6f87 (page 99)"
+  },
+  {
+    "id": "gold-010",
+    "query": "According to the passage, how are antibaryons counted?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      99
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk bcd66abf-be2a-482f-b5ab-46a34b1d6f87 (page 99)"
+  },
+  {
+    "id": "gold-011",
+    "query": "What does the vertical position in Figure 6-4 represent?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      125
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 05bd378a-6ba4-4b02-a740-bdb2a8db2367 (page 125)"
+  },
+  {
+    "id": "gold-012",
+    "query": "Why are the numbers in the diagram also called binomial coefficients?",
+    "query_type": "overview",
+    "expected_route": "vector",
+    "relevant_pages": [
+      125
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 05bd378a-6ba4-4b02-a740-bdb2a8db2367 (page 125)"
+  },
+  {
+    "id": "gold-013",
+    "query": "What happens to the focus of an ellipse when it is viewed at a tilt?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      150
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 0a73f2ec-f0a9-4430-9cf5-0fa49ea25888 (page 150)"
+  },
+  {
+    "id": "gold-014",
+    "query": "Which figure is mentioned as indicating that the law of gravitation is true at even bigger distances?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      150
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 0a73f2ec-f0a9-4430-9cf5-0fa49ea25888 (page 150)"
+  },
+  {
+    "id": "gold-015",
+    "query": "What symbol is used to denote the limit as the time interval becomes infinitesimally small, analogous to the differential symbol?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      171
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 5957d58e-3201-4df7-a439-ab5f1203af62 (page 171)"
+  },
+  {
+    "id": "gold-016",
+    "query": "According to the passage, what does the integral sign ∫ represent and what is its origin?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      171
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 5957d58e-3201-4df7-a439-ab5f1203af62 (page 171)"
+  },
+  {
+    "id": "gold-017",
+    "query": "Which principle will be used as the basis for discussing the laws of impacts and collisions according to the passage?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      199
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk bbb735cb-5cc1-42fb-8a0c-4869f65ad3e0 (page 199)"
+  },
+  {
+    "id": "gold-018",
+    "query": "What is the purpose of discussing the laws of impacts and collisions from a completely different point of view as stated in the passage?",
+    "query_type": "overview",
+    "expected_route": "vector",
+    "relevant_pages": [
+      199
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk bbb735cb-5cc1-42fb-8a0c-4869f65ad3e0 (page 199)"
+  },
+  {
+    "id": "gold-019",
+    "query": "What is the expression for acceleration described in the passage?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      226
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk b9e99b8c-d9a9-4842-a56a-d776a8957520 (page 226)"
+  },
+  {
+    "id": "gold-020",
+    "query": "How does the passage explain the decomposition of acceleration into components, and what does the tangent component represent?",
+    "query_type": "overview",
+    "expected_route": "vector",
+    "relevant_pages": [
+      226
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk b9e99b8c-d9a9-4842-a56a-d776a8957520 (page 226)"
+  },
+  {
+    "id": "gold-021",
+    "query": "What is the expression for the time rate of change of the kinetic energy derived in the passage?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      252
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk b6f9742c-2f5e-4831-a209-9b9eb107365a (page 252)"
+  },
+  {
+    "id": "gold-022",
+    "query": "According to the passage, what does the term m(dv/dt) represent?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      252
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk b6f9742c-2f5e-4831-a209-9b9eb107365a (page 252)"
+  },
+  {
+    "id": "gold-023",
+    "query": "Under what condition is the gravitational field considered uniform in this discussion?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      273
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 7f0f2fa4-60ed-41b2-8800-f49f83060b7b (page 273)"
+  },
+  {
+    "id": "gold-024",
+    "query": "Which plane corresponds to the zero potential energy point P?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      273
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 7f0f2fa4-60ed-41b2-8800-f49f83060b7b (page 273)"
+  },
+  {
+    "id": "gold-025",
+    "query": "According to Einstein's modification of Newton's laws, what replaces the old \\(m v\\) as the conserved quantity?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      299
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 3bf94d1b-5e8e-442f-8a41-fa97d57dd892 (page 299)"
+  },
+  {
+    "id": "gold-026",
+    "query": "Under Einstein's modification, what condition must still hold for conservation of momentum to work?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      299
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 3bf94d1b-5e8e-442f-8a41-fa97d57dd892 (page 299)"
+  },
+  {
+    "id": "gold-027",
+    "query": "Why does the passage state that we look at the 'blob' from different points of view when moving at different velocities?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      321
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 4e4a12fc-7a5e-4fb3-9945-c49d43f846e1 (page 321)"
+  },
+  {
+    "id": "gold-028",
+    "query": "What is called a given point (x, y, z, t) in space-time?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      321
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 4e4a12fc-7a5e-4fb3-9945-c49d43f846e1 (page 321)"
+  },
+  {
+    "id": "gold-029",
+    "query": "What is the mass of the particle discussed in Fig. 18-3?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      341
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk eb17ee6a-f67c-437e-a8b0-5ba9b8968797 (page 341)"
+  },
+  {
+    "id": "gold-030",
+    "query": "According to the passage, how is the x-component of force related to the x-component of acceleration?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      341
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk eb17ee6a-f67c-437e-a8b0-5ba9b8968797 (page 341)"
+  },
+  {
+    "id": "gold-031",
+    "query": "What sidewise force must Moe exert to move mass m outward at radial speed v_r?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      360
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 4ca17992-4f04-4d36-860e-b762b1c84ea5 (page 360)"
+  },
+  {
+    "id": "gold-032",
+    "query": "When a mass moves only along the radius, which quantity stays constant and how is the torque τ related to the Coriolis force F_c?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      360
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 4ca17992-4f04-4d36-860e-b762b1c84ea5 (page 360)"
+  },
+  {
+    "id": "gold-033",
+    "query": "According to the passage, what mathematical function of time is the displacement of a mass on a spring proportional to?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      384
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk b495a235-cbaf-496c-9a55-bb3b33dd5a03 (page 384)"
+  },
+  {
+    "id": "gold-034",
+    "query": "According to the passage, what experiment can be devised to show that the up-and-down motion of a mass on a spring is the same as that of a point going around in a circle?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      384
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk b495a235-cbaf-496c-9a55-bb3b33dd5a03 (page 384)"
+  },
+  {
+    "id": "gold-035",
+    "query": "What is the real part of the eighth complex number listed in the passage?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      403
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk e1544194-5f7f-46e1-a9f0-4ac187903f60 (page 403)"
+  },
+  {
+    "id": "gold-036",
+    "query": "What is the imaginary part of the tenth complex number listed in the passage?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      403
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk e1544194-5f7f-46e1-a9f0-4ac187903f60 (page 403)"
+  },
+  {
+    "id": "gold-037",
+    "query": "According to the passage, what happens to the stored energy of an efficient oscillator when its frequency ω is near its natural frequency ω₀ and the amplitude |x̂| is large?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      427
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 6e1e8988-dfbb-40da-b161-00cd57a9ba18 (page 427)"
+  },
+  {
+    "id": "gold-038",
+    "query": "Why, according to the passage, does the force only need to fight friction to keep an efficient oscillator steady after it has started oscillating?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      427
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 6e1e8988-dfbb-40da-b161-00cd57a9ba18 (page 427)"
+  },
+  {
+    "id": "gold-039",
+    "query": "What does turning dial number ten do in terms of shock absorbers?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      450
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 87c59914-bfb3-470d-b5ab-d0b50fa3d35a (page 450)"
+  },
+  {
+    "id": "gold-040",
+    "query": "Which dial is associated with changing the stiffness of the spring?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      450
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 87c59914-bfb3-470d-b5ab-d0b50fa3d35a (page 450)"
+  },
+  {
+    "id": "gold-041",
+    "query": "According to the passage, what speed is assumed for light on the left side of the interface?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      472
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk ca0abe43-9bb5-489d-80f7-d46ae8b38aea (page 472)"
+  },
+  {
+    "id": "gold-042",
+    "query": "By what factor does light travel more slowly in the glass, as described in the passage?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      472
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk ca0abe43-9bb5-489d-80f7-d46ae8b38aea (page 472)"
+  },
+  {
+    "id": "gold-043",
+    "query": "Which phenomena of light and radio propagation are mentioned as being better understood using the central law discussed in the chapter?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      491
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 97a94885-0bcb-4121-baf4-6d75655a27bb (page 491)"
+  },
+  {
+    "id": "gold-044",
+    "query": "What was the purpose of writing down the rest of Eq. (28.3) according to the passage?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      491
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 97a94885-0bcb-4121-baf4-6d75655a27bb (page 491)"
+  },
+  {
+    "id": "gold-045",
+    "query": "What is the additional phase due to the time delay between each successive oscillator when observing at an angle θ from the normal?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      515
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 6189e442-9537-4f2c-8e5f-4d524a9c32ea (page 515)"
+  },
+  {
+    "id": "gold-046",
+    "query": "What does the case α = 0 represent about the relative phases of the oscillators?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      515
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 6189e442-9537-4f2c-8e5f-4d524a9c32ea (page 515)"
+  },
+  {
+    "id": "gold-047",
+    "query": "According to the passage, at what speed does light appear to travel in a material with index of refraction n?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      534
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk b946e3b8-7202-4ad0-a807-7b2c3a53e8e1 (page 534)"
+  },
+  {
+    "id": "gold-048",
+    "query": "According to the passage, why does light appear to travel slower than the ultimate speed c in a material?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      534
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk b946e3b8-7202-4ad0-a807-7b2c3a53e8e1 (page 534)"
+  },
+  {
+    "id": "gold-049",
+    "query": "According to the passage, what is the total energy flux per cycle for a complete motion where the acceleration finally ceases?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      557
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk f0da0f9c-ebba-4f39-9bda-b6a40f01b75b (page 557)"
+  },
+  {
+    "id": "gold-050",
+    "query": "For a motion whose acceleration is initially and finally zero, what does the passage say the total energy that has flown out equals?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      557
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk f0da0f9c-ebba-4f39-9bda-b6a40f01b75b (page 557)"
+  },
+  {
+    "id": "gold-051",
+    "query": "What assumption is made about the detector's distance from the source when studying a charge moving at arbitrary speed?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      589
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 2c04f1d1-7777-461e-94d1-97d0c899f43d (page 589)"
+  },
+  {
+    "id": "gold-052",
+    "query": "In Fig. 34-1, what does the point A represent?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      589
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 2c04f1d1-7777-461e-94d1-97d0c899f43d (page 589)"
+  },
+  {
+    "id": "gold-053",
+    "query": "How many kinds of cells are there in the retina?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      612
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 2805a8d4-50c8-4596-9f07-cd088f5cdac4 (page 612)"
+  },
+  {
+    "id": "gold-054",
+    "query": "What are the two main functions of the different kinds of cells in the retina?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      612
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 2805a8d4-50c8-4596-9f07-cd088f5cdac4 (page 612)"
+  },
+  {
+    "id": "gold-055",
+    "query": "What is surprising about the way information moves from one side of the brain to the other?",
+    "query_type": "overview",
+    "expected_route": "vector",
+    "relevant_pages": [
+      637
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 09710cd3-c23f-4da5-bd36-ca8f2d7bfdab (page 637)"
+  },
+  {
+    "id": "gold-056",
+    "query": "What is the current status of the answer to the problem of how much of the brain's network is wired in versus learned?",
+    "query_type": "overview",
+    "expected_route": "vector",
+    "relevant_pages": [
+      637
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 09710cd3-c23f-4da5-bd36-ca8f2d7bfdab (page 637)"
+  },
+  {
+    "id": "gold-057",
+    "query": "What does the curve marked P1 in part (b) of Fig. 37-3 show?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      662
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 48340075-44aa-473a-9123-e88667fcb125 (page 662)"
+  },
+  {
+    "id": "gold-058",
+    "query": "How does the result P12 obtained with both holes open differ from the sum of P1 and P2?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      662
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 48340075-44aa-473a-9123-e88667fcb125 (page 662)"
+  },
+  {
+    "id": "gold-059",
+    "query": "How many spin cases allow two electrons to sit on top of each other?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      686
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 1902f535-3169-4e3c-bb20-a419515edc03 (page 686)"
+  },
+  {
+    "id": "gold-060",
+    "query": "Why does the inability of all electrons to occupy the same place give matter its strength?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      686
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 1902f535-3169-4e3c-bb20-a419515edc03 (page 686)"
+  },
+  {
+    "id": "gold-061",
+    "query": "What is the kinetic energy associated with the component of motion in any particular direction for a gas particle?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      707
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 4a0a377e-9529-4ed3-9659-fd067aa0fc51 (page 707)"
+  },
+  {
+    "id": "gold-062",
+    "query": "How many independent directions contribute to the total kinetic energy of a gas particle, and what is the resulting total kinetic energy?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      707
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 4a0a377e-9529-4ed3-9659-fd067aa0fc51 (page 707)"
+  },
+  {
+    "id": "gold-063",
+    "query": "According to the passage, what is the energy of a particle when it is hit with artificial pellets and then with water at the same temperature?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      731
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 9965a640-a8df-4eef-862a-09add54a7cad (page 731)"
+  },
+  {
+    "id": "gold-064",
+    "query": "In Figure 41-1, what component reflects light from source L onto the scale?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      731
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 9965a640-a8df-4eef-862a-09add54a7cad (page 731)"
+  },
+  {
+    "id": "gold-065",
+    "query": "What is occurring to a certain number of atoms at a given moment with respect to the liquid surface?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      750
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 7848e2d3-615f-45d9-9987-bd903eb577f4 (page 750)"
+  },
+  {
+    "id": "gold-066",
+    "query": "What is the central feature of the temperature variation for many phenomena that require borrowing energy?",
+    "query_type": "overview",
+    "expected_route": "vector",
+    "relevant_pages": [
+      750
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 7848e2d3-615f-45d9-9987-bd903eb577f4 (page 750)"
+  },
+  {
+    "id": "gold-067",
+    "query": "What term does the passage use to refer to the majority of molecules in a gas?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      771
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk a51ab0a4-fd40-4aa8-bde6-b10370e6356b (page 771)"
+  },
+  {
+    "id": "gold-068",
+    "query": "Why does the passage refer to molecules that differ from the majority as 'special' or 'S-molecules'?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      771
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk a51ab0a4-fd40-4aa8-bde6-b10370e6356b (page 771)"
+  },
+  {
+    "id": "gold-069",
+    "query": "What is the net result of the two machines in tandem in terms of heat taken from T1 and delivered at T2?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      797
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 7719f182-a86e-4b9e-a2e8-323fe78a5cbb (page 797)"
+  },
+  {
+    "id": "gold-070",
+    "query": "What action does the second machine perform with the heat Q3 that the first machine delivers at T3?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      797
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 7719f182-a86e-4b9e-a2e8-323fe78a5cbb (page 797)"
+  },
+  {
+    "id": "gold-071",
+    "query": "What temperature condition is assumed for T1 and T2 in the described device?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      824
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 3cfa1878-1a25-4740-b0c4-9e1689422df2 (page 824)"
+  },
+  {
+    "id": "gold-072",
+    "query": "Why would the proposed device violate the Second Law of Thermodynamics?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      824
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 3cfa1878-1a25-4740-b0c4-9e1689422df2 (page 824)"
+  },
+  {
+    "id": "gold-073",
+    "query": "According to the passage, what type of disturbance does the motion of an object produce in the air?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      841
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 92ae8ab7-6707-4e5a-a164-e217c8734487 (page 841)"
+  },
+  {
+    "id": "gold-074",
+    "query": "Why does the passage state that for rapid motion of an object in the air, the air does not flow around it?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      841
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 92ae8ab7-6707-4e5a-a164-e217c8734487 (page 841)"
+  },
+  {
+    "id": "gold-075",
+    "query": "What does the variable c represent in the one‑dimensional wave equation for sound?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      864
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 78d6c2f3-b32b-4811-bacd-dc0efe22b200 (page 864)"
+  },
+  {
+    "id": "gold-076",
+    "query": "According to the passage, how does the meaning of c differ between sound waves and light waves?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      864
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 78d6c2f3-b32b-4811-bacd-dc0efe22b200 (page 864)"
+  },
+  {
+    "id": "gold-077",
+    "query": "By throwing the switches on an organ, which instrument sounds can it produce?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      886
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk b4299c0a-62b2-45ff-a51f-9509b918bfa6 (page 886)"
+  },
+  {
+    "id": "gold-078",
+    "query": "According to the passage, how does the shape of the mouth affect the vowel sounds we recognize in speech?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      886
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk b4299c0a-62b2-45ff-a51f-9509b918bfa6 (page 886)"
+  },
+  {
+    "id": "gold-079",
+    "query": "According to the passage, how does the speed of long waves in water with circulatory motions change as the depth of water decreases?",
+    "query_type": "factual",
+    "expected_route": "vector",
+    "relevant_pages": [
+      915
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 8576eeb1-79a6-4c4d-8fc4-f4e81c8245ae (page 915)"
+  },
+  {
+    "id": "gold-080",
+    "query": "How does the change in water depth lead to the formation of shock waves, as described in the passage?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      915
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Generated from chunk 8576eeb1-79a6-4c4d-8fc4-f4e81c8245ae (page 915)"
+  },
+  {
+    "id": "gold-081",
+    "query": "How long does it take for a falling body to reach a velocity of 32 ft/s, given the units of time discussed in the units and standards of time section?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      23,
+      172,
+      627
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [23, 172, 627]"
+  },
+  {
+    "id": "gold-082",
+    "query": "How does the mass of a particle appear in both the quantum probability density of its velocity and the classical law of gravitation?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      54,
+      135,
+      826
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [54, 135, 826]"
+  },
+  {
+    "id": "gold-083",
+    "query": "How does the acceleration of the unit vector in far‑field radiation, as described by the laws of radiation, compare to the centrifugal and Coriolis forces that act on objects in a rotating spaceship?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      30,
+      490,
+      921
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [30, 490, 921]"
+  },
+  {
+    "id": "gold-084",
+    "query": "What effect does the centrifugal force in a rotating spaceship have on the behavior of a gas described by the ideal gas law, and how does this relate to the exponential atmosphere?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      30,
+      490,
+      921
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [30, 490, 921]"
+  },
+  {
+    "id": "gold-085",
+    "query": "How does the compressibility of radiation influence the motion of a Foucault pendulum in a rotating reference frame?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      30,
+      490,
+      921
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [30, 490, 921]"
+  },
+  {
+    "id": "gold-086",
+    "query": "How does the requirement that velocity vectors be drawn with common tails for subtraction relate to the quantum idea that particles in an interference experiment cannot be described as passing exclusively through one of the slits?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      137,
+      224,
+      662
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [137, 224, 662]"
+  },
+  {
+    "id": "gold-087",
+    "query": "Using the relationship v² = GM/a for a satellite's orbital speed, what is the derivative dv/da of the speed with respect to the orbital radius, and how does this derivative relate to the energy required to escape Earth's gravity?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      24,
+      169,
+      274
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [24, 169, 274]"
+  },
+  {
+    "id": "gold-088",
+    "query": "According to the product rule for differentiation, how would you differentiate the electric vector of light when it is expressed as the product of two time‑dependent functions, and what implication does this differentiation have for the scattering of polarized light?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      24,
+      169,
+      274
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [24, 169, 274]"
+  },
+  {
+    "id": "gold-089",
+    "query": "How does the continuous range of photon energies, as described in the first passage, compare with the differential forces experienced by ions versus neutral molecules in a gas when an electric field is applied, as described in the second passage?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      97,
+      665,
+      765
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [97, 665, 765]"
+  },
+  {
+    "id": "gold-090",
+    "query": "What is the relationship between the energy loss rate of a charged oscillator (kT) and the radiative flux described by the Stefan–Boltzmann law (σT⁴ per unit area)?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      74,
+      735,
+      822
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [74, 735, 822]"
+  },
+  {
+    "id": "gold-091",
+    "query": "How does the principle of conservation of energy in a frictionless engine compare to the energy exchange between elastic and kinetic energy in a spring system?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      95,
+      391,
+      788
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [95, 391, 788]"
+  },
+  {
+    "id": "gold-092",
+    "query": "How does the phase velocity of surface tension waves relate to the frequency combinations described by the Ritz combination principle?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      432,
+      687,
+      914
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [432, 687, 914]"
+  },
+  {
+    "id": "gold-093",
+    "query": "If cobalt atoms emit electrons downward in a magnetic field pointing upward, how does applying a force that increases their speed affect the mass of those electrons?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      301,
+      647,
+      932
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [301, 647, 932]"
+  },
+  {
+    "id": "gold-094",
+    "query": "What does the 5‑billion‑year age of meteorites imply about the timescale over which quantum physics developed?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      22,
+      108,
+      474
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [22, 108, 474]"
+  },
+  {
+    "id": "gold-095",
+    "query": "How does the Heisenberg uncertainty principle impact the precision of a beta‑decay based clock built from matter?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      219,
+      673,
+      934
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [219, 673, 934]"
+  },
+  {
+    "id": "gold-096",
+    "query": "How does the concept of gravitational potential energy in a falling object relate to the processes that formed the Earth and stars in the early solar system?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      83,
+      252,
+      531
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [83, 252, 531]"
+  },
+  {
+    "id": "gold-097",
+    "query": "How does the energy-time uncertainty principle affect the determination of the average kinetic energy of molecules in an ideal gas?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      118,
+      707,
+      831
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [118, 707, 831]"
+  },
+  {
+    "id": "gold-098",
+    "query": "How does the adiabatic expansion of a perfect gas, driven by a temperature difference between two heat pads, influence the fraction of area covered by nuclei (Nσ/A) that a small particle beam encounters in a slab of material?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      116,
+      248,
+      791
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [116, 248, 791]"
+  },
+  {
+    "id": "gold-099",
+    "query": "How might vector analysis be applied to model the flux of water molecules during evaporation?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      42,
+      219,
+      321
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [42, 219, 321]"
+  },
+  {
+    "id": "gold-100",
+    "query": "How does the delay time in the radiation formula for slowly moving charges depend on the charge’s instantaneous speed, and what role does the surrounding temperature (as related to the average molecular velocity) play in determining that speed?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      167,
+      490,
+      750
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [167, 490, 750]"
+  },
+  {
+    "id": "gold-101",
+    "query": "How does changing the coordinate origin influence the ability to add a transient (free) solution to a particular (forced) solution in a system described by Newton’s laws?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      214,
+      438,
+      649
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [214, 438, 649]"
+  },
+  {
+    "id": "gold-102",
+    "query": "How does the principle that experiments yield consistent results across different environments support the use of the speed of light as a universal constant in the geometrical representation of a moving field?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      61,
+      398,
+      592
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [61, 398, 592]"
+  },
+  {
+    "id": "gold-103",
+    "query": "How does the necessity of continuity and ordering in defining irrational numbers like sqrt(2) influence the mathematical proofs that establish quantum electrodynamics as the underlying law for all ordinary phenomena?",
+    "query_type": "multihop",
+    "expected_route": "vector",
+    "relevant_pages": [
+      62,
+      264,
+      393
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "calibration_note": "Multi-page, generated from pages [62, 264, 393]"
+  }
+]
