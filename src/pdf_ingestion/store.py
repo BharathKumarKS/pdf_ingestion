@@ -195,6 +195,13 @@ class DocumentStore:
                 key="page_number",
                 range=Range(lt=self._cfg.min_content_page),
             ))
+        # Exclude back matter (index, name index, bibliography) when configured
+        if self._cfg.max_content_page > 0:
+            _must_not.append(FieldCondition(
+                key="page_number",
+                range=Range(gt=self._cfg.max_content_page),
+            ))
+        _has_page_bounds = (self._cfg.min_content_page > 0 or self._cfg.max_content_page > 0)
 
         if source_type is None:
             filter_ = Filter(
@@ -214,7 +221,7 @@ class DocumentStore:
             else:
                 must.append(FieldCondition(key="tenant_id",
                             match=MatchValue(value=tenant_id)))
-            filter_ = Filter(must=must, must_not=_must_not if self._cfg.min_content_page > 0 else [])
+            filter_ = Filter(must=must, must_not=_must_not if _has_page_bounds else [])
 
         response = self._qdrant_search(
             query_vector=query_vector,
@@ -224,11 +231,16 @@ class DocumentStore:
         )
         results = [{"score": h.score, "qdrant_point_id": str(h.id), **h.payload} for h in response.points]
 
-        # Post-filter front matter (local file Qdrant doesn't support Range payload filters)
+        # Post-filter front/back matter (local file Qdrant doesn't support Range payload filters)
         if self._cfg.min_content_page > 0:
             results = [
                 r for r in results
                 if (r.get("page_number") or 0) >= self._cfg.min_content_page
+            ]
+        if self._cfg.max_content_page > 0:
+            results = [
+                r for r in results
+                if 0 < (r.get("page_number") or 0) <= self._cfg.max_content_page
             ]
 
         return results

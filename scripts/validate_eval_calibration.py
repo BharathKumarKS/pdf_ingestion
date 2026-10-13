@@ -56,6 +56,7 @@ import argparse
 import base64
 import hashlib
 import json
+import re
 import sys
 import threading
 import time
@@ -423,6 +424,78 @@ def parse_verdict(response: str) -> tuple[str, str]:
     return verdict, reason
 
 
+# ── Deterministic back-matter gate (Session 3b) ────────────────────────────────
+#
+# The judge is an 8B VLM and it is *inconsistent* on the book's index — it returned
+# NO on p944 for one question and YES for another — so index pages leaked into the
+# labels (a Schrödinger question was "answered" by the index). Prompt wording cannot
+# fix that: the model is simply unreliable here. So index / back-matter pages are
+# capped at PARTIAL deterministically, by *structure*, after the judge has spoken.
+#
+# Applied to the verdict, not inside the prompt, so it does NOT invalidate the
+# verdict cache — the raw judge output stays cached and the cap is applied on read.
+
+_BACKMATTER_HEADINGS = ("## index", "name index", "subject index")
+_INDEX_REF_RE = re.compile(r"\b(?:[IVX]{1,3}-)?\d{1,3}-\d{1,3}\b")
+_BACKMATTER_REF_FRACTION = 0.35  # index pages: >=35% of lines carry a page reference
+_BACKMATTER_MIN_LINES = 8
+
+
+def is_index_like(text: str) -> bool:
+    """One page looks like an index / name-index / symbols page.
+
+    Either an explicit back-matter heading (the chunker emits "## Index -1"), or an
+    index *layout*: at least a third of the lines are "Term, <page-ref>" entries.
+    Content pages sit well below that (the densest in this corpus, p904, is 0.42 —
+    see ``back_matter_start`` for why that does not false-positive).
+    """
+    low = text.lower()
+    if any(h in low for h in _BACKMATTER_HEADINGS):
+        return True
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    if len(lines) < _BACKMATTER_MIN_LINES:
+        return False
+    ref_lines = sum(1 for ln in lines if _INDEX_REF_RE.search(ln))
+    return ref_lines / len(lines) >= _BACKMATTER_REF_FRACTION
+
+
+def back_matter_start(store) -> int:
+    """First page of the trailing back-matter run (index / name index / symbols).
+
+    Back matter is a *suffix* of the book, so its start is found by walking back from
+    the last page over index-like pages. This tolerates the final index pages
+    (p963-967, ref-fraction ~0.5) without dropping the per-page threshold far enough
+    to catch a content page dense in figure references (p904 at 0.42): a content page
+    is never *inside* the trailing run. Memoised on the store.
+    """
+    cached = getattr(store, "_back_matter_start", None)
+    if cached is not None:
+        return cached
+    floor = max(1, int(0.5 * store.n_pages))  # a textbook is never >50% back matter
+    p = store.n_pages
+    while p > floor:
+        lines = [ln for ln in store.text(p).splitlines() if ln.strip()]
+        if len(lines) < _BACKMATTER_MIN_LINES:  # blank/short page — part of the run
+            p -= 1
+            continue
+        if not is_index_like(store.text(p)):
+            break
+        p -= 1
+    store._back_matter_start = p + 1
+    return store._back_matter_start
+
+
+def apply_page_gate(page_number: int, text: str, verdict: str, reason: str,
+                    store) -> tuple[str, str]:
+    """Cap a back-matter page's YES at PARTIAL. Returns (verdict, reason)."""
+    if verdict == "YES" and page_number >= back_matter_start(store):
+        return "PARTIAL", (
+            "[back-matter page — index/contents/cross-reference; "
+            f"judge YES capped to PARTIAL] {reason}"
+        )
+    return verdict, reason
+
+
 def _judge_page(query: dict, page_num: int, store: PageStore, args, cache: VerdictCache | None) -> dict:
     """Judge one page for one query, with disk caching and a bounded retry."""
     text = store.text(page_num)
@@ -433,7 +506,8 @@ def _judge_page(query: dict, page_num: int, store: PageStore, args, cache: Verdi
     if cache is not None:
         hit = cache.get(key)
         if hit is not None:
-            return {"page": page_num, **hit, "cached": True}
+            v, rsn = apply_page_gate(page_num, text, hit["verdict"], hit["reason"], store)
+            return {"page": page_num, "verdict": v, "reason": rsn, "cached": True}
 
     image = store.image_b64(page_num)
     verdict, reason = "ERROR", ""
@@ -449,6 +523,9 @@ def _judge_page(query: dict, page_num: int, store: PageStore, args, cache: Verdi
             else:
                 logger.error("Judge call failed for {} p{} after 3 attempts: {}",
                              query["id"], page_num, reason)
+
+    # Deterministic back-matter cap (Session 3b) — never trust the VLM on index pages.
+    verdict, reason = apply_page_gate(page_num, text, verdict, reason, store)
 
     entry = {"verdict": verdict, "reason": reason}
     # Errors are deliberately not cached: a resumed run should retry them.

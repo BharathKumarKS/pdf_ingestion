@@ -4,10 +4,10 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-13** · `feat/p0-9-gold-dataset-v2` @ `8e81572` (branched from `main`
-> `b7f8361`) · P0 items 1–8 done; **P0-9 (gold set) — Sessions 1–3 done (scan run complete; the
-> three artifacts are on disk and committed). Session 4 (assemble & decide) is next — but read the
-> negatives caveat below first: `data/eval_negatives.json` is NOT yet trustworthy.**
+> **Last updated: 2026-10-13** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold
+> set) — Sessions 1–3b done: the scan ran, the negatives are re-verified (1 dropped, 6 flagged),
+> and index-page false hits are fixed (judge gate + `max_content_page`).** Session 4 (assemble &
+> decide) is next. *(Session 3b's commit is pending approval.)*
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -21,7 +21,7 @@ and do not add new `tenant_id` defaults.
 
 ---
 
-## Current focus — P0-9, the gold-set rebuild (Sessions 1–2 done; Session 3 next)
+## Current focus — P0-9, the gold-set rebuild (Sessions 1–3 done; Session 4 next)
 
 Gates all of P1. **Required-`N` is now measured** (Session 1, below). Two documents, both committed:
 
@@ -62,42 +62,52 @@ still too small for `gpt-oss-20b`'s reasoning trace (content came back null/trun
 8192); and the model's LaTeX (`\(m v\)`, `\frac`, `\theta`) is not valid JSON (`\f`,`\t`,`\n`,`\b`
 even decode to control characters) → `_extract_questions` now escapes every backslash but `\"`/`\\`.
 
-> ⚠️ **Negatives are NOT trustworthy — resolve before Session 4 uses them.** `generate_negatives`
-> accepted **24/24, including 8/8 near_miss**, but the plan predicted near_miss would *mostly be
-> rejected* (Vol 1 does discuss these topics). Acceptance rests on the coarse pass (stride 15 = 63
-> of ~938 pages) plus a dense pass that only fires around a coarse hit; for 5 of 8 near_miss no
-> coarse page was even PARTIAL, so only 63 pages were judged. Term-bearing content pages were never
-> seen — p107 (radioactivity → the carbon-14 half-life question), p754 (tungsten), p103/562/763/898
-> (laser) have **no cache entry at all**. "A full scan found no YES page" is not a full scan.
-> **CONFIRMED 2026-10-13** by a targeted term-page re-scan (`logs/p0-9/verify_negatives.py`, same
-> VLM): at least one negative is **definitively invalid** — `neg-nea-004` ("half-life of
-> carbon-14") is answered by **p107**: *"Carbon-14 has a half-life of 5000 years."* `neg-in_-001`
-> (Schrödinger/hydrogen) also returned YES, but on **p944 — the index** ("## Index -9"), i.e. a
-> judge artifact. Several more show PARTIALs on real content (Fourier, superconductivity, general
-> relativity, Jupiter). **Prune/reclassify before Session 4 uses this file.**
-> **Fix before trusting:** re-verify negatives with a full/stride-1 scan (or dense passes around all
-> term matches), or accept that this tier needs Session 5 human review.
+> ✅ **Negatives re-verified (Session 3b) — resolved.** The term-bearing re-scan now covers every
+> page carrying a negative's key terms (±2) — the pages the stride-15 scan never reached. Result:
+> **1 definitively invalid** — `neg-nea-004` (carbon-14 half-life) is answered on **p107** →
+> **dropped**; `neg-in_-001`'s only YES was on **p944, the index** → now capped to PARTIAL by the
+> back-matter gate (below), so it stays. **6 kept but flagged `needs_review`** because the judge
+> returns content PARTIALs (the book *discusses* the topic): `in_-001, in_-002, in_-005, in_-007,
+> in_-008, nea-008`. **17 clean.** The plan's fear that near_miss would "mostly be rejected" did
+> **not** materialise once the term pages were actually scanned.
+> Evidence: `logs/p0-9/report_negatives.py`, `logs/p0-9/prune_negatives.py`, `logs/p0-9/session3b/`.
 
 ### Next actions before Session 4 (ordered — do in a FRESH session)
 
-1. **Prune + re-verify the negatives** (`data/eval_negatives.json`) — see the caveat above. Drop
-   `neg-nea-004` (answerable on p107); decide `neg-in_-001` (index-page YES); re-verify the
-   term-bearing survivors (full `--scan-stride 1`, or Session 5 human review). **Blocks Session 4**,
-   because negatives are the only source of the abstention metric.
-2. **Stop index/back-matter pages counting as hits.** The VLM returns YES on the book's index
-   (p944 → YES for a Schrödinger question), and index pages are retrievable, so this inflates
-   recall in the *real* eval too — not just the negatives. Fix **before** the Session 4 A/B series,
-   or the reranker comparison is measured through it. See "Index-page false hits" below.
+1. ✅ **DONE (3b) — Prune + re-verify the negatives.** Dropped `neg-nea-004`; `neg-in_-001` kept
+   (its only YES was the index, now gated); 6 flagged `needs_review`. `data/eval_negatives.json`
+   now holds 23 negatives. Residual uncertainty (content PARTIALs) → Session 5.
+2. ✅ **DONE (3b) — Stop index/back-matter pages counting as hits.** Two layers: (a) the judge gate
+   caps index pages at PARTIAL (scanner, deterministic — not prompt-only, since the VLM is
+   inconsistent on the index); (b) `max_content_page` excludes back matter from retrieval. The gold
+   labels were checked and carry **no** back-matter pages. See "Index-page false hits" below.
 3. **Extend the gold set — more `overview`, and `visual` from scratch.** The type mix is *emergent*,
    not designed: 8 overview vs 40 multihop, because there is no overview or visual prompt — the type
    is a post-hoc LLM label (`classify_question()`). Add two generation paths — **overview**
    (book-spanning summary/comparison, the RAPTOR lane) → ~40, **visual** → 30–40 (v1's 7 carry
    `pages=None`, i.e. unlabelled). Pre-register target N per type (D1); scale negatives to keep
    ≥15%; D8's judge criterion needs a visual variant. Own session — `p0-9-SESSIONS.md` 3c.
+4. **Normalise the gold labels' page numbering** (`IMPROVEMENTS.md` §D4). `relevant_pages` mixes DB
+   page numbers (from the generator) with PDF page numbers (from the scan); measured, they differ by
+   0/−1 on ~45% of pages. Pick one numbering and re-derive `relevant_pages` **before** Session 4
+   assembles v2, or the A/B deltas carry about a page of label noise.
 
 ### Index-page false hits (why + where)
 
-Retrieval excludes front matter but **not back matter**: `store.py` filters on
+**✅ FIXED (Session 3b).** (a)+(b) done as one deterministic gate in
+`scripts/validate_eval_calibration.py`: `back_matter_start()` walks the trailing index run
+(structural — heading marker or ≥35% of lines are "Term, <page-ref>" entries; start = **p937** for
+Vol 1) and `apply_page_gate()` caps a YES there at PARTIAL. It is applied to the **verdict**, not in
+the prompt, so the 12k-entry verdict cache stays valid — and it does not trust the 8B VLM, which
+said NO on the index for one question and YES for another. (c) done as a retrieval bound:
+`max_content_page` (config + `store.py`), set to **936** in `.env`. (d) `tests/test_backmatter_gate.py`.
+Still open, and the durable fix: page bounds cannot be exact — the payload `page_number` is offset
+from the PDF page index by 0/−1 on ~45% of pages, and DB page 936 holds **both** content and index —
+so the real fix is **chunk-level classification at ingest: `IMPROVEMENTS.md` §E5**, folded into the
+E1/E2/E3 re-ingest pass. The interim bound leaves ~15 index chunks (0.3%) retrievable; do not chase
+the remainder with page arithmetic.
+
+Original analysis (why): retrieval excludes front matter but **not** back matter: `store.py` filters on
 `min_content_page` as a **lower bound only** (`page_number >= min_content_page` — lines 193, 228),
 so the index/bibliography at pages ~940–968 stays retrievable. A `_NON_CHAPTER` keyword list
 already exists in `store.py` (`"## subject index"`, `"## index\n"`, `"bibliography"`, …) but is
@@ -158,9 +168,9 @@ unresolvable numbers, not more knowledge.
 | 1–6 | baseline committed; silent fallbacks killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed; eval gate + CI | `6381f7b`, `c3a8727` |
 | 7 | metric set fixed (`Precision@k` → `Recall@k` + `Hit@k`) | `1dad73f` |
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
-| 9 | **gold-set rebuild** | Sessions 1–3 done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) on `feat/p0-9-gold-dataset-v2`; **next: Session 4 — assemble & decide (negatives need re-verification first)** |
+| 9 | **gold-set rebuild** | Sessions 1–3b done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) on `feat/p0-9-gold-dataset-v2`; **next: Session 4 — assemble & decide** |
 
-Test suite: **211 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
+Test suite: **221 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
 and 3 search tests return 0 results. **Not regressions; do not "fix" them here.**
 
@@ -203,7 +213,7 @@ gates), with cost classes and re-ingest ordering: [`IMPROVEMENTS.md`](IMPROVEMEN
 
 | Thing | Truth |
 |---|---|
-| Feynman Vol 1 PDF | **968 pages** (report says 940, README says 990 — both wrong) |
+| Feynman Vol 1 PDF | **968 pages** (`mdls kMDItemNumberOfPages`) — README now correct; `Docs/synapse_full_report.pdf` still says 940 |
 | Cluster `knowledge_base` | 5,135 points (5,051 chunks + 84 RAPTOR nodes), doc `6d55c52b` |
 | SQLite `chunks` | 5,048 — the 5,135−5,048 gap is **unexplained; re-measure, don't trust** |
 | Dense embedder | **Nomic 768d + 64d MRL** (`embedding_model` in `config.py`) |

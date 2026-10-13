@@ -6,7 +6,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-out-002",
@@ -15,7 +15,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-out-003",
@@ -24,7 +24,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-out-004",
@@ -33,7 +33,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-out-005",
@@ -42,7 +42,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-out-006",
@@ -51,7 +51,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-out-007",
@@ -60,7 +60,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-out-008",
@@ -69,7 +69,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (out_of_domain); full scan found no YES page"
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-in_-001",
@@ -78,7 +78,9 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page; index-page YES on [944] capped to PARTIAL by back-matter gate",
+    "needs_review": true,
+    "review_note": "content PARTIAL on [137, 138, 685] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
   },
   {
     "id": "neg-in_-002",
@@ -87,7 +89,9 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page",
+    "needs_review": true,
+    "review_note": "content PARTIAL on [59, 322, 324, 325, 327, 330, 331, 689, 690] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
   },
   {
     "id": "neg-in_-003",
@@ -96,7 +100,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-in_-004",
@@ -105,7 +109,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-in_-005",
@@ -114,7 +118,9 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page",
+    "needs_review": true,
+    "review_note": "content PARTIAL on [930, 931, 932, 933, 935] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
   },
   {
     "id": "neg-in_-006",
@@ -123,7 +129,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-in_-007",
@@ -132,7 +138,9 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page",
+    "needs_review": true,
+    "review_note": "content PARTIAL on [594] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
   },
   {
     "id": "neg-in_-008",
@@ -141,7 +149,9 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (in_domain_absent); full scan found no YES page"
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page",
+    "needs_review": true,
+    "review_note": "content PARTIAL on [32, 440, 441, 442, 880, 884, 885, 886, 887, 889, 890, 891, 892, 893, 894, 909, 910, 911] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
   },
   {
     "id": "neg-nea-001",
@@ -150,7 +160,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (near_miss); full scan found no YES page"
+    "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-nea-002",
@@ -159,7 +169,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (near_miss); full scan found no YES page"
+    "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-nea-003",
@@ -168,16 +178,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (near_miss); full scan found no YES page"
-  },
-  {
-    "id": "neg-nea-004",
-    "query": "What does the book give as the half-life of carbon-14?",
-    "query_type": "factual",
-    "answerable": false,
-    "relevant_pages": [],
-    "calibrated": true,
-    "calibration_note": "negative (near_miss); full scan found no YES page"
+    "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-nea-005",
@@ -186,7 +187,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (near_miss); full scan found no YES page"
+    "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-nea-006",
@@ -195,7 +196,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (near_miss); full scan found no YES page"
+    "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-nea-007",
@@ -204,7 +205,7 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (near_miss); full scan found no YES page"
+    "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page"
   },
   {
     "id": "neg-nea-008",
@@ -213,6 +214,8 @@
     "answerable": false,
     "relevant_pages": [],
     "calibrated": true,
-    "calibration_note": "negative (near_miss); full scan found no YES page"
+    "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page",
+    "needs_review": true,
+    "review_note": "content PARTIAL on [143, 147, 193] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
   }
 ]

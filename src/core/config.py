@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     qdrant_url: str = ""                  # e.g. https://xxxx.cloud.qdrant.io
     qdrant_api_key: str = ""              # cluster API key (support vectors)
     min_content_page: int = 0            # skip chunks below this PDF page (filters TOC/preface)
+    max_content_page: int = 0            # skip chunks above this PDF page (filters index/back matter; 0 = off)
 
     # Embedding — Nomic MRL (replaces Jina v3; Apache 2.0, MRL capable)
     embedding_model: str = "nomic-ai/nomic-embed-text-v1.5"

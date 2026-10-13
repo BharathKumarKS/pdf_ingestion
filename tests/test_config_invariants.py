@@ -35,6 +35,13 @@ def test_reranker_model_default_is_bge_not_msmarco():
     assert _default("reranker_model") == "BAAI/bge-reranker-v2-m3"
 
 
+def test_content_page_bounds_default_off():
+    # Front/back-matter page bounds are opt-in (set in .env); a stray default would
+    # silently drop chunks from every retrieval.
+    assert _default("min_content_page") == 0
+    assert _default("max_content_page") == 0
+
+
 def test_cardtype_has_eight_members():
     # Docs (and CLAUDE.md) say 7; the enum actually has 8. Pin the exact set so
     # the count and membership can't regress silently.

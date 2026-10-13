@@ -369,6 +369,18 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   hard) and optional **iterative re-mining** (train → re-mine with the improved reranker →
   retrain). That is iteration, not the bi-encoder's 1-2-3 phasing.
 
+### D4. Gold labels mix two page numberings (DB vs PDF) — label precision
+- **What:** `relevant_pages` is built from two coordinate systems. `generate_gold_dataset.py`
+  sets it from the DB chunk `page_number`; `expand_gold_labels.py` unions in the PDF page
+  numbers returned by `scan_query`. Measured (Session 3b): those two numberings differ by 0 or
+  −1 on ~45% of pages (425 unambiguous pages: 232 at 0, 192 at −1).
+- **Effect:** about a one-page of label noise. The union tends to over-include, so it nudges
+  recall *up* rather than down — not alarming, but it is part of why recall is not 1.0 and it
+  caps how finely a reranker delta can be read.
+- **Fix (do before Session 4 assembles v2):** normalise both sources to one numbering (or have
+  `scan_query` record the DB `page_number` it corresponds to) and re-derive `relevant_pages`.
+- **Not blocking**, but it should be settled before the A/B numbers are believed.
+
 ---
 
 ## E. Ingestion & chunking — closing the gap to the course pipeline
@@ -442,6 +454,27 @@ embedding.** The middle and back of that pipeline are missing.
 - **Why this matters beyond tidiness:** a docstring describing intent gets read as a
   description of reality — exactly the failure mode `silent-failure-audit` warns about.
   This is how the "semantic chunking" claim would have survived into the report.
+
+### E5. Classify chunks content vs non-content at ingest (front/back matter) ⚠️ requires re-ingest
+- **What:** at ingest, tag each chunk `is_content: true/false` from its own text (seed the
+  rule with the `_NON_CHAPTER` keyword list already in `store.py`, currently wired only into
+  the RAPTOR rebuild), store it in the Qdrant payload, and filter retrieval on it. This
+  *replaces* the page-number bounds (`min_content_page` / `max_content_page`).
+- **Why page bounds are not enough** (measured 2026-10-13, Session 3b):
+  - The parser's payload `page_number` and the PDF page index are offset by 0 or −1 on ~45%
+    of pages (425 unambiguous pages: 232 at offset 0, 192 at −1) — a page bound lands
+    differently in the two coordinate systems.
+  - One page holds both: DB page 936 carries the last chapter's ending (chunks 4660-4668)
+    **and** the first ~15 index chunks (4669-4683, `## Index -1`). No page bound can split it:
+    `max_content_page=936` leaks those ~15 chunks; `935` would drop the chapter ending.
+  - Front matter is the same game: `min_content_page=30` still leaves the TOC tail (p30-33).
+- **What it fixes:** front matter, back matter, and the mixed page — one text-based rule,
+  book-agnostic, immune to the ±1 numbering offset.
+- **Does it require re-ingest?** **Yes** — the flag is written into the payload at ingest.
+  Fold it into the E1/E2/E3 re-ingest pass (see "Re-ingest ordering").
+- **Interim (Session 3b):** `max_content_page=936` is approximately right — ~15 index chunks
+  (0.3% of 5,048) remain retrievable. Do not chase the remainder with page arithmetic; this
+  item is the fix.
 
 ---
 
@@ -579,7 +612,7 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
 
 The question "do we re-ingest before fine-tuning?" — **yes, and the order is forced:**
 
-1. **Re-ingest first** (E1/E2/E3 + F1/F2). Every ingestion change alters chunk ids,
+1. **Re-ingest first** (E1/E2/E3/E5 + F1/F2). Every ingestion change alters chunk ids,
    boundaries, embeddings and cards. Fine-tuning trains on *retrieved* passages, so
    training on the current chunks means training against a corpus that is about to change
    underneath it — the mined hard negatives would be mined from a retired index.
