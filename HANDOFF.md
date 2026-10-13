@@ -4,8 +4,9 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-12** · `main` @ `b7f8361` · P0 items 1–8 done; **P0-9 (gold set) is
-> the active critical path and is NOT started.**
+> **Last updated: 2026-10-12** · `feat/p0-9-gold-dataset-v2` @ `52d2179` (branched from `main`
+> `b7f8361`) · P0 items 1–8 done; **P0-9 (gold set) in progress — Session 1 (Tasks 0–2) done and
+> the required-`N` number measured; next is Session 2 (Tasks 3/4a/5).**
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -19,9 +20,9 @@ and do not add new `tenant_id` defaults.
 
 ---
 
-## Current focus — P0-9, the gold-set rebuild (NOT STARTED)
+## Current focus — P0-9, the gold-set rebuild (Session 1 done; Session 2 next)
 
-Gates all of P1. Two documents, both committed:
+Gates all of P1. **Required-`N` is now measured** (Session 1, below). Two documents, both committed:
 
 | Doc | Purpose |
 |---|---|
@@ -44,8 +45,10 @@ of its unresolvable effect, and **needs no re-ingest**.
 
 ### Why P0-9 blocks everything — five conclusions, all unresolvable at n=23
 
-σ_d = 0.2315 → SE ≈ 0.05 → **N_min = 31** for the observed 0.083 effect. General form
-**`N = 0.4206/δ²`** (43 for δ=0.10, 66 for 0.083, 170 for 0.05).
+σ_d = 0.2315 (reranker comparison, **measured** — `IMPROVEMENTS.md` §F4b) → SE ≈ 0.05 at n=23.
+Paired-power **`N = 0.4206/δ²`** for the reranker: **62** to detect the observed 0.083, **169** at
+δ=0.05, 43 at δ=0.10. The merge comparison is quieter (σ_d = 0.1184 → 45 at δ=0.05). Recompute σ_d
+per comparison — do not reuse one number across comparisons.
 
 | # | question | measured | verdict |
 |---|---|---|---|
@@ -67,7 +70,7 @@ unresolvable numbers, not more knowledge.
 | 1–6 | baseline committed; silent fallbacks killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed; eval gate + CI | `6381f7b`, `c3a8727` |
 | 7 | metric set fixed (`Precision@k` → `Recall@k` + `Hit@k`) | `1dad73f` |
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
-| 9 | **gold-set rebuild** | **NOT STARTED — the active path** |
+| 9 | **gold-set rebuild** | **Session 1 (Tasks 0–2) done** — `ca3324e`, `52d2179` on `feat/p0-9-gold-dataset-v2`; required-N measured; **next: Session 2** |
 
 Test suite: **211 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
