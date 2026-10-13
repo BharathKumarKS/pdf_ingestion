@@ -69,6 +69,12 @@ even decode to control characters) → `_extract_questions` now escapes every ba
 > coarse page was even PARTIAL, so only 63 pages were judged. Term-bearing content pages were never
 > seen — p107 (radioactivity → the carbon-14 half-life question), p754 (tungsten), p103/562/763/898
 > (laser) have **no cache entry at all**. "A full scan found no YES page" is not a full scan.
+> **CONFIRMED 2026-10-13** by a targeted term-page re-scan (`logs/p0-9/verify_negatives.py`, same
+> VLM): at least one negative is **definitively invalid** — `neg-nea-004` ("half-life of
+> carbon-14") is answered by **p107**: *"Carbon-14 has a half-life of 5000 years."* `neg-in_-001`
+> (Schrödinger/hydrogen) also returned YES, but on **p944 — the index** ("## Index -9"), i.e. a
+> judge artifact. Several more show PARTIALs on real content (Fourier, superconductivity, general
+> relativity, Jupiter). **Prune/reclassify before Session 4 uses this file.**
 > **Fix before trusting:** re-verify negatives with a full/stride-1 scan (or dense passes around all
 > term matches), or accept that this tier needs Session 5 human review.
 
