@@ -16,7 +16,8 @@ HANDOFF refresh, then `/new`.
 | 2 | Build the tools | 3, 4a, 5 (code only) | no |
 | 3 | **Run the scan** | 4, 5 (execution) | **yes — background job** |
 | 3b | **Fix the scan output** (negatives + index-page hits) | new — see below | no |
-| 3c | **Extend the gold set** (overview + visual) | new — see below | medium (generation) |
+| 3c | **Extend the gold set — overview** (topic → book-wide scan) | new — see below | medium (generation) |
+| 3d | **Visual lane** (text+image query path, §B4) + visual queries + labels + metric | new — see below | heavy (model + re-embed) |
 | 4 | Assemble & decide | 6, 8 | medium |
 | 5 | Human verification | 7 | no (manual) |
 
@@ -162,21 +163,59 @@ the page. Set `--workers` from `--ramp-probe` (100 throwaway page-judgements at 
   and retrieval filters `min_content_page` as a **lower bound only** — back matter is not excluded.
 - **Handoff:** commit each fix; `/new`.
 
-## Session 3c — Extend the gold set (overview + visual)
+## Session 3c — Extend the gold set: overview (tools built 2026-10-13; run pending)
 
-- **Scope:** the type mix is *emergent, not designed*. 8 `overview` vs 40 `multihop`, because there
-  is no overview or visual prompt — `classify_question()` labels after the fact, and the multipage
-  prompt asks for connection-type questions, so the classifier says `multihop`.
-- **Deliverable (1):** an **overview** generation path — book-spanning summary/comparison questions
-  (the kind the RAPTOR summary nodes answer) — targeting ~40, matching multihop.
-- **Deliverable (2):** a **visual** generation path targeting 30–40, **with labels** (v1's 7 carry
-  `pages=None`, i.e. unmeasurable) and a D8 judge variant for questions with no text answer. The
-  corpus supports it: 426 chunks carry image markers and there is a `page_images` table.
-- **Definition of done:** target N per type **pre-registered before generating** (D1); negatives
-  scaled to keep ≥15% of the total; every new query scan-labelled.
-- **Watch:** ≈70 new queries × ~63 judge calls ≈ 4,400 calls (~20 min), plus Session 5 human review
-  — that review is the user's own time. Prefer verified labels over hitting the number exactly.
-- **Handoff:** commit the new prompts + artifacts; `/new`.
+- **Scope — split: visual moved to 3d.** The type mix is *emergent, not designed*: 8 `overview` vs
+  40 `multihop`, because the multipage prompt asks for connection-type questions, so
+  `classify_question()` labels them `multihop`. 3c adds the **overview** path only.
+- **Method (the plan's §D):** pick a *topic*, then an exhaustive book-wide scan for all pages on it.
+  Topics are derived from the book's own **section headings** — grounded, and necessary: the RAPTOR
+  tree's leaf links are stale (`raptor_nodes.child_ids_json` resolves L2→L1/L3→L2 but L1's 5,048
+  leaf refs match only 4 rows in `chunks.id`), so the tree cannot supply labels. One question per
+  topic, pre-labelled `overview` / `expected_route=raptor`.
+- **Built (commit `871a5a4`):** `generate_gold_dataset.py --overview-count/--overview-output`
+  (plus `--n-chunks 0` overview-only runs that never clobber the scanned set);
+  `validate_eval_calibration.py` overview **judge variant** (the page is judged on whether it
+  *contributes to the synthesis*, not on whether it answers the question) + `--overview-stride 4`
+  + a term-bearing sweep over the whole book; `expand_gold_labels.py` marks an entry calibrated
+  only when the scan found pages; `generate_negatives.py` seeds 8 → 12 per tier. Targets
+  pre-registered in `.hermes/plans/2026-10-13-p0-9-3c-preregistration.md` (overview **40**,
+  negatives **32–36**).
+- **Deliverable (still to run):** `data/eval_queries_gold_overview.json` (40) →
+  `data/eval_queries_gold_overview_expanded.json` (every one scan-labelled); negatives 23 → ≥32.
+  Run: `logs/p0-9/run_session3c.sh` — ~40 topics × ~310 pages ≈ **12k judge calls, ~45–50 min**.
+- **Watch:** prefer verified labels over hitting 40 exactly. Step 1 needs the generator LLM
+  (`gpt-oss-20b`), steps 2–3 the VLM judge.
+
+## Session 3d — Visual lane (text+image query path) + visual queries
+
+- **Why it is its own session (verified 2026-10-13):** the visual lane has **no text-query path**
+  (`colpali_embedder` exposes only `embed_query_image`); `evaluate_rag.py` **skips visual queries
+  entirely** (line 641), so a labelled visual query is unmeasurable today; and the cluster's
+  **colpali endpoint is down** — HTTP 500 in ~3.2 s on every request shape, though `GET /routes`
+  advertises `colpali_models: [TomoroAI/tomoro-colqwen3-embed-4b]` and
+  `colpali_endpoint: http://ansatz:8123/embed-image/v1/multivector-embeddings`. Full evidence:
+  `IMPROVEMENTS.md` §B4a.
+- **Deliverable (1) — the text-query path.** Visual search must accept **both text and image**.
+  Two options, not equivalent:
+  - **(a)** add `embed_query_text` to the local `colpali-v1.2` embedder (`colpali_engine` supports
+    `process_queries`) — **no re-ingest**, same embedding space as the stored page vectors, runs
+    offline.
+  - **(b)** swap the lane to **ColQwen3** (`TomoroAI/tomoro-colqwen3-embed-4b`, the endpoint above,
+    `input_type="auto"` = image-or-text) — better model, but a **different embedding space**, so all
+    **945 page images must be re-embedded** (a visual re-ingest, §I1), and the endpoint must be up.
+  The repo's pattern is a **direct HTTP client** (`colbert_embedder.ClusterColBERTEmbedder`) — not
+  `sv_ray_cluster_access` / `embed_colpali` (§I8: reference only, not importable).
+- **Deliverable (2) — visual queries with labels.** Generation path targeting **30–40**; v1's 7
+  carry `pages=None` (unmeasurable). The corpus supports it: 426 chunks carry image markers on 278
+  pages, `page_images` holds 2,835 rows, 945 page PNGs on disk. Needs a **D8 judge variant** for
+  questions with no text answer (criterion: "does this page show the described figure/table/graph?").
+- **Deliverable (3) — a visual metric.** `evaluate_rag.py` reports nothing for visual queries; wire
+  the visual lane (MaxSim over `visual_collection`) so v2 can score them, or they stay unmeasurable.
+- **Watch:** keep the generator and the judge apart — the visual question generator stays text-only
+  (`gpt-oss-20b`); the VLM (`Qwen3-VL`) only judges. Otherwise the judge grades its own questions.
+- **Definition of done:** text+image visual search works and is measured; 30–40 visual queries with
+  `relevant_pages`; negatives still ≥15%; suite at the floor.
 
 ## Session 4 — Assemble & decide (Tasks 6, 8)
 

@@ -97,6 +97,28 @@ Last updated: 2026-10-06
 - **Keep ColPali for its real strength:** "find the diagram that looks like this"
   (a student photographs a lecture-slide figure and wants the book's version).
 
+#### B4a. Verified 2026-10-13 (P0-9 3c recon) — the cluster side, and the fork
+- `GET http://10.0.10.70:8000/routes` advertises
+  `colpali_models: ["TomoroAI/tomoro-colqwen3-embed-4b"]` and
+  `colpali_endpoint: http://ansatz:8123/embed-image/v1/multivector-embeddings` — so ColQwen3 is
+  the router's registered visual model, and its endpoint accepts **both** text and image
+  (`input_type="auto"`).
+- **But the endpoint is down.** Every request shape returns **HTTP 500 in ~3.2 s**: text with
+  `input_type=auto`, with `input_type=text`, with `is_query=true`, plain `input`, and a real
+  base64 page image. The `colbert` endpoint on the same router returns 200, so the router is up
+  and the colpali upstream is the failure. **§B4's text-query path is blocked on the cluster,
+  not on our code.**
+- **Two ways to get the text-query path — not equivalent:**
+
+  | option | work | re-ingest? | blocked on |
+  |---|---|---|---|
+  | (a) add `embed_query_text` to the local `colpali-v1.2` embedder (`colpali_engine` supports `process_queries`) | small | **no** — same embedding space as the stored page vectors | nothing; runs offline |
+  | (b) swap the lane to ColQwen3 on the cluster | new HTTP client + config | **yes** — a different embedding space, so all 945 page images must be re-embedded (§I1) | the cluster serving the endpoint |
+
+- **Do not** use `sv_ray_cluster_access` / `embed_colpali` — §I8: SupportVectors IP, "reference
+  only, keep gitignored… not importable here (needs `svlearn`)". The repo's pattern is a direct
+  HTTP client (`colbert_embedder.ClusterColBERTEmbedder`). **Session 3d owns this decision.**
+
 ### F4. ColBERT: replace-with-RRF is the wrong comparison — **fuse** them instead
 - **Measured** (`scripts/why_colbert.py`, 23 queries, same 100-candidate union pool):
 

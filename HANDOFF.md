@@ -5,9 +5,11 @@
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
 > **Last updated: 2026-10-13** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold
-> set) — Sessions 1–3b done: the scan ran, the negatives are re-verified (1 dropped, 6 flagged),
-> and index-page false hits are fixed (judge gate + `max_content_page`).** Session 4 (assemble &
-> decide) is next. *(Session 3b's commit is pending approval.)*
+> set) — Sessions 1–3b done** (the scan ran; negatives re-verified — 1 dropped, 6 flagged;
+> index-page false hits fixed by the judge gate + `max_content_page`), **and 3c's overview tools
+> are built and committed (`871a5a4`)**. Next: **run 3c** (overview generation + book-wide scan)
+> and **3d** (visual lane — now its own session; the cluster's ColQwen3 endpoint is down).
+> Session 4 (assemble & decide) follows.
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -21,7 +23,7 @@ and do not add new `tenant_id` defaults.
 
 ---
 
-## Current focus — P0-9, the gold-set rebuild (Sessions 1–3 done; Session 4 next)
+## Current focus — P0-9, the gold-set rebuild (Sessions 1–3c built; run 3c + 3d next)
 
 Gates all of P1. **Required-`N` is now measured** (Session 1, below). Two documents, both committed:
 
@@ -81,13 +83,21 @@ even decode to control characters) → `_extract_questions` now escapes every ba
    caps index pages at PARTIAL (scanner, deterministic — not prompt-only, since the VLM is
    inconsistent on the index); (b) `max_content_page` excludes back matter from retrieval. The gold
    labels were checked and carry **no** back-matter pages. See "Index-page false hits" below.
-3. **Extend the gold set — more `overview`, and `visual` from scratch.** The type mix is *emergent*,
-   not designed: 8 overview vs 40 multihop, because there is no overview or visual prompt — the type
-   is a post-hoc LLM label (`classify_question()`). Add two generation paths — **overview**
-   (book-spanning summary/comparison, the RAPTOR lane) → ~40, **visual** → 30–40 (v1's 7 carry
-   `pages=None`, i.e. unlabelled). Pre-register target N per type (D1); scale negatives to keep
-   ≥15%; D8's judge criterion needs a visual variant. Own session — `p0-9-SESSIONS.md` 3c.
-4. **Normalise the gold labels' page numbering** (`IMPROVEMENTS.md` §D4). `relevant_pages` mixes DB
+3. **3c — overview (tools built, run pending).** Split from visual. Method = the plan's §D: pick a
+   *topic*, then an exhaustive book-wide scan for all pages on it; topics come from the book's own
+   section headings (210 found). Targets pre-registered in
+   `.hermes/plans/2026-10-13-p0-9-3c-preregistration.md` (overview **40**, negatives **32–36**).
+   Tools committed `871a5a4`; **run `logs/p0-9/run_session3c.sh`** (~12k judge calls, ~45–50 min,
+   a background job) → `data/eval_queries_gold_overview_expanded.json`.
+4. **3d — visual lane (own session).** Visual search must accept **both text and image**. Today the
+   lane has **no text-query path** (`colpali_embedder` exposes only `embed_query_image`),
+   `evaluate_rag.py` **skips visual queries** (line 641), and the cluster's **colpali endpoint is
+   down** — HTTP 500 on every request shape (verified 2026-10-13), even though `GET /routes`
+   advertises `colpali_models: [TomoroAI/tomoro-colqwen3-embed-4b]`. Two forks: add a text path to
+   the local `colpali-v1.2` (**no re-ingest**), or swap to ColQwen3 (**re-embed all 945 pages**,
+   §I1). Plus visual generation (30–40, labelled), a D8 judge variant, and a visual metric. Full
+   spec: `p0-9-SESSIONS.md` 3d and `IMPROVEMENTS.md` §B4a.
+5. **Normalise the gold labels' page numbering** (`IMPROVEMENTS.md` §D4). `relevant_pages` mixes DB
    page numbers (from the generator) with PDF page numbers (from the scan); measured, they differ by
    0/−1 on ~45% of pages. Pick one numbering and re-derive `relevant_pages` **before** Session 4
    assembles v2, or the A/B deltas carry about a page of label noise.
