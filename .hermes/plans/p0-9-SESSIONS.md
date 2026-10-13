@@ -21,6 +21,35 @@ HANDOFF refresh, then `/new`.
 Task numbers refer to
 `.hermes/plans/2026-10-06_174001-p0-9-gold-dataset-v2.md`.
 
+**Status 2026-10-12:** cluster verified up. Sessions 1→4 are a **dependency chain — do not run
+them in parallel** (see below). Session 5 (human verification) is scheduled for 2026-10-13.
+
+---
+
+## Can these run in parallel? No — and here is why
+
+Two separate reasons, either one fatal:
+
+1. **They are a chain, not a set.** Session 1's required-N sizes Session 2's generation; Session 2's
+   tools are what Session 3 runs; Session 3's artifacts are what Session 4 assembles. Starting
+   Session 3 before Session 2 finishes means running tools that do not exist yet.
+2. **All sessions share one working tree.** Two agents in the same repo directory see each other's
+   uncommitted edits, and one session's `git add -A` / `git commit` sweeps the other's half-finished
+   work into its commit. This is the killer — it corrupts both, silently.
+
+**Where the parallelism actually lives** (do this instead):
+
+- **Inside Session 3** — the ~25k scan calls, via threads (Task 4a). That is the 8–14× speedup.
+- **Inside Session 4** — the A/B configs run as **parallel background processes**; they are
+  independent read-only runs against the index.
+- **Session 5** — the user's manual work, which is naturally independent of everything.
+
+**If you truly need two agent sessions at once**, they must not share a tree: give each its own
+`git worktree add <dir> <branch>` (separate branch, separate directory) and merge afterwards. The
+merge overhead is real, and the chain above means the payoff is small — prefer the in-session
+parallelism instead.
+
+
 ---
 
 ## How to open a session
@@ -88,6 +117,10 @@ server batches, and above its limit you get queueing or 429/503.
 - **Deliverable:** `data/eval_queries_v2.json` (fresh, ≥15% negatives, all entries carry
   `answerable`); abstention metric wired into `evaluate_rag.py`; eval run; **the reranker decision
   with a confidence interval**, written into the report *before* the numbers are seen.
+- **Scope settled 2026-10-12: re-run the FULL A/B series on v2**, not just the reranker question.
+  D6 invalidated the history, so every claim gets re-measured on the powered set. Run the configs as
+  **parallel background processes** (they are independent read-only runs against the index) — that is
+  the real parallelism in P0-9, not parallel sessions.
 - **Definition of done:** `tests/test_gold_schema.py` passes; suite ≥210 pass / 5 fail; the
   decision rule pre-registered and applied.
 - **Handoff:** commit results, tick P0-9 in `HANDOFF.md`, record the decision.
