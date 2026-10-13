@@ -181,6 +181,23 @@ reranker must beat is now 0.651, not 0.598.**
 2. *Does a fine-tuned cross-encoder beat the raw fusion?* — needs the training set (D1).
 Question 1 is the cheaper one and gates question 2.
 
+**Required-N, measured 2026-10-12** (`scripts/required_n.py`, reconstructed from the 23-query
+per-query page sets against `data/eval_queries.json`):
+
+| comparison | σ_d | N @ δ=0.05 | N @ observed effect |
+|---|---|---|---|
+| **reranker** — retriever's own top-20 → after cross-encoder (`rrf3` run) | **0.2315** | **169** | **62** @ δ=0.083 |
+| merge — ColBERT-outer vs 3-way RRF, final R@20 | 0.1184 | 45 | 16 @ δ=0.083 |
+
+σ_d is the SD of the **per-query difference** (not of the scores), so it differs per comparison;
+the reranker comparison is the noisier one and it governs the gold-set size. General form for the
+reranker: **`N = 0.4206/δ²`** where `0.4206 = (z_a+z_b)²·σ_d²` for α=0.05, power=0.80. The 169 at
+δ=0.05 is under the 200 "report-it-as-a-finding" threshold; the observed effect (0.083) needs 62.
+
+*(Note: HANDOFF's "N_min = 31 for the 0.083 effect" is a **different criterion** — the n at which a
+single config's 95% CI half-width equals 0.083, i.e. `(1.96·σ_d/δ)²` — not the paired-power N. The
+paired-power figure is 62. Recorded so the two are not conflated.)*
+
 #### F5. ColBERT queries were never query-encoded — F4's comparison was unfair
 
 **Found 2026-10-06, fixed in `b4cb637`.** `ClusterColBERTEmbedder` sent the parameter
