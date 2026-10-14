@@ -126,3 +126,55 @@ def test_judged_context_precision_is_rank_weighted(ev):
 
 def test_judged_context_precision_none_without_chunks(ev):
     assert ev.compute_context_precision_judged("q", [], lambda p: "YES") is None
+
+
+# ── Visual lane (P0-9 3d) ─────────────────────────────────────────────────────
+
+class _FakeVisualStore:
+    """Returns each page ``dup`` times — mirrors the 3x-duplicated visual index."""
+
+    def __init__(self, pages, dup=3, cosine=0.7):
+        self._hits = [
+            {"page_number": p, "score_cosine": cosine, "score": 12.0}
+            for p in pages
+            for _ in range(dup)
+        ]
+
+    def visual_search(self, **kwargs):
+        return list(self._hits)
+
+
+def _visual_cfg(visual_score_threshold: float = 0.58):
+    return Settings(
+        use_stub_colpali=True,
+        reranker_fetch_k=100,
+        reranker_top_k=20,
+        visual_score_threshold=visual_score_threshold,
+    )
+
+
+def test_run_visual_retrieval_dedupes_pages_before_top_k(ev):
+    """40 pages x3 duplicates must yield 20 DISTINCT pages in top_k, not 7."""
+    store = _FakeVisualStore(range(1, 41), dup=3)
+    r = ev.run_visual_retrieval("a diagram of a pendulum", store, _visual_cfg(), "global")
+    pages = [h["page_number"] for h in r["hits"]]
+    assert len(pages) == len(set(pages)) == 40          # collapsed to one per page
+    assert len({h["page_number"] for h in r["reranked"]}) == 20  # top_k fully distinct
+
+
+def test_run_visual_retrieval_applies_lane_threshold(ev):
+    """hits_above is the subset whose mean best cosine clears visual_score_threshold."""
+    cfg = _visual_cfg(visual_score_threshold=0.6)
+    store = _FakeVisualStore([1, 2], dup=1, cosine=0.9)
+    store._hits += [{"page_number": p, "score_cosine": 0.1, "score": 1.0} for p in (3, 4)]
+    r = ev.run_visual_retrieval("q", store, cfg, "global")
+    assert {h["page_number"] for h in r["hits_above"]} == {1, 2}
+
+
+def test_run_visual_retrieval_metrics_use_page_labels(ev):
+    """A visual query scores through the same page-level metrics as the text lane."""
+    store = _FakeVisualStore([94, 425, 1, 2], dup=3)
+    r = ev.run_visual_retrieval("q", store, _visual_cfg(), "global")
+    m = ev.compute_retrieval_metrics(r, [94, 425], _visual_cfg())
+    assert m["recall_at_20"] == 1.0
+    assert m["hit_at_20"] == 1.0

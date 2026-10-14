@@ -55,6 +55,14 @@ class StubColPaliEmbedder:
         norms = np.linalg.norm(patches, axis=1, keepdims=True) + 1e-9
         return patches / norms
 
+    def embed_query_text(self, text: str) -> np.ndarray:
+        """Deterministic stub of the text-query path (same shape as a page)."""
+        seed = abs(hash(str(text))) % (2**31)
+        rng = np.random.default_rng(seed)
+        patches = rng.random((self.STUB_PATCHES, self.STUB_DIM)).astype(np.float32)
+        norms = np.linalg.norm(patches, axis=1, keepdims=True) + 1e-9
+        return patches / norms
+
     @property
     def patch_dim(self) -> int:
         return self.STUB_DIM
@@ -118,6 +126,27 @@ class ColPaliEmbedder:
     def embed_query_image(self, image) -> np.ndarray:
         """Embed a single query PIL image into patch vectors."""
         return self.embed_pages([image])[0]
+
+    def embed_query_text(self, text: str) -> np.ndarray:
+        """Embed a text query into the SAME patch space as the stored page images.
+
+        ColPali is a late-interaction model: ``process_queries`` runs the text
+        through the same encoder that produced the page vectors, so the resulting
+        (N_patches, patch_dim) matrix is comparable to the stored pages under
+        MaxSim. No re-ingest — the text path shares the page embedding space.
+
+        The patch count is not fixed (a short query yields far fewer patches than
+        a 1031-patch page), which is why ``visual_search`` normalises by the
+        query's own patch count rather than a constant.
+        """
+        import torch
+        self._load()
+        with torch.no_grad():
+            inputs = self._processor.process_queries([text]).to(self._device)
+            embeddings = self._model(**inputs)  # (1, N_patches, D)
+        patches = embeddings[0].cpu().numpy().astype(np.float32)
+        norms = np.linalg.norm(patches, axis=1, keepdims=True) + 1e-9
+        return patches / norms
 
     @property
     def patch_dim(self) -> int:

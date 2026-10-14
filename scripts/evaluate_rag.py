@@ -225,6 +225,51 @@ def run_retrieval(
     }
 
 
+def run_visual_retrieval(query_text: str, store, cfg, tenant_id: str) -> dict:
+    """Text-query ColPali lane: embed the text into the page patch space and MaxSim.
+
+    Returns the same shape as run_retrieval (hits / hits_above / reranked) so the
+    existing page-level metric computation applies unchanged. The visual lane is
+    already page-level — one Qdrant point per page image — so there is no chunk→page
+    dedup and no cross-encoder step: the MaxSim order IS the ranking.
+
+    The text path shares the stored pages' embedding space (no re-ingest), so a
+    text query is scored against the same 945 page vectors a query image would hit.
+    """
+    from src.pdf_ingestion.colpali_embedder import get_colpali_embedder
+    q_patches = get_colpali_embedder(cfg).embed_query_text(query_text)
+    hits = store.visual_search(
+        query_patches=q_patches,
+        tenant_id=tenant_id,
+        limit=cfg.reranker_fetch_k,
+        score_threshold=0.0,  # keep every page; the lane threshold is applied below
+    )
+    # The lane is PAGE-level, so collapse repeats of the same page to its best
+    # (first, since MaxSim order is preserved) occurrence BEFORE slicing to top_k.
+    # Without this, a visual index holding more than one vector per page fills the
+    # top_k slots with duplicates — measured 2026-10-13: 20 slots held 7 distinct
+    # pages, which silently caps Recall@top_k. The index defect itself is a data
+    # issue (IMPROVEMENTS.md §B4b); this keeps the metric correct regardless.
+    seen_pages: set = set()
+    deduped = []
+    for h in hits:
+        p = h.get("page_number")
+        if p in seen_pages:
+            continue
+        seen_pages.add(p)
+        deduped.append(h)
+    hits_above = [
+        h for h in deduped
+        if h.get("score_cosine", 0.0) >= cfg.visual_score_threshold
+    ]
+    return {
+        "q_vec": None,
+        "hits": deduped,
+        "hits_above": hits_above,
+        "reranked": deduped[: cfg.reranker_top_k],
+    }
+
+
 # ── Retrieval metrics ─────────────────────────────────────────────────────────
 
 def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -> dict:
@@ -637,12 +682,28 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
         "top_chunks":  [],
     }
 
-    # Visual queries skip text retrieval metrics
+    # Visual queries use the ColPali MaxSim lane, not text retrieval.
     if query_type == "visual":
         if args.skip_visual:
             result["skipped"] = "visual query, --skip-visual set"
             return result
-        result["skipped"] = "visual query — text retrieval metrics not applicable"
+        if rel_pages is None:
+            result["skipped"] = "visual query — no relevant_pages labelled"
+            return result
+        try:
+            retrieval = run_visual_retrieval(query_text, store, cfg, args.tenant)
+        except Exception as exc:
+            result["error"] = str(exc)
+            return result
+        result["top_chunks"] = [
+            {
+                "page":  h.get("page_number"),
+                "score": round(h.get("score_cosine", 0.0), 4),
+                "text":  "",
+            }
+            for h in retrieval["reranked"][:3]
+        ]
+        result["metrics"] = compute_retrieval_metrics(retrieval, rel_pages, cfg)
         return result
 
     # Queries without page labels skip retrieval metrics (but still run retrieval)

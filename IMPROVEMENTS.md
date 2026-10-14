@@ -119,6 +119,39 @@ Last updated: 2026-10-06
   only, keep gitignored… not importable here (needs `svlearn`)". The repo's pattern is a direct
   HTTP client (`colbert_embedder.ClusterColBERTEmbedder`). **Session 3d owns this decision.**
 
+**Decision taken 2026-10-13 (3d): option (a).** The cluster endpoint was re-probed and is **still
+down** — `POST /embed-image/v1/multivector-embeddings` returns **HTTP 500 ("Internal Server Error")
+in ~3.1 s on all five request shapes** (text `input_type=auto` / `=text`, `is_query=true`, plain
+`input`, no `model`), while the **colbert** endpoint on the same host returns **200 in 0.15 s** — the
+router is up, the colpali upstream is the failure. So (b) is blocked on the cluster, not on our code.
+(a) was verified end-to-end **offline**: `colpali_engine`'s `process_queries` yields a
+**(N_patches, 128)** matrix whose patch_dim matches the stored pages (128) and whose patches are
+L2-normalised — same embedding space, no re-ingest. `ColPaliEmbedder.embed_query_text` now exists
+(real + stub), and `evaluate_rag.run_visual_retrieval` drives it. **(b) stays a candidate for a later
+lane-upgrade pass (§I1) once the cluster serves the endpoint.**
+
+#### B4b. Verified 2026-10-13 (P0-9 3d) — the visual index holds THREE vectors per page
+- `visual_knowledge_base` (local Qdrant) has **2,835 points for 945 pages — every page exactly 3×**,
+  all under **one** `document_id` (`b2d9fb56`). Three Phase-3 runs each minted fresh `page_image_id`s
+  (`save_page_images` deactivates old `PageImage` rows but never deletes their Qdrant points), so a
+  visual search returns every page three times.
+- **Effect (measured):** the top-20 of a visual search held only **7 distinct pages** — duplicate
+  slots cap Recall@20 / Hit@20 / NDCG@20 for the whole visual lane. **Mitigated in code:**
+  `run_visual_retrieval` now collapses repeats by `page_number` before slicing to `top_k`, so the
+  metric is correct (20/20 distinct). The **index is still 3× too large** and the Streamlit visual
+  search still returns the duplicates.
+- **`clean_stale_visual.py` does not catch this.** It deletes points whose `document_id` is absent
+  from `knowledge_base`, but all 2,835 points share one id. Worse, the local visual doc id
+  (`b2d9fb56`) is **not** the text doc id (`5fcc9006`), so the script would flag the *entire* visual
+  index stale and then hit its own guard and refuse (exit 2). The documented remedy covers stale
+  *documents*, not duplicate *pages within a live document*.
+- **Root fix (fold into the E1/E2/E3 re-ingest pass):** `save_colpali_embeddings` / the Phase-3
+  orchestrator must delete a document's existing visual points before upserting — same shape as the
+  text path. **Re-ingest: yes (visual only).** Until then, keep the page-level dedup in the eval lane.
+- **Also open:** the visual doc id (`b2d9fb56`) ≠ the text doc id (`5fcc9006`) — the two indexes come
+  from different ingests, so `page_number` is the only join key between them. Confirm this is
+  intended before trusting any cross-lane visual number.
+
 ### F4. ColBERT: replace-with-RRF is the wrong comparison — **fuse** them instead
 - **Measured** (`scripts/why_colbert.py`, 23 queries, same 100-candidate union pool):
 

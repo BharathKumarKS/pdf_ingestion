@@ -65,6 +65,32 @@ class TestColPaliEmbedder:
     def test_stub_patch_dim_property(self):
         assert StubColPaliEmbedder().patch_dim == StubColPaliEmbedder.STUB_DIM
 
+    def test_stub_embed_query_text_shape(self):
+        emb = StubColPaliEmbedder()
+        patches = emb.embed_query_text("what is kinetic energy?")
+        assert patches.ndim == 2
+        assert patches.shape == (StubColPaliEmbedder.STUB_PATCHES, StubColPaliEmbedder.STUB_DIM)
+
+    def test_stub_query_text_is_normalised(self):
+        emb = StubColPaliEmbedder()
+        patches = emb.embed_query_text("Newton's second law")
+        norms = np.linalg.norm(patches, axis=1)
+        np.testing.assert_allclose(norms, 1.0, atol=1e-5)
+
+    def test_stub_query_text_is_deterministic(self):
+        emb = StubColPaliEmbedder()
+        assert np.allclose(
+            emb.embed_query_text("entropy"),
+            emb.embed_query_text("entropy"),
+        )
+
+    def test_stub_query_text_differs_per_text(self):
+        emb = StubColPaliEmbedder()
+        assert not np.allclose(
+            emb.embed_query_text("entropy"),
+            emb.embed_query_text("momentum"),
+        )
+
 
 # ── Image store ---------------------------------------------------------------
 
