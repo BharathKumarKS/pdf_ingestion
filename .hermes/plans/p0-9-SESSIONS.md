@@ -65,6 +65,16 @@ Paste one line, e.g. for session 2:
 Reading only your section is the point — the plan is 1,044 lines (~11k tokens) and you do not
 need most of it.
 
+**Session 3d** (new work — there is no plan section for it; the sessions file is the spec):
+
+> Read `HANDOFF.md`, then `.hermes/plans/p0-9-SESSIONS.md` (session 3d), then
+> `IMPROVEMENTS.md` §B4a and §I1. Do not read the whole P0-9 plan — 3d is new work and is
+> fully specified in the sessions file. Before writing any code, settle the §B4a fork: get
+> the text-query path by adding `embed_query_text` to the local `colpali-v1.2` embedder
+> (**no re-ingest**, runs offline) or by moving the lane to ColQwen3 on the cluster
+> (**re-embed all 945 pages**, and the endpoint is currently down). Verify the endpoint is
+> actually serving before committing to (b).
+
 ---
 
 ## Session 1 — Measure (Tasks 0, 1, 2)
