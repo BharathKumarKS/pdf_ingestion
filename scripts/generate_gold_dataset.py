@@ -120,8 +120,9 @@ Below are the book's section titles (markdown "##" headings), one per line.
 Propose {n} book-spanning TOPICS for overview questions: concepts that recur across \
 several chapters, or that the book develops over its whole length (for example \
 conservation of energy, the atomic theory of matter, symmetry and invariance). \
-Avoid narrow topics confined to a single section.
-
+Avoid narrow topics confined to a single section — a topic is only useful here if the \
+book discusses it on many pages spread across different chapters.
+{used}
 Output ONLY a JSON array of {n} short topic strings, no other text.
 
 Section titles:
@@ -388,19 +389,33 @@ def extract_section_titles(chunks: list, max_titles: int = 250) -> list[str]:
     return titles
 
 
-def generate_overview_questions(chunks: list, n: int, cfg) -> list[tuple[str, str]]:
+def generate_overview_questions(chunks: list, n: int, cfg,
+                                exclude: list[str] | None = None,
+                                candidates: int = 0) -> list[tuple[str, str]]:
     """(topic, question) pairs for the overview lane.
 
-    One LLM call proposes ``n`` book-spanning topics from the section titles; one call
-    per topic writes the question. The question is pre-labelled ``overview`` — it is
-    NOT run through ``classify_question``, which is exactly what mislabelled the
-    multipage questions as ``multihop``.
+    One LLM call proposes ``candidates`` (default ``n``) book-spanning topics from the
+    section titles; one call per topic writes the question. The question is pre-labelled
+    ``overview`` — it is NOT run through ``classify_question``, which is exactly what
+    mislabelled the multipage questions as ``multihop``.
+
+    ``exclude`` suppresses topics already in the set: their titles are dropped from the
+    candidate list AND named in the prompt, so the model cannot re-propose one via a
+    different heading.
     """
     titles = extract_section_titles(chunks)
+    if exclude:
+        used_low = {t.strip().lower() for t in exclude}
+        titles = [t for t in titles if t.strip().lower() not in used_low]
     if not titles:
-        raise RuntimeError("no section titles found in the corpus — cannot derive overview topics")
+        raise RuntimeError("no section titles left after exclusion — cannot derive topics")
+    used_block = ""
+    if exclude:
+        used_block = ("\nDo NOT propose any of these topics (already in the set): "
+                      + "; ".join(exclude) + ".\n")
     topics = _generate_batch(
-        _OVERVIEW_TOPIC_PROMPT.format(n=n, titles="\n".join(titles)),
+        _OVERVIEW_TOPIC_PROMPT.format(n=candidates or n, titles="\n".join(titles),
+                                      used=used_block),
         cfg, context="overview topics",
     )
     pairs: list[tuple[str, str]] = []
@@ -431,6 +446,14 @@ def main():
     p.add_argument("--overview-output", default="data/eval_queries_gold_overview.json",
                    help="Where overview entries are written (kept separate from --output so "
                         "the already-scanned set is not regenerated)")
+    p.add_argument("--overview-exclude-file", default="",
+                   help="JSON file of existing entries; their `topic` values are excluded from "
+                        "the new candidates (use when adding topics to an existing set)")
+    p.add_argument("--overview-id-start", type=int, default=1,
+                   help="First numeric id for the overview entries (default 1)")
+    p.add_argument("--overview-candidates", type=int, default=0,
+                   help="How many topics to request before trimming to --overview-count "
+                        "(default: the same number). Request extras to allow filtering.")
     p.add_argument("--min-chunk-tokens", type=int, default=80,
                    help="Skip chunks with fewer tokens (default: 80)")
     p.add_argument("--output", default="data/eval_queries_gold.json")
@@ -541,11 +564,20 @@ def main():
 
     # 3c: overview lane — written to its own file, labels filled by the book-wide scan.
     if args.overview_count > 0:
+        exclude: list[str] = []
+        if args.overview_exclude_file:
+            prev = json.loads(Path(args.overview_exclude_file).read_text())
+            exclude = [e["topic"] for e in prev if e.get("topic")]
+            console.print(f"Excluding [cyan]{len(exclude)}[/] topics already in the set")
         console.print("\nDeriving overview topics from the book's section headings…")
-        pairs = generate_overview_questions(chunks, args.overview_count, cfg)
+        pairs = generate_overview_questions(
+            chunks, args.overview_count, cfg,
+            exclude=exclude,
+            candidates=args.overview_candidates or args.overview_count,
+        )
         overview_entries = [
             {
-                "id": f"ovw-{i:03d}",
+                "id": f"ovw-{args.overview_id_start + i - 1:03d}",
                 "query": q,
                 "query_type": "overview",
                 "expected_route": "raptor",

@@ -1,0 +1,101 @@
+[
+  {
+    "id": "ovw-041",
+    "query": "How does Feynman develop the concept and applications of center of mass and inertia throughout Volume 1, linking the initial definitions, the treatment of rigid bodies, and the analysis of rotating systems, and what overarching insights does the book convey about the role of these concepts in understanding physical motion?",
+    "query_type": "overview",
+    "expected_route": "raptor",
+    "topic": "Center of Mass and Inertia",
+    "relevant_pages": [],
+    "calibrated": false,
+    "answerable": true,
+    "calibration_note": "Overview, topic 'Center of Mass and Inertia' (topics derived from the book's section headings); labels pending exhaustive book-wide scan"
+  },
+  {
+    "id": "ovw-042",
+    "query": "How does Feynman develop a unified understanding of wave propagation in media throughout The Feynman Lectures on Physics, Volume 1, connecting mechanical, acoustic, and electromagnetic waves, and what key physical principles and mathematical frameworks link these phenomena across the book?",
+    "query_type": "overview",
+    "expected_route": "raptor",
+    "topic": "Wave Propagation in Media",
+    "relevant_pages": [],
+    "calibrated": false,
+    "answerable": true,
+    "calibration_note": "Overview, topic 'Wave Propagation in Media' (topics derived from the book's section headings); labels pending exhaustive book-wide scan"
+  },
+  {
+    "id": "ovw-043",
+    "query": "How does Feynman develop the concept of transformation properties of physical quantities throughout Volume 1, and in what ways does this development link the discussion of symmetry, reference frames, and conservation laws in the context of mechanics, electromagnetism, and thermodynamics?",
+    "query_type": "overview",
+    "expected_route": "raptor",
+    "topic": "Transformation Properties of Physical Quantities",
+    "relevant_pages": [],
+    "calibrated": false,
+    "answerable": true,
+    "calibration_note": "Overview, topic 'Transformation Properties of Physical Quantities' (topics derived from the book's section headings); labels pending exhaustive book-wide scan"
+  },
+  {
+    "id": "ovw-044",
+    "query": "How does Feynman develop the concept of time–distance relationships and kinematics throughout Volume 1, and what are the key insights that emerge from his cumulative treatment of motion, including the interplay between theoretical derivations, experimental observations, and intuitive analogies?",
+    "query_type": "overview",
+    "expected_route": "raptor",
+    "topic": "Time–Distance Relationships and Kinematics",
+    "relevant_pages": [],
+    "calibrated": false,
+    "answerable": true,
+    "calibration_note": "Overview, topic 'Time–Distance Relationships and Kinematics' (topics derived from the book's section headings); labels pending exhaustive book-wide scan"
+  },
+  {
+    "id": "ovw-045",
+    "query": "How does Feynman build a coherent narrative of thermal radiation and equilibrium throughout Volume 1, linking the laws of thermodynamics, kinetic theory of gases, and electromagnetic theory of radiation to arrive at a comprehensive understanding of black‑body radiation and its implications for the development of quantum theory?",
+    "query_type": "overview",
+    "expected_route": "raptor",
+    "topic": "Thermal Radiation and Equilibrium",
+    "relevant_pages": [],
+    "calibrated": false,
+    "answerable": true,
+    "calibration_note": "Overview, topic 'Thermal Radiation and Equilibrium' (topics derived from the book's section headings); labels pending exhaustive book-wide scan"
+  },
+  {
+    "id": "ovw-046",
+    "query": "How does Feynman's presentation of molecular kinetic behavior evolve throughout The Feynman Lectures on Physics, Volume 1, and how does this development connect the microscopic description of gas molecules with macroscopic properties such as pressure, temperature, sound propagation, and diffusion, culminating in his discussion of Brownian motion and its implications for the kinetic theory of gases?",
+    "query_type": "overview",
+    "expected_route": "raptor",
+    "topic": "Molecular Kinetic Behavior",
+    "relevant_pages": [],
+    "calibrated": false,
+    "answerable": true,
+    "calibration_note": "Overview, topic 'Molecular Kinetic Behavior' (topics derived from the book's section headings); labels pending exhaustive book-wide scan"
+  },
+  {
+    "id": "ovw-047",
+    "query": "How does Feynman's treatment of the interaction of light with matter evolve throughout Volume 1, from classical electrodynamics to quantum descriptions, and what key experimental phenomena are used to illustrate these transitions?",
+    "query_type": "overview",
+    "expected_route": "raptor",
+    "topic": "Interaction of Light with Matter",
+    "relevant_pages": [],
+    "calibrated": false,
+    "answerable": true,
+    "calibration_note": "Overview, topic 'Interaction of Light with Matter' (topics derived from the book's section headings); labels pending exhaustive book-wide scan"
+  },
+  {
+    "id": "ovw-048",
+    "query": "How does Feynman develop the concept of atomic and molecular energy levels throughout Volume 1 of The Feynman Lectures on Physics, beginning with spectral line analysis, moving through quantum mechanical models of atoms, and concluding with the discussion of energy bands in solids, and what are the key conceptual shifts that link these treatments?",
+    "query_type": "overview",
+    "expected_route": "raptor",
+    "topic": "Atomic and Molecular Energy Levels",
+    "relevant_pages": [],
+    "calibrated": false,
+    "answerable": true,
+    "calibration_note": "Overview, topic 'Atomic and Molecular Energy Levels' (topics derived from the book's section headings); labels pending exhaustive book-wide scan"
+  },
+  {
+    "id": "ovw-049",
+    "query": "How does Feynman build the theory of quantum state evolution throughout Volume 1, starting from the notion of probability amplitudes, through the formulation of the time‑dependent Schrödinger equation, to applications in scattering and bound states, and what does this progression reveal about his broader pedagogical strategy for connecting classical intuition with quantum formalism?",
+    "query_type": "overview",
+    "expected_route": "raptor",
+    "topic": "Quantum State Evolution",
+    "relevant_pages": [],
+    "calibrated": false,
+    "answerable": true,
+    "calibration_note": "Overview, topic 'Quantum State Evolution' (topics derived from the book's section headings); labels pending exhaustive book-wide scan"
+  }
+]
