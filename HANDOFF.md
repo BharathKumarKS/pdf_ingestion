@@ -153,6 +153,16 @@ negatives are measured by `evaluate_rag.py`. `funnel_boundary_recall.py` gained 
 **To resume** (once the router answers): the two funnel commands + `required_n.py` and the
 `evaluate_rag.py` run are written out in §3 of the pre-registration file. Nothing else blocks.
 
+### UI — text-query visual search (2026-10-14)
+
+The visual tabs — admin **Visual Search** and student **Find a Figure** — now accept a **typed
+description** as well as an uploaded image: a `Describe it / Upload an image` radio drives the same
+ColPali MaxSim search via `embed_query_text` (local, no re-ingest). Duplicate pages no longer appear:
+`store.visual_search` collapses by page, and `save_colpali_embeddings` now replaces a document's
+pages instead of accumulating another copy (**§B4b**, both halves fixed in code; the existing 2,835
+points are still 3× until a re-ingest/cleanup). A text query **ranks, not filters** — the 0.58
+threshold is image-calibrated (**§B4e**). Tests: `tests/test_visual_index.py` (4).
+
 ### Next actions before Session 4 (ordered — do in a FRESH session)
 
 1. ✅ **DONE (3b) — Prune + re-verify the negatives.** Dropped `neg-nea-004`; `neg-in_-001` kept

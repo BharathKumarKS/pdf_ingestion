@@ -959,23 +959,39 @@ if tab_raptor is not None:
 # Visual search — shared core (admin "Visual Search" + student "Find a Figure")
 # ══════════════════════════════════════════════════════════════════════════
 
-def _visual_search_and_explain(cfg, store, image_file, n_results: int,
-                               tenant_id: str, source_type_filter):
-    """Embed a query image, find matching pages, and explain them.
+def _visual_search_and_explain(cfg, store, n_results: int, tenant_id: str,
+                               source_type_filter, image_file=None, query_text=None):
+    """Embed the query — an image OR a text description — and explain the matching pages.
 
     Shared by the admin Visual Search tab and the student "Find a Figure" tab so the
-    two cannot drift apart. Returns (results, synthesis). Callers render the images
-    themselves — admin adds debug detail, students do not.
+    two cannot drift apart. Exactly one of ``image_file`` / ``query_text`` is used, and
+    both drive the SAME ColPali MaxSim search: ``embed_query_text`` maps text into the
+    same page-patch space the stored page images live in, so a typed description needs
+    no second index. Returns (results, synthesis). Callers render the images themselves.
     """
-    import io
-    from PIL import Image
     from src.pdf_ingestion.colpali_embedder import get_colpali_embedder
 
-    query_image = Image.open(io.BytesIO(image_file.read()))
-    q_patches = get_colpali_embedder(cfg).embed_query_image(query_image)
+    if query_text:
+        q_patches = get_colpali_embedder(cfg).embed_query_text(query_text)
+        subject = f'the description "{query_text.strip()}"'
+    elif image_file is not None:
+        import io
+        from PIL import Image
+        query_image = Image.open(io.BytesIO(image_file.read()))
+        q_patches = get_colpali_embedder(cfg).embed_query_image(query_image)
+        subject = "the image the user uploaded"
+    else:
+        raise ValueError("_visual_search_and_explain needs image_file or query_text")
+
+    # An image query keeps the configured threshold. A TEXT query passes 0.0 and is
+    # ranked, not filtered: the 0.58 threshold is calibrated for image queries, whose
+    # patch count is a fixed grid; a text query yields far fewer patches, so its
+    # mean-best-cosine sits on a different scale and the image threshold would drop
+    # every page (IMPROVEMENTS.md §B4e).
     results = store.visual_search(
         query_patches=q_patches, tenant_id=tenant_id,
         source_type=source_type_filter, limit=n_results,
+        score_threshold=0.0 if query_text else None,
     )
     if not results:
         return [], None
@@ -994,9 +1010,9 @@ def _visual_search_and_explain(cfg, store, image_file, n_results: int,
     )
     synthesis = call_llm(
         prompt=(
-            "The user uploaded an image to search a physics knowledge base. The most "
+            f"The user searched a physics knowledge base with {subject}. The most "
             "visually similar pages were retrieved. Using the text from those pages, "
-            "explain clearly what the image shows and the physics behind it.\n\n"
+            "explain clearly what those pages show and the physics behind it.\n\n"
             f"Retrieved page content:\n{context_text}"
         ),
         system=(
@@ -1039,8 +1055,9 @@ if tab_figure is not None:
     with tab_figure:
         st.header("🖼️ Find a Figure")
         st.caption(
-            "Upload a diagram, figure, or a photo of a page and Synapse will find the "
-            "matching pages in the textbook and explain what they show."
+            "Describe a figure in words, or upload a diagram / figure / photo of a page, "
+            "and Synapse will find the matching pages in the textbook and explain what "
+            "they show."
         )
         try:
             store    = DocumentStore(cfg)
@@ -1052,15 +1069,30 @@ if tab_figure is not None:
         if not n_visual:
             st.info("Visual search isn't available for this material yet.", icon="💡")
         else:
-            img_file  = st.file_uploader(
-                "Upload an image (PNG, JPG)", type=["png", "jpg", "jpeg"], key="student_figure",
+            mode = st.radio(
+                "Search by", ["Describe it", "Upload an image"],
+                horizontal=True, key="student_figure_mode",
             )
+            query_text, img_file = None, None
+            if mode == "Describe it":
+                query_text = st.text_input(
+                    "Describe the figure you're looking for",
+                    placeholder="e.g. the diagram of a pendulum, or the graph of x vs t",
+                    key="student_figure_text",
+                )
+            else:
+                img_file = st.file_uploader(
+                    "Upload an image (PNG, JPG)", type=["png", "jpg", "jpeg"],
+                    key="student_figure",
+                )
             n_results = st.slider("Pages to show", 1, 5, 3)
-            if img_file and st.button("Find the page", type="primary"):
+
+            if (query_text or img_file) and st.button("Find the page", type="primary"):
                 with st.spinner("Looking for matching pages… (the first run loads the model)"):
                     try:
                         results, synthesis = _visual_search_and_explain(
-                            cfg, store, img_file, n_results, tenant_id, source_type_filter,
+                            cfg, store, n_results, tenant_id, source_type_filter,
+                            image_file=img_file, query_text=query_text,
                         )
                     except Exception as e:
                         st.error(f"Visual search error: {e}")
@@ -1068,8 +1100,8 @@ if tab_figure is not None:
 
                 if not results:
                     st.info(
-                        "No page in the textbook matched this image — that usually means "
-                        "the image isn't from this book.",
+                        "No page in the textbook matched that — that usually means the "
+                        "figure isn't from this book.",
                         icon="🔍",
                     )
                 else:
@@ -1087,8 +1119,9 @@ if tab_visual is not None:
     with tab_visual:
         st.header("🖼️ Visual Search")
         st.caption(
-            "Upload an image (a diagram, figure, or photo of a page) to find the most "
-            "similar pages in the knowledge base using ColPali late-interaction search."
+            "Describe a figure in words, or upload an image (a diagram, figure, or photo "
+            "of a page), to find the most similar pages in the knowledge base using "
+            "ColPali late-interaction search."
         )
 
         try:
@@ -1134,19 +1167,31 @@ if tab_visual is not None:
                     "come back shortly for visual search.",
                     icon="🔄",
                 )
-            query_image_file = st.file_uploader(
-                "Upload a query image (PNG, JPG)",
-                type=["png", "jpg", "jpeg"],
-                key="visual_query",
+            mode = st.radio(
+                "Search by", ["Describe it", "Upload an image"],
+                horizontal=True, key="visual_mode",
             )
+            query_text, query_image_file = None, None
+            if mode == "Describe it":
+                query_text = st.text_input(
+                    "Describe the figure, diagram or page you're looking for",
+                    placeholder="e.g. the diagram of a pendulum, or a graph of x vs t",
+                    key="visual_text",
+                )
+            else:
+                query_image_file = st.file_uploader(
+                    "Upload a query image (PNG, JPG)",
+                    type=["png", "jpg", "jpeg"],
+                    key="visual_query",
+                )
             n_results = st.slider("Results to show", 1, 10, 5)
 
-            if query_image_file and st.button("Search by Image", type="primary"):
-                with st.spinner("Embedding query image… (first run is slow on CPU)"):
+            if (query_text or query_image_file) and st.button("Search", type="primary"):
+                with st.spinner("Embedding the query… (first run is slow on CPU)"):
                     try:
                         results, synthesis = _visual_search_and_explain(
-                            cfg, store, query_image_file, n_results,
-                            tenant_id, source_type_filter,
+                            cfg, store, n_results, tenant_id, source_type_filter,
+                            image_file=query_image_file, query_text=query_text,
                         )
                     except Exception as e:
                         st.error(f"Visual search error: {e}")
@@ -1154,8 +1199,8 @@ if tab_visual is not None:
 
                 if not results:
                     st.info(
-                        "No page matched this image. The index holds the course textbook "
-                        "only, so an out-of-domain image will not match."
+                        "No page matched. The index holds the course textbook only, so "
+                        "an out-of-domain query will not match."
                     )
                 else:
                     if synthesis:

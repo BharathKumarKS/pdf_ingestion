@@ -151,6 +151,33 @@ lane-upgrade pass (§I1) once the cluster serves the endpoint.**
 - **Also open:** the visual doc id (`b2d9fb56`) ≠ the text doc id (`5fcc9006`) — the two indexes come
   from different ingests, so `page_number` is the only join key between them. Confirm this is
   intended before trusting any cross-lane visual number.
+- **✅ Fixed in code 2026-10-14 (the UI text-query work).** Both halves are now closed, though the
+  *existing* 2,835 points are untouched:
+  - **Read path** — `DocumentStore.visual_search` collapses duplicate pages itself (over-fetches
+    `limit × 5`, keeps each page's best occurrence, returns `limit` distinct pages). The UI and the
+    eval lane both stop showing a page 3×. `dedupe_by_page=False` is the escape hatch.
+  - **Write path** — `save_colpali_embeddings` now deletes the `(document_id, page_number)` it is
+    about to write *before* upserting, so a re-ingest **replaces** a document's pages instead of
+    adding another full copy. Keyed per page, so a partial re-ingest touches only its own pages.
+  - Tests: `tests/test_visual_index.py` (4).
+  - **Still 3× in the live index.** The fix prevents *new* duplication; it does not remove the
+    1,890 existing duplicates. Cleaning those needs a one-off dedupe (keep one point per
+    `(document_id, page_number)`) or the visual re-ingest already planned for E1/E2/E3. **No cleanup
+    script was run** — deleting from a live index is a deliberate, separate call.
+
+#### B4e. Open 2026-10-14 — the visual score threshold is image-calibrated; a text query needs its own
+- `visual_score_threshold` (**0.58**) was calibrated for **image** queries. `visual_search` divides
+  the MaxSim sum by the query's own patch count to get a mean-best-cosine, so the *scale* depends on
+  how many patches the query has. An image is a fixed grid (~1031 patches); a short **text** query
+  yields far fewer, so its mean-best-cosine sits on a different scale — the 0.58 image threshold
+  drops nearly every page.
+- **Consequence for the new UI text path:** it **ranks, not filters** (`score_threshold=0.0`) and
+  displays the cosine, rather than silently returning "no results" against an image-calibrated bar.
+- **Fix (needs a run, not a decision):** calibrate a separate text threshold from the **33 labelled
+  visual queries** — run `run_visual_retrieval` over them and take the knee of the score
+  distribution. Until then the text path is unfiltered.
+- **Not blocking**, but any visual-lane number is threshold-dependent, so pin this before comparing
+  the visual lane across configs.
 
 #### B4c. Verified 2026-10-13 (P0-9 3d-ii) — the visual judge is over-permissive; the criterion must be strict
 - **What:** the 3d-ii visual judge variant (D8's "does this page show the described

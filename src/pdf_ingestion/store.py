@@ -17,6 +17,11 @@ from src.pdf_ingestion.embedder import EmbeddedChunk
 from src.pdf_ingestion.parser import ParsedDocument
 from src.pdf_ingestion.raptor_tree import RaptorNodeData
 
+# ColPali visual search: the index may hold more than one vector per page (three, after
+# three Phase-3 runs — IMPROVEMENTS.md §B4b). Over-fetch by this factor so that after
+# collapsing duplicate pages we can still return the caller's requested count.
+_VISUAL_DEDUPE_OVERFETCH = 5
+
 
 # ── Qdrant payload builder ─────────────────────────────────────────────────
 
@@ -1027,6 +1032,18 @@ class DocumentStore:
                 },
             ))
 
+        # REPLACE, don't accumulate. Each Phase-3 run mints fresh page_image_ids
+        # (SQLite deactivates the old PageImage rows but their Qdrant points were
+        # never removed), so a re-ingest used to add another full copy of the
+        # document's pages — measured 2026-10-13: 2,835 points for 945 pages, 3x
+        # (IMPROVEMENTS.md §B4b). Delete the pages we are about to write, keyed on
+        # (document_id, page_number), so a partial re-ingest replaces only its own
+        # pages and leaves the rest of the document intact.
+        for doc_id in {pi.document_id for pi in page_image_records}:
+            pages = sorted({pi.page_number for pi in page_image_records
+                            if pi.document_id == doc_id})
+            self._delete_colpali_pages(doc_id, pages)
+
         for i in range(0, len(points), 32):
             self._qdrant.upsert(
                 collection_name=cfg.colpali_collection,
@@ -1036,6 +1053,27 @@ class DocumentStore:
                     page_image_records[0].document_id if page_image_records else "?")
         return len(points)
 
+    def _delete_colpali_pages(self, document_id: str, page_numbers: list[int]) -> None:
+        """Remove a document's visual points for the given pages (re-ingest replace step).
+
+        Best-effort: a failure is logged, not raised — losing a duplicate is
+        preferable to aborting a Phase-3 run. The read path also dedupes by page, so
+        a failed delete degrades to the old (duplicated) behaviour, not to wrong hits.
+        """
+        from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
+        if not page_numbers:
+            return
+        try:
+            self._qdrant.delete(
+                collection_name=self._cfg.colpali_collection,
+                points_selector=Filter(must=[
+                    FieldCondition(key="document_id", match=MatchValue(value=document_id)),
+                    FieldCondition(key="page_number", match=MatchAny(any=page_numbers)),
+                ]),
+            )
+        except Exception as exc:
+            logger.warning("ColPali replace-delete failed for doc {}: {}", document_id, exc)
+
     def visual_search(
         self,
         query_patches: "np.ndarray",
@@ -1043,12 +1081,22 @@ class DocumentStore:
         source_type: Optional[str] = None,
         limit: int = 5,
         score_threshold: Optional[float] = None,
+        dedupe_by_page: bool = True,
     ) -> list[dict]:
         """MaxSim late-interaction search against the ColPali collection.
 
         source_type=None  → hybrid (user docs + global baseline)
         source_type='user_upload' → user docs only
         source_type='base_textbook' → global baseline only
+
+        ``limit`` is the number of DISTINCT PAGES returned when ``dedupe_by_page``
+        (the default). The index can hold more than one vector per page — three,
+        after three Phase-3 runs (IMPROVEMENTS.md §B4b) — so returning raw points
+        shows the same page repeatedly. We over-fetch and collapse by
+        ``page_number``, keeping each page's best occurrence (Qdrant returns points
+        in descending score order). The ingest path now replaces a document's pages
+        instead of accumulating them, so this is a belt-and-braces guard for an
+        index that predates that fix.
         """
         from qdrant_client.models import FieldCondition, Filter, MatchValue
         if source_type == "user_upload":
@@ -1068,12 +1116,15 @@ class DocumentStore:
                              match=MatchValue(value=self._cfg.global_tenant_id))]),
             ])
         try:
+            # Over-fetch so that after collapsing duplicates we still have `limit`
+            # distinct pages (the index held 3 vectors/page when this was added).
+            fetch = limit * _VISUAL_DEDUPE_OVERFETCH if dedupe_by_page else limit
             response = self._qdrant.query_points(
                 collection_name=self._cfg.colpali_collection,
                 query=query_patches.tolist(),
                 using="colpali",
                 query_filter=filter_,
-                limit=limit,
+                limit=fetch,
                 with_payload=True,
             )
             # Normalise to a cosine-like 0-1 score. ColPali patch vectors are
@@ -1087,14 +1138,24 @@ class DocumentStore:
             threshold = score_threshold if score_threshold is not None else self._cfg.visual_score_threshold
             n_query_patches = max(1, len(query_patches))
             results = []
+            seen_pages: set = set()
             for h in response.points:
                 cosine = h.score / n_query_patches
-                if cosine >= threshold:
-                    results.append({
-                        "score": h.score,                 # raw MaxSim (sum of cosines)
-                        "score_cosine": round(cosine, 4),  # mean best cosine, 0-1
-                        **(h.payload or {}),
-                    })
+                if cosine < threshold:
+                    continue
+                payload = h.payload or {}
+                page = payload.get("page_number")
+                if dedupe_by_page and page is not None:
+                    if page in seen_pages:
+                        continue
+                    seen_pages.add(page)
+                results.append({
+                    "score": h.score,                 # raw MaxSim (sum of cosines)
+                    "score_cosine": round(cosine, 4),  # mean best cosine, 0-1
+                    **payload,
+                })
+                if len(results) >= limit:
+                    break
             return results
         except Exception as exc:
             logger.warning("Visual search failed ({})", exc)

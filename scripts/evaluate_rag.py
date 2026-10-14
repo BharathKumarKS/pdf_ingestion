@@ -244,12 +244,10 @@ def run_visual_retrieval(query_text: str, store, cfg, tenant_id: str) -> dict:
         limit=cfg.reranker_fetch_k,
         score_threshold=0.0,  # keep every page; the lane threshold is applied below
     )
-    # The lane is PAGE-level, so collapse repeats of the same page to its best
-    # (first, since MaxSim order is preserved) occurrence BEFORE slicing to top_k.
-    # Without this, a visual index holding more than one vector per page fills the
-    # top_k slots with duplicates — measured 2026-10-13: 20 slots held 7 distinct
-    # pages, which silently caps Recall@top_k. The index defect itself is a data
-    # issue (IMPROVEMENTS.md §B4b); this keeps the metric correct regardless.
+    # The lane is PAGE-level. ``store.visual_search`` now collapses duplicate pages
+    # itself (IMPROVEMENTS.md §B4b — the index held 3 vectors per page), so this is a
+    # second, cheap guard: it keeps the metric correct even if a caller passes
+    # ``dedupe_by_page=False``, and it documents the invariant the metric relies on.
     seen_pages: set = set()
     deduped = []
     for h in hits:
