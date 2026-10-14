@@ -403,6 +403,25 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   `scan_query` record the DB `page_number` it corresponds to) and re-derive `relevant_pages`.
 - **Not blocking**, but it should be settled before the A/B numbers are believed.
 
+### D5. `generate_negatives.py` verifies at stride 15 — weaker than the Session 3b re-scan
+- **What:** `generate_negatives.py` accepts a candidate if its own two-pass scan (stride 15,
+  then ±8 dense) finds no YES page. But a near-miss fact can sit on a page the stride never
+  reaches, so the generator re-accepts negatives that are genuinely answerable. Verified
+  2026-10-13 (P0-9 3c): the grown run accepted 36/36, and the term-bearing re-scan then found
+  **two** answerable ones — `neg-nea-004` (carbon-14 half-life, **p107** — already known from
+  Session 3b) *and* the newly added `neg-nea-010` (age of the universe, **p106/157**).
+- **Effect:** a grown negatives file is *less* trustworthy than the pruned one it replaces.
+  Committing it unmodified would have put two answerable queries into the abstention metric —
+  the exact defect Session 3b existed to fix.
+- **Fix (now the required procedure):** after every `generate_negatives.py` run, always
+  `logs/p0-9/verify_negatives.py` (term-bearing sweep, ±2 neighbours) then
+  `logs/p0-9/prune_negatives.py` (drop content-YES, flag content-PARTIAL as `needs_review`).
+  `verify_negatives.py` keeps a per-seed term list — extend `TERMS` whenever `_SEEDS` grows,
+  or the new seeds are silently skipped.
+- **Better fix (not done):** fold the term sweep into `generate_negatives.py` itself, so the
+  generator cannot accept a candidate it has not swept. Until then the two-step procedure is
+  a manual invariant that is easy to forget.
+
 ---
 
 ## E. Ingestion & chunking — closing the gap to the course pipeline
