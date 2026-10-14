@@ -261,6 +261,18 @@ the page. Set `--workers` from `--ramp-probe` (100 throwaway page-judgements at 
   index in this session unless the E1/E2/E3 re-ingest pass is the chosen path.
 - **Definition of done:** 30–40 visual queries with `relevant_pages`; `evaluate_rag.py` reports
   visual-lane numbers; negatives still ≥15%; suite at the floor.
+- **STATUS 2026-10-14 (3d-ii DONE):** all three deliverables built and the scan has **completed**.
+  (1) `generate_gold_dataset.py --visual-count` — text-only generator writes one figure question per
+  `<!-- image -->` page in the content region; `data/eval_queries_gold_visual.json` holds **40**
+  (pages 37–915). (2) `_VISUAL_JUDGE_PROMPT` + `judge_template()`; the visual query is no longer
+  excluded from scan mode, and is scanned with stride 4 + term sweep + an anchor window around its
+  `source_page`. (3) the scan → `data/eval_queries_gold_visual_expanded.json` — **33 usable of 40**
+  (6 uncalibrated, `vis-024` dropped as non-specific).
+  **Three findings → `IMPROVEMENTS.md` §B4c, §B4d and §D4:** a loose visual criterion returns YES for
+  ANY figure page (266 for one query) — the strict "name the figure, match subject AND quantities"
+  prompt fixes it (§B4c); that strict prompt × `expand_gold_labels`' YES-only filter leaves 6 queries
+  uncalibrated, and a vague question scores 71 pages (§B4d); the DB→PDF page offset reaches **+2**, so
+  the visual lane labels from the fitz scan only (§D4).
 
 ## Session 4 — Assemble & decide (Tasks 6, 8)
 

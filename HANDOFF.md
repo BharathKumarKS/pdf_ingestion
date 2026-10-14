@@ -4,14 +4,16 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-13** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold
-> set) — Sessions 1–3c done, 3d partly done.** 3c's overview lane is complete: **40 overview
+> **Last updated: 2026-10-14** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold
+> set) — Sessions 1–3c done, 3d + 3d-ii done.** 3c's overview lane is complete: **40 overview
 > queries**, topics derived from the book's own section headings, every one scan-labelled over the
 > whole book (min 22 / median 58 / max 314 pages — none narrow); negatives grown 23 → **34** (2
 > dropped as answerable by the term-bearing re-scan). Assembled: **135 answerable + 34 negatives =
 > 169, 20.1%**. **3d settled the §B4a fork on option (a)** and landed the text-query path + the
-> visual metric (commit `4697961`); **3d-ii** (visual queries + labels) is the remaining piece.
-> Next: **3d-ii**, then **Session 4** (assemble & decide).
+> visual metric (commit `4697961`). **3d-ii is done** — the visual generation path, the D8 visual
+> judge variant and the book-wide scan are in (commit `3a18da4`); the scan left **33 usable visual
+> queries** of 40 (6 uncalibrated, 1 dropped as non-specific — **§B4d**). Next: **Session 4**
+> (assemble v2 & decide).
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -76,7 +78,7 @@ even decode to control characters) → `_extract_questions` now escapes every ba
 > **not** materialise once the term pages were actually scanned.
 > Evidence: `logs/p0-9/report_negatives.py`, `logs/p0-9/prune_negatives.py`, `logs/p0-9/session3b/`.
 
-### Session 3d delivered 2026-10-13 (partly — code landed, queries remain as 3d-ii)
+### Session 3d delivered 2026-10-13 (code landed; the queries followed as 3d-ii)
 
 Commit `4697961` on `feat/p0-9-gold-dataset-v2`. **§B4a fork settled on option (a)**, on evidence:
 the cluster colpali endpoint was re-probed and is **still down** (HTTP 500 on all five request
@@ -88,7 +90,7 @@ gives an `(N, 128)` matrix whose patch_dim matches the stored pages, L2-normalis
 |---|---|
 | (1) text-query path | ✅ `ColPaliEmbedder.embed_query_text` + stub |
 | (3) visual metric | ✅ `evaluate_rag.run_visual_retrieval` — text → MaxSim over `visual_knowledge_base`, page-level metrics reused; visual queries now score instead of being skipped |
-| (2) visual queries + labels (30–40) | ⛔ **not started — this is 3d-ii** |
+| (2) visual queries + labels (30–40) | ✅ **done as 3d-ii** — 33 usable of 40 (see "Session 3d-ii" below) |
 
 Tests: +4 stub text-path, +3 visual-lane. Suite **225 pass / 5 fail** (same 5 pre-existing).
 
@@ -97,6 +99,30 @@ Tests: +4 stub text-path, +3 visual-lane. Suite **225 pass / 5 fail** (same 5 pr
 **7 distinct pages**, capping the whole lane's Recall@20. `clean_stale_visual.py` cannot catch it
 (keys on `document_id`), and the visual doc id ≠ the text doc id (`5fcc9006`). Nothing was deleted;
 the eval lane dedupes by page meanwhile. Root fix folded into the E1/E2/E3 re-ingest pass.
+
+### Session 3d-ii delivered 2026-10-14 — the visual queries and their labels
+
+Commit `3a18da4`. Three deliverables, all built: (1) the **visual generation path**
+(`generate_gold_dataset.py --visual-count` — text-only generator, one figure question per
+`<!-- image -->` page in the content region) → `data/eval_queries_gold_visual.json` (**40**,
+source pages 37–915); (2) the **D8 visual judge variant** (`_VISUAL_JUDGE_PROMPT`, strict) plus the
+anchor window, in `validate_eval_calibration.py`; (3) the **book-wide scan** →
+`data/eval_queries_gold_visual_expanded.json`.
+
+| Result | Value |
+|---|---|
+| Generated | 40 visual questions |
+| **Usable after hygiene** | **33** (23 single-page, 7 two-page, 2 three-page, 1 four-page) |
+| Uncalibrated (no YES page) | **6** — `vis-004, 009, 016, 017, 023, 025` |
+| Dropped as non-specific | **1** — `vis-024` (71 YES pages — "the diagram of the wave signals") |
+
+**The 6 uncalibrated are a scan/judge gap, not generator hallucinations** — the source pages carry
+the figures the questions describe. Two causes (§B4d): `vis-004/025` found the *correct* page but
+the strict VLM graded it **PARTIAL**, and `expand_gold_labels.py:88` keeps **YES only**;
+`vis-009/016/017/023` got NO everywhere, even in the ±4 anchor window. A re-scan that credits a
+correct PARTIAL, or a specificity-gated generator, would recover them — **deferred** (needs cluster
+VLM calls). Tests: `tests/test_visual_queries.py` (8, passing); suite **236 pass / 5 fail** (the
+same 5 pre-existing).
 
 ### Next actions before Session 4 (ordered — do in a FRESH session)
 
@@ -116,14 +142,13 @@ the eval lane dedupes by page meanwhile. Root fix folded into the E1/E2/E3 re-in
    Assembled: **135 answerable + 34 negatives = 169 → 20.1% negatives**.
    Artifacts: `data/eval_queries_gold_overview_expanded.json`, `data/eval_negatives.json`.
    Targets + deviations: `.hermes/plans/2026-10-13-p0-9-3c-preregistration.md` (Outcome + Round 2).
-4. ⛔ **3d-ii — visual queries + labels (own session).** The lane is wired and measured; it has
-   **no labelled queries** (v1's 7 carry `pages=None`). Build: a **visual generation path** in
-   `generate_gold_dataset.py` (none exists — factual/multipage/overview only; generator stays
-   **text-only** `gpt-oss-20b`, the VLM only judges), a **D8 judge variant** for questions with no
-   text answer ("does this page show the described figure/table/graph?"), and a book-wide scan to
-   fill `relevant_pages`. `validate_eval_calibration.py` currently **excludes** `visual` from
-   scanning (line 845). Target 30–40. Corpus supports it: 426 chunks carry image markers on 278
-   pages, 945 page PNGs. Full spec: `p0-9-SESSIONS.md` 3d + 3d-ii.
+4. ✅ **DONE (3d-ii) — visual queries + labels.** Built the **visual generation path**
+   (`generate_gold_dataset.py --visual-count`, text-only generator, one figure question per
+   `<!-- image -->` page in the content region) → `data/eval_queries_gold_visual.json` (**40**,
+   pages 37–915); the **D8 visual judge variant** (`_VISUAL_JUDGE_PROMPT`, strict) + the anchor
+   window in `validate_eval_calibration.py`; the book-wide scan →
+   `data/eval_queries_gold_visual_expanded.json`. **33 usable** of 40 (6 uncalibrated, `vis-024`
+   dropped as non-specific) — **§B4d**. Commit `3a18da4`.
 5. **Normalise the gold labels' page numbering** (`IMPROVEMENTS.md` §D4). `relevant_pages` mixes DB
    page numbers (from the generator) with PDF page numbers (from the scan); measured, they differ by
    0/−1 on ~45% of pages. Pick one numbering and re-derive `relevant_pages` **before** Session 4
@@ -205,9 +230,9 @@ unresolvable numbers, not more knowledge.
 | 1–6 | baseline committed; silent fallbacks killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed; eval gate + CI | `6381f7b`, `c3a8727` |
 | 7 | metric set fixed (`Precision@k` → `Recall@k` + `Hit@k`) | `1dad73f` |
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
-| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) on `feat/p0-9-gold-dataset-v2` + **3d code (`4697961` — §B4a fork → option (a), text path + visual metric)**; **next: 3d-ii (visual queries + labels), then Session 4 — assemble & decide** |
+| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) on `feat/p0-9-gold-dataset-v2` + **3d code (`4697961` — §B4a fork → option (a), text path + visual metric)** + **3d-ii (`3a18da4` — visual generation path + D8 judge variant + scan → 33 usable visual labels, §B4d)**; **next: Session 4 — assemble & decide** |
 
-Test suite: **225 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
+Test suite: **236 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
 and 3 search tests return 0 results. **Not regressions; do not "fix" them here.**
 

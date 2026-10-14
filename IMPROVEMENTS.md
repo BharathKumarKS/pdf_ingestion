@@ -178,6 +178,39 @@ lane-upgrade pass (§I1) once the cluster serves the endpoint.**
   ±4) around the question's `source_page`, because the figure is on that page or adjacent and a
   stride-4 sample alone misses it ~75% of the time. Average pages/query fell ~694 → ~240.
 
+#### B4d. Verified 2026-10-14 (P0-9 3d-ii) — visual label hygiene: 33 usable of 40; the strict criterion × a YES-only filter
+- The 3d-ii scan produced **40** visual questions; **33 are usable** after hygiene (23 single-page,
+  7 two-page, 2 three-page, 1 four-page labels). Within the 30–40 target.
+- **6 left uncalibrated** (`relevant_pages: []`): `vis-004, 009, 016, 017, 023, 025`. Two distinct
+  causes, both in the log:
+  - **`vis-004`, `vis-025` — correct page found, graded PARTIAL, then discarded.** The anchor window
+    reached the true page and the strict VLM named the right figure ("Figure 33-6, which includes
+    diagrams of incident, reflected…") but returned **PARTIAL**, and `expand_gold_labels.py:88`
+    keeps **YES only** (`found = {h["page"] for h in hits if h["verdict"] == "YES"}`) — so a
+    correct-but-PARTIAL verdict yields an empty label. The §B4c strict criterion is now *too* strict
+    for an under-specified question.
+  - **`vis-009, 016, 017, 023` — "No hot zones found in coarse pass."** Even the ±4 anchor window
+    returned NO on every page, despite the source page carrying an `<!-- image -->` marker. Either
+    the caption Docling attached does not match the *rendered* figure, or the 8B VLM cannot read the
+    small caption text on the page image.
+  - **These are NOT generator hallucinations.** The source pages carry the figures the questions
+    describe (checked against the `chunks` table), so the gap is in the *scan/judge*, not the
+    generator. A re-scan that credits a *correct* PARTIAL as a hit would recover them.
+- **1 dropped as non-specific:** `vis-024` ("Show me the diagram of the wave signals.") scored
+  **71 YES pages** — every wave/shock diagram in the book (Figs 51-2, 51-5, 51-9, 51-10, 51-12…).
+  A vague question has no single answer page, so no threshold or cap rescues it: the **generator
+  must reject non-specific questions** (a specificity gate), or the question must name the figure.
+  Dropped (emptied + `calibrated: false`); the raw 71-page label is preserved in
+  `logs/p0-9/run_session3dii_visual_scan.log`.
+- **Consequence:** the visual lane's metric denominator is **33**, not 40. The 6 uncalibrated are not
+  lost work — they are the evidence that the *judge criterion* needs a second pass. **Deferred** (own
+  item, needs cluster VLM calls): either accept a correct PARTIAL, or regenerate with a
+  specificity-gated prompt.
+- **Minor (fold into §D4):** the anchor window (`validate_eval_calibration.py:785`) uses
+  `source_page` — which is **DB page numbering** — as if it were **PDF** numbering (line 98's comment
+  says the window is PDF). The ±4 window still covers the true page at the measured ≤+2 offset, so no
+  label is lost to it, but the window is centred wrong; fix with §D4's numbering normalisation.
+
 ### F4. ColBERT: replace-with-RRF is the wrong comparison — **fuse** them instead
 - **Measured** (`scripts/why_colbert.py`, 23 queries, same 100-candidate union pool):
 
