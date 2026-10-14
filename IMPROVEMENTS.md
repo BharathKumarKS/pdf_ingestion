@@ -161,9 +161,9 @@ lane-upgrade pass (§I1) once the cluster serves the endpoint.**
     adding another full copy. Keyed per page, so a partial re-ingest touches only its own pages.
   - Tests: `tests/test_visual_index.py` (4).
   - **Still 3× in the live index.** The fix prevents *new* duplication; it does not remove the
-    1,890 existing duplicates. Cleaning those needs a one-off dedupe (keep one point per
-    `(document_id, page_number)`) or the visual re-ingest already planned for E1/E2/E3. **No cleanup
-    script was run** — deleting from a live index is a deliberate, separate call.
+    1,890 existing duplicates. **The re-ingest is the chosen path — no one-off dedupe script was
+    written.** See "Visual-index cleanup rides along with the re-ingest" at the end of this file for
+    the verification step (and the trap where the re-ingest mints a new visual `document_id`).
 
 #### B4e. Open 2026-10-14 — the visual score threshold is image-calibrated; a text query needs its own
 - `visual_score_threshold` (**0.58**) was calibrated for **image** queries. `visual_search` divides
@@ -796,3 +796,28 @@ chunks; only entity resolution changes what is written).
 re-chunk does not invalidate them. But any query whose answer was only findable *because*
 of the old boundaries may change behaviour — re-run the baseline after re-ingest and
 re-record it, rather than comparing across the two.
+
+### Visual-index cleanup rides along with the re-ingest (§B4b)
+
+The 2,835-point / 945-page / 3× visual index is **not** cleaned by a one-off script — the
+re-ingest is the chosen path (decided 2026-10-14). The write path already replaces a document's
+pages instead of accumulating them, so a Phase-3 re-ingest that **reuses the same visual
+`document_id`** comes out clean (one point per page).
+
+**Verify, don't assume — count the collection afterwards:**
+
+```bash
+# expect ~945 (one per page), NOT 2,835
+uv run python -c "from src.pdf_ingestion.store import DocumentStore; \
+from src.core.config import get_settings; print(DocumentStore(get_settings()).count_visual_vectors(['global']))"
+```
+
+- If it is ~945, done.
+- If it is still ~2,835 (or 945 + 1,890), the re-ingest minted a **new** visual `document_id` and
+  the old points survived as orphans. **`clean_stale_visual.py` will NOT remove them** — it keys on
+  a `document_id` absent from `knowledge_base`, and the visual doc id is *never* in
+  `knowledge_base` (different ingest), so it hits its own guard and exits 2 (§B4b). Delete the
+  orphaned `document_id` explicitly instead.
+- **Ordering trap, unchanged:** still run `clean_stale_visual.py` after every Phase-3 re-ingest per
+  `ARCHITECTURE.md` §8 — the above is about the *duplicate-pages* defect, not the *stale-document*
+  one.
