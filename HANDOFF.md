@@ -5,11 +5,12 @@
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
 > **Last updated: 2026-10-13** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold
-> set) — Sessions 1–3b done** (the scan ran; negatives re-verified — 1 dropped, 6 flagged;
-> index-page false hits fixed by the judge gate + `max_content_page`), **and 3c's overview tools
-> are built and committed (`871a5a4`)**. Next: **run 3c** (overview generation + book-wide scan)
-> and **3d** (visual lane — now its own session; the cluster's ColQwen3 endpoint is down).
-> Session 4 (assemble & decide) follows.
+> set) — Sessions 1–3c done.** 3c's overview lane is complete: 40 topics generated from the book's
+> own section headings, every one scan-labelled over the whole book → **39 usable** (`ovw-026` is
+> absent from Vol 1); negatives grown 23 → **34** (2 dropped as answerable by the term-bearing
+> re-scan). Next: **3d** (visual lane — its own session; the cluster's ColQwen3 endpoint is down),
+> then **Session 4** (assemble & decide). 8 overview topics are narrow (≤15 pages) — see the
+> pre-registration's Outcome.
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -83,12 +84,13 @@ even decode to control characters) → `_extract_questions` now escapes every ba
    caps index pages at PARTIAL (scanner, deterministic — not prompt-only, since the VLM is
    inconsistent on the index); (b) `max_content_page` excludes back matter from retrieval. The gold
    labels were checked and carry **no** back-matter pages. See "Index-page false hits" below.
-3. **3c — overview (tools built, run pending).** Split from visual. Method = the plan's §D: pick a
-   *topic*, then an exhaustive book-wide scan for all pages on it; topics come from the book's own
-   section headings (210 found). Targets pre-registered in
-   `.hermes/plans/2026-10-13-p0-9-3c-preregistration.md` (overview **40**, negatives **32–36**).
-   Tools committed `871a5a4`; **run `logs/p0-9/run_session3c.sh`** (~12k judge calls, ~45–50 min,
-   a background job) → `data/eval_queries_gold_overview_expanded.json`.
+3. ✅ **DONE (3c) — the overview lane.** 40 topics generated from the book's section headings, all
+   scan-labelled over the whole book (stride 4 + term sweep, ~29k judge calls). **39 usable**:
+   `ovw-026` (Energy-Momentum Tensor) is not in Vol 1 → dropped. Negatives 23 → **34** (2 dropped
+   as answerable by the term-bearing re-scan, 9 flagged `needs_review`) = 20.2% ≥ 15%.
+   Artifacts: `data/eval_queries_gold_overview_expanded.json`, `data/eval_negatives.json`.
+   Targets + deviations: `.hermes/plans/2026-10-13-p0-9-3c-preregistration.md` (Outcome section).
+   **8 of the 39 topics are narrow (≤15 pages) — replace or reclassify before the per-type comparison.**
 4. **3d — visual lane (own session).** Visual search must accept **both text and image**. Today the
    lane has **no text-query path** (`colpali_embedder` exposes only `embed_query_image`),
    `evaluate_rag.py` **skips visual queries** (line 641), and the cluster's **colpali endpoint is
@@ -178,7 +180,7 @@ unresolvable numbers, not more knowledge.
 | 1–6 | baseline committed; silent fallbacks killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed; eval gate + CI | `6381f7b`, `c3a8727` |
 | 7 | metric set fixed (`Precision@k` → `Recall@k` + `Hit@k`) | `1dad73f` |
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
-| 9 | **gold-set rebuild** | Sessions 1–3b done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) on `feat/p0-9-gold-dataset-v2`; **next: Session 4 — assemble & decide** |
+| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) on `feat/p0-9-gold-dataset-v2`; **next: 3d (visual lane), then Session 4 — assemble & decide** |
 
 Test suite: **221 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,

@@ -22,18 +22,25 @@ TERMS = {
         ["france", "paris"], ["pride and prejudice", "austen"], ["mercury"],
         ["cricket"], ["sourdough", "bread"], ["tokyo"], ["iphone", "apple"],
         ["brazil", "portuguese"],
+        # 3c: the four seeds added when the set grew to 12 per tier.
+        ["everest", "mountain"], ["mona lisa", "leonardo"], ["tyre", "tire"],
+        ["canberra", "australia"],
     ],
     "in_": [
         ["schr", "hydrogen atom"], ["general relativity", "curved space", "curvature of space"],
         ["higgs", "electroweak"], ["entanglement", "bell's theorem", "bell theorem"],
         ["standard model"], ["navier", "viscosity"],
         ["superconduct", "bcs"], ["fourier"],
+        ["quantum hall", "hall effect"], ["strong nuclear", "strong force"],
+        ["gravitational wave", "gravity wave"], ["black hole", "hawking"],
     ],
     "nea": [
         ["magnetic moment"], ["top quark", "quark"], ["laser"],
         ["carbon-14", "carbon 14", "radiocarbon", "half-life"],
         ["cosmological constant"], ["speed of sound"],
         ["tungsten"], ["jupiter"],
+        ["proton mass", "mass of the proton"], ["age of the universe", "billion years"],
+        ["nitrogen", "boiling point"], ["neutron", "chadwick"],
     ],
 }
 
@@ -58,6 +65,9 @@ flagged = []
 for n in neg:
     tier = n["id"].split("-")[1]
     idx = int(n["id"].rsplit("-", 1)[1]) - 1
+    if idx >= len(TERMS.get(tier, [])):
+        print(f"{n['id']:16s} -> no search terms registered for this seed => SKIPPED")
+        continue
     terms = TERMS[tier][idx]
 
     pages = set()

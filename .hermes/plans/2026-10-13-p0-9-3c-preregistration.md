@@ -158,3 +158,30 @@ Two facts that make visual its own session, not a sub-task:
 **Do not** use `sv_ray_cluster_access` / `embed_colpali` — `IMPROVEMENTS.md` §I8:
 SupportVectors IP, "reference only, keep gitignored… not importable here (needs
 `svlearn`)". The repo's pattern is a direct HTTP client (`colbert_embedder.ClusterColBERTEmbedder`).
+
+---
+
+## Outcome (post-hoc, 2026-10-13 — recorded after the run, not a target)
+
+The scan ran to completion (exit 0, ~3 h 20 m; ~29 k judge calls for the overview
+pass + 788 for the new negatives).
+
+| pre-registered | delivered | note |
+|---|---|---|
+| overview **40** | **39** | `ovw-026` *Energy-Momentum Tensor* got **0 pages** from an exhaustive book-wide scan — the topic is not in Vol 1 at all. Dropped rather than carried as an answerable-but-page-less entry (it would fail the v2 schema test). |
+| negatives **32–36** | **34** | 36 generated (12/tier), **2 dropped as answerable** by the Session 3b term-bearing re-scan: `neg-nea-004` (carbon-14, p107 — the known one) and **`neg-nea-010` (age of the universe, p106/157 — new)**. 9 kept but flagged `needs_review`. |
+| ≥15% negatives | **20.2%** | 34 / (134 answerable + 34) |
+
+**Two things Session 4 must act on:**
+1. **8 of the 39 overview topics are narrow, not book-spanning** (≤15 pages):
+   `ovw-018` Symmetry in Fundamental Forces (11) · `ovw-021` Photoelectric Effect (10) ·
+   `ovw-022` Doppler Effect (10) · `ovw-023` Lorentz Force (9) · `ovw-025` Principle of
+   Least Action (8) · `ovw-028` Thermionic Emission (4) · `ovw-032` Photon Momentum (15) ·
+   `ovw-033` Schrödinger Equation (4). These behave like factual questions; replace or
+   reclassify before the per-type comparison. Median overview is 43 pages, max 157.
+2. **The generator's own negative verification is weaker than Session 3b's.**
+   `generate_negatives.py` verifies at stride 15, which missed p107 for `neg-nea-004`
+   (already known) *and* p106/157 for the new `neg-nea-010` — it accepted both. The
+   term-bearing re-scan (`logs/p0-9/verify_negatives.py`) is what catches them. **Any
+   future negatives run must be followed by that re-scan + `prune_negatives.py`.**
+

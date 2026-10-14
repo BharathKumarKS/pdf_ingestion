@@ -72,6 +72,44 @@
     "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
   },
   {
+    "id": "neg-out-009",
+    "query": "What is the tallest mountain in the world?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page",
+    "needs_review": true,
+    "review_note": "content PARTIAL on [109] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
+  },
+  {
+    "id": "neg-out-010",
+    "query": "Who painted the Mona Lisa?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
+  },
+  {
+    "id": "neg-out-011",
+    "query": "How do you change a car tyre?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
+  },
+  {
+    "id": "neg-out-012",
+    "query": "What is the capital of Australia?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (out); term-page re-scan (Session 3b) found no YES page"
+  },
+  {
     "id": "neg-in_-001",
     "query": "What does the book say about the Schrödinger equation for the hydrogen atom?",
     "query_type": "factual",
@@ -154,6 +192,46 @@
     "review_note": "content PARTIAL on [32, 440, 441, 442, 880, 884, 885, 886, 887, 889, 890, 891, 892, 893, 894, 909, 910, 911] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
   },
   {
+    "id": "neg-in_-009",
+    "query": "What does the book say about the quantum Hall effect?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page"
+  },
+  {
+    "id": "neg-in_-010",
+    "query": "What is the book's treatment of the strong nuclear force?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page",
+    "needs_review": true,
+    "review_note": "content PARTIAL on [930, 935, 936] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
+  },
+  {
+    "id": "neg-in_-011",
+    "query": "What does the book say about gravitational waves?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page",
+    "needs_review": true,
+    "review_note": "content PARTIAL on [915] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
+  },
+  {
+    "id": "neg-in_-012",
+    "query": "What is the book's explanation of black hole thermodynamics?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (in_); term-page re-scan (Session 3b) found no YES page"
+  },
+  {
     "id": "neg-nea-001",
     "query": "What numerical value does the book give for the electron's magnetic moment?",
     "query_type": "factual",
@@ -217,5 +295,32 @@
     "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page",
     "needs_review": true,
     "review_note": "content PARTIAL on [143, 147, 193] — the book discusses the topic; confirm it is genuinely unanswerable (Session 5)"
+  },
+  {
+    "id": "neg-nea-009",
+    "query": "What value does the book give for the mass of the proton?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page"
+  },
+  {
+    "id": "neg-nea-011",
+    "query": "What does the book give as the boiling point of liquid nitrogen?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page"
+  },
+  {
+    "id": "neg-nea-012",
+    "query": "Which year does the book give for the discovery of the neutron?",
+    "query_type": "factual",
+    "answerable": false,
+    "relevant_pages": [],
+    "calibrated": true,
+    "calibration_note": "negative (nea); term-page re-scan (Session 3b) found no YES page"
   }
 ]
