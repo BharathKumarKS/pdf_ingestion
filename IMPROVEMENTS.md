@@ -152,6 +152,32 @@ lane-upgrade pass (§I1) once the cluster serves the endpoint.**
   from different ingests, so `page_number` is the only join key between them. Confirm this is
   intended before trusting any cross-lane visual number.
 
+#### B4c. Verified 2026-10-13 (P0-9 3d-ii) — the visual judge is over-permissive; the criterion must be strict
+- **What:** the 3d-ii visual judge variant (D8's "does this page show the described
+  figure/table/graph?") is answered by the 8B VLM (`Qwen/Qwen3-VL-8B-Instruct`) with **YES for
+  essentially any page carrying a figure**. Measured on `vis-001` ("Show me the figure that
+  displays water magnified one billion times"): a loose prompt returned **266 YES pages** — the
+  label became "every figure page in the book", so Recall@20's denominator was meaningless.
+- **Why:** the same failure class as the index-page false hits (§B4 / Session 3b) — an 8B VLM
+  reads "does this page show a figure/diagram/graph/table" as "does this page show *a* figure",
+  not "the *specific* figure described". Prompt wording is the only lever that moved it.
+- **Fix (applied in `_VISUAL_JUDGE_PROMPT`):** force the model to work out *which* figure is
+  printed on the page (caption number + subject) and to require a **subject AND quantities/axes
+  match**; state explicitly that "a different diagram is NO even if it is also a physics
+  diagram". Verified on the probe: p37 (the true page) YES, p38 (steam, same chapter) PARTIAL,
+  p800/p504/p532 (unrelated figures) NO. `vis-001` → `[37]`, `vis-002` → `[77]`.
+- **Durable note:** this is a *prompt-level* fix, so it is exactly the kind of thing Session 5's
+  human verification must check — a stricter criterion that the VLM still under-applies would
+  silently re-widen the labels. If the visual lane is kept, add a labelled-page probe like
+  `tests/test_backmatter_gate.py` pins the index gate.
+- **Related — the term sweep explodes on generic visual vocabulary.** A visual question's
+  content words are dominated by the *request* ("show", "figure", "diagram", "fig", "graph")
+  plus common nouns ("water", "angle", "one", "times"), so the term-bearing sweep selected
+  ~600 pages/query and the scan cost was unbounded. Fixed by (a) dropping a term that appears
+  on more than `_TERM_MAX_DF` (25) pages and (b) adding an **anchor window** (`_VISUAL_ANCHOR`,
+  ±4) around the question's `source_page`, because the figure is on that page or adjacent and a
+  stride-4 sample alone misses it ~75% of the time. Average pages/query fell ~694 → ~240.
+
 ### F4. ColBERT: replace-with-RRF is the wrong comparison — **fuse** them instead
 - **Measured** (`scripts/why_colbert.py`, 23 queries, same 100-candidate union pool):
 
@@ -435,6 +461,14 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
 - **Fix (do before Session 4 assembles v2):** normalise both sources to one numbering (or have
   `scan_query` record the DB `page_number` it corresponds to) and re-derive `relevant_pages`.
 - **Not blocking**, but it should be settled before the A/B numbers are believed.
+- **Visual-lane measurement (3d-ii, 2026-10-13):** the offset is not only 0/−1. Matching a
+  distinctive phrase from each image-marker chunk against the PDF text (150 chunks), the
+  chunk's content landed on PDF pages at delta **{0: 101, +1: 25, +2: 10, −1: 8}** — so the
+  DB→PDF offset reaches **+2**. Consequence for the visual lane: the generator's
+  `source_page` is stored as **traceability only, never a label**; visual `relevant_pages` are
+  filled *exclusively* by the fitz scan, whose 1-based PDF page index is the same key the
+  `visual_knowledge_base` payload uses (`page_number`, `image_key` `page_0532.png` ↔ p532).
+  The visual lane is therefore free of this defect; the text lane is not.
 
 ### D5. `generate_negatives.py` verifies at stride 15 — weaker than the Session 3b re-scan
 - **What:** `generate_negatives.py` accepts a candidate if its own two-pass scan (stride 15,

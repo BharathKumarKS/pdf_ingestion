@@ -87,6 +87,23 @@ _RENDER_DPI = 110
 # densely than the default stride-15 coarse pass (see scan_query).
 _OVERVIEW_STRIDE = 4
 
+# 3d-ii: same reasoning for a visual question — the page that SHOWS a figure is one page
+# among ~950, and its neighbours do not necessarily share the figure's terms, so the
+# coarse pass is dense too.
+_VISUAL_STRIDE = 4
+
+# 3d-ii: a visual question records the page it was generated from (`source_page`). The
+# figure is on that page or adjacent (measured DB→PDF offset 0/-1/+1/+2), so a window
+# around it is judged densely — a stride-4 sample would miss the true page ~75% of the
+# time. The window is in PDF page numbering, which is what the visual index keys on.
+_VISUAL_ANCHOR = 4
+
+# 3d-ii: the term sweep keeps only terms that are RARE in the book. A visual question's
+# content words are dominated by generic vocabulary ("water", "angle", "one", "times"),
+# and sweeping every page carrying them costs hundreds of judge calls per query and adds
+# no signal. A term appearing on more than this many pages is dropped from the sweep.
+_TERM_MAX_DF = 25
+
 # Content words ignored when building a question's key terms for the term-bearing sweep.
 _TERM_STOPWORDS = {
     "the", "a", "an", "of", "and", "or", "to", "in", "on", "for", "is", "are", "was",
@@ -99,6 +116,11 @@ _TERM_STOPWORDS = {
     "explain", "explains", "describe", "describes", "summarize", "summarise", "compare",
     "comparison", "develop", "develops", "development", "discuss", "discusses",
     "treatment", "chapter", "chapters", "according",
+    # 3d-ii: visual-question vocabulary — generic to the *request*, not the content.
+    "show", "shows", "shown", "figure", "figures", "fig", "diagram", "diagrams",
+    "graph", "graphs", "plot", "plots", "chart", "picture", "schematic", "illustrate",
+    "illustrates", "illustrating", "depicts", "depicting", "display", "displays",
+    "displaying", "locate", "find", "page",
 }
 
 
@@ -177,6 +199,68 @@ Then on the next line, one sentence explaining why.
 Reply format (two lines only):
 <YES|PARTIAL|NO>
 <one sentence reason>"""
+
+# 3d-ii: the visual variant. A visual question's answer is a FIGURE, so the standard
+# "does this page answer the question" test is the wrong one — no page's prose answers
+# "show me the diagram of X". This asks whether the page shows the SPECIFIC visual.
+#
+# Measured 2026-10-13: a loose "does this page show the described figure?" criterion
+# returns YES for ANY page carrying a figure — one query scored 266 YES pages, i.e. the
+# label was "every figure page in the book". Forcing the model to NAME the page's figure
+# first, and to be strict about a different diagram, collapses that to the real pages
+# (p37 YES, p38 PARTIAL, unrelated pages NO on the probe).
+_VISUAL_JUDGE_PROMPT = """\
+You are checking whether a textbook page shows ONE SPECIFIC figure.
+
+The reader is looking for: {query}
+
+You are shown page {page_number} as an IMAGE (the rendered page) together with its \
+extracted text below. The IMAGE is what matters here: judge the figure/diagram/graph/\
+table actually printed on the page, not the prose.
+
+First work out, for yourself, which figure(s)/table(s) are actually printed on the page \
+(caption number and subject). Then decide:
+  YES     — one of the page's figures IS the figure the reader described (same subject \
+AND the same quantities/items/axes)
+  PARTIAL — the page has a figure of the same KIND but not the one described
+  NO      — the page has no figure matching the description
+
+Be strict: a different diagram is NO even if it is also a physics diagram.
+
+Page {page_number} text:
+---
+{page_text}
+---
+
+Reply with exactly two lines:
+<YES|PARTIAL|NO>
+<one sentence naming the figure the page shows, and why it does or does not match>"""
+
+
+def judge_template(query_type: str | None) -> str:
+    """The judge prompt for a query type. Single source for the variants.
+
+    The prompt is part of the verdict-cache key (via its hash), so the variants can
+    never be served each other's cached verdicts.
+    """
+    if query_type == "overview":
+        return _OVERVIEW_JUDGE_PROMPT
+    if query_type == "visual":
+        return _VISUAL_JUDGE_PROMPT
+    return _JUDGE_PROMPT
+
+
+def coarse_stride(args, query_type: str | None) -> int:
+    """Coarse-pass stride for a query type.
+
+    Overview and visual questions are answered by no single page, so both are scanned
+    far more densely than the default stride-15 pass (plus a term-bearing sweep).
+    """
+    if query_type == "visual":
+        return int(getattr(args, "visual_stride", _VISUAL_STRIDE))
+    if query_type == "overview":
+        return int(getattr(args, "overview_stride", _OVERVIEW_STRIDE))
+    return int(getattr(args, "scan_stride", 15))
 
 
 # ── Page access: one open PDF, each page rendered/extracted once (Task 4a #1) ───
@@ -566,11 +650,11 @@ def apply_page_gate(page_number: int, text: str, verdict: str, reason: str,
 def _judge_page(query: dict, page_num: int, store: PageStore, args, cache: VerdictCache | None) -> dict:
     """Judge one page for one query, with disk caching and a bounded retry."""
     text = store.text(page_num)
-    # 3c: an overview question gets the "contributes to the synthesis" criterion; every
-    # other type gets the standard "is this page useful" one. The prompt hash is part of
-    # the cache key, so the two variants can never be served each other's verdicts.
-    template = (_OVERVIEW_JUDGE_PROMPT
-                if query.get("query_type") == "overview" else _JUDGE_PROMPT)
+    # 3c/3d-ii: overview gets the "contributes to the synthesis" criterion, visual gets
+    # the "shows the described figure" one, everything else the standard "is this page
+    # useful" test. The prompt hash is part of the cache key, so the variants can never
+    # be served each other's verdicts.
+    template = judge_template(query.get("query_type"))
     prompt = template.format(
         query=query["query"], page_number=page_num, page_text=text,
     )
@@ -660,11 +744,12 @@ def scan_query(query: dict, pdf_path: str, args) -> list[dict]:
     end    = min(int(getattr(args, "page_end", 968)), store.n_pages)
     window = int(getattr(args, "scan_window", 8))
 
-    # 3c: an overview question is answered by no single page, so it is scanned
-    # exhaustively — a much smaller coarse stride, plus a term-bearing sweep below.
-    overview = query.get("query_type") == "overview"
-    stride = (int(getattr(args, "overview_stride", _OVERVIEW_STRIDE)) if overview
-              else int(getattr(args, "scan_stride", 15)))
+    # 3c/3d-ii: an overview question is answered by no single page and a visual question
+    # is answered by one page that SHOWS a figure — both are scanned exhaustively (a much
+    # smaller coarse stride, plus a term-bearing sweep below).
+    query_type = query.get("query_type")
+    dense_scan = query_type in ("overview", "visual")
+    stride = coarse_stride(args, query_type)
 
     # Pass 1: coarse
     coarse_pages = list(range(start, end + 1, stride))
@@ -673,18 +758,39 @@ def scan_query(query: dict, pdf_path: str, args) -> list[dict]:
     store.prewarm(coarse_pages)
     pass1 = _run_pool(coarse_pages, query, store, args, cache, workers)
 
-    # 3c: term-bearing sweep (overview only) — every page carrying a key term of the
-    # question, which the coarse stride can miss entirely. Same trick that recovered the
-    # negatives in Session 3b.
-    if overview:
+    # 3c/3d-ii: term-bearing sweep — every page carrying a RARE key term of the question,
+    # which the coarse stride can miss entirely. Same trick that recovered the negatives
+    # in Session 3b. Applies to the dense-scan types (overview, visual).
+    if dense_scan:
         terms = key_terms(query["query"])
+        # Drop terms common across the book (they cost hundreds of pages and no signal).
+        max_df = int(getattr(args, "term_max_df", _TERM_MAX_DF))
+        low_text = {p: store.text(p).lower() for p in range(start, end + 1)}
+        if max_df:
+            df = {t: sum(1 for p in range(start, end + 1) if t in low_text[p]) for t in terms}
+            terms = [t for t in terms if df[t] <= max_df]
         term_pages = [
             p for p in range(start, end + 1)
-            if p not in set(coarse_pages) and any(t in store.text(p).lower() for t in terms)
+            if p not in set(coarse_pages) and any(t in low_text[p] for t in terms)
         ]
         console.print(f"  Term sweep — {len(term_pages)} pages carry any of {terms}…")
         store.prewarm(term_pages)
         pass1 += _run_pool(term_pages, query, store, args, cache, workers)
+
+    # 3d-ii: a visual question records the page it was generated from (`source_page`, DB
+    # numbering). The figure is on that page or adjacent, so its PDF neighbourhood is
+    # judged densely — a stride-4 sample alone misses the true page ~75% of the time.
+    if query_type == "visual" and query.get("source_page"):
+        anchor = int(getattr(args, "visual_anchor", _VISUAL_ANCHOR))
+        src = int(query["source_page"])
+        judged = {r["page"] for r in pass1}
+        anchor_pages = [
+            p for p in range(max(start, src - anchor), min(end, src + anchor) + 1)
+            if p not in judged
+        ]
+        console.print(f"  Anchor window — {len(anchor_pages)} pages around source p{src}…")
+        store.prewarm(anchor_pages)
+        pass1 += _run_pool(anchor_pages, query, store, args, cache, workers)
 
     hot_pages = {r["page"] for r in pass1 if r["verdict"] in ("YES", "PARTIAL")}
     for r in pass1:
@@ -771,6 +877,15 @@ def add_scan_args(p: argparse.ArgumentParser) -> None:
                    help=f"Coarse pass for overview queries only — denser, because an "
                         f"overview question is answered by no single page "
                         f"(default {_OVERVIEW_STRIDE})")
+    p.add_argument("--visual-stride", type=int, default=_VISUAL_STRIDE,
+                   help=f"Coarse pass for visual queries only — denser, because the page "
+                        f"that SHOWS a figure is one page among ~950 (default {_VISUAL_STRIDE})")
+    p.add_argument("--visual-anchor", type=int, default=_VISUAL_ANCHOR,
+                   help=f"Visual queries: pages ± this many around the question's "
+                        f"`source_page`, judged densely (default {_VISUAL_ANCHOR})")
+    p.add_argument("--term-max-df", type=int, default=_TERM_MAX_DF,
+                   help=f"Drop a sweep term that appears on more than this many pages "
+                        f"(default {_TERM_MAX_DF}; 0 disables the filter)")
     p.add_argument("--scan-window", type=int, default=8,
                    help="Dense pass: pages ± this many around each hot zone (default 8)")
     p.add_argument("--page-start", type=int, default=30,
@@ -841,8 +956,10 @@ def main():
         all_queries = [q for q in all_queries if not q.get("id", "").startswith("_")]
 
         if args.scan:
-            # Scan mode: include uncalibrated queries too (that's the point)
-            queries = [q for q in all_queries if q.get("query_type") != "visual"]
+            # Scan mode: include uncalibrated queries too (that's the point). Visual
+            # queries are included as of 3d-ii — the visual judge variant and the dense
+            # visual stride exist now (they used to be excluded).
+            queries = all_queries
         else:
             queries = [q for q in all_queries if q.get("calibrated") and q.get("relevant_pages")]
 

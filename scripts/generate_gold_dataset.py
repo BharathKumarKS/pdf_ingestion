@@ -18,6 +18,14 @@ Two generation strategies:
     question is not answered by any one page — so they are filled by an exhaustive
     book-wide scan (scripts/expand_gold_labels.py). Written to a separate file so
     the already-scanned single/multi-page set is never regenerated.
+  - visual (--visual-count N): a question whose answer is a FIGURE/diagram/graph/table,
+    generated from a page that carries a Docling ``<!-- image -->`` marker (3d-ii).
+    The generator stays TEXT-ONLY (it reads the page text + markers, never the image);
+    the VLM judge is the only thing that sees the image, so the judge cannot grade its
+    own questions. Labels are NOT taken from the source page — the DB page numbering
+    and the PDF page numbering the visual index uses differ (measured 2026-10-13: off
+    by up to +2 on ~1/3 of pages) — so they are filled by a book-wide scan with the
+    visual judge variant. Written to a separate file.
 
 Output: data/eval_queries_gold.json
 
@@ -27,6 +35,8 @@ Usage:
     uv run python scripts/generate_gold_dataset.py --tenant global --multipage-count 20
     uv run python scripts/generate_gold_dataset.py --tenant global --overview-count 40 \
         --overview-output data/eval_queries_gold_overview.json
+    uv run python scripts/generate_gold_dataset.py --tenant global --visual-count 40 \
+        --visual-output data/eval_queries_gold_visual.json
     uv run python scripts/generate_gold_dataset.py --tenant global --dry-run
 """
 from __future__ import annotations
@@ -142,6 +152,38 @@ the whole book — a summary, a comparison, or a "how does the book develop X" \
 question. It must NOT be answerable from any single page.
 
 Output ONLY a JSON array containing the one question string, no other text.
+
+Output format:
+["question"]"""
+
+# 3d-ii: the visual path. The generator reads the page TEXT plus the Docling
+# `<!-- image -->` markers (never the image itself) and writes a question whose answer
+# is a figure/diagram/graph/table. Keeping it text-only is deliberate: the VLM judge is
+# the only thing that sees the page image, so the judge cannot grade its own questions.
+_VISUAL_PROMPT = """\
+You are building a physics RAG evaluation dataset for VISUAL search: the task is to \
+find the textbook PAGE that SHOWS a particular figure, diagram, graph, or table.
+
+Below is the text of one page. The marker `<!-- image -->` marks where a figure or \
+diagram appears on the page; the surrounding text usually names or describes it (for \
+example a "Figure 1-2" caption).
+
+Write ONE question that can ONLY be answered by SEEING the page's figure/diagram/\
+graph/table, not by reading prose. Phrase it as a request to LOCATE the visual, for \
+example "Show me the diagram of ...", "Which page shows the graph of ...", "Find the \
+table comparing ...".
+
+Requirements:
+- Describe the visual specifically enough that a reader could decide whether a given \
+page shows it — name its subject and, where the text gives them, the quantities, axes, \
+or items being compared.
+- Do NOT ask for a number, definition, or explanation that the prose alone provides.
+- Refer to a figure/diagram/graph/table that THIS page actually shows (near an \
+`<!-- image -->` marker).
+- Output ONLY a JSON array containing the one question string, no other text.
+
+Page {page} text:
+{text}
 
 Output format:
 ["question"]"""
@@ -429,6 +471,39 @@ def generate_overview_questions(chunks: list, n: int, cfg,
     return pairs
 
 
+# ── 3d-ii: visual lane — questions from image-marker pages, labels from the scan ──
+
+_IMAGE_MARKER = "<!-- image -->"
+
+
+def image_marker_pages(chunks: list, min_page: int, max_page: int) -> list:
+    """One chunk per page that carries a Docling ``<!-- image -->`` marker.
+
+    The marker is how the chunker records a figure/diagram on the page (426 chunks on
+    278 pages, measured 2026-10-13). Restricted to the content region — the front matter
+    and the index also carry markers (the title page, the copyright page) but show no
+    physics figure. Pages are deduped, first chunk wins, ordered by page.
+    """
+    by_page: dict[int, object] = {}
+    for c in chunks:
+        p = c.page_number
+        if not p or p < min_page or p > max_page:
+            continue
+        if _IMAGE_MARKER in (c.text or "") and p not in by_page:
+            by_page[p] = c
+    return [by_page[p] for p in sorted(by_page)]
+
+
+def generate_visual_question(chunk, cfg) -> str:
+    """Ask the (text-only) generator for one visual question about this page's figure."""
+    prompt = _VISUAL_PROMPT.format(
+        page=chunk.page_number or "?",
+        text=(chunk.text or "")[:1400],
+    )
+    qs = _generate_batch(prompt, cfg, context=f"visual page {chunk.page_number}")
+    return qs[0]
+
+
 def main():
     p = argparse.ArgumentParser(description="Generate gold evaluation dataset from known pages")
     p.add_argument("--tenant", default="global")
@@ -454,6 +529,17 @@ def main():
     p.add_argument("--overview-candidates", type=int, default=0,
                    help="How many topics to request before trimming to --overview-count "
                         "(default: the same number). Request extras to allow filtering.")
+    p.add_argument("--visual-count", type=int, default=0,
+                   help="How many visual (figure/diagram/graph/table) questions to generate "
+                        "from pages carrying an image marker. 0 = skip.")
+    p.add_argument("--visual-output", default="data/eval_queries_gold_visual.json",
+                   help="Where visual entries are written (kept separate from --output)")
+    p.add_argument("--visual-id-start", type=int, default=1,
+                   help="First numeric id for the visual entries (default 1)")
+    p.add_argument("--visual-min-page", type=int, default=30,
+                   help="First page eligible for visual generation (default 30, skips front matter)")
+    p.add_argument("--visual-max-page", type=int, default=936,
+                   help="Last page eligible for visual generation (default 936, skips back matter)")
     p.add_argument("--min-chunk-tokens", type=int, default=80,
                    help="Skip chunks with fewer tokens (default: 80)")
     p.add_argument("--output", default="data/eval_queries_gold.json")
@@ -502,6 +588,14 @@ def main():
                 console.print(f"  · {t}")
             console.print(f"would pick [cyan]{args.overview_count}[/] topics, "
                           f"then 1 question per topic")
+        if args.visual_count > 0:
+            cands = image_marker_pages(chunks, args.visual_min_page, args.visual_max_page)
+            console.print(f"\n[cyan]{len(cands)}[/] pages carry an image marker in "
+                          f"pages {args.visual_min_page}–{args.visual_max_page}; first 10:")
+            for c in cands[:10]:
+                console.print(f"  · p{c.page_number}: {c.text[:70]}…")
+            console.print(f"would pick [cyan]{args.visual_count}[/] pages, "
+                          f"then 1 visual question per page")
         return
 
     # Generate questions
@@ -597,6 +691,39 @@ def main():
         oout.write_text(json.dumps(overview_entries, indent=2, ensure_ascii=False))
         console.print(f"Saved [bold green]{len(overview_entries)}[/] overview entries "
                       f"to [bold]{oout}[/]")
+
+    # 3d-ii: visual lane — questions from image-marker pages, written to their own file.
+    # Labels are filled later by the book-wide scan with the visual judge variant; the
+    # source page is recorded for traceability only (its DB numbering does NOT match the
+    # visual index's PDF numbering, so it is not a label).
+    if args.visual_count > 0:
+        console.print("\nDeriving visual questions from image-marker pages…")
+        cands = image_marker_pages(chunks, args.visual_min_page, args.visual_max_page)
+        console.print(f"[cyan]{len(cands)}[/] pages carry an image marker in "
+                      f"pages {args.visual_min_page}–{args.visual_max_page}")
+        picked = sample_chunks_stratified(cands, args.visual_count)
+        visual_entries = []
+        for i, chunk in enumerate(track(picked, description="Generating visual questions…"), 1):
+            q = generate_visual_question(chunk, cfg)
+            visual_entries.append({
+                "id": f"vis-{args.visual_id_start + i - 1:03d}",
+                "query": q,
+                "query_type": "visual",
+                "expected_route": "colpali",
+                "relevant_pages": [],
+                "calibrated": False,
+                "answerable": True,
+                "source_page": chunk.page_number,
+                "calibration_note": (
+                    f"Visual, generated from page {chunk.page_number} (DB page numbering — "
+                    "traceability only, NOT a label); labels pending book-wide visual scan"
+                ),
+            })
+        vout = Path(args.visual_output)
+        vout.parent.mkdir(parents=True, exist_ok=True)
+        vout.write_text(json.dumps(visual_entries, indent=2, ensure_ascii=False))
+        console.print(f"Saved [bold green]{len(visual_entries)}[/] visual entries "
+                      f"to [bold]{vout}[/]")
 
 
 if __name__ == "__main__":
