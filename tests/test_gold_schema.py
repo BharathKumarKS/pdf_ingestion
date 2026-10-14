@@ -51,3 +51,20 @@ def test_negatives_are_at_least_15_percent():
     qs = [e for e in _load() if not e["id"].startswith("_")]
     negs = [e for e in qs if not e["answerable"]]
     assert len(negs) / len(qs) >= 0.15, f"only {len(negs)}/{len(qs)} negatives"
+
+
+def test_abstention_helper_recognises_declining_answers():
+    import importlib.util
+    from pathlib import Path as P
+
+    root = P(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location("ev2", root / "scripts" / "evaluate_rag.py")
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    class Cfg:
+        visual_score_threshold = 0.0
+
+    assert mod._looks_like_abstention("This is not covered in the book.", [], Cfg())
+    assert not mod._looks_like_abstention("Kinetic energy is 1/2 mv^2.", [], Cfg())

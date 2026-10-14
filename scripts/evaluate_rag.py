@@ -520,6 +520,26 @@ def compute_answer_relevance(question: str, answer: str, judge_fn) -> float:
     return round(score / 3, 4)
 
 
+_ABSTAIN_PHRASES = (
+    "not covered", "not in the provided", "cannot be answered", "no information",
+    "does not discuss", "isn't covered", "is not discussed", "i don't have",
+)
+
+
+def _looks_like_abstention(answer: str, top_chunks: list[dict], cfg) -> bool:
+    """A negative query is handled correctly if the system declines to answer.
+
+    Two independent signals, OR-ed: the answer text declines, or the top retrieved score
+    is below the configured threshold (the retrieval-side guardrail). The threshold is the
+    only one in config (`visual_score_threshold`); a lane-specific text threshold would be
+    a refinement — the answer-text signal is the primary one here.
+    """
+    if answer and any(p in answer.lower() for p in _ABSTAIN_PHRASES):
+        return True
+    thr = getattr(cfg, "visual_score_threshold", 0.0)
+    return bool(top_chunks) and float(top_chunks[0].get("score", 1.0)) < thr
+
+
 def compute_citation_accuracy(answer: str, chunks: list[dict]) -> float:
     """Fraction of [Page N] citations in the answer that appear in retrieved chunks."""
     cited = {int(m) for m in re.findall(r"\[Page (\d+)\]", answer, re.IGNORECASE)}
@@ -670,12 +690,14 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
     query_text  = query["query"]
     query_type  = query.get("query_type", "factual")
     rel_pages   = query.get("relevant_pages")  # None for visual / uncalibrated
+    answerable  = query.get("answerable", True)  # False for a verified negative
 
     result = {
         "id":          qid,
         "query":       query_text,
         "query_type":  query_type,
         "calibrated":  query.get("calibrated", False),
+        "answerable":  answerable,
         "relevant_pages": rel_pages,
         "metrics":     {},
         "generation":  {},
@@ -726,12 +748,13 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
         for h in retrieval["reranked"][:3]
     ]
 
-    # Retrieval metrics (only if relevant_pages labelled)
-    if rel_pages is not None:
+    # Retrieval metrics (only if relevant_pages labelled). A negative has no correct
+    # page, so recall/MRR are undefined for it — abstention is measured instead, below.
+    if rel_pages is not None and answerable:
         result["metrics"] = compute_retrieval_metrics(
             retrieval, rel_pages, cfg
         )
-    else:
+    elif answerable:
         result["metrics"] = {"note": "relevant_pages not labelled — calibrate and set calibrated=true"}
 
     # Generation metrics (only if full eval mode)
@@ -761,6 +784,19 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
                     query_text, retrieval["reranked"], judge_fn
                 )
 
+    # Negatives: there is no correct page, so retrieval metrics are undefined. What we
+    # measure instead is whether the system ABSTAINS — the answer declines to answer, or
+    # the top-1 score falls below the threshold (the retrieval-side guardrail).
+    if not answerable:
+        top = retrieval["reranked"][:1]
+        result["metrics"] = {
+            "abstained": _looks_like_abstention(
+                result["generation"].get("answer", ""), top, cfg
+            ),
+            "top1_score": round(top[0].get("score", 0.0), 4) if top else None,
+            "note": "negative query — abstention is the metric, not recall",
+        }
+
     return result
 
 
@@ -781,6 +817,8 @@ def aggregate_metrics(results: list[dict], cfg) -> dict:
     for r in results:
         if r.get("skipped") or r.get("error"):
             continue
+        if not r.get("answerable", True):
+            continue  # negatives carry abstention, not retrieval metrics
         qt = r["query_type"]
         if qt not in by_type:
             by_type[qt] = []
@@ -805,9 +843,17 @@ def aggregate_metrics(results: list[dict], cfg) -> dict:
         }
 
     all_scored = [r for r in results if not r.get("skipped") and not r.get("error")]
+    answerable_scored = [r for r in all_scored if r.get("answerable", True)]
+    negatives = [r for r in all_scored if not r.get("answerable", True)]
+    n_abstained = sum(1 for r in negatives if r.get("metrics", {}).get("abstained"))
     return {
-        "overall":    _type_agg(all_scored),
+        "overall":    _type_agg(answerable_scored),
         "by_type":    {qt: _type_agg(items) for qt, items in by_type.items()},
+        "abstention": {
+            "n_negatives":     len(negatives),
+            "n_abstained":     n_abstained,
+            "abstention_rate": round(n_abstained / len(negatives), 4) if negatives else None,
+        },
     }
 
 
@@ -860,7 +906,14 @@ def build_summary_table(aggregated: dict, cfg) -> str:
     for qt, m in aggregated["by_type"].items():
         rows.append(_row(f"  {qt}", m))
 
-    return _md_table(headers, rows)
+    table = _md_table(headers, rows)
+    ab = aggregated.get("abstention") or {}
+    if ab.get("n_negatives"):
+        rate = ab.get("abstention_rate")
+        rate_s = f"{rate:.3f}" if rate is not None else "—"
+        table += (f"\n\n**Abstention (negatives):** {ab['n_abstained']}/{ab['n_negatives']}"
+                  f" = {rate_s} — a negative is handled correctly when the system declines")
+    return table
 
 
 def build_per_query_table(results: list[dict], cfg) -> str:
