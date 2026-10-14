@@ -173,15 +173,48 @@ pass + 788 for the new negatives).
 | ≥15% negatives | **20.2%** | 34 / (134 answerable + 34) |
 
 **Two things Session 4 must act on:**
-1. **8 of the 39 overview topics are narrow, not book-spanning** (≤15 pages):
-   `ovw-018` Symmetry in Fundamental Forces (11) · `ovw-021` Photoelectric Effect (10) ·
-   `ovw-022` Doppler Effect (10) · `ovw-023` Lorentz Force (9) · `ovw-025` Principle of
-   Least Action (8) · `ovw-028` Thermionic Emission (4) · `ovw-032` Photon Momentum (15) ·
-   `ovw-033` Schrödinger Equation (4). These behave like factual questions; replace or
-   reclassify before the per-type comparison. Median overview is 43 pages, max 157.
+1. ~~8 of the 39 overview topics are narrow~~ — **RESOLVED by round 2, below.** The set is back
+   to **40**, all book-spanning (min 22 pages).
 2. **The generator's own negative verification is weaker than Session 3b's.**
    `generate_negatives.py` verifies at stride 15, which missed p107 for `neg-nea-004`
    (already known) *and* p106/157 for the new `neg-nea-010` — it accepted both. The
    term-bearing re-scan (`logs/p0-9/verify_negatives.py`) is what catches them. **Any
    future negatives run must be followed by that re-scan + `prune_negatives.py`.**
+
+---
+
+### Round 2 — the narrow topics replaced (2026-10-13)
+
+The 8 narrow topics (`ovw-018` Symmetry in Fundamental Forces 11 · `ovw-021` Photoelectric
+Effect 10 · `ovw-022` Doppler Effect 10 · `ovw-023` Lorentz Force 9 · `ovw-025` Principle of
+Least Action 8 · `ovw-028` Thermionic Emission 4 · `ovw-032` Photon Momentum 15 · `ovw-033`
+Schrödinger Equation 4) were replaced by **9 new book-spanning topics**, so the overview set is
+**40 again**.
+
+Method: the generator now over-requests topics and excludes those already in the set
+(`--overview-candidates`, `--overview-exclude-file`). 14 candidates were generated from the
+headings with the 39 existing topics excluded, then filtered **before any judge spend** by a
+cheap SQLite term-page probe. The 9 kept, with judged pages after the book-wide scan:
+
+| id | topic | probe pages | judged pages |
+|---|---|---|---|
+| ovw-041 | Center of Mass and Inertia | 212 | 46 |
+| ovw-042 | Wave Propagation in Media | 233 | 100 |
+| ovw-043 | Transformation Properties of Physical Quantities | 220 | 119 |
+| ovw-044 | Time–Distance Relationships and Kinematics | 542 | 314 |
+| ovw-045 | Thermal Radiation and Equilibrium | 122 | 55 |
+| ovw-046 | Molecular Kinetic Behavior | 152 | 114 |
+| ovw-047 | Interaction of Light with Matter | 384 | 95 |
+| ovw-048 | Atomic and Molecular Energy Levels | 291 | 24 |
+| ovw-049 | Quantum State Evolution | 173 | 23 |
+
+Dropped candidates: Measurement and Units (79), Random Processes and Diffusion (70), Periodic
+Systems and Resonance (82), Relativistic Kinematics (34) — least spanning — and **Energy
+Landscapes and Force Fields**, whose head word "landscapes" occurs on **0** pages of Vol 1, so
+the topic name is not the book's vocabulary.
+
+**Result: 40 overview queries, every one labelled, min 22 / median 58 / max 314 pages — no
+topic under 15 pages.** The probe over-estimates when a topic's words are generic (`ovw-048`
+"energy" → 291 probe vs 24 judged), so the judged count is the one that matters. Merge tool:
+`logs/p0-9/merge_overview_round2.py`.
 

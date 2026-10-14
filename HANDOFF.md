@@ -5,12 +5,12 @@
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
 > **Last updated: 2026-10-13** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold
-> set) — Sessions 1–3c done.** 3c's overview lane is complete: 40 topics generated from the book's
-> own section headings, every one scan-labelled over the whole book → **39 usable** (`ovw-026` is
-> absent from Vol 1); negatives grown 23 → **34** (2 dropped as answerable by the term-bearing
-> re-scan). Next: **3d** (visual lane — its own session; the cluster's ColQwen3 endpoint is down),
-> then **Session 4** (assemble & decide). 8 overview topics are narrow (≤15 pages) — see the
-> pre-registration's Outcome.
+> set) — Sessions 1–3c done.** 3c's overview lane is complete: **40 overview queries**, topics
+> derived from the book's own section headings, every one scan-labelled over the whole book
+> (min 22 / median 58 / max 314 pages — none narrow); negatives grown 23 → **34** (2 dropped as
+> answerable by the term-bearing re-scan). Assembled: **135 answerable + 34 negatives = 169,
+> 20.1%**. Next: **3d** (visual lane — its own session; the cluster's ColQwen3 endpoint is down),
+> then **Session 4** (assemble & decide).
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -84,13 +84,15 @@ even decode to control characters) → `_extract_questions` now escapes every ba
    caps index pages at PARTIAL (scanner, deterministic — not prompt-only, since the VLM is
    inconsistent on the index); (b) `max_content_page` excludes back matter from retrieval. The gold
    labels were checked and carry **no** back-matter pages. See "Index-page false hits" below.
-3. ✅ **DONE (3c) — the overview lane.** 40 topics generated from the book's section headings, all
-   scan-labelled over the whole book (stride 4 + term sweep, ~29k judge calls). **39 usable**:
-   `ovw-026` (Energy-Momentum Tensor) is not in Vol 1 → dropped. Negatives 23 → **34** (2 dropped
-   as answerable by the term-bearing re-scan, 9 flagged `needs_review`) = 20.2% ≥ 15%.
+3. ✅ **DONE (3c) — the overview lane.** **40 overview queries**, topics from the book's section
+   headings, every one scan-labelled over the whole book (stride 4 + term sweep, ~36k judge
+   calls). Round 1 produced 40 topics of which 1 (`ovw-026` Energy-Momentum Tensor) was absent
+   from Vol 1 and 8 were narrow (≤15 pages); **round 2 replaced those 8 with 9 new book-spanning
+   topics** (min 22 / median 58 / max 314 pages). Negatives 23 → **34** (2 dropped as answerable
+   by the term-bearing re-scan, 9 flagged `needs_review`).
+   Assembled: **135 answerable + 34 negatives = 169 → 20.1% negatives**.
    Artifacts: `data/eval_queries_gold_overview_expanded.json`, `data/eval_negatives.json`.
-   Targets + deviations: `.hermes/plans/2026-10-13-p0-9-3c-preregistration.md` (Outcome section).
-   **8 of the 39 topics are narrow (≤15 pages) — replace or reclassify before the per-type comparison.**
+   Targets + deviations: `.hermes/plans/2026-10-13-p0-9-3c-preregistration.md` (Outcome + Round 2).
 4. **3d — visual lane (own session).** Visual search must accept **both text and image**. Today the
    lane has **no text-query path** (`colpali_embedder` exposes only `embed_query_image`),
    `evaluate_rag.py` **skips visual queries** (line 641), and the cluster's **colpali endpoint is
