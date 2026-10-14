@@ -5,15 +5,15 @@
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
 > **Last updated: 2026-10-14** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold
-> set) — Sessions 1–3c done, 3d + 3d-ii done.** 3c's overview lane is complete: **40 overview
-> queries**, topics derived from the book's own section headings, every one scan-labelled over the
-> whole book (min 22 / median 58 / max 314 pages — none narrow); negatives grown 23 → **34** (2
-> dropped as answerable by the term-bearing re-scan). Assembled: **135 answerable + 34 negatives =
-> 169, 20.1%**. **3d settled the §B4a fork on option (a)** and landed the text-query path + the
-> visual metric (commit `4697961`). **3d-ii is done** — the visual generation path, the D8 visual
-> judge variant and the book-wide scan are in (commit `3a18da4`); the scan left **33 usable visual
-> queries** of 40 (6 uncalibrated, 1 dropped as non-specific — **§B4d**). Next: **Session 4**
-> (assemble v2 & decide).
+> set) — Sessions 1–3c, 3d, 3d-ii done; Session 4 partly done (v2 assembled + abstention wired +
+> decision pre-registered; the A/B run is blocked on the cluster).** 3c's overview lane is
+> complete: **40 overview queries**, topics derived from the book's own section headings, every one
+> scan-labelled over the whole book (min 22 / median 58 / max 314 pages — none narrow); negatives
+> grown 23 → **34**. **3d settled the §B4a fork on option (a)** (commit `4697961`). **3d-ii is done**
+> — visual generation path + D8 judge variant + scan (commit `3a18da4`); **33 usable visual queries**
+> of 40 (§B4d, commit `18250f1`). **v2 is assembled** (commit `e69c347`): **168 answerable + 34
+> negatives = 202** (16.8%). Next: **run Session 4's A/B** (see "Session 4" below) — blocked until
+> the cluster router is back.
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -124,6 +124,35 @@ correct PARTIAL, or a specificity-gated generator, would recover them — **defe
 VLM calls). Tests: `tests/test_visual_queries.py` (8, passing); suite **236 pass / 5 fail** (the
 same 5 pre-existing).
 
+### Session 4 delivered 2026-10-14 (partly — the harness, blocked on the cluster)
+
+Commit `e69c347`. **`data/eval_queries_v2.json` is assembled** by the new `scripts/build_gold_v2.py`:
+**95 text** (55 factual + 40 multihop) + **40 overview** (3c) + **33 visual** (3d-ii, calibrated
+only) + **34 negatives** = **202** (16.8% negatives). The 8 pre-3c overview entries inside
+`gold_expanded` are dropped (superseded); v1 is not merged (D6). `tests/test_gold_schema.py` passes
+(6). The **abstention metric is wired** into `evaluate_rag.py`: a negative
+(`answerable: false`) measures `abstained` (a declining answer OR a top-1 score below the
+threshold), negatives are excluded from the by-type retrieval averages, and an `abstention` block
+prints under the summary table. Suite **242 pass / 5 fail** (same 5).
+
+**The decision is pre-registered** before any numbers exist:
+`.hermes/plans/2026-10-14-p0-9-4-preregistration.md` — reranker stays iff it beats no-reranker on
+R@20 by more than the 95% CI on the paired difference; abstention must beat the majority baseline.
+Scope decided there: the **text-lane funnel runs on 135 queries and excludes the 33 visual**
+(the funnel has no ColPali lane, so visual queries would dilute the delta); the visual lane and the
+negatives are measured by `evaluate_rag.py`. `funnel_boundary_recall.py` gained `--include-visual`
+(default: excluded).
+
+> ⛔ **BLOCKED 2026-10-14 12:45 — the cluster router is down.** The `--limit 2` probe to
+> `http://10.0.10.70:8000` failed with `[Errno 61] Connection refused` on the **LLM** (HyDE →
+> empty), **SPLADE**, and **rerank** endpoints; only the local dense lane worked. The same router
+> answered at **08:15** today (the 3d-ii scan), so it went down since. **No A/B numbers can be
+> produced until it is back.** The probe also ran against the *local* Qdrant — the run order needs
+> `export QDRANT_HOST=10.0.10.65` (the cluster index, 5,135 points), not `data/qdrant`.
+
+**To resume** (once the router answers): the two funnel commands + `required_n.py` and the
+`evaluate_rag.py` run are written out in §3 of the pre-registration file. Nothing else blocks.
+
 ### Next actions before Session 4 (ordered — do in a FRESH session)
 
 1. ✅ **DONE (3b) — Prune + re-verify the negatives.** Dropped `neg-nea-004`; `neg-in_-001` kept
@@ -230,9 +259,9 @@ unresolvable numbers, not more knowledge.
 | 1–6 | baseline committed; silent fallbacks killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed; eval gate + CI | `6381f7b`, `c3a8727` |
 | 7 | metric set fixed (`Precision@k` → `Recall@k` + `Hit@k`) | `1dad73f` |
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
-| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) on `feat/p0-9-gold-dataset-v2` + **3d code (`4697961` — §B4a fork → option (a), text path + visual metric)** + **3d-ii (`3a18da4` — visual generation path + D8 judge variant + scan → 33 usable visual labels, §B4d)**; **next: Session 4 — assemble & decide** |
+| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) + **3d code (`4697961`)** + **3d-ii (`3a18da4`, `18250f1` — 33 usable visual labels, §B4d)** + **Session 4 partly (`e69c347` — v2 assembled 202, abstention wired, decision pre-registered)** on `feat/p0-9-gold-dataset-v2`; **next: run the v2 A/B — blocked on the cluster router** |
 
-Test suite: **236 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
+Test suite: **242 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
 and 3 search tests return 0 results. **Not regressions; do not "fix" them here.**
 

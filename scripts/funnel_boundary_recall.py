@@ -93,6 +93,10 @@ def main() -> int:
                          "the outer query (current app behaviour); 'rrf2' = RRF over "
                          "dense+sparse; 'rrf3' = RRF over dense+sparse+ColBERT, i.e. "
                          "ColBERT fused as a contributor rather than replacing the others")
+    ap.add_argument("--include-visual", action="store_true",
+                    help="keep visual queries in the text-lane funnel (default: excluded — "
+                         "they are routed to the ColPali lane, which this funnel does not "
+                         "measure, so they would dilute the text-lane delta)")
     args = ap.parse_args()
     if args.no_colbert:
         args.merge = "rrf2"
@@ -111,6 +115,14 @@ def main() -> int:
 
     queries = [x for x in json.loads(Path(args.queries).read_text())
                if x.get("calibrated") and x.get("relevant_pages")]
+    if not args.include_visual:
+        # The funnel measures the TEXT lane (dense/sparse/ColBERT/rerank). A visual query
+        # is routed to the ColPali lane, which this funnel does not measure, so keeping it
+        # would dilute the text-lane numbers and the reranker delta.
+        n_before = len(queries)
+        queries = [x for x in queries if x.get("query_type") != "visual"]
+        if n_before != len(queries):
+            logger.info(f"excluded {n_before - len(queries)} visual queries (text-lane funnel)")
     if args.limit_queries:
         queries = queries[: args.limit_queries]
     logger.info(f"{len(queries)} calibrated queries with labels")
