@@ -17,7 +17,8 @@ HANDOFF refresh, then `/new`.
 | 3 | **Run the scan** | 4, 5 (execution) | **yes — background job** |
 | 3b | **Fix the scan output** (negatives + index-page hits) | new — see below | no |
 | 3c | **Extend the gold set — overview** (topic → book-wide scan) | new — see below | medium (generation) |
-| 3d | **Visual lane** (text+image query path, §B4) + visual queries + labels + metric | new — see below | heavy (model + re-embed) |
+| 3d | **Visual lane** (text+image query path, §B4) + visual metric | new — see below | heavy (model) |
+| 3d-ii | **Visual queries + labels** (generation + D8 judge variant + scan) | new — see below | heavy (generation + scan) |
 | 4 | Assemble & decide | 6, 8 | medium |
 | 5 | Human verification | 7 | no (manual) |
 
@@ -74,6 +75,15 @@ need most of it.
 > (**no re-ingest**, runs offline) or by moving the lane to ColQwen3 on the cluster
 > (**re-embed all 945 pages**, and the endpoint is currently down). Verify the endpoint is
 > actually serving before committing to (b).
+
+**Session 3d-ii** (new work — the sessions file is the spec):
+
+> Read `HANDOFF.md`, then `.hermes/plans/p0-9-SESSIONS.md` (session 3d-ii), then
+> `IMPROVEMENTS.md` §B4a and §B4b. Do not read the whole P0-9 plan. The visual lane's code
+> already exists (3d, commit `4697961`): `embed_query_text` + `evaluate_rag.run_visual_retrieval`.
+> 3d-ii builds the **queries**: a visual generation path, a D8 judge variant, and the scan that
+> fills `relevant_pages`. The lane has **no labelled visual queries** today (v1's 7 carry
+> `pages=None`), so the metric has nothing to score until this runs.
 
 ---
 
@@ -226,6 +236,31 @@ the page. Set `--workers` from `--ramp-probe` (100 throwaway page-judgements at 
   (`gpt-oss-20b`); the VLM (`Qwen3-VL`) only judges. Otherwise the judge grades its own questions.
 - **Definition of done:** text+image visual search works and is measured; 30–40 visual queries with
   `relevant_pages`; negatives still ≥15%; suite at the floor.
+- **STATUS 2026-10-13:** code delivered (`4697961`). §B4a fork settled on **(a)** — the cluster
+  colpali endpoint is still down (HTTP 500 on all shapes; colbert on the same host 200). Deliverable
+  (1) `ColPaliEmbedder.embed_query_text` ✅, (3) `evaluate_rag.run_visual_retrieval` ✅. Deliverable
+  (2) → **3d-ii**. Also found + registered `IMPROVEMENTS.md` §B4b (visual index 3× per page).
+
+## Session 3d-ii — Visual queries + labels (own session; the lane's code already exists)
+
+- **Scope:** the visual lane is wired and measured (3d, `4697961`) but has **no labelled queries** —
+  v1's 7 visual queries carry `pages=None`, so the metric has nothing to score. This session builds
+  the queries and their labels.
+- **Deliverable (1) — a visual generation path** in `generate_gold_dataset.py`. None exists (only
+  factual / multipage / overview). **Keep the generator text-only** (`gpt-oss-20b`) — it proposes a
+  question from the page's text + image markers; the VLM **only judges**, or it grades its own
+  questions. Corpus supports it: 426 chunks carry image markers on 278 pages, 945 page PNGs on disk.
+- **Deliverable (2) — a D8 judge variant** in `validate_eval_calibration.py` for questions with no
+  text answer: criterion = *"does this page show the described figure/table/graph?"* (the standard
+  variant asks whether the page *answers* the question). `validate_eval_calibration.py` currently
+  **excludes `visual` from scanning** (line 845) — that exclusion must lift for this lane.
+- **Deliverable (3) — the scan** that fills `relevant_pages`, then 30–40 labelled visual queries.
+  Judge: `Qwen/Qwen3-VL-8B-Instruct` @ `http://10.0.10.70:8000` (the D9 VLM), `--workers 8`.
+- **Watch:** the §B4b duplication (visual index 3× per page) — the eval lane dedupes by page, but the
+  scan's page accounting sees duplicates too; the index is still 3× too large. Do **not** delete the
+  index in this session unless the E1/E2/E3 re-ingest pass is the chosen path.
+- **Definition of done:** 30–40 visual queries with `relevant_pages`; `evaluate_rag.py` reports
+  visual-lane numbers; negatives still ≥15%; suite at the floor.
 
 ## Session 4 — Assemble & decide (Tasks 6, 8)
 

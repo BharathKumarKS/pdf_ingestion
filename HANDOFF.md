@@ -5,12 +5,13 @@
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
 > **Last updated: 2026-10-13** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold
-> set) — Sessions 1–3c done.** 3c's overview lane is complete: **40 overview queries**, topics
-> derived from the book's own section headings, every one scan-labelled over the whole book
-> (min 22 / median 58 / max 314 pages — none narrow); negatives grown 23 → **34** (2 dropped as
-> answerable by the term-bearing re-scan). Assembled: **135 answerable + 34 negatives = 169,
-> 20.1%**. Next: **3d** (visual lane — its own session; the cluster's ColQwen3 endpoint is down),
-> then **Session 4** (assemble & decide).
+> set) — Sessions 1–3c done, 3d partly done.** 3c's overview lane is complete: **40 overview
+> queries**, topics derived from the book's own section headings, every one scan-labelled over the
+> whole book (min 22 / median 58 / max 314 pages — none narrow); negatives grown 23 → **34** (2
+> dropped as answerable by the term-bearing re-scan). Assembled: **135 answerable + 34 negatives =
+> 169, 20.1%**. **3d settled the §B4a fork on option (a)** and landed the text-query path + the
+> visual metric (commit `4697961`); **3d-ii** (visual queries + labels) is the remaining piece.
+> Next: **3d-ii**, then **Session 4** (assemble & decide).
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -75,6 +76,28 @@ even decode to control characters) → `_extract_questions` now escapes every ba
 > **not** materialise once the term pages were actually scanned.
 > Evidence: `logs/p0-9/report_negatives.py`, `logs/p0-9/prune_negatives.py`, `logs/p0-9/session3b/`.
 
+### Session 3d delivered 2026-10-13 (partly — code landed, queries remain as 3d-ii)
+
+Commit `4697961` on `feat/p0-9-gold-dataset-v2`. **§B4a fork settled on option (a)**, on evidence:
+the cluster colpali endpoint was re-probed and is **still down** (HTTP 500 on all five request
+shapes, ~3.1 s; the **colbert** endpoint on the same host returns 200 in 0.15 s), so option (b) /
+ColQwen3 is blocked on the cluster. Option (a) verified end-to-end **offline** — `process_queries`
+gives an `(N, 128)` matrix whose patch_dim matches the stored pages, L2-normalised, no re-ingest.
+
+| Deliverable | State |
+|---|---|
+| (1) text-query path | ✅ `ColPaliEmbedder.embed_query_text` + stub |
+| (3) visual metric | ✅ `evaluate_rag.run_visual_retrieval` — text → MaxSim over `visual_knowledge_base`, page-level metrics reused; visual queries now score instead of being skipped |
+| (2) visual queries + labels (30–40) | ⛔ **not started — this is 3d-ii** |
+
+Tests: +4 stub text-path, +3 visual-lane. Suite **225 pass / 5 fail** (same 5 pre-existing).
+
+**Found and registered (`IMPROVEMENTS.md` §B4b):** the local `visual_knowledge_base` holds
+**2,835 points for 945 pages — every page exactly 3×**, one doc id (`b2d9fb56`); top-20 held only
+**7 distinct pages**, capping the whole lane's Recall@20. `clean_stale_visual.py` cannot catch it
+(keys on `document_id`), and the visual doc id ≠ the text doc id (`5fcc9006`). Nothing was deleted;
+the eval lane dedupes by page meanwhile. Root fix folded into the E1/E2/E3 re-ingest pass.
+
 ### Next actions before Session 4 (ordered — do in a FRESH session)
 
 1. ✅ **DONE (3b) — Prune + re-verify the negatives.** Dropped `neg-nea-004`; `neg-in_-001` kept
@@ -93,14 +116,14 @@ even decode to control characters) → `_extract_questions` now escapes every ba
    Assembled: **135 answerable + 34 negatives = 169 → 20.1% negatives**.
    Artifacts: `data/eval_queries_gold_overview_expanded.json`, `data/eval_negatives.json`.
    Targets + deviations: `.hermes/plans/2026-10-13-p0-9-3c-preregistration.md` (Outcome + Round 2).
-4. **3d — visual lane (own session).** Visual search must accept **both text and image**. Today the
-   lane has **no text-query path** (`colpali_embedder` exposes only `embed_query_image`),
-   `evaluate_rag.py` **skips visual queries** (line 641), and the cluster's **colpali endpoint is
-   down** — HTTP 500 on every request shape (verified 2026-10-13), even though `GET /routes`
-   advertises `colpali_models: [TomoroAI/tomoro-colqwen3-embed-4b]`. Two forks: add a text path to
-   the local `colpali-v1.2` (**no re-ingest**), or swap to ColQwen3 (**re-embed all 945 pages**,
-   §I1). Plus visual generation (30–40, labelled), a D8 judge variant, and a visual metric. Full
-   spec: `p0-9-SESSIONS.md` 3d and `IMPROVEMENTS.md` §B4a.
+4. ⛔ **3d-ii — visual queries + labels (own session).** The lane is wired and measured; it has
+   **no labelled queries** (v1's 7 carry `pages=None`). Build: a **visual generation path** in
+   `generate_gold_dataset.py` (none exists — factual/multipage/overview only; generator stays
+   **text-only** `gpt-oss-20b`, the VLM only judges), a **D8 judge variant** for questions with no
+   text answer ("does this page show the described figure/table/graph?"), and a book-wide scan to
+   fill `relevant_pages`. `validate_eval_calibration.py` currently **excludes** `visual` from
+   scanning (line 845). Target 30–40. Corpus supports it: 426 chunks carry image markers on 278
+   pages, 945 page PNGs. Full spec: `p0-9-SESSIONS.md` 3d + 3d-ii.
 5. **Normalise the gold labels' page numbering** (`IMPROVEMENTS.md` §D4). `relevant_pages` mixes DB
    page numbers (from the generator) with PDF page numbers (from the scan); measured, they differ by
    0/−1 on ~45% of pages. Pick one numbering and re-derive `relevant_pages` **before** Session 4
@@ -182,9 +205,9 @@ unresolvable numbers, not more knowledge.
 | 1–6 | baseline committed; silent fallbacks killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed; eval gate + CI | `6381f7b`, `c3a8727` |
 | 7 | metric set fixed (`Precision@k` → `Recall@k` + `Hit@k`) | `1dad73f` |
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
-| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) on `feat/p0-9-gold-dataset-v2`; **next: 3d (visual lane), then Session 4 — assemble & decide** |
+| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) on `feat/p0-9-gold-dataset-v2` + **3d code (`4697961` — §B4a fork → option (a), text path + visual metric)**; **next: 3d-ii (visual queries + labels), then Session 4 — assemble & decide** |
 
-Test suite: **221 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
+Test suite: **225 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
 and 3 search tests return 0 results. **Not regressions; do not "fix" them here.**
 
