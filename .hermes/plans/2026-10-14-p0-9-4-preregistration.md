@@ -80,3 +80,64 @@ queries until one arm wins.
   it adds ~a page of label noise and is a floor on how finely a delta can be read.
 - §B4b — the visual index holds 3 vectors/page; `run_visual_retrieval` dedupes by page.
 - §B4d — the visual denominator is 33, not 40.
+
+---
+
+## Outcome (post-hoc, 2026-10-14 — recorded after the run, not a target)
+
+Run: 2026-10-14 18:03–18:06, `logs/p0-9/run_session4_v2.sh`, **steps 1–2 only**.
+`QDRANT_HOST=10.0.10.65` (cluster index), shared HyDE cache `logs/p0-9/v2_hyde.json`.
+
+| pre-registered | delivered | note |
+|---|---|---|
+| text lane **135** | **133** | `gold-001`/`gold-002` dropped pre-run by §D6 (front-matter labels outside the window) |
+| rerank vs no-rerank on R@20, 95% CI on the paired difference | **−0.0107**, CI **[−0.0304, +0.0091]** | **straddles 0 → UNRESOLVED at n=133**, per §4/§6 |
+| `required_n.py` — the powered decision | **did not run** | the script's `--queries` default is `data/eval_queries.json` (**v1**, ids `vec-NNN`) → *"only 0 shared queries"*, exit 1. Re-run with `--queries data/eval_queries_v2.json`: n=133, SD_d **0.1164**, SE 0.0101, required N **43** at δ=0.05 (**934** at the observed 0.011). §D7 |
+| abstention **> majority baseline** | **not measured** | step 4 (`evaluate_rag.py`) left no artifact — no generation metrics, no abstention block |
+| visual lane (33) | **not measured** | same — `run_visual_retrieval` never ran |
+
+Funnel (page-level recall; a boundary "has" a page if any of its chunks is in the pool):
+
+| boundary | rerank | no-rerank | reading |
+|---|---|---|---|
+| B1_dense64_1000 | 0.7924 | 0.7924 | precedes the reranker — identical, as it must be |
+| B2_dense768_500 | 0.7415 | 0.7415 | " |
+| B3_sparse_250 | 0.6743 | 0.6743 | " |
+| B4_rrf_union_100 | 0.5943 | 0.5942 | " (see §D10 — not bit-reproducible) |
+| B5_colbert_100 | 0.6007 | 0.6007 | " |
+| **B5b_retriever_top20** | **0.4495** | **0.4495** | the 100→20 cut costs **0.15** of recall |
+| **B6_rerank_20** | **0.4389** | **0.4495** | the reranker's isolated contribution: **−0.0107** |
+
+Headline metrics on the reranked top-20: R@20 0.4389 vs 0.4495 · P@20 0.2049 vs 0.1932 ·
+Hit@20 0.9549 vs 0.9699 · R-prec 0.3473 vs 0.3752. 30 queries worse / 37 better / 66
+identical — churn, not a uniform loss.
+
+**Exploratory (NOT a pre-registered endpoint — subgroup, no multiplicity control beyond the
+note below).** The effect is concentrated in the factual lane, where it *is* resolved:
+
+| subgroup | n | mean Δ R@20 | 95% CI | verdict |
+|---|---|---|---|---|
+| factual | 53 | **−0.0469** | [−0.0787, −0.0152] | **resolved — the reranker hurts** |
+| multihop | 40 | +0.0091 | [−0.0351, +0.0534] | unresolved |
+| overview | 40 | +0.0176 | [−0.0016, +0.0368] | unresolved |
+| all | 133 | −0.0107 | [−0.0304, +0.0091] | unresolved |
+
+The factual result survives a Bonferroni correction for 3 subgroups (z=2.394 → CI
+[−0.0857, −0.0081], still excluding 0). Treat it as a hypothesis for the next run, not as
+the session's verdict.
+
+**Two measurement defects found while reading the result (registered, §D8/§D9):** the funnel
+does not apply `max_content_page`, so it does not mirror deployed retrieval and the bias is
+arm-asymmetric (2.15% of the rerank arm's top-20 slots are back-matter pages the app never
+serves, vs 0.95% in the no-rerank arm); and R@20 is capped by the label denominator, which is
+why v2's 0.4495 is not comparable to v1's recorded 0.636.
+
+### What this session did *not* settle
+
+1. **The reranker decision.** §4's rule is not met and cannot be met at a feasible n — see the
+   plan's §5 stopping rule and §D9. Extending to ~934 queries is the only way to resolve the
+   observed 0.011; extending in blocks of 30 (the pre-registered rule) reaches δ≈0.026 at n=163.
+2. **Abstention.** The second half of the pre-registered decision is still unmeasured.
+3. **The visual lane.** Same.
+4. **§D4 (DB↔PDF page numbering) was never normalised** — it was "next action 5" *before* this
+   run and is still open, so every number above carries ~a page of label noise.

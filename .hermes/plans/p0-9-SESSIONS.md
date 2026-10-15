@@ -20,13 +20,17 @@ HANDOFF refresh, then `/new`.
 | 3d | **Visual lane** (text+image query path, §B4) + visual metric | new — see below | heavy (model) |
 | 3d-ii | **Visual queries + labels** (generation + D8 judge variant + scan) | new — see below | heavy (generation + scan) |
 | 4 | Assemble & decide | 6, 8 | medium |
+| 4b | **Fix the harness + normalise the labels**, then re-run the funnel | new — see below | medium (funnel re-run; **no LLM calls**) |
 | 5 | Human verification | 7 | no (manual) |
 
 Task numbers refer to
 `.hermes/plans/2026-10-06_174001-p0-9-gold-dataset-v2.md`.
 
-**Status 2026-10-12:** cluster verified up. Sessions 1→4 are a **dependency chain — do not run
-them in parallel** (see below). Session 5 (human verification) is scheduled for 2026-10-13.
+**Status 2026-10-14:** Session 4's A/B **ran** — steps 1–2 only: the reranker delta is **unresolved**
+at n=133 (−0.0107, CI [−0.0304, +0.0091]), and steps 3–4 (`required_n.py`, `evaluate_rag.py`) never
+ran, so abstention and the visual lane are still unmeasured. Sessions 1→4b are a **dependency chain
+— do not run them in parallel** (see below). **Next: 4b.** Session 5 (human verification) is still
+unscheduled.
 
 ---
 
@@ -84,6 +88,13 @@ need most of it.
 > 3d-ii builds the **queries**: a visual generation path, a D8 judge variant, and the scan that
 > fills `relevant_pages`. The lane has **no labelled visual queries** today (v1's 7 carry
 > `pages=None`), so the metric has nothing to score until this runs.
+
+**Session 4b** (follow-on to 4 — the sessions file is the spec):
+
+> Read `HANDOFF.md`, then `.hermes/plans/p0-9-SESSIONS.md` (session 4b), then
+> `.hermes/plans/2026-10-14-p0-9-4-preregistration.md` → **the "Outcome" section only**, then
+> `IMPROVEMENTS.md` §D4, §D7, §D8. Do **not** read the whole P0-9 plan. Session 4's A/B ran, but the
+> decision came out **unresolved** and two of its four steps never ran. 4b does **not** add queries.
 
 ---
 
@@ -286,6 +297,56 @@ the page. Set `--workers` from `--ramp-probe` (100 throwaway page-judgements at 
 - **Definition of done:** `tests/test_gold_schema.py` passes; suite ≥210 pass / 5 fail; the
   decision rule pre-registered and applied.
 - **Handoff:** commit results, tick P0-9 in `HANDOFF.md`, record the decision.
+
+## Session 4b — Fix the harness + normalise the labels, then re-run the funnel
+
+- **Why it exists:** Session 4's A/B **ran** but came out **unresolved**, and two of its four steps
+  never ran at all. Three of the four defects are in *our measurement code*, not in the retrieval, so
+  the next run should not be spent measuring through them. Evidence:
+  `.hermes/plans/2026-10-14-p0-9-4-preregistration.md` → "Outcome"; `IMPROVEMENTS.md` §D7, §D8, §D4.
+- **Scope decision (2026-10-14, Bharath): tasks 1 and 2 land *together*, before the re-run.** Fixing
+  the funnel moves the numbers; normalising the labels moves them again. Doing both first yields
+  **one** clean number instead of two moving ones.
+- **This session does NOT add queries.** The §5 stopping rule (extend in blocks of 30) is a separate
+  decision, deferred until after this re-run — see the arithmetic below.
+
+**Task 1 — three harness fixes (no cluster; minutes each).**
+
+1. `scripts/required_n.py` — `--queries` defaults to `data/eval_queries.json` (**v1**, ids `vec-NNN`),
+   so the v2 id join matches nothing and the script exits 1 with *"only 0 shared queries"* (§D7).
+   Make `--queries` **required**, or default it to the v2 file.
+2. `scripts/funnel_boundary_recall.py` — apply `max_content_page` in `build_filter` (lines 52–54)
+   **and** in the local `post()` filter (lines 202–204). `store.py` applies **both** bounds (198–208,
+   240–249), so today the funnel does not mirror deployed retrieval — and arm-asymmetrically (§D8).
+3. `logs/p0-9/run_session4_v2.sh` — pass `--queries data/eval_queries_v2.json` to step 3, and make the
+   script **abort on a non-zero step** instead of carrying on to step 4.
+
+**Task 2 — normalise the gold page numbering (§D4).** `relevant_pages` mixes DB chunk `page_number`
+(from the generator) with PDF page indices (from the scan); measured, they differ by 0/−1 on ~45% of
+pages (and reach +2). Pick **one** numbering, re-derive `relevant_pages`, and re-run
+`tests/test_gold_schema.py`. This is the label-noise floor under every number in the Outcome section.
+
+**Then the re-run — still no LLM calls.** HyDE is cached in `logs/p0-9/v2_hyde.json`, so the funnel is
+retrieval + rerank only, roughly 3 minutes per arm:
+
+```bash
+export QDRANT_HOST=10.0.10.65          # the cluster index (5,135 points), NOT data/qdrant
+bash logs/p0-9/run_session4_v2.sh      # now with the fixes and the abort
+```
+
+Compare against the Session 4 table in `HANDOFF.md`. **If the CI still straddles 0, that is the
+answer.** The arithmetic: the observed 0.011 needs **n≈934** to resolve, the pre-registered δ=0.05
+needed only **43**, and extending in blocks of 30 reaches δ≈0.026 at n=163. Do **not** keep extending
+hoping for significance — §5 forbids it.
+
+- **Deliverable:** the three fixes + normalised labels committed; a re-run funnel pair; the Outcome
+  section updated with the post-fix numbers; §D7/§D8 marked fixed.
+- **Watch:** step 4 of the run script is the **expensive** cluster run (`evaluate_rag.py` —
+  generation + the abstention block + the 33-query visual lane). It belongs to this session's re-run or
+  to its own, but it is the **only** route to the abstention half of the pre-registered decision, and
+  it is not free.
+- **Definition of done:** suite at the floor (**247 pass / 5 fail**); fixes + re-run committed;
+  `HANDOFF.md` + the Outcome section refreshed; `/new`.
 
 ## Session 5 — Human verification (Task 7)
 

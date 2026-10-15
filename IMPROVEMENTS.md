@@ -4,7 +4,7 @@ Everything known-but-not-yet-done, in one place so it can be taken in a single p
 Each entry says **what**, **why it matters**, and **the evidence** — so nothing has to be
 re-derived later. Add to this file rather than leaving a note in a commit message.
 
-Last updated: 2026-10-06
+Last updated: 2026-10-14
 
 ---
 
@@ -481,6 +481,12 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
 - **Order:** run the lane on/off A/B first (see below). If removing the reranker raises
   Recall@20, "fine-tune it" becomes a choice — make it earn its place — rather than a
   necessity, and the free option should be tested first.
+- **v2 update (2026-10-14):** the v1 numbers in this entry (0.598 / 0.561, and the 0.895→1.0 vs
+  0.561→0.895 gaps) are **not comparable to v2** — different query set, and v2's label sizes make
+  R@20 mean something different (§D9). On v2 the same pair reads: retriever's own top-20 **0.4495**
+  → reranked **0.4389**, CI on the paired difference [−0.0304, +0.0091] → **unresolved at n=133**;
+  the loss is concentrated in the **factual** lane (−0.0469, CI [−0.0787, −0.0152] → resolved).
+  So the "must beat X to earn its place" threshold is **0.4495** on v2, not 0.598.
 
 ### D3. Pin HyDE before any A/B
 - Two identical runs of the same command gave Recall@20 of **0.631** and **0.561** — a 0.07
@@ -575,6 +581,68 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   when sampling — exactly as `image_marker_pages` already does for the visual path.
 - **Related:** §D4 (DB↔PDF numbering) is a *different* label-precision defect; both are label
   validity, neither is a retrieval problem.
+
+### D7. `required_n.py` silently falls back to the v1 query file
+- **What:** `--queries` defaults to `data/eval_queries.json` — **v1**, 30 entries, ids `vec-NNN`.
+  v2's ids are `gold-NNN` / `ovw-NNN` / `vis-NNN`, so the id join matches nothing: the script
+  prints *"only 0 shared queries — cannot estimate; check the JSON shape"* and **exits 1**.
+- **Measured (2026-10-14, Session 4):** `logs/p0-9/run_session4_v2.sh` step 3 does **not** pass
+  `--queries`, so the pre-registered powered decision silently did not run — it looks like a
+  completed step in the run script. The identical command with
+  `--queries data/eval_queries_v2.json` works: n=133, SD_d **0.1164**, SE 0.0101, required N **43**
+  at δ=0.05 (and **934** at the observed 0.011).
+- **Why it matters:** the one number the whole session exists to produce comes from this script.
+  A wrong default turns it into a no-op that produces no artifact and no error anyone notices.
+- **Fix:** make `--queries` **required**, or default it to `data/eval_queries_v2.json`; and make
+  the <5-shared-queries path exit non-zero *and* be checked by the run script. No re-ingest.
+
+### D8. The funnel does not apply `max_content_page` — it does not mirror deployed retrieval
+- **What:** `funnel_boundary_recall.py::build_filter` (lines 52–54) and its local post-filter
+  (lines 202–204) apply `min_content_page` **only**. `store.py` applies **both** bounds
+  (lines 198–208 in the filter, 240–249 in the post-filter). So the funnel's candidate pools
+  contain index/back-matter pages the app now excludes — although the module docstring claims it
+  replays each stage "mirroring `store._qdrant_search` exactly".
+- **Measured on the v2 run** (`max_content_page` = 936): back-matter pages (>936) occupy
+  **43 of 2,001** top-20 slots in the **rerank** arm (2.15%, 30 queries affected) but only
+  **19 of 1,991** in the **no-rerank** arm (0.95%, 10 queries). Gold labels carry no back-matter
+  pages (§B4b), so those slots are pure waste — and the **reranker is the arm that promotes them**
+  (e.g. `gold-003` no-rerank top-20 contains p944/p950; `gold-004` contains p940/p947).
+- **Why it matters:** every funnel number ever reported — including v1's 0.895 / 0.561 in §D2 —
+  was measured on a candidate pool the product does not serve, and the defect is
+  **arm-asymmetric**, so it biases the reranker comparison specifically.
+- **Fix:** add the upper bound to `build_filter` and to the local `post()` filter. Two lines.
+  No re-ingest.
+
+### D9. Recall@k is capped by the label denominator — report it against the ceiling
+- **What:** `R@20 = |top20 ∩ rel| / |rel|`, so any query with more than 20 relevant pages has a
+  ceiling of `20/|rel|`. v2's overview labels were scan-expanded book-wide (mean **73.8**,
+  median 56.5, max **314** pages) → that lane's mean ceiling is **0.3992**. The whole v2 text
+  lane's mean ceiling is **0.8016**. v1's 23 queries had a mean label size of **3.4** (max 13) →
+  ceiling **1.0000**.
+- **Measured (2026-10-14):** v2 overview R@20 0.1402 is **35% of its achievable 0.3992**, not 14%
+  of 100%. And the apparent regression from v1 is mostly this arithmetic: v2's 88 text queries
+  with ≤20 labels (structurally v1-like) score B5b **0.6037** against v1's recorded **0.636** —
+  a ~0.03 gap, inside the label-noise (§D4) and HyDE bands, not 0.19.
+- **Why it matters:** **any** cross-dataset or cross-lane comparison of R@20 is invalid unless
+  normalised by the ceiling. This is also why the overview lane looks catastrophic while being
+  merely unmeasurable at k=20 — the ranking work in HANDOFF P1 item 10 should not be driven by
+  that raw number.
+- **Fix:** report `R@20 ÷ (min(20,|rel|)/|rel|)` alongside the raw value, and/or use a k that
+  scales with `|rel|` (R@`|rel|`) for the overview lane. Report-side only. No re-ingest.
+
+### D10. RRF fusion is not bit-reproducible at the pool level, even with HyDE pinned
+- **What:** with a shared HyDE cache, `B1`/`B2`/`B3` and `B5b` are byte-identical across the two
+  arms of the v2 A/B (as they must be — they precede the reranker), but `B4_rrf_union_100` differs
+  on **7 of 133** queries and `B5_colbert_100` on **2**. The top-20 (`B5b`) survived in every case,
+  so the headline metric is unaffected.
+- **Measured:** e.g. `gold-024` gets p529 in one arm and p810 in the other at B4; `gold-044`
+  p223 vs p95; `ovw-009` loses p41 at B5.
+- **Why it matters:** ARCHITECTURE §12 attributes non-reproducibility to HyDE at temperature 0.3.
+  **Pinning HyDE does not fully fix it** — a second, smaller source sits at the fusion stage. It is
+  below the current effect size (pool-level, never top-20), but "same command, same cache" is not
+  a guarantee, and it sets a floor under any future A/B claim.
+- **Fix (not done):** investigate Qdrant RRF tie-breaking / prefetch ordering. Until then, note it
+  in every A/B rather than assuming determinism. No re-ingest.
 
 ---
 

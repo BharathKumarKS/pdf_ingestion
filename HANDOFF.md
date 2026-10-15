@@ -4,16 +4,21 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-14** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold
-> set) — Sessions 1–3c, 3d, 3d-ii done; Session 4 partly done (v2 assembled + abstention wired +
-> decision pre-registered; the A/B run is blocked on the cluster).** 3c's overview lane is
-> complete: **40 overview queries**, topics derived from the book's own section headings, every one
-> scan-labelled over the whole book (min 22 / median 58 / max 314 pages — none narrow); negatives
-> grown 23 → **34**. **3d settled the §B4a fork on option (a)** (commit `4697961`). **3d-ii is done**
-> — visual generation path + D8 judge variant + scan (commit `3a18da4`); **33 usable visual queries**
-> of 40 (§B4d, commit `18250f1`). **v2 is assembled** (commit `e69c347`): **168 answerable + 34
-> negatives = 202** (16.8%). Next: **run Session 4's A/B** (see "Session 4" below) — blocked until
-> the cluster router is back.
+> **Last updated: 2026-10-14 (evening)** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9
+> (gold set) — Sessions 1–3c, 3d, 3d-ii done; Session 4 steps 1–2 ran, steps 3–4 did not.** The v2
+> A/B produced its numbers: **rerank vs no-rerank R@20 −0.0107, 95% CI [−0.0304, +0.0091] →
+> UNRESOLVED at n=133** (the pre-registered rule is not met, and cannot be met at a feasible n —
+> §D9). `required_n.py` never ran (wrong `--queries` default, §D7); `evaluate_rag.py` never ran, so
+> **abstention and the visual lane are still unmeasured.** Outcome + numbers:
+> `.hermes/plans/2026-10-14-p0-9-4-preregistration.md` → "Outcome". 3c's overview lane is complete:
+> **40 overview queries**, every one scan-labelled over the whole book (min 22 / median 58 / max 314
+> pages — none narrow); negatives grown 23 → **34**. **3d settled the §B4a fork on option (a)**
+> (commit `4697961`). **3d-ii is done** — visual generation path + D8 judge variant + scan (commit
+> `3a18da4`); **33 usable visual queries** of 40 (§B4d, commit `18250f1`). **v2 is assembled**
+> (commit `e69c347`) and then pruned by §D6 (commit `f109379`): **166 answerable + 34 negatives =
+> 200** (17.0%). Next: **Session 4b** (see "Next — the Session 4b plan" below) — fix three
+> harness defects + normalise the labels, re-run the funnel, then measure abstention + the visual
+> lane.
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -143,15 +148,42 @@ Scope decided there: the **text-lane funnel runs on 135 queries and excludes the
 negatives are measured by `evaluate_rag.py`. `funnel_boundary_recall.py` gained `--include-visual`
 (default: excluded).
 
-> ⛔ **BLOCKED 2026-10-14 12:45 — the cluster router is down.** The `--limit 2` probe to
-> `http://10.0.10.70:8000` failed with `[Errno 61] Connection refused` on the **LLM** (HyDE →
-> empty), **SPLADE**, and **rerank** endpoints; only the local dense lane worked. The same router
-> answered at **08:15** today (the 3d-ii scan), so it went down since. **No A/B numbers can be
-> produced until it is back.** The probe also ran against the *local* Qdrant — the run order needs
-> `export QDRANT_HOST=10.0.10.65` (the cluster index, 5,135 points), not `data/qdrant`.
+> ✅ **UNBLOCKED AND RUN 2026-10-14 18:03–18:06.** The router came back mid-afternoon.
+> `logs/p0-9/run_session4_v2.sh` (written 17:55) ran **steps 1–2** on the cluster index
+> (`QDRANT_HOST=10.0.10.65`, 5,135 points), **133 text queries**, one shared HyDE cache.
+> **Steps 3 and 4 did not run** — §D7: `required_n.py`'s `--queries` default is **v1** →
+> *"0 shared queries"*, exit 1; `evaluate_rag.py` wrote no artifact. Full numbers:
+> pre-registration → "Outcome".
 
-**To resume** (once the router answers): the two funnel commands + `required_n.py` and the
-`evaluate_rag.py` run are written out in §3 of the pre-registration file. Nothing else blocks.
+### Session 4 — the v2 A/B result (2026-10-14)
+
+| boundary | rerank | no-rerank | reading |
+|---|---|---|---|
+| B1_dense64_1000 | 0.7924 | 0.7924 | precedes the reranker — identical, as it must be |
+| B2_dense768_500 | 0.7415 | 0.7415 | " |
+| B3_sparse_250 | 0.6743 | 0.6743 | " |
+| B4_rrf_union_100 | 0.5943 | 0.5942 | " (§D10 — not bit-reproducible) |
+| B5_colbert_100 | 0.6007 | 0.6007 | " |
+| **B5b_retriever_top20** | **0.4495** | **0.4495** | the 100→20 cut costs **0.15** of recall |
+| **B6_rerank_20** | **0.4389** | **0.4495** | the reranker alone: **−0.0107**, CI **[−0.0304, +0.0091]** |
+
+**Verdict: unresolved at n=133** — the CI straddles 0, so the pre-registered rule (§4) is not met.
+30 queries worse / 37 better / 66 identical — churn, not a uniform loss. Exploratory per-type:
+**factual −0.0469, CI [−0.0787, −0.0152] → resolved (the reranker hurts factual)**, multihop
++0.0091 and overview +0.0176 both unresolved. The factual result survives a Bonferroni correction
+for 3 subgroups, but it is a **subgroup, not the pre-registered endpoint**.
+
+**Why v2 looks worse than v1's 0.636 — and mostly is not** (§D9): R@20 is divided by the label
+count, and v2's overview labels average **73.8** pages (max 314) against v1's **3.4** (max 13).
+v1's mean ceiling was 1.0000; v2's text lane is 0.8016 and its overview lane only 0.3992. On v2's
+88 text queries with ≤20 labels — structurally v1-like — B5b scores **0.6037** vs v1's 0.636.
+**v1 and v2 R@20 numbers are not comparable; never put them in the same table unnormalised.**
+
+**Two harness defects found while reading the result:** the funnel ignores `max_content_page` and
+so does not mirror deployed retrieval — arm-asymmetrically (2.15% of the rerank arm's top-20 slots
+are back-matter pages the app never serves, vs 0.95%) — §D8; and RRF fusion is not
+bit-reproducible at the pool level even with HyDE pinned (7/133 queries at B4, 2/133 at B5; the
+top-20 was stable) — §D10.
 
 ### UI — text-query visual search (2026-10-14)
 
@@ -188,10 +220,47 @@ threshold is image-calibrated (**§B4e**). Tests: `tests/test_visual_index.py` (
    window in `validate_eval_calibration.py`; the book-wide scan →
    `data/eval_queries_gold_visual_expanded.json`. **33 usable** of 40 (6 uncalibrated, `vis-024`
    dropped as non-specific) — **§B4d**. Commit `3a18da4`.
-5. **Normalise the gold labels' page numbering** (`IMPROVEMENTS.md` §D4). `relevant_pages` mixes DB
-   page numbers (from the generator) with PDF page numbers (from the scan); measured, they differ by
-   0/−1 on ~45% of pages. Pick one numbering and re-derive `relevant_pages` **before** Session 4
-   assembles v2, or the A/B deltas carry about a page of label noise.
+5. **⛔ STILL OPEN — Normalise the gold labels' page numbering** (`IMPROVEMENTS.md` §D4).
+   `relevant_pages` mixes DB page numbers (from the generator) with PDF page numbers (from the
+   scan); measured, they differ by 0/−1 on ~45% of pages (and up to +2, §D4's visual note). It was
+   to be done **before** Session 4 assembled v2 and **was not** — so the A/B numbers above carry
+   about a page of label noise, which is also the floor under how finely the reranker delta can be
+   read (pre-registration §6).
+
+### Next — the Session 4b plan (ordered; do in a FRESH session)
+
+> **Session 4b, not "Session 5"** — `p0-9-SESSIONS.md` already assigns Session 5 to human
+> verification (Task 7). This is a follow-on to Session 4, named per the 3b/3c/3d-ii convention.
+
+**Scope decision (2026-10-14, Bharath):** tasks 1 and 2 below are done **together** — fixing the
+funnel changes the numbers and normalising the labels changes them again, so both land before the
+re-run, which then yields **one** clean number instead of two moving ones.
+
+0. **Commit the artifacts.** `logs/p0-9/v2_{rerank,norerank,hyde}.json` + `run_session4_v2.sh` are
+   still **untracked** — the A/B evidence is currently only on this disk.
+1. **Fix the three harness defects** (no cluster; minutes each).
+   a. `required_n.py` — make `--queries` required, or default it to the v2 file (§D7).
+   b. `funnel_boundary_recall.py` — apply `max_content_page` in `build_filter` **and** the local
+      `post()` filter, so it mirrors `store.py` (§D8).
+   c. `logs/p0-9/run_session4_v2.sh` — pass `--queries data/eval_queries_v2.json` and fail loudly
+      on a non-zero step, instead of continuing to step 4.
+2. **§D4 — normalise the page numbering, then re-derive `relevant_pages`.** No cluster. This is the
+   label-noise floor under every number reported above; do it before adding more queries.
+3. **Re-run the funnel on the same 133 queries with the fixed harness.** HyDE is cached, so this is
+   retrieval + rerank only — roughly 3 minutes per arm, **no LLM calls**. Compare against the table
+   in "Session 4" above. If the delta's CI still straddles 0, that is the honest answer, not a
+   reason to extend.
+4. **Run step 4 — `evaluate_rag.py` on v2.** The cluster-heavy piece: generation metrics + the
+   **abstention** block (34 negatives) + the **visual lane** (33 queries via `run_visual_retrieval`).
+   This is the *other half* of the pre-registered decision and is entirely unmeasured.
+5. **Then decide the reranker**, knowing that the observed 0.011 needs **n≈934** to resolve while
+   the pre-registered δ=0.05 needed only **43** — so "extend in blocks of 30" (the §5 stopping rule)
+   reaches δ≈0.026 at n=163 and will never resolve 0.011. The realistic options: (i) drop it on
+   cost/benefit grounds with "no measurable gain at n=133" stated honestly; (ii) extend once to
+   ~163 and check the sign is stable; (iii) change the endpoint to the **factual lane**, where the
+   loss *is* resolved (−0.0469). **Do not** keep extending until an arm wins — §5 forbids it.
+6. **Only then P1 item 10** (ranking) — and drive it off the **ceiling-normalised** numbers (§D9),
+   not the raw overview R@20 of 0.14.
 
 ### Index-page false hits (why + where)
 
@@ -269,9 +338,9 @@ unresolvable numbers, not more knowledge.
 | 1–6 | baseline committed; silent fallbacks killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed; eval gate + CI | `6381f7b`, `c3a8727` |
 | 7 | metric set fixed (`Precision@k` → `Recall@k` + `Hit@k`) | `1dad73f` |
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
-| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) + **3d code (`4697961`)** + **3d-ii (`3a18da4`, `18250f1` — 33 usable visual labels, §B4d)** + **Session 4 partly (`e69c347` — v2 assembled 202, abstention wired, decision pre-registered)** on `feat/p0-9-gold-dataset-v2`; **next: run the v2 A/B — blocked on the cluster router** |
+| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) + **3d code (`4697961`)** + **3d-ii (`3a18da4`, `18250f1` — 33 usable visual labels, §B4d)** + **Session 4 (`e69c347`, `f109379`) — v2 assembled (202) then pruned by §D6 to 200, abstention wired, decision pre-registered; the v2 A/B ran 2026-10-14 18:03–18:06 (steps 1–2): R@20 −0.0107, CI [−0.0304, +0.0091] → unresolved at n=133; steps 3–4 did not run (§D7)** on `feat/p0-9-gold-dataset-v2`; **next: Session 4b — fix the harness (§D7/§D8) + normalise the labels (§D4), then re-run the funnel** |
 
-Test suite: **242 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`). The 5 are
+Test suite: **247 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`, re-measured 2026-10-14). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
 and 3 search tests return 0 results. **Not regressions; do not "fix" them here.**
 
@@ -322,8 +391,11 @@ gates), with cost classes and re-ingest ordering: [`IMPROVEMENTS.md`](IMPROVEMEN
 | Chunker | `chonkie.SentenceChunker` (class named `SemanticChunker`) |
 | Intent classifier | 768d `LogisticRegression`, pinned `scikit-learn~=1.9`, schema-checked at load |
 | Card types | **8** in `CardType` (single source for `DA_CARD_TYPES`) |
-| Eval queries | 30 = 23 calibrated non-visual + 7 uncalibrated `visual` |
-| Baseline (v1, 23 q) | Recall@20 **0.636** · MRR 0.365 · NDCG@6 0.377 |
+| Eval queries (v1) | 30 = 23 calibrated non-visual + 7 uncalibrated `visual` — **superseded by v2; do not use** |
+| Baseline (v1, 23 q) | Recall@20 **0.636** · Hit@20 1.000 · MRR 0.361 · NDCG@20 0.432 (`p0-judge-canonical_2026-10-06_0010.md`) — **not comparable to v2** (§D9) |
+| Gold v2 | `data/eval_queries_v2.json` — **200** = 166 answerable (53 factual + 40 multihop + 40 overview + 33 visual) + 34 negatives (17.0%). The funnel's text lane is the **133** |
+| v2 label sizes | text lane mean **22.2** pages (factual 9.5 · multihop 4.4 · overview **73.8**, max 314) → R@20 ceiling **0.8016** overall, **0.3992** on overview (§D9) |
+| v2 funnel (133 text q, 2026-10-14) | B1 0.7924 · **B5b retriever top-20 0.4495** · **B6 reranked 0.4389** · Δ **−0.0107**, CI [−0.0304, +0.0091] → **unresolved** |
 | Judge lane (v1, 23 q) | Faithfulness **0.701 (a floor)** · Ans.Relevance 0.927 · Citation 1.000 |
 | Judge gateway | **`http://10.0.10.70:8000`** — serves `Qwen/Qwen3-VL-8B-Instruct` (the D9 VLM) among 6 models; ~0.8 s per page judgment at concurrency 1. The P0-9 plan's `10.0.10.51:8000` is **dead**. |
 
