@@ -535,6 +535,30 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   filled *exclusively* by the fitz scan, whose 1-based PDF page index is the same key the
   `visual_knowledge_base` payload uses (`page_number`, `image_key` `page_0532.png` ↔ p532).
   The visual lane is therefore free of this defect; the text lane is not.
+- **Re-measured 2026-10-14 (Session 4b) — the premise needs revising.** The DB `page_number`
+  and the fitz PDF page index are the **same coordinate system** (both run 1…~968), not two
+  numberings to reconcile; `chunks` stores **no PDF-page field** (columns: id, document_id,
+  tenant_id, chunk_index, text, page_number, qdrant_point_id, char_start, char_end,
+  token_count, version, is_active, created_at, updated_at), so there is nothing to join on.
+  The 0/−1 is **chunk-boundary fuzz**: `SentenceChunker` merges text across PDF page
+  boundaries, so a straddling chunk gets one `page_number` (where it starts/ends) and the
+  label inherits it. Measured over the 425 unambiguous DB pages: a page's **first** chunk
+  starts on PDF p−1 for **45%** (192) and on p for **55%** (232); its **last** chunk ends on
+  p for **44%** (189), p+1 for **41%** (173), p+2 for **6%**, p+3 for **2%**. Whole-page
+  span: **57%** of DB pages sit on one PDF page, **35%** span two, **6%** span three (e.g.
+  DB page 252's 13 chunks land on PDF 252, 253, 254).
+- **Consequence:** there is no shift to apply — the fuzz is inherent to the parser's
+  chunk→page assignment, so re-deriving `relevant_pages` cannot remove it; only a re-ingest
+  that assigns `page_number` per PDF page can (fold into the E1/E2/E3 pass). The mixing is
+  **symmetric across the rerank / no-rerank arms** (both read the same labels), so it widens
+  the delta's CI rather than biasing one arm. **Session 4b stopped here** pending the owner's
+  decision: reframe §D4 as an inherent noise floor and proceed, attempt an approximate
+  chunk-derived PDF→DB remap, or defer to the re-ingest. **No labels were changed.**
+  **Decision (2026-10-14, owner): reframe.** Treat this as an inherent ±1 noise floor — do
+  **not** re-derive `relevant_pages` (no edit can remove the fuzz) and do **not** block the
+  funnel re-run on it. §D4 is hereby a *known, symmetric* label-noise floor, not an open
+  defect; the durable fix (page numbers assigned per PDF page) folds into the E1/E2/E3
+  re-ingest. Proceed to the Session 4b funnel re-run.
 
 ### D5. `generate_negatives.py` verifies at stride 15 — weaker than the Session 3b re-scan
 - **What:** `generate_negatives.py` accepts a candidate if its own two-pass scan (stride 15,
@@ -595,6 +619,9 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   A wrong default turns it into a no-op that produces no artifact and no error anyone notices.
 - **Fix:** make `--queries` **required**, or default it to `data/eval_queries_v2.json`; and make
   the <5-shared-queries path exit non-zero *and* be checked by the run script. No re-ingest.
+  **✅ Applied 2026-10-14 (Session 4b, pending commit):** `--queries` is now `required=True`;
+  `run_session4_v2.sh` passes `--queries data/eval_queries_v2.json` to step 3. Verified: the
+  command now reproduces n=133, SD_d 0.1164, required N 43 at δ=0.05.
 
 ### D8. The funnel does not apply `max_content_page` — it does not mirror deployed retrieval
 - **What:** `funnel_boundary_recall.py::build_filter` (lines 52–54) and its local post-filter
@@ -611,7 +638,9 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   was measured on a candidate pool the product does not serve, and the defect is
   **arm-asymmetric**, so it biases the reranker comparison specifically.
 - **Fix:** add the upper bound to `build_filter` and to the local `post()` filter. Two lines.
-  No re-ingest.
+  No re-ingest. **✅ Applied 2026-10-14 (Session 4b, pending commit):** both now apply
+  `max_content_page`, mirroring `store.py`; `run_session4_v2.sh` also aborts on a failed step
+  (`set -e` + `ERR` trap) so a broken step can no longer fall through to the next.
 
 ### D9. Recall@k is capped by the label denominator — report it against the ceiling
 - **What:** `R@20 = |top20 ∩ rel| / |rel|`, so any query with more than 20 relevant pages has a

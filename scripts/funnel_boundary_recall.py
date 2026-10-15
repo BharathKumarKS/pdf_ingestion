@@ -52,6 +52,10 @@ def build_filter(cfg, tenant_id: str, source_type: str | None):
     if cfg.min_content_page > 0:
         must_not.append(FieldCondition(key="page_number",
                                        range=Range(lt=cfg.min_content_page)))
+    if cfg.max_content_page > 0:
+        must_not.append(FieldCondition(key="page_number",
+                                       range=Range(gt=cfg.max_content_page)))
+    _has_page_bounds = (cfg.min_content_page > 0 or cfg.max_content_page > 0)
     if source_type is None:
         return Filter(
             must_not=must_not,
@@ -66,7 +70,7 @@ def build_filter(cfg, tenant_id: str, source_type: str | None):
         key="tenant_id",
         match=MatchValue(value=cfg.global_tenant_id if source_type == "base_textbook" else tenant_id),
     ))
-    return Filter(must=must, must_not=must_not if cfg.min_content_page > 0 else [])
+    return Filter(must=must, must_not=must_not if _has_page_bounds else [])
 
 
 def main() -> int:
@@ -200,8 +204,11 @@ def main() -> int:
                 logger.warning(f"SPLADE failed for {qid}: {exc}")
 
         def post(points):
+            lo = cfg.min_content_page
+            hi = cfg.max_content_page
             return [p for p in points
-                    if (p.payload.get("page_number") or 0) >= cfg.min_content_page]
+                    if (p.payload.get("page_number") or 0) >= lo
+                    and (hi <= 0 or 0 < (p.payload.get("page_number") or 0) <= hi)]
 
         row = {"id": qid, "n_relevant": len(relevant), "pages": {}}
 

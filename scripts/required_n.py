@@ -19,12 +19,23 @@ Usage:
     # merge comparison: ColBERT-outer vs 3-way RRF, final R@20
     uv run python scripts/required_n.py \
         data/eval_results/merge-ab_colbert_2026-10-06.json \
-        data/eval_results/merge-ab_rrf3_2026-10-06.json --delta 0.05
+        data/eval_results/merge-ab_rrf3_2026-10-06.json \
+        --queries data/eval_queries.json --delta 0.05
 
     # reranker comparison: the retriever's own top-20 vs after the cross-encoder, one run
     uv run python scripts/required_n.py \
         data/eval_results/merge-ab_rrf3_2026-10-06.json:B5b_retriever_top20 \
-        data/eval_results/merge-ab_rrf3_2026-10-06.json:B6_rerank_20 --delta 0.083
+        data/eval_results/merge-ab_rrf3_2026-10-06.json:B6_rerank_20 \
+        --queries data/eval_queries.json --delta 0.083
+
+    # v2 gold set (ids gold-NNN/ovw-NNN/vis-NNN):
+    uv run python scripts/required_n.py \
+        logs/p0-9/v2_rerank.json logs/p0-9/v2_norerank.json \
+        --queries data/eval_queries_v2.json --delta 0.05
+
+--queries is REQUIRED (it was optional, defaulting to v1's data/eval_queries.json; against a
+v2 result file that default joined nothing and exited 1, so the powered decision silently did
+not run — see IMPROVEMENTS.md §D7).
 """
 from __future__ import annotations
 
@@ -66,8 +77,12 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("a", help="run A: results.json[:BOUNDARY]")
     p.add_argument("b", help="run B: results.json[:BOUNDARY]")
-    p.add_argument("--queries", default="data/eval_queries.json",
-                   help="ground-truth query file (relevant_pages)")
+    p.add_argument("--queries", required=True,
+                   help="ground-truth query file (relevant_pages). REQUIRED: this script "
+                        "reconstructs per-query recall against --queries, so a wrong default "
+                        "(it used to be v1's data/eval_queries.json, ids vec-NNN) silently "
+                        "joins against nothing and exits 1 — the powered decision never runs. "
+                        "For the v2 gold set pass data/eval_queries_v2.json.")
     p.add_argument("--delta", type=float, default=0.05,
                    help="effect size you want to detect (default 0.05 recall@20)")
     p.add_argument("--k", type=int, default=20)
