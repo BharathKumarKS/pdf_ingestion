@@ -549,6 +549,33 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   generator cannot accept a candidate it has not swept. Until then the two-step procedure is
   a manual invariant that is easy to forget.
 
+### D6. Verified 2026-10-14 (Session 4 pre-run) — gold labels can fall outside the retrievable window
+- **What:** retrieval is bounded to the content region — `min_content_page` (**30**) …
+  `max_content_page` (**936**). A gold label outside that window can never be retrieved, so the
+  query measures nothing. Session 3b checked **back-matter** labels and found none; **front
+  matter was not checked**, and that is where the gap was.
+- **Measured (168 answerable in v2, window [30, 936]):**
+  - **2 queries labelled entirely below the window** — `gold-001`, `gold-002`, both **page 3**
+    (the preface), both factual questions generated from a preface chunk ("the year Feynman
+    received the Oersted Medal for Teaching"; "how a Scientific American reviewer described the
+    Lectures"). These are **unanswerable by construction**.
+  - **4 queries partly outside** (one unreachable page each, all multihop): `gold-081` (p23),
+    `gold-087` (p24), `gold-088` (p24), `gold-094` (p22). Each has its recall capped below 1.0
+    because `compute_retrieval_metrics` counts *all* labelled pages in the denominator.
+- **How it surfaced:** the first v2 `--limit 2` probe scored **0.000 recall on every lane** for
+  `gold-001`/`gold-002`. The retriever was fine — `gold-003` (label p30) was in the top-20 — the
+  labels were simply unreachable. Undetected, this bakes ~1.2% of dead recall into the headline.
+- **Fix (applied):** `build_gold_v2.py` now **drops** an answerable entry whose labels fall
+  entirely outside the window and reports the ids. The 4 partly-outside are **kept and noted
+  here**; their unreachable page is left in the label (stripping it is a label edit, deferred).
+  Guard: `tests/test_gold_schema.py::test_answerable_labels_are_retrievable`.
+- **Root cause (upstream, no re-ingest):** the generator samples chunks with no content-region
+  bound, so a preface chunk yields a preface-labelled question. Fold into
+  `generate_gold_dataset.py`: skip chunks below `min_content_page` / above `max_content_page`
+  when sampling — exactly as `image_marker_pages` already does for the visual path.
+- **Related:** §D4 (DB↔PDF numbering) is a *different* label-precision defect; both are label
+  validity, neither is a retrieval problem.
+
 ---
 
 ## E. Ingestion & chunking — closing the gap to the course pipeline

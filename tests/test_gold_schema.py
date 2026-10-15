@@ -53,6 +53,21 @@ def test_negatives_are_at_least_15_percent():
     assert len(negs) / len(qs) >= 0.15, f"only {len(negs)}/{len(qs)} negatives"
 
 
+def test_answerable_labels_are_retrievable():
+    """No answerable query may be labelled only outside the content region (§D6)."""
+    from src.core.config import get_settings
+
+    cfg = get_settings()
+    lo, hi = cfg.min_content_page or 0, cfg.max_content_page or 10**9
+    for e in _load():
+        if e["id"].startswith("_") or not e.get("answerable"):
+            continue
+        pages = e.get("relevant_pages") or []
+        assert any(lo <= p <= hi for p in pages), (
+            f"{e['id']} is labelled only outside the retrievable window [{lo}, {hi}]: {pages}"
+        )
+
+
 def test_abstention_helper_recognises_declining_answers():
     import importlib.util
     from pathlib import Path as P
