@@ -22,6 +22,21 @@ export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 LOG="logs/p0-9/session4b_step4.log"
 
+# Preflight: fail fast if the cluster is unreachable. A down cluster otherwise produces an
+# empty report after hours (Session 4b: 167 queries all failed, evaluate_rag exited rc=0 with
+# 0/0 — see IMPROVEMENTS.md §D11).
+preflight() {  # url, name
+    local code
+    code=$(curl -s -m 6 -o /dev/null -w "%{http_code}" "$1" 2>/dev/null || true)
+    if [ "$code" != "200" ]; then
+        echo "STEP4_PREFLIGHT_FAILED: $2 unreachable ($1 -> HTTP $code) — aborting before the run"
+        exit 3
+    fi
+    echo "preflight OK: $2"
+}
+preflight "http://10.0.10.65:6333/collections/knowledge_base" "Qdrant 10.0.10.65"
+preflight "http://10.0.10.70:8000/v1/models" "LLM router 10.0.10.70"
+
 {
     echo "=== STEP 4 start $(date '+%F %T') ==="
     uv run python scripts/evaluate_rag.py \
