@@ -186,6 +186,27 @@ lane-upgrade pass (§I1) once the cluster serves the endpoint.**
 - **Not blocking**, but any visual-lane number is threshold-dependent, so pin this before comparing
   the visual lane across configs.
 
+#### B4f. Blocked 2026-10-16 (P0-9 4b) — the visual lane cannot run offline: ColPali's base model is not cached
+- **What:** `evaluate_rag.py` step 4 reached the visual lane and then spent **~27.7 min per visual
+  query** doing HuggingFace retry-backoff, scoring **0** on every one. Cause: the cache holds only
+  the **LoRA adapter** `vidore/colpali-v1.2` (`adapter_config.json` + `adapter_model.safetensors`),
+  not its base `vidore/colpaligemma-3b-pt-448-base` — which is absent from the machine entirely
+  (`~/.cache/huggingface/hub/` has no `colpaligemma` entry), and `huggingface.co` is unreachable
+  (DNS fails). So `ColPaliEmbedder` cannot construct and `run_visual_retrieval` returns nothing.
+- **Evidence:** `logs/p0-9/session4b_step4_aborted.log` — first visual query at 22:18, ~27.7 min
+  apart thereafter; `store.visual_search failed (timed out)`; recall@20 = 0.000 on every visual q.
+- **Why it contradicts §B4a:** §B4a recorded option (a) as "verified end-to-end offline". That
+  verification must have run while the base model was present (or online); it is not present now.
+- **Fix (a prerequisite, not a decision):** obtain `vidore/colpaligemma-3b-pt-448-base` into the HF
+  cache (or point `COLPALI_MODEL` at a local path that bundles the base), then the lane loads offline.
+  Until then **run step 4 with `--skip-visual`** and report the visual lane as *unmeasured*, not 0 —
+  a 0 would read as "the lane retrieves nothing", which is false.
+- **Also:** set `HF_HUB_OFFLINE=1` / `TRANSFORMERS_OFFLINE=1` for offline eval runs, so a missing
+  model fails **fast** instead of burning ~27.7 min of backoff per query. Every eval script should
+  run offline by default; nothing here should phone home.
+- **Not blocking the text/abstention half** of the pre-registered decision — that is the text lane
+  and runs without ColPali.
+
 #### B4c. Verified 2026-10-13 (P0-9 3d-ii) — the visual judge is over-permissive; the criterion must be strict
 - **What:** the 3d-ii visual judge variant (D8's "does this page show the described
   figure/table/graph?") is answered by the 8B VLM (`Qwen/Qwen3-VL-8B-Instruct`) with **YES for
