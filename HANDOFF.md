@@ -20,10 +20,14 @@
 > re-measured and **reframed** — the DB and PDF page numbers are one coordinate system with
 > inherent ±1 chunk-boundary fuzz, not two numberings, so **no labels were changed** (§D4 is now a
 > known symmetric noise floor); and the funnel re-ran post-fix on the same 133 queries (HyDE
-> cached, no LLM): **Δ −0.0101, CI [−0.0299, +0.0097] → still UNRESOLVED at n=133**. Remaining:
-> **step 4** (`evaluate_rag.py`) — **abstention (34 negatives) + the visual lane (33 queries) are
-> still entirely unmeasured**; that is the expensive cluster run and the other half of the
-> pre-registered decision.
+> cached, no LLM): **Δ −0.0101, CI [−0.0299, +0.0097] → still UNRESOLVED at n=133**. **Step 4
+> (`evaluate_rag.py`) was attempted and is BLOCKED — abstention (34 negatives) + the visual lane (33
+> queries) are still unmeasured.** Two blockers: the **visual lane cannot run on this machine** —
+> ColPali's base model `vidore/colpaligemma-3b-pt-448-base` is not cached and HF is unreachable
+> (§B4f; run with `--skip-visual`, report it *unmeasured*, not 0); and the **cluster is
+> intermittently unreachable** — the step-4 run hit an outage and wrote an empty report while
+> exiting 0 (§D11, since fixed). Runner `logs/p0-9/run_session4b_step4.sh` now preflights the
+> cluster. Re-run step 4 (`--skip-visual`, ~1.5–2h) when the cluster is up.
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -260,9 +264,15 @@ re-run, which then yields **one** clean number instead of two moving ones.
    UNRESOLVED at n=133.** The §D8 fix raised every pre-reranker boundary (B1 0.7924→0.7999, B5b
    0.4495→0.4492) and moved the headline delta by **0.0006** — inside the noise. Full table +
    per-type: pre-registration → "Session 4b re-run".
-4. **Run step 4 — `evaluate_rag.py` on v2.** The cluster-heavy piece: generation metrics + the
-   **abstention** block (34 negatives) + the **visual lane** (33 queries via `run_visual_retrieval`).
-   This is the *other half* of the pre-registered decision and is entirely unmeasured.
+4. **⛔ BLOCKED — run step 4 (`evaluate_rag.py` on v2).** The cluster-heavy piece: generation
+   metrics + the **abstention** block (34 negatives) + the **visual lane** (33 queries via
+   `run_visual_retrieval`). This is the *other half* of the pre-registered decision and is still
+   entirely unmeasured. Attempted 2026-10-16 twice: the first run was killed (the visual lane burns
+   ~27.7 min/query because ColPali's base model is missing — §B4f); the second ran `--skip-visual`
+   but hit a **cluster outage** and wrote an empty report while exiting 0 (§D11). Runner
+   `logs/p0-9/run_session4b_step4.sh` now (a) passes `--skip-visual`, (b) exports
+   `HF_HUB_OFFLINE=1`, and (c) **preflights Qdrant + the router, exiting 3 fast if either is down**.
+   Re-run when the cluster is up; the visual lane needs `colpaligemma-3b-pt-448-base` first (§B4f).
 5. **Then decide the reranker**, knowing that the observed 0.011 needs **n≈934** to resolve while
    the pre-registered δ=0.05 needed only **43** — so "extend in blocks of 30" (the §5 stopping rule)
    reaches δ≈0.026 at n=163 and will never resolve 0.011. The realistic options: (i) drop it on
