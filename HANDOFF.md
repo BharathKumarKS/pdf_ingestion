@@ -4,7 +4,7 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-14 (evening)** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9
+> **Last updated: 2026-10-15** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9
 > (gold set) — Sessions 1–3c, 3d, 3d-ii done; Session 4 steps 1–2 ran, steps 3–4 did not.** The v2
 > A/B produced its numbers: **rerank vs no-rerank R@20 −0.0107, 95% CI [−0.0304, +0.0091] →
 > UNRESOLVED at n=133** (the pre-registered rule is not met, and cannot be met at a feasible n —
@@ -16,9 +16,14 @@
 > (commit `4697961`). **3d-ii is done** — visual generation path + D8 judge variant + scan (commit
 > `3a18da4`); **33 usable visual queries** of 40 (§B4d, commit `18250f1`). **v2 is assembled**
 > (commit `e69c347`) and then pruned by §D6 (commit `f109379`): **166 answerable + 34 negatives =
-> 200** (17.0%). Next: **Session 4b** (see "Next — the Session 4b plan" below) — fix three
-> harness defects + normalise the labels, re-run the funnel, then measure abstention + the visual
-> lane.
+> 200** (17.0%). **Session 4b (in progress):** the three harness fixes landed (`769e60d`); §D4 was
+> re-measured and **reframed** — the DB and PDF page numbers are one coordinate system with
+> inherent ±1 chunk-boundary fuzz, not two numberings, so **no labels were changed** (§D4 is now a
+> known symmetric noise floor); and the funnel re-ran post-fix on the same 133 queries (HyDE
+> cached, no LLM): **Δ −0.0101, CI [−0.0299, +0.0097] → still UNRESOLVED at n=133**. Remaining:
+> **step 4** (`evaluate_rag.py`) — **abstention (34 negatives) + the visual lane (33 queries) are
+> still entirely unmeasured**; that is the expensive cluster run and the other half of the
+> pre-registered decision.
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -236,20 +241,25 @@ threshold is image-calibrated (**§B4e**). Tests: `tests/test_visual_index.py` (
 funnel changes the numbers and normalising the labels changes them again, so both land before the
 re-run, which then yields **one** clean number instead of two moving ones.
 
-0. **Commit the artifacts.** `logs/p0-9/v2_{rerank,norerank,hyde}.json` + `run_session4_v2.sh` are
-   still **untracked** — the A/B evidence is currently only on this disk.
-1. **Fix the three harness defects** (no cluster; minutes each).
-   a. `required_n.py` — make `--queries` required, or default it to the v2 file (§D7).
-   b. `funnel_boundary_recall.py` — apply `max_content_page` in `build_filter` **and** the local
-      `post()` filter, so it mirrors `store.py` (§D8).
-   c. `logs/p0-9/run_session4_v2.sh` — pass `--queries data/eval_queries_v2.json` and fail loudly
-      on a non-zero step, instead of continuing to step 4.
-2. **§D4 — normalise the page numbering, then re-derive `relevant_pages`.** No cluster. This is the
-   label-noise floor under every number reported above; do it before adding more queries.
-3. **Re-run the funnel on the same 133 queries with the fixed harness.** HyDE is cached, so this is
-   retrieval + rerank only — roughly 3 minutes per arm, **no LLM calls**. Compare against the table
-   in "Session 4" above. If the delta's CI still straddles 0, that is the honest answer, not a
-   reason to extend.
+0. ✅ **DONE (`12e0dd5`).** `logs/p0-9/v2_{rerank,norerank,hyde}.json` + `run_session4_v2.sh` are
+   tracked; the A/B evidence is in git.
+1. ✅ **DONE (`769e60d`).** The three harness defects fixed:
+   a. `required_n.py` — `--queries` is now **required** (§D7). Verified: reproduces n=133, SD_d
+      0.1163, required N 43.
+   b. `funnel_boundary_recall.py` — `max_content_page` applied in `build_filter` **and** `post()`,
+      mirroring `store.py` (§D8).
+   c. `logs/p0-9/run_session4_v2.sh` — step 3 passes `--queries`; `set -e` + `ERR` trap abort on a
+      failed step.
+2. ✅ **DONE — REFRAMED, no labels changed (§D4).** Re-measured: the DB `page_number` and the PDF
+   page index are **one coordinate system** with inherent ±1 chunk-boundary fuzz (`SentenceChunker`
+   merges across page boundaries), not two numberings; `chunks` stores no PDF-page field, so there
+   is nothing to reconcile. No label edit can remove the fuzz, and it is **symmetric across the A/B
+   arms** → a known noise floor, not an open defect. Durable fix folds into the E1/E2/E3 re-ingest.
+3. ✅ **DONE (2026-10-15, `logs/p0-9/session4b_rerun.log`).** Funnel re-ran post-fix, same 133
+   queries, HyDE cached (**no LLM calls**). **Δ −0.0101, 95% CI [−0.0299, +0.0097] → still
+   UNRESOLVED at n=133.** The §D8 fix raised every pre-reranker boundary (B1 0.7924→0.7999, B5b
+   0.4495→0.4492) and moved the headline delta by **0.0006** — inside the noise. Full table +
+   per-type: pre-registration → "Session 4b re-run".
 4. **Run step 4 — `evaluate_rag.py` on v2.** The cluster-heavy piece: generation metrics + the
    **abstention** block (34 negatives) + the **visual lane** (33 queries via `run_visual_retrieval`).
    This is the *other half* of the pre-registered decision and is entirely unmeasured.
@@ -395,7 +405,7 @@ gates), with cost classes and re-ingest ordering: [`IMPROVEMENTS.md`](IMPROVEMEN
 | Baseline (v1, 23 q) | Recall@20 **0.636** · Hit@20 1.000 · MRR 0.361 · NDCG@20 0.432 (`p0-judge-canonical_2026-10-06_0010.md`) — **not comparable to v2** (§D9) |
 | Gold v2 | `data/eval_queries_v2.json` — **200** = 166 answerable (53 factual + 40 multihop + 40 overview + 33 visual) + 34 negatives (17.0%). The funnel's text lane is the **133** |
 | v2 label sizes | text lane mean **22.2** pages (factual 9.5 · multihop 4.4 · overview **73.8**, max 314) → R@20 ceiling **0.8016** overall, **0.3992** on overview (§D9) |
-| v2 funnel (133 text q, 2026-10-14) | B1 0.7924 · **B5b retriever top-20 0.4495** · **B6 reranked 0.4389** · Δ **−0.0107**, CI [−0.0304, +0.0091] → **unresolved** |
+| v2 funnel (133 text q) | pre-fix (2026-10-14): B1 0.7924 · **B5b retriever top-20 0.4495** · **B6 reranked 0.4389** · Δ **−0.0107**, CI [−0.0304, +0.0091]. **post-fix (2026-10-15, `769e60d`):** B1 0.7999 · **B5b 0.4492** · **B6 0.4391** · Δ **−0.0101**, CI [−0.0299, +0.0097] → **still unresolved** |
 | Judge lane (v1, 23 q) | Faithfulness **0.701 (a floor)** · Ans.Relevance 0.927 · Citation 1.000 |
 | Judge gateway | **`http://10.0.10.70:8000`** — serves `Qwen/Qwen3-VL-8B-Instruct` (the D9 VLM) among 6 models; ~0.8 s per page judgment at concurrency 1. The P0-9 plan's `10.0.10.51:8000` is **dead**. |
 

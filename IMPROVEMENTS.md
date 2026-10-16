@@ -151,6 +151,13 @@ lane-upgrade pass (§I1) once the cluster serves the endpoint.**
 - **Also open:** the visual doc id (`b2d9fb56`) ≠ the text doc id (`5fcc9006`) — the two indexes come
   from different ingests, so `page_number` is the only join key between them. Confirm this is
   intended before trusting any cross-lane visual number.
+- **Cluster ≠ local (measured 2026-10-15, Session 4b).** The **2,835 / 3×** figure is the **local**
+  index only. The **cluster** `visual_knowledge_base` (10.0.10.65, what the eval runs against) holds
+  **1,033 points** — one doc (`6d55c52b`, the *same* id as the cluster `knowledge_base`), ~**914
+  distinct pages** with ~**86 duplicate pages** in the first 1,000 (~9%). So the 3× defect does not
+  apply to the cluster lane; there is a residual ~9% page duplication. The eval lane dedupes by
+  `page_number` regardless. The "local doc id ≠ text doc id" caveat above is **local-only** — on the
+  cluster the visual and text doc ids match.
 - **✅ Fixed in code 2026-10-14 (the UI text-query work).** Both halves are now closed, though the
   *existing* 2,835 points are untouched:
   - **Read path** — `DocumentStore.visual_search` collapses duplicate pages itself (over-fetches

@@ -141,3 +141,43 @@ why v2's 0.4495 is not comparable to v1's recorded 0.636.
 3. **The visual lane.** Same.
 4. **§D4 (DB↔PDF page numbering) was never normalised** — it was "next action 5" *before* this
    run and is still open, so every number above carries ~a page of label noise.
+
+---
+
+## Session 4b re-run — post-fix (2026-10-14)
+
+Run: `logs/p0-9/session4b_rerun.log`, steps 1–3 only, **the same 133 text queries** and the same
+HyDE cache (93 hypotheticals = factual 53 + overview 40, fully cached → **no LLM calls**). The
+harness fixes landed first (commit `769e60d`): §D7 (`--queries` now required) and §D8
+(`max_content_page` applied in `build_filter` + `post()`).
+
+| boundary | rerank | no-rerank | (Session 4) | Δ post-fix |
+|---|---|---|---|---|
+| B1_dense64_1000 | 0.7999 | 0.7999 | (0.7924) | — |
+| B2_dense768_500 | 0.7453 | 0.7453 | (0.7415) | — |
+| B3_sparse_250 | 0.6755 | 0.6755 | (0.6743) | — |
+| B4_rrf_union_100 | 0.5948 | 0.5948 | (0.5943) | — |
+| B5_colbert_100 | 0.6009 | 0.6008 | (0.6007) | — |
+| **B5b_retriever_top20** | **0.4492** | **0.4492** | (0.4495) | — |
+| **B6_rerank_20** | **0.4391** | **0.4492** | (0.4389 / 0.4495) | **−0.0101** |
+
+**Verdict: still UNRESOLVED at n=133.** Δ −0.0101, 95% CI **[−0.0299, +0.0097]** — straddles 0;
+§4's rule is not met. 29 worse / 37 better / 67 identical. `required_n.py` (now with the right
+file): n=133, SD_d **0.1163**, SE 0.0101, required N **43** at δ=0.05 (934 at the observed 0.0101).
+
+Headline on the reranked top-20: rerank P@20 0.205 / R@20 0.439 / Hit@20 0.955 / R-prec 0.348;
+no-rerank 0.192 / 0.449 / 0.970 / 0.375.
+
+**The §D8 fix did what it should, and did not change the decision.** Removing back-matter pages
+from the pools raised every pre-reranker boundary (B1 0.7924→0.7999 … B5b 0.4495→0.4492) and
+moved the headline delta by **0.0006** (−0.0107 → −0.0101) — inside the noise. The reranker stays
+un-earned on the pre-registered endpoint.
+
+Exploratory per-type (subgroup, no multiplicity control beyond the note): **factual −0.0469**,
+CI [−0.0787, −0.0152] → resolved (the reranker hurts factual); multihop +0.0091 → unresolved;
+**overview +0.0195, CI [+0.0007, +0.0384]** → now *just* excludes 0 (was [−0.0016, +0.0368]), i.e.
+the fix flipped the overview subgroup to a marginal reranker win. It does **not** survive a
+Bonferroni correction for 3 subgroups, so treat it as a hypothesis, not a result.
+
+Still unmeasured after 4b: **abstention** (34 negatives) and the **visual lane** (33 queries) —
+both live in step 4 (`evaluate_rag.py`), the only expensive cluster run, not yet executed.
