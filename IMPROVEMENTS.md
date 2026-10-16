@@ -701,6 +701,35 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
 - **Fix (not done):** investigate Qdrant RRF tie-breaking / prefetch ordering. Until then, note it
   in every A/B rather than assuming determinism. No re-ingest.
 
+### D11. `store._qdrant_search` turns a cluster outage into a per-query `UnboundLocalError`
+- **What:** the schema-detection block (lines ~276–284) did:
+  ```python
+  try:
+      col_info = self._qdrant.get_collection(cfg.qdrant_collection)
+      vectors_cfg = col_info.config.params.vectors
+      has_new_schema = isinstance(vectors_cfg, dict) and "dense_64" in vectors_cfg
+  except Exception:
+      has_new_schema = False          # vectors_cfg never assigned
+  if not has_new_schema:
+      using = "dense" if isinstance(vectors_cfg, dict) ...   # UnboundLocalError
+  ```
+  When `get_collection` raises — which it does the moment the cluster is unreachable — the `except`
+  sets the flag but leaves `vectors_cfg` unbound, so the **next line crashes on every query**.
+- **Measured (2026-10-16, Session 4b step 4):** the cluster dropped before the run; **all 167
+  non-visual queries** failed with `cannot access local variable 'vectors_cfg'`, so `evaluate_rag.py`
+  exited `rc=0` having written an **empty report** (`0/0` scope, 0 judge calls). A connection outage
+  surfaced as a misleading crash, and the run *looked* like it completed. Log:
+  `logs/p0-9/session4b_step4.log`.
+- **Why it matters:** the same class as the P0 "kill silent fallbacks" work — a failure that does not
+  name its cause. It also means **any** eval run during a cluster blip silently produces nothing
+  rather than erroring.
+- **Fix (applied 2026-10-16):** initialise `vectors_cfg = None` before the `try` and **log a warning**
+  in the `except` (naming the collection and the exception) instead of swallowing silently. The
+  sibling block at ~line 400 was already safe (its `except` sets `using = None` and logs).
+- **Also:** the cluster at `10.0.10.65`/`10.0.10.70` is **intermittently unreachable** (up
+  2026-10-15 20:0x, down 2026-10-16 10:4x–now) — an eval run should preflight it and fail fast.
+  No re-ingest.
+
 ---
 
 ## E. Ingestion & chunking — closing the gap to the course pipeline

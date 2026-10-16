@@ -273,11 +273,18 @@ class DocumentStore:
         cfg = self._cfg
 
         # Schema detection — old Jina vs new 4-vector schema
+        vectors_cfg = None
         try:
             col_info    = self._qdrant.get_collection(cfg.qdrant_collection)
             vectors_cfg = col_info.config.params.vectors
             has_new_schema = isinstance(vectors_cfg, dict) and "dense_64" in vectors_cfg
-        except Exception:
+        except Exception as exc:
+            # NOTE: this used to swallow the error and leave vectors_cfg unbound, so the
+            # next line raised UnboundLocalError on EVERY query when the cluster was
+            # unreachable — a connection outage surfaced as a misleading crash. Log it.
+            logger.warning(
+                "schema detection failed for '{}' ({}); assuming legacy single-vector "
+                "schema — if the cluster is down, retrieval will fail", cfg.qdrant_collection, exc)
             has_new_schema = False
 
         if not has_new_schema:
