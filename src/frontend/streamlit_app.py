@@ -136,19 +136,84 @@ def _latex_delims_to_dollars(text: str) -> str:
     return text
 
 
+def _split_formula(text: str) -> tuple[str, str]:
+    """Split a formula card's content into (expression, explanation).
+
+    The generator concatenates the LaTeX expression and its prose explanation into
+    ONE string: ``"F = G \\frac{m_1 m_2}{r^2} where F is the gravitational force..."``.
+    ``st.latex()`` typesets its whole argument as mathematics, so the explanation
+    rendered as maths — spaces collapsed and letters italic (B1). Split at the first
+    *top-level* occurrence of the word ``where``.
+
+    Keyed on the **word**, not on a spacing pattern: the generator writes the
+    separator as ``" where "`` (1,568×), but also ``" where:"`` (a colon followed by a
+    bulleted list), ``" where\\n"``, ``"\\nwhere "`` and ``"\\n\\nwhere\\n"``. A literal
+    ``" where "`` match leaks 128 of 1,534 cards. Surrounding whitespace and a trailing
+    colon are stripped from the explanation.
+
+    "Top-level" is load-bearing: ``where`` can appear inside the expression itself
+    (``\\text{where}``), so occurrences at brace depth > 0 or inside a ``$...$`` /
+    ``$$...$$`` span are skipped. A boundary is only credible if the left-hand side is
+    an expression: when the prefix already reads as prose (a sentence break), the card
+    is *prose-led* and ``where`` is incidental — return no boundary so the caller
+    renders markdown. 4 of 1,517 cards are of this shape.
+    """
+    import re
+    sentence_break = re.compile(r'\.\s+[A-Z]')
+    depth, i, n = 0, 0, len(text)
+    while i < n:
+        ch = text[i]
+        if ch == "$":
+            display = text.startswith("$$", i)
+            close = text.find("$$", i + 2) if display else text.find("$", i + 1)
+            i = n if close == -1 else close + (2 if display else 1)
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth = max(0, depth - 1)
+        elif depth == 0 and text[i:i + 5].lower() == "where" \
+                and (i == 0 or not text[i - 1].isalnum()) \
+                and (i + 5 == n or not text[i + 5].isalnum()):
+            prefix = text[:i].strip()
+            if sentence_break.search(prefix):
+                break   # prose-led card: not an expression/explanation pair
+            return prefix, text[i + 5:].strip().lstrip(":").strip()
+        i += 1
+    return text.strip(), ""
+
+
 def render_math(text: str, card_type: str = "") -> None:
     """Render card content with LaTeX support.
 
-    Formula cards: use st.latex() directly — reliable rendering without
-    markdown parser interference.
+    Formula cards: the content is ``"<expression> where <prose explanation>"`` in one
+    field, so split it — ``st.latex()`` the expression, ``st.markdown()`` the
+    explanation. Handing the whole string to ``st.latex()`` typesets the prose as
+    mathematics (B1).
+
+    When no boundary is found the card is **prose-led or mixed** — 17 of 1,534 cards
+    join the explanation with something other than "where" (". Here …", "Thus:",
+    "Definitions:", or prose that leads and embeds the maths, e.g. "For two vectors
+    \\(\\mathbf{a}\\) and \\(\\mathbf{b}\\) …"). Those must NOT be forced into
+    ``st.latex()`` either, so they fall back to markdown, where the delimiter and
+    brace converters typeset the embedded maths and the prose stays prose.
+
     Other cards: convert {expr} / (expr) → $expr$ for inline math in markdown.
     """
     stripped = _clean_text(text).strip()
     if card_type == "formula":
-        # Extract the LaTeX expression — strip outer {}, (), or $$ wrappers if present
-        import re
-        inner = re.sub(r'^[\$\{\(]+|[\$\}\)]+$', '', stripped).strip()
-        st.latex(inner)
+        expression, explanation = _split_formula(stripped)
+        if not explanation:
+            # No expression/explanation boundary: render as markdown, not maths.
+            st.markdown(_convert_braces_to_math(_latex_delims_to_dollars(stripped)))
+            return
+        # NOTE: do not "unwrap" the expression. The old code stripped leading/trailing
+        # $, {, (, }, ) characters — harmless when it ran on the whole card (whose tail
+        # was prose), but applied to the split expression it eats a real closing brace:
+        # 254 of 1,517 expressions end in '}' (\frac{..}{..}) and were left unbalanced.
+        # No card in the corpus is wrapper-enclosed; render the expression as-is.
+        st.latex(expression)
+        st.markdown(_convert_braces_to_math(explanation))
     else:
         st.markdown(_convert_braces_to_math(stripped))
 
@@ -346,8 +411,8 @@ with tab_upload:
 
     # Topic/Difficulty were collected here and persisted to the Document row and chunk
     # payload, but nothing ever filtered or steered on them — they looked functional and
-    # did nothing. Removed; revisit as a real feature (scoped card generation) later.
-    subject, difficulty = None, None
+    # did nothing. Removed (widgets, the variables, and the now-always-null extra_meta
+    # keys); revisit as a real feature (scoped card generation) later.
 
     if uploaded and st.button("Upload & Ingest", type="primary", use_container_width=True):
         effective_tenant = cfg.global_tenant_id if upload_as_base else tenant_id
@@ -364,7 +429,6 @@ with tab_upload:
                     tenant_id=effective_tenant,
                     source_type=effective_src,
                     is_global_baseline=upload_as_base,
-                    extra_meta={"subject": subject, "difficulty": difficulty},
                     settings=cfg,
                 )
                 doc_id   = result["document_id"]
@@ -1282,6 +1346,40 @@ if tab_graph is not None:
             """)
 
 
+def _store_vs_sqlite_rows(store, pairs: list[tuple[str, int | None]]) -> list[dict]:
+    """Build the Admin Status "store vs SQLite" table rows (I3).
+
+    ``pairs`` is ``[(collection_name, sqlite_row_count_or_None), …]``. The point of the
+    table is to make a disagreement *visible*: local SQLite describes whatever ingest
+    wrote THIS file, which may have run on another machine against another Qdrant, so
+    three status bugs went unnoticed (visual readiness, the sidebar badge, the graph).
+
+    Kept as a module-level pure-ish function (it only calls ``store.count_collection``)
+    so the comparison logic is testable — the tab itself sits behind ``is_admin`` and a
+    test cannot reach it.
+    """
+    rows = []
+    for collection, sqlite_n in pairs:
+        n_store = store.count_collection(collection)
+        if n_store == 0:
+            # An empty store is a problem on its own — checked before the "no SQLite
+            # counterpart" case, so an empty concept_embeddings is still flagged.
+            match = "⚠️ store empty"
+        elif sqlite_n is None:
+            match = "—"
+        elif n_store == sqlite_n:
+            match = "✅"
+        else:
+            match = f"⚠️ Δ {n_store - sqlite_n:+,}"
+        rows.append({
+            "Collection":   collection,
+            "Store points": n_store,
+            "SQLite rows":  "—" if sqlite_n is None else sqlite_n,
+            "Match":        match,
+        })
+    return rows
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # TAB 7 — Admin Status  (admin only)
 # ══════════════════════════════════════════════════════════════════════════
@@ -1313,6 +1411,27 @@ if tab_status is not None:
             c4.metric("Cards (Ph.2)",    f"{t_cards:,}")
             c5.metric("RAPTOR nodes",    f"{t_raptor:,}")
             c6.metric("Visual pages",    f"{t_visual:,}")
+
+            # ── Store (Qdrant) vs SQLite ──────────────────────────────────
+            # Everything above counts SQLite rows. Local SQLite describes whatever
+            # ingest wrote THIS file, which may have run on another machine against
+            # another Qdrant — three status bugs came from exactly that gap (visual
+            # readiness, the sidebar badge, the graph). Show the store's own counts
+            # beside them so a disagreement is visible instead of implied.
+            st.divider()
+            st.subheader("🗄️ Store (Qdrant) vs SQLite")
+            st.caption(
+                "The stores are what retrieval actually reads. A ⚠️ row means local "
+                "SQLite describes a different ingest than the index."
+            )
+            import pandas as pd
+            store_rows = _store_vs_sqlite_rows(store, [
+                (cfg.qdrant_collection,   t_chunks + t_raptor),
+                (cfg.colpali_collection,  t_visual),
+                (cfg.da_collection,       t_cards),
+                (cfg.concept_collection,  None),
+            ])
+            st.dataframe(pd.DataFrame(store_rows), use_container_width=True, hide_index=True)
 
             st.divider()
             if all_docs:

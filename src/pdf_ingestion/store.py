@@ -1191,6 +1191,22 @@ class DocumentStore:
             logger.warning("Visual index count failed ({})", exc)
             return 0
 
+    def count_collection(self, collection_name: str) -> int:
+        """Exact server-side point count for a collection (0 if unreachable).
+
+        The Admin Status panel compares this against the SQLite row counts. The three
+        status bugs that panel exists to catch were all cases where local SQLite
+        described a different ingest than the index actually serving retrieval (visual
+        readiness, the sidebar badge, the graph) — a count straight from the store is
+        the only figure that cannot be stale in that way.
+        """
+        try:
+            res = self._qdrant.count(collection_name=collection_name, exact=True)
+            return int(res.count)
+        except Exception as exc:
+            logger.warning("Collection count failed for {} ({})", collection_name, exc)
+            return 0
+
     def visual_index_documents(self, tenant_ids: list[str]) -> dict[str, int]:
         """Document id -> visual-vector count, for the given tenants.
 

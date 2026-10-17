@@ -4,7 +4,7 @@ Everything known-but-not-yet-done, in one place so it can be taken in a single p
 Each entry says **what**, **why it matters**, and **the evidence** — so nothing has to be
 re-derived later. Add to this file rather than leaving a note in a commit message.
 
-Last updated: 2026-10-14
+Last updated: 2026-10-16
 
 ---
 
@@ -36,29 +36,77 @@ Last updated: 2026-10-14
 
 ## B. UI / UX backlog — combine into one pass
 
-### B1. Formula card: the explanation renders as mathematics ⚠️ verified
-- **What:** on a formula card, the whole `content` string is passed to `st.latex()`
+### B1. Formula card: the explanation renders as mathematics ✅ FIXED 2026-10-16
+- **What:** on a formula card, the whole `content` string was passed to `st.latex()`
   (`streamlit_app.py`, `render_math`, the `card_type == "formula"` branch). The content
-  is `"<formula> where <prose explanation>"`, so the prose is typeset as maths: spaces
+  is `"<formula> where <prose explanation>"`, so the prose was typeset as maths: spaces
   collapse and letters go italic.
 - **Symptom:** `a = F/m` renders correctly, then
-  `whereaisthelinearaccelerationofthebody(m·s⁻²),Fisthenetexternalforce…`
-- **Fix:** split at the first top-level ` where ` — render the formula with `st.latex()`
-  and the explanation with `st.markdown()`.
-- **Evidence:** 1,534 formula cards; **1,516 (98.8%) contain ` where `**; 1,401 split
-  cleanly with a naive regex; the remaining ~115 have `where` *inside* LaTeX
-  (`\text{where}`, or as part of an expression), so the split must respect brace depth,
-  not just match the word. 18 cards are pure formula with no explanation.
-- **Root-cause note:** the generator emits one unstructured string. The durable fix is
-  for `formula` cards to carry the formula and the explanation as separate fields.
+  `whereaisthelinearaccelerationofthebody(m·s⁻²),Fisthenexternalforce…`
+- **Fix (applied):** `_split_formula()` splits the card at the first **top-level**
+  occurrence of the word `where`, and `render_math` renders the two halves with
+  `st.latex()` / `st.markdown()`. Cards with no credible boundary are prose-led and fall
+  back to markdown (where the delimiter/brace converters still typeset the maths embedded
+  in them). Tests: `tests/test_frontend_formula_render.py` + the golden file
+  `tests/data/formula_split_golden.json`.
+- **Evidence — CORRECTED.** The original entry's numbers were stale (measured before the
+  card-value filters removed ~3k cards). Re-measured on the live 1,534 formula cards:
+  - **1,517 contain the word `where`** — *not* 1,516 containing `" where "`. Only **1,389**
+    use the single-spaced separator; the rest are `" where:"` (colon + a bulleted list),
+    `" where\n"`, `"\nwhere "`, `"\n\nwhere\n"` and multi-space forms. **Keying on
+    `" where "` leaks 128 cards** — the splitter keys on the word.
+  - **0 cards are "pure formula with no explanation"** — the claim of 18 pure cards is
+    wrong. All **17** no-`where` cards are prose-bearing (`. Here …`, `Thus:`,
+    `Definitions:`, or prose-led like "For two vectors \(a\) and \(b\) …"). They were the
+    *worst* case, since the prose had nowhere to go but `st.latex()`. Handled by the
+    markdown fallback.
+  - **0** `where` occurrences are nested inside LaTeX in the live corpus (the
+    brace-depth guard is still required — see the synthetic case in the golden file).
+  - Verified end-to-end by capturing the `st.*` calls for all 1,534 cards:
+    **1,513 render latex+markdown, 21 fall back to markdown, 0 expressions brace-unbalanced,
+    0 `st.latex` arguments contain prose.**
+- **Fixed alongside — a latent bug the split exposed.** The old wrapper-strip
+  (`re.sub(r'^[\$\{\(]+|[\$\}\)]+$', '', …)`) was harmless while it ran on the whole card
+  (whose tail is prose), but applied to the split expression it eats a real closing brace:
+  **254 of 1,517 expressions end in `}`** (`\frac{..}{..}`) and were left unbalanced. No
+  card in the corpus is wrapper-enclosed, so the strip was removed.
+- **Root-cause note (still open, upstream):** the generator emits one unstructured string.
+  The durable fix is for `formula` cards to carry the formula and the explanation as
+  separate fields — that needs card regeneration, so it rides with §A1.
 
-### B2. Study Cards: the two card categories still unruled
-- `summary` (RAPTOR summaries exposed as cards, titled "Summary") — nothing to self-test;
-  candidate for exclusion from the student set.
-- `factoid` where `content == title` (a bare sentence echo, e.g. *"The simple lever is
-  fundamentally reversible."*) — legitimate facts, but ~29k of them; candidate for
-  ranking/capping rather than display.
-- **Status:** raised, deliberately **not** actioned — the call is Bharath's.
+### B2. Study Cards: the two card categories still unruled — HALF DONE 2026-10-16
+- ✅ **Already done in code** (found while working B1): `_STUDENT_CARD_TYPES`
+  (`streamlit_app.py`) is `["formula", "definition", "question", "misconception",
+  "example"]` — `summary`, `factoid` and `objective` are **already excluded from the
+  student set** (the comment above it cites the reason: 5k–11k each, they crash the
+  browser). So "candidate for exclusion from the student set" is settled by the code, not
+  by a decision.
+- ⬜ **Still open — an admin/product decision, not a code task:**
+  - `summary` (RAPTOR summaries exposed as cards, titled "Summary") — nothing to
+    self-test. It is admin-only today; the open question is whether it should exist as a
+    *card type* at all.
+  - `factoid` where `content == title` (a bare sentence echo, e.g. *"The simple lever is
+    fundamentally reversible."*) — legitimate facts, but ~29k of them. Admin-only today;
+    the open question is whether the admin view should rank/cap them rather than list
+    them.
+  Both need Bharath's call; neither blocks anything.
+
+### B5. NEW 2026-10-16 (found while fixing B1) — formula expressions contain Unicode maths that is not valid LaTeX
+- **What:** many formula-card expressions use Unicode maths characters rather than LaTeX
+  commands: `∮_S \mathbf{E}` (∮), `∂²p/∂t² = c² ∇²p` (∂, ², ∇²), `\varepsilon_0 =
+  8.854\times10^{-12}` (×, ⁻¹²), `m_μ = 206\,m_e` (μ, ₑ). `st.latex()` renders via KaTeX,
+  which expects LaTeX markup — a Unicode superscript like `²` or `⁻¹²` inside a maths
+  expression is not guaranteed to parse, and where it fails the card shows the raw source
+  in an error colour.
+- **Why it matters:** it is the same class of defect as B1 — content that *looks* fine in
+  the store and renders wrong. B1's fix routes the explanation to markdown (where Unicode
+  is fine); it does **not** clean the expression half.
+- **Not measured yet:** how many of the 1,513 latex-rendered expressions actually fail
+  KaTeX. Measuring it needs a KaTeX check, not a Python one — do that before "fixing" it.
+- **Likely fix:** normalise the expression at render time (map `²`→`^{2}`, `⁻¹²`→`^{-12}`,
+  `×`→`\times`, `∂`→`\partial`, …) or, better, have the generator emit LaTeX (folds into
+  the B1 upstream note / §A1). Low cost, but **do not start without the measurement** —
+  a blind normaliser can corrupt expressions that render correctly today.
 
 ### B3. Visual search threshold needs re-calibration on real figures
 - **What:** the 600 cutoff was fitted against **synthetic** negatives (noise/blank/
@@ -206,6 +254,26 @@ lane-upgrade pass (§I1) once the cluster serves the endpoint.**
   run offline by default; nothing here should phone home.
 - **Not blocking the text/abstention half** of the pre-registered decision — that is the text lane
   and runs without ColPali.
+
+#### B4g. Verified 2026-10-16 (P0-9 4b, offline) — the index-page hypothesis is REFUTED for the funnel's overview lane
+- **What was hypothesised:** the index/back-matter pages pollute the overview lane's retrieval and
+  explain its bad MRR (0.191), so ranking work (P1 item 10) should not start until they are excluded.
+- **Measured (no cluster needed):** counted back-matter pages (`page_number >= 937`, §B4's
+  `back_matter_start`) in every query's top-20 from the **pre-fix** funnel artifacts
+  (`git show 12e0dd5:logs/p0-9/v2_rerank.json`, 133 text queries):
+  overview B5b **2/625 slots = 0.32%**, factual 1.66%, multihop 0.68% — overview is the
+  **least** polluted type, not the most; only **2 of 40** overview queries carry a back-matter page
+  at all (`ovw-012`→p942, `ovw-049`→p950). The reranker arm is the polluted one (overview B6
+  2.11%, factual 2.92%) — consistent with §D8's arm asymmetry, not with an overview-specific effect.
+- **Consequence:** the index is **not** the cause of overview MRR 0.191, so P1 item 10 need **not**
+  wait on a back-matter fix. Ranking should be driven off the ceiling-normalised numbers (§D9)
+  as already planned. The §D8 bound (`max_content_page`) is still worth keeping; it is simply not
+  the ranking lever.
+- **Caveat:** this bounds the *funnel* artifacts. The 0.191 MRR itself comes from the v1
+  `evaluate_rag` run (23 queries, 8 pre-3c overview) — a different, superseded set that predates
+  the bound; it cannot be re-tested from artifacts on disk. Treat the refutation as
+  "not the cause of the funnel's overview numbers", and re-check on v2's own per-type MRR once
+  step 4 runs.
 
 #### B4c. Verified 2026-10-13 (P0-9 3d-ii) — the visual judge is over-permissive; the criterion must be strict
 - **What:** the 3d-ii visual judge variant (D8's "does this page show the described
@@ -922,11 +990,23 @@ near-duplicates as *separate nodes* ('orbit' / 'Orbit' / 'planetary orbit' / "Ea
 so nearly every chunk ties at 1 distinct concept. **Deduplicating concept names is the bigger
 lever than ranking.**
 
-### I3. Admin Status should report the STORES, not SQLite
+### I3. Admin Status should report the STORES, not SQLite ✅ DONE 2026-10-16
 
 Three separate bugs came from local SQLite describing a different ingest than the index (visual
 readiness, the sidebar badge, the graph). A status panel driven by store counts would have caught
 all three.
+
+**Fixed:** the Admin Status tab now carries a **"🗄️ Store (Qdrant) vs SQLite"** table beside the
+existing SQLite-derived metrics — `knowledge_base`, `visual_knowledge_base`, `derivative_artifacts`
+and `concept_embeddings` each show the store's exact point count next to the SQLite row count, with
+a `Match` column (`✅` / `⚠️ Δ ±N` / `⚠️ store empty`). Backed by a new additive store method
+`DocumentStore.count_collection(collection_name)` (returns 0 and logs a WARNING if the cluster is
+unreachable — covered by `tests/test_fallback_chains.py`). The row-building logic is extracted to
+`_store_vs_sqlite_rows()` so it is testable despite the tab sitting behind `is_admin`
+(`tests/test_frontend_status_panel.py`, 7 tests).
+**What it already surfaces:** the `derivative_artifacts` row disagrees with the SQLite card count by
+design — that collection is the retired card generation with **zero id overlap** (§A2). That is the
+panel doing its job, not a bug to chase here.
 
 ### I4. Phoenix does not trace LLM calls
 
@@ -935,25 +1015,67 @@ so `OpenAIInstrumentor()` patches a library that is never used. Retrieval stages
 synthesis, card generation and RAPTOR are invisible — including their latency and token counts.
 Fix: call through the `openai` SDK, or emit manual spans around `call_llm`.
 
-### I5. Upload tab's "Topic" and "Difficulty" are inert
+### I5. Upload tab's "Topic" and "Difficulty" are inert ✅ DONE 2026-10-16
 
 Persisted to the Document row and the chunk payload, but nothing filters or steers on them.
 Wire or remove.
 
-### I6. Test the fallback chains
+**Resolved by removal** (the widgets and their comment were already gone; completed here): the two
+unused `subject, difficulty = None, None` locals were deleted, and `ingest_pdf` no longer receives
+`extra_meta={"subject": None, "difficulty": None}` — that was writing two always-null keys into
+every Document row and chunk payload for a feature that does not exist. Revisit as a real feature
+(scoped card generation) is tracked as §C4.
+
+### I6. Test the fallback chains ✅ DONE 2026-10-16
 
 Stub tests structurally cannot reach the fallback paths (stub embedder/LLM/ColPali/graph/SPLADE).
 A lane that silently falls back to a stub in production is a silent-failure class P0-2 did not cover.
 
-### I7. `render_math()` golden-file test
+**Done:** `tests/test_fallback_chains.py` (8 tests) drives the REAL classes with a deliberately
+broken backend and pins what each fallback returns — a failed LLM call returns `""` and logs at
+ERROR; **a production failure is asserted to differ from the stub's `"{}"`** (so a stub leaking into
+production is detectable); a 200-with-no-choices response returns `""`; a failed embedder `encode`
+degrades to a zero vector of the right shape; `visual_search` returns `[]` and `count_visual_vectors`
+/ `count_collection` return `0` on an outage. The store tests assert the WARNING was logged, so they
+cannot pass vacuously via an early return.
+**Finding registered as §I9** (the zero-vector embedder fallback is a genuine silent-degradation
+risk, not just untested).
+
+### I7. `render_math()` golden-file test ✅ DONE 2026-10-16
 
 Would end the six-commit LaTeX patch cycle. Partly done — `tests/test_frontend_math.py` pins the
 two converter bugs, but there is no golden-file end-to-end check.
+
+**Done:** `tests/data/formula_split_golden.json` (8 cases drawn from real cards, covering every
+separator shape found in the corpus) + `tests/test_frontend_formula_render.py` (10 tests). The
+golden test pins the split; the render tests capture what `render_math` actually hands to
+`st.latex` / `st.markdown`, so the B1 defect class (prose reaching `st.latex`) now fails a test
+rather than waiting for someone to look at the page.
 
 ### I8. `sv_ray_cluster_access/` — reference only, keep gitignored
 
 Its own header declares it SupportVectors IP, not for reuse or sharing. Not importable here
 (needs `svlearn`), and every endpoint it documents is unreachable. Keep as reference only.
+
+### I9. NEW 2026-10-16 (found by §I6) — a failed embedding silently degrades to ZERO vectors
+
+- **What:** `NomicEmbedder._encode` (`embedder.py`) catches **any** exception from the model and
+  substitutes `np.zeros((len(texts), embedding_dim))`, logging at ERROR. The zero vectors then flow
+  on as if they were real embeddings — stored on ingest, and searched at query time.
+- **Why it matters:** it is the worst shape of silent failure. Retrieval does not error, it returns
+  *wrong* results: a zero vector has zero similarity to everything, so an ingested chunk becomes
+  unfindable and a query embedding makes every score meaningless. The caller cannot tell a real
+  vector from a fallback one by looking at it.
+- **Measured (pinned by `tests/test_fallback_chains.py`):** the fallback is exactly all-zeros of
+  shape `(768,)`, and it is logged at ERROR. That is the current, intended-but-questionable
+  behaviour — the test freezes it so a change cannot happen unnoticed.
+- **Options (not decided):** (a) raise instead of substituting, so ingest fails loudly and the
+  caller retries; (b) keep the fallback but make it observable — return a flag/count alongside the
+  vectors so `evaluate_rag.py` and the ingest path can report "N chunks embedded as zeros"; (c) do
+  nothing, on the grounds that the ERROR log is enough. **(a) or (b) is recommended** — a zero
+  vector is never the right answer to "the model is down", and the cost of (b) is small.
+- **Cost:** small — the fallback is one branch in `_encode`, plus its call sites.
+- **Not blocking anything.**
 
 ---
 

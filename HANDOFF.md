@@ -4,7 +4,7 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-15** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9
+> **Last updated: 2026-10-16** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9
 > (gold set) — Sessions 1–3c, 3d, 3d-ii done; Session 4 steps 1–2 ran, steps 3–4 did not.** The v2
 > A/B produced its numbers: **rerank vs no-rerank R@20 −0.0107, 95% CI [−0.0304, +0.0091] →
 > UNRESOLVED at n=133** (the pre-registered rule is not met, and cannot be met at a feasible n —
@@ -311,7 +311,14 @@ the product too (needs a re-ingest — its own item, honour the `clean_stale_*` 
 visible — an index-page probe in the test suite, and/or a "fraction of retrieved pages that are
 back matter" metric.
 
-**Hypothesis (unverified) — index pages may explain the overview number.** Overview queries are the
+**✅ REFUTED 2026-10-16 (§B4g) — the index is NOT polluting the overview lane.** Back-matter pages
+(`page >= 937`) occupy **0.32%** of the overview top-20 slots in the pre-fix funnel artifacts
+(2/625) — the **lowest** of any type (factual 1.66%, multihop 0.68%); only 2 of 40 overview
+queries touch one. P1 item 10 therefore need **not** wait on a back-matter fix. (The 0.191 MRR is
+from the superseded v1 run and is not re-testable from disk — re-check on v2's per-type MRR after
+step 4.) Original hypothesis, kept for the record:
+
+Overview queries are the
 ones an index page looks superficially good for, and overview MRR **0.191** is the one genuinely bad
 number (P1 item 10). Cheap test: count back-matter pages (≥ ~940) in the retrieved sets for the
 overview queries — if they are over-represented, the index is polluting the metric and the ranking
@@ -360,7 +367,8 @@ unresolvable numbers, not more knowledge.
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
 | 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) + **3d code (`4697961`)** + **3d-ii (`3a18da4`, `18250f1` — 33 usable visual labels, §B4d)** + **Session 4 (`e69c347`, `f109379`) — v2 assembled (202) then pruned by §D6 to 200, abstention wired, decision pre-registered; the v2 A/B ran 2026-10-14 18:03–18:06 (steps 1–2): R@20 −0.0107, CI [−0.0304, +0.0091] → unresolved at n=133; steps 3–4 did not run (§D7)** on `feat/p0-9-gold-dataset-v2`; **next: Session 4b — fix the harness (§D7/§D8) + normalise the labels (§D4), then re-run the funnel** |
 
-Test suite: **247 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`, re-measured 2026-10-14). The 5 are
+Test suite: **272 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`, re-measured 2026-10-16 —
+up from 247/5: +25 new tests from the §B1/§I3/§I6/§I7 work). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
 and 3 search tests return 0 results. **Not regressions; do not "fix" them here.**
 
@@ -381,13 +389,24 @@ handoff steps.
 
 **P1 — then improve metrics** (all gated on P0-9)
 10. Ranking — overview MRR 0.191 is the one genuinely bad number. Cheapest first: config
-    (MMR λ / RRF) → the cross-encoder → hard-negative fine-tuning. **First check the index-page
-    hypothesis in "Index-page false hits" above** — if back-matter pages are polluting overview
-    retrieval, fix that before tuning ranking.
+    (MMR λ / RRF) → the cross-encoder → hard-negative fine-tuning. **The index-page
+    hypothesis has been checked and REFUTED (§B4g)** — the index is not polluting the
+    overview lane, so nothing gates item 10 on a back-matter fix.
 11. Calibrate the 7 `visual` queries (folds into P0-9).
 12. Per-lane attribution in the eval report (which lane moves which query type).
-13. Test the fallback chains — stub tests cannot reach them.
-14. `render_math()` golden-file test — ends the LaTeX patch cycle (partly done).
+13. ✅ **DONE 2026-10-16** — Test the fallback chains. `tests/test_fallback_chains.py` (8
+    tests) drives the real classes with a broken backend. Revealed §I9 (a failed embedding
+    silently degrades to zero vectors). Not actually gated on P0-9.
+14. ✅ **DONE 2026-10-16** — `render_math()` golden-file test.
+    `tests/data/formula_split_golden.json` + `tests/test_frontend_formula_render.py` (10
+    tests). Done as part of fixing §B1 (formula cards rendered prose as maths), which this
+    test now pins. Not actually gated on P0-9.
+
+**Also done 2026-10-16 (Group 2 UI/backlog pass, no cluster needed):** §B1 (formula
+render), §I3 (Admin Status now shows store vs SQLite counts), §I5 (Topic/Difficulty fully
+removed), §B2 half (already done in code), §B4g (index hypothesis refuted). Registered:
+§B5 (Unicode maths in formula expressions is not valid LaTeX) and §I9 (zero-vector
+embedding fallback).
 
 **P2** abstention · guardrails · PPR · semantic caching · OKF cards
 

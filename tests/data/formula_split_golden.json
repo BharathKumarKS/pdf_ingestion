@@ -1,0 +1,50 @@
+[
+ {
+  "shape": "plain",
+  "content": "∮_S \\mathbf{E}\\cdot d\\mathbf{A} = \\frac{Q_{\\text{enc}}}{\\varepsilon_0} where \\mathbf{E} is the electric field (V/m), d\\mathbf{A} is an infinitesimal area vector on a closed surface S (m²), Q_{\\text{enc}} is the total charge enclosed by S (C), and \\varepsilon_0 = 8.854\\times10^{-12}\\,\\text{F/m} is the vacuum permittivity. Valid for electrostatic situations in vacuum (or linear, isotropic media with appropriate permittivity) and for any closed surface.",
+  "expr": "∮_S \\mathbf{E}\\cdot d\\mathbf{A} = \\frac{Q_{\\text{enc}}}{\\varepsilon_0}",
+  "expl": "\\mathbf{E} is the electric field (V/m), d\\mathbf{A} is an infinitesimal area vector on a closed surface S (m²), Q_{\\text{enc}} is the total charge enclosed by S (C), and \\varepsilon_0 = 8.854\\times10^{-12}\\,\\text{F/m} is the vacuum permittivity. Valid for electrostatic situations in vacuum (or linear, isotropic media with appropriate permittivity) and for any closed surface."
+ },
+ {
+  "shape": "colon",
+  "content": "F = (W \\times p) / (2\\pi R) where:\n- F is the required input force at the handle (N),\n- W is the load force to be lifted (N),\n- p is the screw pitch (linear advance per revolution, m),\n- R is the length of the handle (lever arm radius, m).\nThis relation follows from the work principle: input work (F·2πR) equals output work (W·p). Valid for an ideal, frictionless screw jack in a static situation; real devices require additional force to overcome friction.",
+  "expr": "F = (W \\times p) / (2\\pi R)",
+  "expl": "- F is the required input force at the handle (N),\n- W is the load force to be lifted (N),\n- p is the screw pitch (linear advance per revolution, m),\n- R is the length of the handle (lever arm radius, m).\nThis relation follows from the work principle: input work (F·2πR) equals output work (W·p). Valid for an ideal, frictionless screw jack in a static situation; real devices require additional force to overcome friction."
+ },
+ {
+  "shape": "trail_nl",
+  "content": "Δx = v_x Δt, Δy = v_y Δt, Δz = v_z Δt; Δs = √(Δx² + Δy² + Δz²) = √(v_x² + v_y² + v_z²) Δt where\n- Δt is the time interval (s),\n- v_x, v_y, v_z are the velocity components along the x, y, z axes (m·s⁻¹),\n- Δx, Δy, Δz are the corresponding displacements (m),\n- Δs is the total displacement magnitude (m).\nValid for a sufficiently small time interval such that the velocity components can be treated as constant (i.e., linear approximation).",
+  "expr": "Δx = v_x Δt, Δy = v_y Δt, Δz = v_z Δt; Δs = √(Δx² + Δy² + Δz²) = √(v_x² + v_y² + v_z²) Δt",
+  "expl": "- Δt is the time interval (s),\n- v_x, v_y, v_z are the velocity components along the x, y, z axes (m·s⁻¹),\n- Δx, Δy, Δz are the corresponding displacements (m),\n- Δs is the total displacement magnitude (m).\nValid for a sufficiently small time interval such that the velocity components can be treated as constant (i.e., linear approximation)."
+ },
+ {
+  "shape": "lead_nl",
+  "content": "x' = γ (x - v t),\n y' = y,\n z' = z,\n t' = γ \\left(t - \\frac{v x}{c^{2}}\\right),\nwhere γ = 1/\\sqrt{1 - v^{2}/c^{2}}. \nVariables: x, y, z (position in original inertial frame, meters), t (time in original frame, seconds), v (relative velocity of the frames along the x‑axis, m·s⁻¹), c (speed of light in vacuum, 2.998×10⁸ m·s⁻¹), x', y', z', t' (coordinates in the moving frame, same units). Conditions: both frames are inertial, v is constant and directed along the x‑axis, and the transformation assumes special relativity (v < c).",
+  "expr": "x' = γ (x - v t),\n y' = y,\n z' = z,\n t' = γ \\left(t - \\frac{v x}{c^{2}}\\right),",
+  "expl": "γ = 1/\\sqrt{1 - v^{2}/c^{2}}. \nVariables: x, y, z (position in original inertial frame, meters), t (time in original frame, seconds), v (relative velocity of the frames along the x‑axis, m·s⁻¹), c (speed of light in vacuum, 2.998×10⁸ m·s⁻¹), x', y', z', t' (coordinates in the moving frame, same units). Conditions: both frames are inertial, v is constant and directed along the x‑axis, and the transformation assumes special relativity (v < c)."
+ },
+ {
+  "shape": "multispace",
+  "content": "σ = √N   (for unit step size)  or  σ = √N \\times S_{rms}   where σ is the standard deviation of the net displacement (m if step size is in meters), N is the number of independent steps (dimensionless), and S_{rms} is the root‑mean‑square step length (m). Valid for a simple, unbiased random walk with statistically independent steps of equal rms magnitude.",
+  "expr": "σ = √N (for unit step size) or σ = √N \\times S_{rms}",
+  "expl": "σ is the standard deviation of the net displacement (m if step size is in meters), N is the number of independent steps (dimensionless), and S_{rms} is the root‑mean‑square step length (m). Valid for a simple, unbiased random walk with statistically independent steps of equal rms magnitude."
+ },
+ {
+  "shape": "no_where_prose",
+  "content": "s = s₀ + v₀ t + ½ a t²  →  s = s₀ + v₀ t + 16 t² (for a = 32 ft·s⁻²). Here s is the position (ft), s₀ the initial position (ft), v₀ the initial velocity (ft·s⁻¹), t the elapsed time (s), and a the constant acceleration (ft·s⁻²). Valid for motion with constant acceleration (e.g., free fall near Earth’s surface) neglecting air resistance.",
+  "expr": "s = s₀ + v₀ t + ½ a t² → s = s₀ + v₀ t + 16 t² (for a = 32 ft·s⁻²). Here s is the position (ft), s₀ the initial position (ft), v₀ the initial velocity (ft·s⁻¹), t the elapsed time (s), and a the constant acceleration (ft·s⁻²). Valid for motion with constant acceleration (e.g., free fall near Earth’s surface) neglecting air resistance.",
+  "expl": ""
+ },
+ {
+  "shape": "prose_led",
+  "content": "For an isolated system of particles, the total linear momentum is constant: \\( \\sum_i m_i v_i = \\text{constant} \\). In the specific case described (initial total momentum zero), this gives \\( m\\,(-v) + 2m\\,(v/2) = 0 \\). Here, \\(m_i\\) are the masses (kg) and \\(v_i\\) their velocities (m·s⁻¹) measured in an inertial reference frame. Applicable when no external forces act on the system (closed, isolated) and relativistic effects are negligible (v \\ll c).",
+  "expr": "For an isolated system of particles, the total linear momentum is constant: \\( \\sum_i m_i v_i = \\text{constant} \\). In the specific case described (initial total momentum zero), this gives \\( m\\,(-v) + 2m\\,(v/2) = 0 \\). Here, \\(m_i\\) are the masses (kg) and \\(v_i\\) their velocities (m·s⁻¹) measured in an inertial reference frame. Applicable when no external forces act on the system (closed, isolated) and relativistic effects are negligible (v \\ll c).",
+  "expl": ""
+ },
+ {
+  "shape": "nested_in_braces",
+  "content": "\\frac{Q_{\\text{where}}}{4\\pi\\varepsilon_0 r^2} where Q is the enclosed charge.",
+  "expr": "\\frac{Q_{\\text{where}}}{4\\pi\\varepsilon_0 r^2}",
+  "expl": "Q is the enclosed charge."
+ }
+]

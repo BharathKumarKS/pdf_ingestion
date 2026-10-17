@@ -51,7 +51,14 @@ data/*.db.bak-*
 data/test_*.db
 
 # ── Test artefacts ─────────────────────────────────────────────────────────
-tests/data/
+# `tests/data/*` (not `tests/data/`) so the negation below can re-include files —
+# git never descends into an excluded directory, so a `!` rule under `tests/data/`
+# would be silently ignored. Same shape as the data/models rule above.
+tests/data/*
+# …but small JSON fixtures ARE tracked: they are hand-checked golden files, not
+# generated artefacts (e.g. tests/data/formula_split_golden.json, used by
+# tests/test_frontend_formula_render.py).
+!tests/data/*.json
 .pytest_cache/
 .coverage
 htmlcov/
