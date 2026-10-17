@@ -4,30 +4,25 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-16** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9
-> (gold set) — Sessions 1–3c, 3d, 3d-ii done; Session 4 steps 1–2 ran, steps 3–4 did not.** The v2
-> A/B produced its numbers: **rerank vs no-rerank R@20 −0.0107, 95% CI [−0.0304, +0.0091] →
-> UNRESOLVED at n=133** (the pre-registered rule is not met, and cannot be met at a feasible n —
-> §D9). `required_n.py` never ran (wrong `--queries` default, §D7); `evaluate_rag.py` never ran, so
-> **abstention and the visual lane are still unmeasured.** Outcome + numbers:
-> `.hermes/plans/2026-10-14-p0-9-4-preregistration.md` → "Outcome". 3c's overview lane is complete:
-> **40 overview queries**, every one scan-labelled over the whole book (min 22 / median 58 / max 314
-> pages — none narrow); negatives grown 23 → **34**. **3d settled the §B4a fork on option (a)**
-> (commit `4697961`). **3d-ii is done** — visual generation path + D8 judge variant + scan (commit
-> `3a18da4`); **33 usable visual queries** of 40 (§B4d, commit `18250f1`). **v2 is assembled**
-> (commit `e69c347`) and then pruned by §D6 (commit `f109379`): **166 answerable + 34 negatives =
-> 200** (17.0%). **Session 4b (in progress):** the three harness fixes landed (`769e60d`); §D4 was
-> re-measured and **reframed** — the DB and PDF page numbers are one coordinate system with
-> inherent ±1 chunk-boundary fuzz, not two numberings, so **no labels were changed** (§D4 is now a
-> known symmetric noise floor); and the funnel re-ran post-fix on the same 133 queries (HyDE
-> cached, no LLM): **Δ −0.0101, CI [−0.0299, +0.0097] → still UNRESOLVED at n=133**. **Step 4
-> (`evaluate_rag.py`) was attempted and is BLOCKED — abstention (34 negatives) + the visual lane (33
-> queries) are still unmeasured.** Two blockers: the **visual lane cannot run on this machine** —
-> ColPali's base model `vidore/colpaligemma-3b-pt-448-base` is not cached and HF is unreachable
-> (§B4f; run with `--skip-visual`, report it *unmeasured*, not 0); and the **cluster is
-> intermittently unreachable** — the step-4 run hit an outage and wrote an empty report while
-> exiting 0 (§D11, since fixed). Runner `logs/p0-9/run_session4b_step4.sh` now preflights the
-> cluster. Re-run step 4 (`--skip-visual`, ~1.5–2h) when the cluster is up.
+> **Last updated: 2026-10-16** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold set)
+> is MEASURED.** Sessions 1–3c, 3d, 3d-ii and **Session 4/4b (all four steps) are done.** The v2 A/B:
+> **rerank vs no-rerank R@20 Δ −0.0101, 95% CI [−0.0299, +0.0097] → UNRESOLVED at n=133** (the
+> pre-registered rule is not met and cannot be met at a feasible n — §D9). **Step 4 ran 2026-10-16
+> 20:13–21:22** (`--skip-visual`, `logs/p0-9/session4b_step4.log`) and measured the second half:
+> **abstention 17/34 = 0.500** (> the 0.0 majority baseline → **met**; half the negatives still
+> answered) and the text-lane generation metrics (**Faith 0.661 · Ans.Rel 0.852 · Citation 1.000**,
+> n=133); the **visual lane** was measured separately (**33 q, R@20 0.960**). **Reranker decision:
+> keep it enabled for now — settle it with an ablation / A-B after the re-ingest (§D13).** 3c's
+> overview lane: **40 overview queries** (min 22 / median 58 / max 314 pages); negatives 23 → **34**.
+> **3d** settled the §B4a fork on option (a) (`4697961`); **3d-ii** (visual path + D8 judge + scan,
+> `3a18da4`) gave **33 usable visual queries** (§B4d, `18250f1`); **v2** assembled (`e69c347`) then
+> pruned by §D6 (`f109379`): **166 answerable + 34 negatives = 200** (17.0%). **Session 4b:** harness
+> fixes (`769e60d`); §D4 re-measured and **reframed** (one coordinate system + inherent ±1
+> chunk-boundary fuzz → **no labels changed**; §D4 is now a known symmetric noise floor); funnel
+> re-ran post-fix on the same 133 queries: **Δ −0.0101, CI [−0.0299, +0.0097] → still UNRESOLVED**.
+> §B4f, §D11, §I10 resolved. Artifacts: `p0-9-gold-v2_2026-10-17_0422.md` (step 4),
+> `p0-9-gold-v2-visual_2026-10-17_0410.md` (visual); outcome: pre-registration → "Step 4 outcome".
+> **Next: the re-ingest (E1/E2/E3) → the reranker ablation; Session 5 (human verification) runs now.**
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -264,23 +259,29 @@ re-run, which then yields **one** clean number instead of two moving ones.
    UNRESOLVED at n=133.** The §D8 fix raised every pre-reranker boundary (B1 0.7924→0.7999, B5b
    0.4495→0.4492) and moved the headline delta by **0.0006** — inside the noise. Full table +
    per-type: pre-registration → "Session 4b re-run".
-4. **⛔ BLOCKED — run step 4 (`evaluate_rag.py` on v2).** The cluster-heavy piece: generation
-   metrics + the **abstention** block (34 negatives) + the **visual lane** (33 queries via
-   `run_visual_retrieval`). This is the *other half* of the pre-registered decision and is still
-   entirely unmeasured. Attempted 2026-10-16 twice: the first run was killed (the visual lane burns
-   ~27.7 min/query because ColPali's base model is missing — §B4f); the second ran `--skip-visual`
-   but hit a **cluster outage** and wrote an empty report while exiting 0 (§D11). Runner
-   `logs/p0-9/run_session4b_step4.sh` now (a) passes `--skip-visual`, (b) exports
-   `HF_HUB_OFFLINE=1`, and (c) **preflights Qdrant + the router, exiting 3 fast if either is down**.
-   Re-run when the cluster is up; the visual lane needs `colpaligemma-3b-pt-448-base` first (§B4f).
-5. **Then decide the reranker**, knowing that the observed 0.011 needs **n≈934** to resolve while
-   the pre-registered δ=0.05 needed only **43** — so "extend in blocks of 30" (the §5 stopping rule)
-   reaches δ≈0.026 at n=163 and will never resolve 0.011. The realistic options: (i) drop it on
-   cost/benefit grounds with "no measurable gain at n=133" stated honestly; (ii) extend once to
-   ~163 and check the sign is stable; (iii) change the endpoint to the **factual lane**, where the
-   loss *is* resolved (−0.0469). **Do not** keep extending until an arm wins — §5 forbids it.
+4. ✅ **DONE (2026-10-16, 20:13–21:22) — step 4 (`evaluate_rag.py` on v2) ran.** `--skip-visual`,
+   `logs/p0-9/session4b_step4.log` → `data/eval_results/p0-9-gold-v2_2026-10-17_0422.md`. Measured
+   the *other half* of the pre-registered decision: **abstention 17/34 = 0.500** (> the 0.0 majority
+   baseline → **met**) and the text-lane generation metrics (Faith 0.661 · Ans.Rel 0.852 · Citation
+   1.000, n=133). The **visual lane** (33 q) was measured **separately**: **R@20 0.960**
+   (`p0-9-gold-v2-visual_2026-10-17_0410.md`). §B4f and §D11 resolved. Outcome: pre-registration →
+   "Step 4 outcome"; registered `IMPROVEMENTS.md` §D12.
+5. ✅ **DECIDED (2026-10-16, owner) — keep the reranker enabled for now.** The observed 0.011 needs
+   **n≈934** to resolve while the pre-registered δ=0.05 needed only **43**, so "extend in blocks of
+   30" (§5) reaches δ≈0.026 at n=163 and can never resolve 0.011. Decision: **do not drop it and do
+   not extend the query set** — settle it with a **fresh ablation / A-B after the re-ingest**
+   (E1/E2/E3 + §E5 + §D4), when the label fuzz and chunk-boundary noise that currently swamp the
+   effect are removed. Keep the **factual-lane** loss (−0.0469, resolved) as the hypothesis to
+   re-check. Rejected: (i) drop now (cost is small, effect unresolved not proven-negative);
+   (ii) extend (0.011 needs n≈934; §5 forbids extending until an arm wins). Registered `§D13`.
 6. **Only then P1 item 10** (ranking) — and drive it off the **ceiling-normalised** numbers (§D9),
    not the raw overview R@20 of 0.14.
+7. **Runnable NOW, no cluster — Session 5 (human verification, Task 7).** Prepared 2026-10-16:
+   fill in `data/gold_v2_review.md` (**30 queries, 6 per stratum**), then
+   `uv run python scripts/score_review_sheet.py`. Protocol (sample, verdicts, the ±1 window
+   rule, pre-registered consequences):
+   `.hermes/plans/2026-10-16-p0-9-5-verification-protocol.md`. This is the productive thing to do
+   while step 4 is blocked on the outage — it is the only P0-9 task that needs nothing but you.
 
 ### Index-page false hits (why + where)
 
@@ -365,9 +366,9 @@ unresolvable numbers, not more knowledge.
 | 1–6 | baseline committed; silent fallbacks killed; sklearn pinned + classifier schema-checked; config-invariant tests; doc drift fixed; eval gate + CI | `6381f7b`, `c3a8727` |
 | 7 | metric set fixed (`Precision@k` → `Recall@k` + `Hit@k`) | `1dad73f` |
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
-| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) + **3d code (`4697961`)** + **3d-ii (`3a18da4`, `18250f1` — 33 usable visual labels, §B4d)** + **Session 4 (`e69c347`, `f109379`) — v2 assembled (202) then pruned by §D6 to 200, abstention wired, decision pre-registered; the v2 A/B ran 2026-10-14 18:03–18:06 (steps 1–2): R@20 −0.0107, CI [−0.0304, +0.0091] → unresolved at n=133; steps 3–4 did not run (§D7)** on `feat/p0-9-gold-dataset-v2`; **next: Session 4b — fix the harness (§D7/§D8) + normalise the labels (§D4), then re-run the funnel** |
+| 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) + **3d code (`4697961`)** + **3d-ii (`3a18da4`, `18250f1` — 33 usable visual labels, §B4d)** + **Session 4 (`e69c347`, `f109379`)** + **Session 4b (`769e60d` harness fixes; §D4 reframed; funnel re-run) + step 4 (2026-10-16)** — v2 = 200 (166 answerable + 34 negatives); **abstention 17/34 = 0.500 (met), Faith 0.661, visual lane 33 q R@20 0.960** (`p0-9-gold-v2_2026-10-17_0422.md`). **✅ P0-9 is MEASURED — both halves of the pre-registered decision now have numbers (reranker unresolved; abstention met).** Reranker decision deferred to a post-re-ingest ablation (§D13). on `feat/p0-9-gold-dataset-v2` |
 
-Test suite: **272 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`, re-measured 2026-10-16 —
+Test suite: **286 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`, re-measured 2026-10-16 —
 up from 247/5: +25 new tests from the §B1/§I3/§I6/§I7 work). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
 and 3 search tests return 0 results. **Not regressions; do not "fix" them here.**
@@ -385,14 +386,21 @@ handoff steps.
 
 ## Priority plan (agreed)
 
-**P0 — make the numbers trustworthy.** 1–8 ✅ · **9 ⛔ gold set (active critical path)**
+**P0 — make the numbers trustworthy.** 1–8 ✅ · **9 ✅ gold set — MEASURED (2026-10-16); both
+halves of the pre-registered decision now have numbers (reranker unresolved; abstention met).**
 
-**P1 — then improve metrics** (all gated on P0-9)
-10. Ranking — overview MRR 0.191 is the one genuinely bad number. Cheapest first: config
-    (MMR λ / RRF) → the cross-encoder → hard-negative fine-tuning. **The index-page
-    hypothesis has been checked and REFUTED (§B4g)** — the index is not polluting the
-    overview lane, so nothing gates item 10 on a back-matter fix.
-11. Calibrate the 7 `visual` queries (folds into P0-9).
+**P1 — then improve metrics.** The re-ingest is now the gating item:
+ 0. **Re-ingest (E1/E2/E3 + §E5 + §D4)** ⚠️ requires re-ingest — semantic chunking, parent/child
+    hierarchy, late/contextual chunking, chunk-level front/back-matter classification, and
+    per-PDF-page numbering. It removes the ±1 label fuzz (§D4) and the chunk-boundary noise that
+    currently swamp the reranker effect; **the reranker ablation (§D13) and every metric below
+    re-measure on the rebuilt index.** Honour the `clean_stale_*` ordering (§B4b, §E5).
+10. **Ranking** — overview MRR is the one genuinely bad number (report it ceiling-normalised, §D9,
+    not the raw 0.14). Cheapest first: config (MMR λ / RRF) → the cross-encoder → hard-negative
+    fine-tuning. **The index-page hypothesis is REFUTED (§B4g)** — nothing gates item 10 on a
+    back-matter fix. Run the **reranker ablation (§D13)** here, on the re-ingested index.
+11. ✅ **SUPERSEDED** — v2 carries **33 calibrated visual queries** (§B4d); the old "7 uncalibrated
+    visual queries" belong to v1. Re-check the visual lane after the re-ingest.
 12. Per-lane attribution in the eval report (which lane moves which query type).
 13. ✅ **DONE 2026-10-16** — Test the fallback chains. `tests/test_fallback_chains.py` (8
     tests) drives the real classes with a broken backend. Revealed §I9 (a failed embedding
@@ -435,6 +443,8 @@ gates), with cost classes and re-ingest ordering: [`IMPROVEMENTS.md`](IMPROVEMEN
 | Gold v2 | `data/eval_queries_v2.json` — **200** = 166 answerable (53 factual + 40 multihop + 40 overview + 33 visual) + 34 negatives (17.0%). The funnel's text lane is the **133** |
 | v2 label sizes | text lane mean **22.2** pages (factual 9.5 · multihop 4.4 · overview **73.8**, max 314) → R@20 ceiling **0.8016** overall, **0.3992** on overview (§D9) |
 | v2 funnel (133 text q) | pre-fix (2026-10-14): B1 0.7924 · **B5b retriever top-20 0.4495** · **B6 reranked 0.4389** · Δ **−0.0107**, CI [−0.0304, +0.0091]. **post-fix (2026-10-15, `769e60d`):** B1 0.7999 · **B5b 0.4492** · **B6 0.4391** · Δ **−0.0101**, CI [−0.0299, +0.0097] → **still unresolved** |
+| v2 step 4 (133 text q, 2026-10-16) | R@20 **0.465** · Hit@20 0.947 · MRR 0.827 · NDCG@20 0.540 · Faith **0.661** · Ans.Rel 0.852 · Citation 1.000 (n=133; factual 0.564 / multihop 0.619 / overview 0.178). **Abstention 17/34 = 0.500** (> the 0.0 majority baseline → **met**). 164/200 synthesis, **4876 judge calls, 0 failed**, 3565.7s — `data/eval_results/p0-9-gold-v2_2026-10-17_0422.md` |
+| Visual lane (v2, 33 q) | **R@20 0.960** · R@100 0.836 · Hit@20 1.000 · MRR 0.914 · NDCG@20 0.891 — **first measurement** 2026-10-16 (cluster `visual_knowledge_base`, ColPali text-query path; `data/eval_results/p0-9-gold-v2-visual_2026-10-17_0410.md`). §B4f resolved (base model cached); §I10 fixed the per-query 5.5 GB reload that OOM-killed the first try |
 | Judge lane (v1, 23 q) | Faithfulness **0.701 (a floor)** · Ans.Relevance 0.927 · Citation 1.000 |
 | Judge gateway | **`http://10.0.10.70:8000`** — serves `Qwen/Qwen3-VL-8B-Instruct` (the D9 VLM) among 6 models; ~0.8 s per page judgment at concurrency 1. The P0-9 plan's `10.0.10.51:8000` is **dead**. |
 

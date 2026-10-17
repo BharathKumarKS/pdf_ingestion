@@ -181,3 +181,29 @@ Bonferroni correction for 3 subgroups, so treat it as a hypothesis, not a result
 
 Still unmeasured after 4b: **abstention** (34 negatives) and the **visual lane** (33 queries) —
 both live in step 4 (`evaluate_rag.py`), the only expensive cluster run, not yet executed.
+
+---
+
+## Step 4 outcome — abstention, generation metrics + the visual lane (2026-10-16)
+
+Run: 2026-10-16 20:13–21:22, `logs/p0-9/run_session4b_step4.sh` → `logs/p0-9/session4b_step4.log`.
+`evaluate_rag.py --skip-visual` on `data/eval_queries_v2.json`, cluster `knowledge_base`, reranker ON.
+Artifact: `data/eval_results/p0-9-gold-v2_2026-10-17_0422.md`. The visual lane is measured
+**separately** (below) because `--skip-visual` excludes it from this run.
+
+| pre-registered | delivered | note |
+|---|---|---|
+| abstention **> majority baseline** | **17/34 = 0.500** | the majority baseline is **0.0** (a system that always answers abstains on nothing) → **MET**; but half the negatives are still answered |
+| text-lane generation metrics | Faith **0.661** · Ans.Rel **0.852** · Citation **1.000** | n=133 |
+| visual lane (33) | **R@20 0.960** | measured separately — `data/eval_results/p0-9-gold-v2-visual_2026-10-17_0410.md` |
+
+Text lane, n=133: R@100 0.639 · R@20 **0.465** · Hit@20 0.947 · Ctx.Prec 0.235 · MRR 0.827 · NDCG@20 0.540.
+Per type — factual R@20 **0.564** (n=53), multihop **0.619** (n=40), overview **0.178** (n=40).
+Run integrity: 164/200 synthesis, 162/200 faithfulness, **4876 judge calls, 0 failed**, 3 queries
+returned no answer, elapsed 3565.7s.
+
+**Both halves of the pre-registered decision are now measured.** Reranker: **unresolved** at n=133
+(§4's rule is not met). Abstention: 0.500 > 0.0 → **met**. The reranker half cannot be resolved at a
+feasible n (934 at the observed 0.011; §5 forbids extending until an arm wins), so the owner decision
+(2026-10-16) is to **keep the reranker enabled for now** and settle it with a fresh ablation / A-B
+**after the re-ingest** (`IMPROVEMENTS.md` §D13), once the chunking + label fixes have moved the floor.

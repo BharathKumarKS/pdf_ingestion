@@ -347,12 +347,35 @@ hoping for significance — §5 forbids it.
   it is not free.
 - **Definition of done:** suite at the floor (**247 pass / 5 fail**); fixes + re-run committed;
   `HANDOFF.md` + the Outcome section refreshed; `/new`.
+- **✅ COMPLETE 2026-10-16 — including step 4.** Tasks 1–3 done (harness fixes `769e60d`; §D4 reframed,
+  no labels changed; funnel re-run `logs/p0-9/session4b_rerun.log`). **Step 4 ran 20:13–21:22**
+  (`logs/p0-9/run_session4b_step4.sh`, `--skip-visual`): abstention **17/34 = 0.500** (> the 0.0
+  baseline → met), text-lane generation metrics (Faith 0.661), and the visual lane measured separately
+  (R@20 0.960). Artifact `data/eval_results/p0-9-gold-v2_2026-10-17_0422.md`. Reranker kept enabled,
+  decision deferred to a post-re-ingest ablation (§D13). Both §B4f and §D11 resolved.
 
 ## Session 5 — Human verification (Task 7)
 
 - **Manual.** The agent generates the review sheet (`data/gold_v2_review.md`) in 1–2 turns; the
   **user** opens each labelled page and fills the verdict column.
-- **Deliverable:** `label error rate = X/25 = Y%` recorded in `IMPROVEMENTS.md` §F4b.
+- **Prepared 2026-10-16** — the sheet, the protocol and the scorer all exist, so this session is
+  runnable **now**, with no cluster:
+  - protocol: `.hermes/plans/2026-10-16-p0-9-5-verification-protocol.md` (sample, verdict
+    vocabulary, the ±1 window rule, and the pre-registered consequences)
+  - sheet: `data/gold_v2_review.md` — **30 queries, 6 per stratum** (factual / multihop /
+    overview / visual / negatives). This is a **deviation from the plan's uniform 25**: the five
+    strata came from five different generation+judge paths, and a uniform 25 lands only ~4 in the
+    visual and ~4 in the negative lane — the two whose labels came from different rules. Equal
+    allocation keeps every lane sampled. Use `--per-stratum 5` for the plan's 25.
+  - regenerate: `uv run python scripts/build_review_sheet.py`
+  - score: `uv run python scripts/score_review_sheet.py` (per-stratum + pooled, 95% Wilson CI,
+    refuses to report while any row is blank)
+- **Deliverable:** `label error rate = X/30 = Y% (95% CI …)` recorded in `IMPROVEMENTS.md` §F4b
+  (the plan says §F4b) with the per-stratum breakdown, then the pre-registered consequence applied.
+- **Watch:** the page number carries a measured **±1** fuzz (§D4) — a page counts as correct if
+  the content is on it or within ±1. Without that rule the fuzz is reported as label error.
+  Overview labels average 58 pages (max 314), so the sheet lists at most **5 pages per query**
+  (first, last, three evenly spaced); negatives have no page — check them by term search.
 
 ---
 
