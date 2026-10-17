@@ -1,0 +1,445 @@
+[
+  {
+    "id": "vis-001",
+    "query": "Show me the figure that displays water magnified one billion times.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      37
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 37,
+    "calibration_note": "Visual, generated from page 37 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-002",
+    "query": "Show me the schematic diagram of DNA from Fig. 3-2.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      77
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 76,
+    "calibration_note": "Visual, generated from page 76 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-003",
+    "query": "Show me the diagram of a pendulum (Fig.\u202f4\u20117) that displays the bob, string, and the angle of swing.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      94
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 94,
+    "calibration_note": "Visual, generated from page 94 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-005",
+    "query": "Show me the graph that plots the fraction of heads versus the number of tosses N for a particular sequence of penny tosses.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      130
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 129,
+    "calibration_note": "Visual, generated from page 129 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-006",
+    "query": "Show me the diagram of the apparatus that demonstrates the independence of vertical and horizontal motions.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      144,
+      370,
+      374
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 145,
+    "calibration_note": "Visual, generated from page 145 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 3 pages"
+  },
+  {
+    "id": "vis-007",
+    "query": "Locate the figure that illustrates the Cavendish torsion balance apparatus, showing the horizontal rod with two small masses suspended by a wire, and the two large masses positioned nearby to create the gravitational attraction for measuring G.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      154
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 155,
+    "calibration_note": "Visual, generated from page 155 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-008",
+    "query": "Show me the diagram of a parabolic trajectory of a falling body launched with an initial horizontal velocity, including axes labeled \\(x\\) and \\(y\\) and the parabola curve (Fig. 8\u20114).",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      176
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 176,
+    "calibration_note": "Visual, generated from page 176 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-010",
+    "query": "Find the figure that illustrates the addition of vectors by placing the tail of one vector at the head of the other, forming a parallelogram.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      222
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 223,
+    "calibration_note": "Visual, generated from page 223 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-011",
+    "query": "Show me the diagram of the closed path in a gravitational field from Fig. 13-3.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      257
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 257,
+    "calibration_note": "Visual, generated from page 257 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-012",
+    "query": "Show the diagram that illustrates the coordinate transformation between the stationary system and the moving system (the primed and unprimed coordinate axes) used to demonstrate that Newton\u2019s laws retain the same form in both frames.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      214,
+      217,
+      218,
+      285
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 286,
+    "calibration_note": "Visual, generated from page 286 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 4 pages"
+  },
+  {
+    "id": "vis-013",
+    "query": "Show the diagram of the torque produced by a force, including the force vector, the point of application, the lever arm, and the angle between the force direction and the lever arm.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      339
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 339,
+    "calibration_note": "Visual, generated from page 339 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-014",
+    "query": "Show me the diagram illustrating the two coordinate systems where the z- and z\u2032-axes coincide and one system is rotated by a fixed angle \u03b8 relative to the other.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      217,
+      218
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 364,
+    "calibration_note": "Visual, generated from page 364 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 2 pages"
+  },
+  {
+    "id": "vis-015",
+    "query": "Show me the figure of the actual motion of the tip of the axis of the gyroscope under gravity after the axis was released.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      374
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 374,
+    "calibration_note": "Visual, generated from page 374 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-018",
+    "query": "Show me the figure of a light ray reflecting off a surface where the angle of incidence equals the angle of reflection.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      454,
+      457
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 454,
+    "calibration_note": "Visual, generated from page 454 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 2 pages"
+  },
+  {
+    "id": "vis-019",
+    "query": "Show me the diagram of the paraboloidal mirror, including its focal point and axis of symmetry.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      464
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 464,
+    "calibration_note": "Visual, generated from page 464 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-020",
+    "query": "Show me the diagram of a thin lens with two positive radii, including the labels for the lens surfaces and the two positive radii of curvature.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      477
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 478,
+    "calibration_note": "Visual, generated from page 478 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-021",
+    "query": "Show me the diagram of the two-antenna system (Fig. 29\u20116) that illustrates the amplitude pattern with the N antenna one\u2011quarter wavelength apart from the S antenna and one\u2011fourth period behind it, indicating that the W direction has amplitude 2 and the S direction has amplitude 0.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      504
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 504,
+    "calibration_note": "Visual, generated from page 504 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-022",
+    "query": "Find the figure that shows a linear array of n equal oscillators driven with phases s = s.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      506,
+      515
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 515,
+    "calibration_note": "Visual, generated from page 515 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 2 pages"
+  },
+  {
+    "id": "vis-026",
+    "query": "Show me the diagram of a charged particle moving in a circular (or helical) path in a uniform magnetic field, including the velocity vector, magnetic field direction, and radius of curvature.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      593
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 594,
+    "calibration_note": "Visual, generated from page 594 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-027",
+    "query": "Show me the diagram of the wavefronts of a wave traveling at an angle to the coordinate axes, as illustrated in Fig. 34-11.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      604
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 604,
+    "calibration_note": "Visual, generated from page 604 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-028",
+    "query": "Locate the figure that shows the spectral sensitivity of the eye, with a dashed curve for rods and a solid curve for cones, as plotted in Fig.\u202f35\u20113.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      613,
+      614
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 614,
+    "calibration_note": "Visual, generated from page 614 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 2 pages"
+  },
+  {
+    "id": "vis-029",
+    "query": "Show me the diagram of the neural connections from the eyes to the visual cortex.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      632,
+      635,
+      636
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 636,
+    "calibration_note": "Visual, generated from page 636 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 3 pages"
+  },
+  {
+    "id": "vis-030",
+    "query": "Show me the graph that displays the response to light of the nerve fibers of the horseshoe crab's eye, as presented in Fig. 36-12.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      649
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 649,
+    "calibration_note": "Visual, generated from page 649 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-031",
+    "query": "Show me Fig. 38-2, the diagram of the single-slit experiment illustrating the relationship between particle position and vertical momentum components.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      676,
+      677
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 676,
+    "calibration_note": "Visual, generated from page 676 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 2 pages"
+  },
+  {
+    "id": "vis-032",
+    "query": "Show me the diagram of the gas box with a piston, labeled V, as depicted in Fig. 39-1.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      695
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 695,
+    "calibration_note": "Visual, generated from page 695 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-033",
+    "query": "Show me the diagram of the velocity distribution function (Fig. 40\u20115) that displays the shaded area labeled f(u) du.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      720,
+      721
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 720,
+    "calibration_note": "Visual, generated from page 720 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 2 pages"
+  },
+  {
+    "id": "vis-034",
+    "query": "Show me the diagram of the 36\u2011step random walk of step length l, starting at point B and ending at S36, as illustrated in Figure 41\u20116.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      744
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 743,
+    "calibration_note": "Visual, generated from page 743 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-035",
+    "query": "Show me the figure of the heated rubber band (Fig. 44-1).",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      784
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 782,
+    "calibration_note": "Visual, generated from page 782 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-036",
+    "query": "Show me the figure that illustrates the change in entropy during a reversible transformation.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      802,
+      803
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 803,
+    "calibration_note": "Visual, generated from page 803 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 2 pages"
+  },
+  {
+    "id": "vis-037",
+    "query": "Show me the figure that displays the electric field as a function of position with a solid curve for one instant and a dashed curve for a later instant.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      839
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 839,
+    "calibration_note": "Visual, generated from page 839 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-038",
+    "query": "Show me the frequency spectrum diagram of a carrier wave modulated by a single cosine wave, including the sideband frequencies \u03c9c\u202f\u00b1\u202f\u03c9m.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      856
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 857,
+    "calibration_note": "Visual, generated from page 857 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-039",
+    "query": "Show me the schematic diagram (Fig.\u00a050-2) that depicts a periodic function f(t) as a sum of simple harmonic functions, including the amplitudes a\u2099 and b\u2099.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      886
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 886,
+    "calibration_note": "Visual, generated from page 886 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  },
+  {
+    "id": "vis-040",
+    "query": "Show me the graph of phase velocity versus wavelength for water.",
+    "query_type": "visual",
+    "expected_route": "colpali",
+    "relevant_pages": [
+      914
+    ],
+    "calibrated": true,
+    "answerable": true,
+    "source_page": 915,
+    "calibration_note": "Visual, generated from page 915 (DB page numbering \u2014 traceability only, NOT a label); labels pending book-wide visual scan | scan-expanded: 1 pages"
+  }
+]
