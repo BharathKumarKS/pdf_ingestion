@@ -1,7 +1,7 @@
 # P1 — the re-ingest (E1/E2/E3/E5 + §D4 + §I1). Execution plan.
 
-**Status:** planned 2026-10-16. **Steps 0, 1 and 2 done** (P1-a). Next: Step 3 (E1 `chunker.py`
-rewrite). Supersedes the "Next: the re-ingest" line in `HANDOFF.md`.
+**Status:** planned 2026-10-16. **Steps 0–3 done** (P1-a + E1). Next: Step 4 (E3 late
+chunking). Supersedes the "Next: the re-ingest" line in `HANDOFF.md`.
 **Scope owner decisions taken 2026-10-16** (all four settled — see §2).
 
 > Read `ARCHITECTURE.md` §8 (invariants/traps) and `IMPROVEMENTS.md` §E before the first change.
@@ -118,10 +118,27 @@ Each step ends with: unit tests green (stubs, offline) → a small live probe �
   Docling's default `max_tokens=512`; at the configured `parent_max_tokens=5000` the count is 42**
   (Docling 2.117.0, 2026-10-17) — the figure, not the design, was stale.
 
-### Step 3 — E1 `chunker.py` rewrite (SemanticChunker)
+### Step 3 — E1 `chunker.py` rewrite (SemanticChunker) ✅ DONE 2026-10-17
 - chonkie `SemanticChunker(threshold=…)` over each parent's text; children keep `start_index/end_index`.
 - Keep the micro-chunk merge behaviour and the `TextChunk` contract; add `parent_id`, `is_content`.
 - Verify: children are contiguous and cover the parent; no child crosses a parent boundary.
+  (`tests/test_semantic_chunker.py`, 8 fast + 1 slow — verified on `test_book.pdf`: 42 parents →
+  **91 children** raw, **66** at the current `min_chunk_tokens=32`; spans tile each parent exactly.)
+- **Decisions taken while building it:**
+  1. **Segmentation model = chonkie's default** (`minishlab/potion-base-32M`, local + cached).
+     It scores sentence-to-sentence similarity for *segmentation only*; the indexed vectors stay
+     the cluster dense model (R2). Segmenting 968 pages through the cluster would be one HTTP
+     call per sentence window. The plan did not specify this — recorded here as the answer.
+  2. **`chunk_document` kept** as the flat full-text path for `store.py` until Step 7, now backed
+     by the same semantic chunker (`parent_id`/`parent_text` stay `None`). `TextChunk` gained
+     `parent_id`, `parent_text`, `is_content` — all defaulted, so the 5 existing call sites and
+     their tests are untouched.
+  3. **`page_number` now comes from the parent's provenance map** in the parent-aware path (Step
+     6's change lands here because this is where children are created); `_page_for_offset` stays
+     only for the legacy flat path. Step 6 therefore becomes verification + removing the dead path.
+- **Registered:** the inherited `min_chunk_tokens=32` merges 91 → 66 children on `test_book.pdf`
+  (−27%, avg 312 → 430 chars) — `IMPROVEMENTS.md` §E1. Threshold left at 32 pending the funnel
+  candidate-count measurement.
 
 ### Step 4 — E3 `late_chunk_embedder.py`
 - Local tokenizer (jina **or** Qwen3 — must match the model used for the token vectors) for offsets;

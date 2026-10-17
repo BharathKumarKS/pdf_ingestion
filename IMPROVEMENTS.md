@@ -886,6 +886,23 @@ embedding.** The middle and back of that pipeline are missing.
 - **Caveat:** semantic chunking costs an embedding pass at ingest and its `threshold` is
   a tuning knob. Smaller chunks also mean more of them (19 vs 12 here) — re-check the
   funnel's candidate counts after switching.
+- **Measured 2026-10-17 (`test_book.pdf`, 42 parents → children):** the *inherited*
+  `min_chunk_tokens=32` — a threshold set for the old size-based chunker — merges a material
+  share of the new, smaller children:
+
+  | `min_chunk_tokens` | children | median tokens | avg chars |
+  |---|---|---|---|
+  | 0 (raw chonkie) | 91 | 60 | 312 |
+  | 16 | 80 | 68 | 355 |
+  | **32 (current default)** | **66** | **84** | **430** |
+  | 64 | 55 | 106 | 517 |
+
+  So E1's "smaller, topic-coherent" gain is partly clawed back: **91 → 66 children, −27%**,
+  with average child size up 312 → 430 chars. Every parent's *first* child escapes the merge
+  (the "promote rather than drop" branch), which is why `min=3` tokens survives at any
+  setting. **Not changed yet** — the plan keeps the merge behaviour, and the threshold is a
+  measurement, not a code choice: settle it with the funnel's candidate counts after the
+  re-ingest (§E1 caveat) rather than by guessing now.
 
 ### E2. Parent/child hierarchy (hierarchical markdown → parent chunks) ⚠️ requires re-ingest
 - **What:** use Docling's markdown heading structure to define **parent** chunks
