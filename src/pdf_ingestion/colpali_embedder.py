@@ -153,12 +153,28 @@ class ColPaliEmbedder:
         return self._cfg.colpali_patch_dim
 
 
-# -- Factory -------------------------------------------------------------------
+# -- Singleton factory --------------------------------------------------------
+
+# ColPali loads ~5.5 GB of weights. Constructing one per call (as this factory
+# used to) reloaded the model for EVERY query, which thrashed memory and
+# OOM-killed a 33-query visual run at query 15. Cached exactly like
+# get_colbert_embedder / get_reranker; reset in tests.
+_colpali_instance: StubColPaliEmbedder | ColPaliEmbedder | None = None
+
 
 def get_colpali_embedder(
     settings: Settings | None = None,
 ) -> StubColPaliEmbedder | ColPaliEmbedder:
-    cfg = settings or get_settings()
-    if cfg.use_stub_colpali:
-        return StubColPaliEmbedder()
-    return ColPaliEmbedder(settings=cfg)
+    global _colpali_instance
+    if _colpali_instance is None:
+        cfg = settings or get_settings()
+        if cfg.use_stub_colpali:
+            _colpali_instance = StubColPaliEmbedder()
+        else:
+            _colpali_instance = ColPaliEmbedder(settings=cfg)
+    return _colpali_instance
+
+
+def reset_colpali_embedder() -> None:
+    global _colpali_instance
+    _colpali_instance = None
