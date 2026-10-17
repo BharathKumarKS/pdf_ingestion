@@ -453,6 +453,13 @@ Tests: 141 test functions across 10 files. `test_phase1/2/3` map to the phases;
   (`ssh -R 7687:localhost:7687 …`); start it with
   `docker compose --profile phase3 up -d memgraph` — the `--profile phase3` flag is
   required or it silently does nothing.
+- **The cluster's embedding API has three text surfaces, and only one of them is obvious.**
+  `10.0.10.70:8123`: `/embed-text/v1/embeddings` (**pooled** by default — pass
+  `return_token_embeddings: true` for **per-token, native-dim** vectors), `/embed-text/v1/
+  multivector-embeddings` (ColBERT, always 128-d, `embedding_type: "colbert"` whatever model you
+  name), `/embed-text/v1/sparse-embeddings`. A `dimensions` parameter is **ignored** (MRL slicing is
+  client-side). The GPU VM shell is **not** available to us — `ssh` is refused; the cluster is
+  API-only. See `IMPROVEMENTS.md` §E3a.
 
 ---
 

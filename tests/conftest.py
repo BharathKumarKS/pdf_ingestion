@@ -32,6 +32,7 @@ def reset_db_singletons():
     from src.pdf_ingestion.reranker import reset_reranker
     from src.pdf_ingestion.colbert_embedder import reset_colbert_embedder
     from src.pdf_ingestion.colpali_embedder import reset_colpali_embedder
+    from src.pdf_ingestion.cluster_embedder import reset_cluster_embedder
     reset_singletons()
     reset_graph_builder()
     reset_intent_router()
@@ -39,6 +40,7 @@ def reset_db_singletons():
     reset_reranker()
     reset_colbert_embedder()
     reset_colpali_embedder()
+    reset_cluster_embedder()
     yield
     reset_singletons()
     reset_graph_builder()
@@ -47,6 +49,7 @@ def reset_db_singletons():
     reset_reranker()
     reset_colbert_embedder()
     reset_colpali_embedder()
+    reset_cluster_embedder()
 
 
 @pytest.fixture(scope="session")

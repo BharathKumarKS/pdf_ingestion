@@ -23,6 +23,9 @@
 > §B4f, §D11, §I10 resolved. Artifacts: `p0-9-gold-v2_2026-10-17_0422.md` (step 4),
 > `p0-9-gold-v2-visual_2026-10-17_0410.md` (visual); outcome: pre-registration → "Step 4 outcome".
 > **Next: the re-ingest (E1/E2/E3) → the reranker ablation; Session 5 (human verification) runs now.**
+> **P1 re-ingest STARTED 2026-10-16** — plan: `.hermes/plans/2026-10-16-p1-reingest-plan.md`
+> (10 steps, decisions closed). Done: Step 0 (config) + Step 1 (`cluster_embedder.py`, 11 tests).
+> Suite **297 pass / 5 fail** (same 5 pre-existing). Next: Step 2 (`parent_chunker.py`).
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---

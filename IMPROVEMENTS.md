@@ -921,6 +921,26 @@ embedding.** The middle and back of that pipeline are missing.
 - **Also a slip worth correcting in the course note:** the whole document goes to a
   long-context *embedding* model, not an LLM.
 
+#### E3a. VERIFIED 2026-10-16 — the cluster CAN serve late chunking (corrects a wrong reading)
+
+- **What was believed:** "the cluster cannot do late chunking — no endpoint returns a dense model's
+  per-token hidden states." **Wrong.** `POST /embed-text/v1/embeddings` accepts
+  **`return_token_embeddings: true`** and then returns per-token, **native-dimension** vectors:
+  `jinaai/jina-embeddings-v2-base-en` → `(1, 22, 768)`; `Qwen/Qwen3-Embedding-0.6B` → `(1, 19, 1024)`.
+  Batching works; each response item carries `index` — honour it rather than array order.
+- **The alignment precondition holds:** a **local** jina tokenizer produced exactly 22 tokens for the
+  same text the API returned 22 vectors for, so a local `offset_mapping` lines up 1:1 with the API's
+  token vectors. Only the *tokenizer* is local; the vectors still come from the cluster.
+- **The class repo documents this path** — `Labs/Week_3/chunking_pipeline/docs/notebooks/
+  02-contextual_and_late_chunking.ipynb`, cell 13 ("Alternative: API-based late chunking (SV cluster)").
+- **Why the earlier reading was wrong:** only the *pooled* form had ever been requested. The
+  multivector (ColBERT) endpoint returns 128-d per token with `embedding_type: "colbert"` for **every**
+  model name, which made it look like the only per-token surface — it is not.
+- **Consequence:** late chunking and MRL compose. Mean is linear, so `mean(tok)[:64] == mean(tok[:64])`
+  (pinned by `tests/test_cluster_embedder.py`), i.e. a late-chunked vector still has a valid 64d view.
+  This is the E3 method chosen for the P1 re-ingest — no LLM calls.
+- **Evidence:** live probes 2026-10-16 (`.hermes/plans/2026-10-16-p1-reingest-plan.md` §2.1).
+
 ### E4. Stale docstrings describing a pipeline that was never built ✅ fixed
 - `chunker.py` claimed *"Chonkie-based semantic chunker"*, *"Two-pass chunking … Semantic
   grouping via chonkie SemanticChunker"*, and *"span tracking for Jina late chunking"*.
@@ -1156,6 +1176,20 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   settings (`Collection: knowledge_base`, embedder nomic, reranker bge) even though the visual lane
   read `visual_knowledge_base` with ColPali. A reader can misread which index was scored; the visual
   lane's collection/model belong in the snapshot.
+
+### I11. NEW 2026-10-16 — `.env.example` pointed the embedding endpoints at the LLM router port
+
+- **What:** `SV_COLBERT_URL` / `SV_SPARSE_URL` / `SV_RERANK_URL` were documented as
+  `http://10.0.10.70:8000/...`. The cluster fronts **two** services: `:8000` is the LLM router
+  (chat/completions only) and `:8123` serves embeddings / colbert / sparse / rerank / colpali. Every
+  embedding path on `:8000` returns 404.
+- **Why it matters:** it is the same class as the dead `10.0.10.51:8000` recorded in the P0-9 plan —
+  a copied endpoint that reads as authoritative. Anyone following `.env.example` gets 404s and
+  concludes the lane is broken.
+- **Fixed:** the three URLs now point at `:8123`, with the two-service split written down beside them.
+- **Cost:** none. No re-ingest.
+
+---
 
 The question "do we re-ingest before fine-tuning?" — **yes, and the order is forced:**
 

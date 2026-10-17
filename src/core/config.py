@@ -54,6 +54,30 @@ class Settings(BaseSettings):
     sv_colbert_url: str = ""             # e.g. http://10.0.10.51:8000/embed-text/v1/multivector-embeddings
     sv_sparse_url: str = ""             # e.g. http://10.0.10.51:8000/embed-text/v1/sparse-embeddings
     sv_rerank_url: str = ""             # e.g. http://10.0.10.51:8000/rerank/v1/rank
+    sv_embed_url: str = ""               # dense text embeddings, e.g. http://10.0.10.70:8123/embed-text/v1/embeddings
+
+    # Dense embedder served by the cluster (the re-ingest's dense lane). Deliberately SEPARATE
+    # from embedding_model/embedding_dim above: the intent classifier is schema-checked against
+    # embedding_dim, so the switch is a deliberate, tested step rather than a config edit.
+    # Qwen3-Embedding-0.6B is MRL-capable (32-1024); the endpoint IGNORES a `dimensions` param,
+    # so the 64d view is sliced client-side and re-normalised.
+    dense_model: str = "Qwen/Qwen3-Embedding-0.6B"
+    dense_dim: int = 1024                # native dim of dense_model
+    dense_dim_low: int = 64              # MRL truncation for the fast ANN first stage
+    # Qwen3 is instruction-aware: the model card measures a ~1-5% retrieval drop without a
+    # query-side instruction. Documents need none. The query path must match the index, so this
+    # is applied in store.search / evaluate_rag / funnel_boundary_recall alike.
+    query_instruction: str = (
+        "Instruct: Given a physics question, retrieve textbook passages that answer it\nQuery: "
+    )
+    # Cluster-served models for the ColBERT + sparse lanes (§I1 upgrades).
+    sv_colbert_model: str = "lightonai/GTE-ModernColBERT-v1"
+    sv_sparse_model: str = "Qdrant/bm42-all-minilm-l6-v2-attentions"
+
+    # Re-ingest chunking (E1/E2/E3)
+    late_chunk_enabled: bool = True      # embed children with parent context (cluster per-token)
+    parent_max_tokens: int = 5000        # Docling HybridChunker parent size (class-repo default)
+    semantic_threshold: float = 0.8      # chonkie SemanticChunker breakpoint
 
     # Chunking
     chunk_size: int = 512
