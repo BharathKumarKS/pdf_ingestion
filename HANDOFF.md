@@ -4,7 +4,7 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-16** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold set)
+> **Last updated: 2026-10-17** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold set)
 > is MEASURED.** Sessions 1–3c, 3d, 3d-ii and **Session 4/4b (all four steps) are done.** The v2 A/B:
 > **rerank vs no-rerank R@20 Δ −0.0101, 95% CI [−0.0299, +0.0097] → UNRESOLVED at n=133** (the
 > pre-registered rule is not met and cannot be met at a feasible n — §D9). **Step 4 ran 2026-10-16
@@ -24,8 +24,11 @@
 > `p0-9-gold-v2-visual_2026-10-17_0410.md` (visual); outcome: pre-registration → "Step 4 outcome".
 > **Next: the re-ingest (E1/E2/E3) → the reranker ablation; Session 5 (human verification) runs now.**
 > **P1 re-ingest STARTED 2026-10-16** — plan: `.hermes/plans/2026-10-16-p1-reingest-plan.md`
-> (10 steps, decisions closed). Done: Step 0 (config) + Step 1 (`cluster_embedder.py`, 11 tests).
-> Suite **297 pass / 5 fail** (same 5 pre-existing). Next: Step 2 (`parent_chunker.py`).
+> (10 steps, decisions closed). Done: Step 0 (config), Step 1 (`cluster_embedder.py`, 11 tests),
+> **Step 2 (`parent_chunker.py` + `models.py`; 9 tests + 1 slow)** — `test_book.pdf` → **42** parents,
+> every one with ≥1 in-range page and a heading stack (the plan's "43" was Docling's *default*
+> `max_tokens=512`; at the configured `parent_max_tokens=5000` it is 42).
+> Suite **306 pass / 5 fail** (same 5 pre-existing). Next: Step 3 (E1 `chunker.py` rewrite).
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -371,8 +374,8 @@ unresolvable numbers, not more knowledge.
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
 | 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) + **3d code (`4697961`)** + **3d-ii (`3a18da4`, `18250f1` — 33 usable visual labels, §B4d)** + **Session 4 (`e69c347`, `f109379`)** + **Session 4b (`769e60d` harness fixes; §D4 reframed; funnel re-run) + step 4 (2026-10-16)** — v2 = 200 (166 answerable + 34 negatives); **abstention 17/34 = 0.500 (met), Faith 0.661, visual lane 33 q R@20 0.960** (`p0-9-gold-v2_2026-10-17_0422.md`). **✅ P0-9 is MEASURED — both halves of the pre-registered decision now have numbers (reranker unresolved; abstention met).** Reranker decision deferred to a post-re-ingest ablation (§D13). on `feat/p0-9-gold-dataset-v2` |
 
-Test suite: **286 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`, re-measured 2026-10-16 —
-up from 247/5: +25 new tests from the §B1/§I3/§I6/§I7 work). The 5 are
+Test suite: **306 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`, re-measured 2026-10-17 —
+297/5 before the P1 Step 2 tests, +9 from `tests/test_parent_chunker.py`). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
 and 3 search tests return 0 results. **Not regressions; do not "fix" them here.**
 

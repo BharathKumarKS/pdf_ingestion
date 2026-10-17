@@ -1,6 +1,7 @@
 # P1 — the re-ingest (E1/E2/E3/E5 + §D4 + §I1). Execution plan.
 
-**Status:** planned 2026-10-16. Not started. Supersedes the "Next: the re-ingest" line in `HANDOFF.md`.
+**Status:** planned 2026-10-16. **Steps 0, 1 and 2 done** (P1-a). Next: Step 3 (E1 `chunker.py`
+rewrite). Supersedes the "Next: the re-ingest" line in `HANDOFF.md`.
 **Scope owner decisions taken 2026-10-16** (all four settled — see §2).
 
 > Read `ARCHITECTURE.md` §8 (invariants/traps) and `IMPROVEMENTS.md` §E before the first change.
@@ -96,23 +97,26 @@ Per child we store: `text`, `parent_id`, `parent_text`, `page_number` (provenanc
 
 Each step ends with: unit tests green (stubs, offline) → a small live probe → commit.
 
-### Step 0 — scaffolding & config (no behaviour change)
+### Step 0 — scaffolding & config (no behaviour change) ✅ DONE
 - `config.py`: add `sv_embed_url`, `dense_model`, `dense_dim` (1024), `dense_dim_low` (64),
   `sv_sparse_model`, `sv_colbert_model`, `late_chunk_enabled`, `parent_max_tokens`, `semantic_threshold`.
 - **Do not** flip `embedding_dim` yet — the intent classifier is schema-checked against it (§6 risk R-a).
 - Verify: `uv run pytest tests/ -q -m "not slow"` unchanged at the floor.
 
-### Step 1 — `cluster_embedder.py` (foundation; everything depends on it)
+### Step 1 — `cluster_embedder.py` (foundation; everything depends on it) ✅ DONE
 - `StubClusterEmbedder` (deterministic, no network) + `ClusterDenseEmbedder` (httpx, pooled + per-token).
 - MRL slice helper, re-normalised.
 - Factory `get_cluster_embedder` / `reset_cluster_embedder`; register in `tests/conftest.py`.
 - Verify: `tests/test_cluster_embedder.py` (stub) + one live probe asserting the per-token shape and
   the local-tokenizer alignment from §2.1.
 
-### Step 2 — E2 `parent_chunker.py`
+### Step 2 — E2 `parent_chunker.py` ✅ DONE 2026-10-17
 - Wrap Docling; expose `convert(pdf) -> (DoclingDocument, ParentChunk[])` where each `ParentChunk`
   carries `text`, `headings`, and a **char→page map** built from `meta.doc_items[].prov[].charspan/page_no`.
-- Verify: on `test_book.pdf` — 43 parents, every parent has ≥1 page, page numbers in range.
+- Verify: on `test_book.pdf` — **42** parents, every parent has ≥1 page, page numbers in range.
+  (`tests/test_parent_chunker.py`, 9 fast + 1 slow.) **The earlier "43" in this plan was measured with
+  Docling's default `max_tokens=512`; at the configured `parent_max_tokens=5000` the count is 42**
+  (Docling 2.117.0, 2026-10-17) — the figure, not the design, was stale.
 
 ### Step 3 — E1 `chunker.py` rewrite (SemanticChunker)
 - chonkie `SemanticChunker(threshold=…)` over each parent's text; children keep `start_index/end_index`.
