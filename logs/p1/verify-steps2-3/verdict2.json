@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "c2_verdict": "confirmed",
+  "c3_verdict": "confirmed",
+  "surviving_logic_errors": [],
+  "withdrawn_findings": [
+    "logic_error #1",
+    "logic_error #2",
+    "logic_error #3"
+  ],
+  "new_problems_in_counter_evidence": [],
+  "summary": "All earlier concerns are resolved; the code correctly handles page attribution, formula elements, and helper definitions, with no remaining defects."
+}

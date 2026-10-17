@@ -1,0 +1,32 @@
+{
+  "1_global_scan_false_positives": {
+    "mismatches_reported": 20,
+    "of_which_element_is_NOT_a_member_of_that_parent": 20,
+    "sample": [
+      {
+        "parent": 0,
+        "ref": "#/texts/18"
+      },
+      {
+        "parent": 2,
+        "ref": "#/texts/102"
+      },
+      {
+        "parent": 2,
+        "ref": "#/texts/329"
+      }
+    ]
+  },
+  "2_char_level_agreement": {
+    "positions_sampled": 5555,
+    "disagreements": 114
+  },
+  "3_formula_page_recorded": {
+    "formula_elements": 15,
+    "page_present_in_map_at_cursor": 15
+  },
+  "4_page_for_offset_definition": [
+    "line 251: def _page_for_offset(char_offset: int, page_map: dict[int, int]) -> Optional[int]:"
+  ],
+  "5_test_counts": "18 passed, 2 deselected in 3.63s"
+}

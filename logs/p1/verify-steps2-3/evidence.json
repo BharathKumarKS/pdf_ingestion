@@ -1,0 +1,147 @@
+{
+  "E1_charspan_is_element_relative": [
+    {
+      "ref": "#/texts/0",
+      "len_text": 19,
+      "prov": [
+        [
+          1,
+          [
+            0,
+            19
+          ]
+        ]
+      ],
+      "last_charspan_end": 19
+    },
+    {
+      "ref": "#/texts/1",
+      "len_text": 572,
+      "prov": [
+        [
+          1,
+          [
+            0,
+            13
+          ]
+        ],
+        [
+          2,
+          [
+            14,
+            117
+          ]
+        ],
+        [
+          2,
+          [
+            118,
+            572
+          ]
+        ]
+      ],
+      "last_charspan_end": 572
+    },
+    {
+      "ref": "#/texts/6",
+      "len_text": 47,
+      "prov": [
+        [
+          2,
+          [
+            0,
+            47
+          ]
+        ]
+      ],
+      "last_charspan_end": 47
+    },
+    {
+      "ref": "#/texts/7",
+      "len_text": 247,
+      "prov": [
+        [
+          2,
+          [
+            0,
+            247
+          ]
+        ]
+      ],
+      "last_charspan_end": 247
+    }
+  ],
+  "E2_formula_elements": [],
+  "E3_page_map_agreement": {
+    "elements_checked": 194,
+    "mismatches": 20,
+    "examples": [
+      {
+        "parent": 0,
+        "ref": "#/texts/10",
+        "claimed": 1,
+        "element_first_page": 2
+      },
+      {
+        "parent": 2,
+        "ref": "#/texts/93",
+        "claimed": 3,
+        "element_first_page": 8
+      },
+      {
+        "parent": 2,
+        "ref": "#/texts/279",
+        "claimed": 3,
+        "element_first_page": 19
+      },
+      {
+        "parent": 9,
+        "ref": "#/texts/234",
+        "claimed": 5,
+        "element_first_page": 15
+      },
+      {
+        "parent": 12,
+        "ref": "#/texts/234",
+        "claimed": 7,
+        "element_first_page": 15
+      }
+    ]
+  },
+  "E3_spanning_parent_example": {
+    "parent_id": 0,
+    "pages": [
+      1,
+      2
+    ],
+    "page_map": {
+      "0": 1,
+      "14": 2,
+      "118": 2,
+      "573": 2,
+      "621": 2,
+      "869": 2
+    }
+  },
+  "E4_tiling": {
+    "children": 91,
+    "bad_slice": 0,
+    "bad_owner_span": 0,
+    "bad_contiguity_or_coverage": 0
+  },
+  "E5_merge": {
+    "parents": 42,
+    "merged_children": 42,
+    "parents_with_!=1_child": 0
+  },
+  "E6_legacy_path": {
+    "chunks": 7,
+    "parent_fields_all_none": true,
+    "indices_sequential": true,
+    "first_starts_at_0": true,
+    "slice_matches": true
+  },
+  "E7_cluster_basic": {
+    "status": 200
+  }
+}

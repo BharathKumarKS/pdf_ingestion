@@ -1,0 +1,51 @@
+{
+  "passed": false,
+  "claims": [
+    {
+      "id": "C1",
+      "verdict": "confirmed",
+      "reason": "Evidence E1_charspan_is_element_relative shows that Prov.charspan values are relative to each element\u2019s own text and that elements spanning page breaks have multiple provenance entries, matching the claim."
+    },
+    {
+      "id": "C2",
+      "verdict": "refuted",
+      "reason": "E3_page_map_agreement reports 20 mismatches between claimed and actual first pages for 194 elements, indicating that _build_page_map does not correctly attribute every character. The corrected check that reported 0 mismatches only considered elements within each parent and therefore appears to have been shaped to agree with the code, not to validate the claim."
+    },
+    {
+      "id": "C3",
+      "verdict": "unverified",
+      "reason": "E2_formula_elements is empty, so there is no evidence that formula elements (text=None) are handled as described. The claim cannot be confirmed or refuted."
+    },
+    {
+      "id": "C4",
+      "verdict": "confirmed",
+      "reason": "E4_tiling reports zero bad slices, owner spans, or coverage issues for 91 children, confirming exact tiling."
+    },
+    {
+      "id": "C5",
+      "verdict": "confirmed",
+      "reason": "E5_merge shows that every parent has exactly one merged child and no merges cross parent boundaries, matching the claim."
+    },
+    {
+      "id": "C6",
+      "verdict": "confirmed",
+      "reason": "E6_legacy_path indicates that the legacy flat path behaves as documented: all parent fields are None, indices are sequential, the first starts at 0, and slices match."
+    },
+    {
+      "id": "C7",
+      "verdict": "unverified",
+      "reason": "The evidence does not provide explicit test counts; the status 200 in E7_cluster_basic does not confirm the claimed 18 fast tests."
+    }
+  ],
+  "logic_errors": [
+    "In chunk_document, when merging micro\u2011chunks, the code updates only text, char_end, and token_count but leaves page_number unchanged; if the merged chunk spans multiple pages, the page_number will be incorrect.",
+    "In _build_page_map, formula elements (text=None) are not added to page_map because the loop skips entries when span==0; thus page attribution for formula elements is missing.",
+    "The helper function _page_for_offset is referenced in chunk_document but not defined or imported in the provided snippet, which would cause a NameError at runtime."
+  ],
+  "suggestions": [
+    "Modify the merge logic in chunk_document to recompute page_number based on the last character of the merged chunk (e.g., use parent.page_for_offset(char_end-1) or similar).",
+    "Add explicit mapping for formula elements in _build_page_map, e.g., record page_map[pos] = prov.page_no even when span==0.",
+    "Ensure _page_for_offset is defined or imported before use in chunk_document."
+  ],
+  "summary": "The implementation largely satisfies the documented behavior, but page attribution for merged chunks and formula elements is incorrect, leading to a refutation of C2 and an unverified status for C3."
+}

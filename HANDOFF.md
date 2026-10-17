@@ -33,7 +33,9 @@
 > parent exactly, no child crosses a parent. Segmentation model = chonkie's default (local
 > `potion-base-32M`); the indexed vectors stay the cluster dense model. §E1 carries the merge
 > measurement (91 → 66, −27%).
-> Suite **315 pass / 5 fail** (same 5 pre-existing). Next: Step 4 (E3 `late_chunk_embedder.py`).
+> Suite **315 pass / 5 fail** (same 5 pre-existing). **Next: Step 4 (E3 `late_chunk_embedder.py`) —
+> start with the Qwen3 tokenizer-alignment probe, NOT the module** (plan §Step 4 "FIRST ACTION":
+> §2.1 verified the local↔API token alignment for *jina* only, and R2 selects Qwen3).
 >
 > **Steps 2–3 went through independent review 2026-10-17** (verifier = `openai/gpt-oss-20b`, a
 > different model from the author's). It found one genuine defect — a parent with no provenance

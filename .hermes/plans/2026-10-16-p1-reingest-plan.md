@@ -147,6 +147,26 @@ Each step ends with: unit tests green (stubs, offline) → a small live probe �
 - Verify: a chunk containing "This" gets a vector that differs from its isolation-embedded twin, and
   `mean(tok)[:64] == mean(tok[:64])` numerically (the MRL/linearity claim in §2.1).
 
+- **⛔ FIRST ACTION — the alignment precondition is only half-verified.** §2.1 proved that a *local
+  jina* tokenizer returns the same token count as the cluster returns vectors, which is what makes
+  local `offset_mapping` align 1:1 with the API's token vectors. For **`Qwen/Qwen3-Embedding-0.6B`**
+  — the model R2 actually selects — only the response *shape* `(1, 19, 1024)` was checked, **not**
+  the count/offset agreement. Every mean-pooled child vector depends on that alignment, so verify
+  it for Qwen3 **before writing the module**, exactly as §2.1 did for jina (same text → same token
+  count locally and from the API; then spot-check that token `i`'s vector corresponds to the local
+  `offset_mapping[i]` span).
+  - **If Qwen3 aligns:** proceed as planned, 1024d + 64d.
+  - **If it does not:** the fallback is jina for the token path (768d), which collides with R2's
+    1024d dense design and the §7.1 `dense_1024` naming — that is a decision to bring back to the
+    owner, not to pick silently.
+- **Also measure before committing to it:** per-token embedding cost on `test_book.pdf` extrapolated
+  to 968 pages (per-token output dwarfs pooled), and whether the `min_chunk_tokens=32` merge
+  (91→66 children on `test_book.pdf`, §E1) is still the right unit now that children are what gets
+  embedded and retrieved.
+- **Independent verification is part of this step** (see `HANDOFF.md` → Session hygiene): run the
+  verifier single-turn with evidence embedded — `openai/gpt-oss-20b` cannot sustain a multi-turn
+  tool session on the cluster (harmony control tokens leak; measured 2026-10-17).
+
 ### Step 5 — E5 `is_content`
 - Reuse the `_NON_CHAPTER` list already in `store.py:1362`, promoted to a shared helper.
 - Tag each child; write the flag into the Qdrant payload + SQLite; filter retrieval on it.
