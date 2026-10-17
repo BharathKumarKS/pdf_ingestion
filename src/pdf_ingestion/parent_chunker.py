@@ -116,11 +116,21 @@ def _item_texts(doc) -> dict[str, str]:
 
 
 def _to_parent(index: int, doc_chunk, item_texts: dict[str, str]) -> ParentChunk:
+    page_map = _build_page_map(doc_chunk, item_texts)
+    if not page_map:
+        # Loud, not silent. A parent with no provenance yields children whose page_number is
+        # None, which breaks page citations downstream; P0's "silent fallbacks killed" pass
+        # exists precisely so this class of degradation does not reappear unannounced.
+        logger.warning(
+            "Parent {} has no page provenance — its children will carry no page_number "
+            "({} chars, {} elements)",
+            index, len(doc_chunk.text), len(doc_chunk.meta.doc_items),
+        )
     return ParentChunk(
         parent_id=index,
         text=doc_chunk.text,
         headings=list(doc_chunk.meta.headings or []),
-        page_map=_build_page_map(doc_chunk, item_texts),
+        page_map=page_map,
     )
 
 

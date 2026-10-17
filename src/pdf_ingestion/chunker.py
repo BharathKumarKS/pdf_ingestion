@@ -133,7 +133,9 @@ class SemanticChunker:
 
             if token_count < self._cfg.min_chunk_tokens and out:
                 # Merge into the previous child of the SAME parent, so no child ever spans
-                # two parents.
+                # two parents. ``page_number`` is deliberately left as the previous child's:
+                # it is the page of the merged child's START, which is the convention every
+                # page_number in this codebase follows (it is derived from char_start).
                 prev = out[-1]
                 out[-1] = replace(
                     prev,

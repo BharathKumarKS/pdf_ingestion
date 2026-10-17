@@ -32,7 +32,9 @@ def _item(ref: str, *provs: SimpleNamespace) -> SimpleNamespace:
 
 
 def _chunk(text: str, *items: SimpleNamespace) -> SimpleNamespace:
-    return SimpleNamespace(text=text, meta=SimpleNamespace(doc_items=list(items)))
+    return SimpleNamespace(
+        text=text, meta=SimpleNamespace(doc_items=list(items), headings=[])
+    )
 
 
 # ── Page map ────────────────────────────────────────────────────────────────
@@ -78,6 +80,29 @@ def test_page_map_anchors_offset_zero_when_no_element_claims_it():
 
 def test_page_map_is_empty_for_an_element_less_chunk():
     assert _build_page_map(_chunk("", ), {}) == {}
+
+
+def test_parent_without_provenance_warns_instead_of_failing_silently():
+    """A parent with no provenance is loud — its children would silently have no page_number.
+
+    Found by the independent reviewer on the Step 2 diff (2026-10-17): `_build_page_map` can
+    legitimately return `{}` (no element carries `prov`), and `page_for_offset` then returns
+    None for every child. The slow test cannot see it — `test_book.pdf` does have provenance.
+    """
+    from loguru import logger
+
+    from src.pdf_ingestion.parent_chunker import _to_parent
+
+    captured: list[str] = []
+    sink = logger.add(lambda msg: captured.append(msg), level="WARNING")
+    try:
+        parent = _to_parent(3, _chunk("text with no provenance", _item("#/x")), {})
+    finally:
+        logger.remove(sink)
+
+    assert parent.page_map == {}
+    assert parent.page_for_offset(0) is None
+    assert any("no page provenance" in record for record in captured)
 
 
 # ── ParentChunk contract ────────────────────────────────────────────────────

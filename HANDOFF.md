@@ -33,7 +33,16 @@
 > parent exactly, no child crosses a parent. Segmentation model = chonkie's default (local
 > `potion-base-32M`); the indexed vectors stay the cluster dense model. §E1 carries the merge
 > measurement (91 → 66, −27%).
-> Suite **314 pass / 5 fail** (same 5 pre-existing). Next: Step 4 (E3 `late_chunk_embedder.py`).
+> Suite **315 pass / 5 fail** (same 5 pre-existing). Next: Step 4 (E3 `late_chunk_embedder.py`).
+>
+> **Steps 2–3 went through independent review 2026-10-17** (verifier = `openai/gpt-oss-20b`, a
+> different model from the author's). It found one genuine defect — a parent with no provenance
+> silently gave every child `page_number=None` — now fixed with a loud warning + test. Two of its
+> three "logic errors" were diff-only artifacts (a helper defined outside the diff; a guard
+> misread), and its C2 refutation rested on a flawed check of the author's own. Adjudicated with
+> evidence: **page-map agreement is 0 mismatches / 169 elements and 0 / 5555 sampled characters**
+> against Docling's per-element provenance as an independent oracle. See "Verified facts" for the
+> verifier's model and its one hard limit (no multi-turn tool sessions).
 > If this date is old, re-check `git log --oneline -5` and `git status --short` first.
 
 ---
@@ -393,6 +402,14 @@ plan. The previous long session reached ~271k tokens/call with 2 lossy compactio
 **do not continue P0-9 inside a compacted session.** See `p0-9-SESSIONS.md` for the split and the
 handoff steps.
 
+**Independent verification is a step, not a nicety.** Run `requesting-code-review`'s Step 5 on
+every commit that changes source. `delegate_task` already runs on a different model
+(`openai/gpt-oss-20b` — see "Verified facts"), so the independence costs nothing, but it is only
+real if it is invoked: Steps 2 and 3 shipped unreviewed on 2026-10-17 and the reviewer immediately
+found a genuine defect (a parent with no provenance silently gave every child `page_number=None`).
+Budget `max_tokens` ≥32k for the reviewer — on a 300-line diff the hidden reasoning trace alone
+exceeded 16k output tokens and the verdict came back empty.
+
 ---
 
 ## Priority plan (agreed)
@@ -458,6 +475,8 @@ gates), with cost classes and re-ingest ordering: [`IMPROVEMENTS.md`](IMPROVEMEN
 | Visual lane (v2, 33 q) | **R@20 0.960** · R@100 0.836 · Hit@20 1.000 · MRR 0.914 · NDCG@20 0.891 — **first measurement** 2026-10-16 (cluster `visual_knowledge_base`, ColPali text-query path; `data/eval_results/p0-9-gold-v2-visual_2026-10-17_0410.md`). §B4f resolved (base model cached); §I10 fixed the per-query 5.5 GB reload that OOM-killed the first try |
 | Judge lane (v1, 23 q) | Faithfulness **0.701 (a floor)** · Ans.Relevance 0.927 · Citation 1.000 |
 | Judge gateway | **`http://10.0.10.70:8000`** — serves `Qwen/Qwen3-VL-8B-Instruct` (the D9 VLM) among 6 models; ~0.8 s per page judgment at concurrency 1. The P0-9 plan's `10.0.10.51:8000` is **dead**. |
+| Cluster LLM catalogue (probed 2026-10-17) | **Listed ≠ serving.** `/v1/models` returns 6 ids, but only **2 text models answer**: `openai/gpt-oss-20b` (200, ~0.3 s on a trivial prompt) and `Qwen/Qwen3-VL-8B-Instruct` (200). **`openai/gpt-oss-120b` is listed and 502 ×3** ("Backend inference unreachable"), as is `deepseek-ai/DeepSeek-R1-Distill-Qwen-7B` (backend `10.0.50.71` down). Same trap class as §B4a's ColPali endpoint — re-probe, never trust the catalogue. |
+| Verifier model | `delegate_task` children run **`openai/gpt-oss-20b`** (cluster) — `delegation.model` in `~/.hermes/config.yaml`, alias `sv-gptoss`. That is a *different* model from the main agent (`deepseek/deepseek-v4.1-flash`), so the independent-review step is free. `delegation.fallback_providers` is **`[]`** (it was the main agent's own model → a cluster outage silently turned the verifier into self-review). **Limit (measured 2026-10-17):** it cannot sustain a multi-turn *tool* session — after 25 API calls the provider rejected the request as malformed because the model's own harmony control tokens (`<\|channel\|>commentary`) had leaked into message content and the server could not parse the replayed history. Single-turn tool calling works. So the verifier runs **single-turn with the evidence embedded**, not as a tool-using agent; a mid-run protocol failure counts as *no verdict*, never a pass. |
 
 ---
 
