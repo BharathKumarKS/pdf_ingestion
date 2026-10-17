@@ -1,0 +1,464 @@
+[
+  {
+    "parent_id": 0,
+    "text": "Ira Nirenberg To access a customizable version of this book, as well as other interactive content, visit www.ck12.org CK-12 Foundation is a non-profit organization with a mission to reduce the cost of textbook materials for the K-12 market both in the U.S. and worldwide. Using an open-content, web-based collaborative model termed the FlexBook \u00ae, CK-12 intends to pioneer the generation and distribution of high-quality educational content that will serve both as core text as well as provide an adaptive environment for learning, powered through the FlexBook Platform \u00ae.\nCopyright \u00a9 2014 CK-12 Foundation, www.ck12.org\nThe names 'CK-12' and 'CK12' and associated logos and the terms ' FlexBook \u00ae' and ' FlexBook Platform \u00ae' (collectively 'CK-12 Marks') are trademarks and service marks of CK-12 Foundation and are protected by federal, state, and international laws.\nAny form of reproduction of this book in any format or medium, in whole or in sections must include the referral attribution link http://www.ck12.org/saythanks (placed in a visible location) in addition to the following terms.\nExcept as otherwise noted, all CK-12 Content (including CK-12 Curriculum Material) is made available to Users in accordance with the Creative Commons Attribution-Non-Commercial 3.0 Unported (CC BY-NC 3.0) License (http://creativecommons.org/ licenses/by-nc/3.0/), as amended and updated by Creative Commons from time to time (the 'CC License'), which is incorporated herein by this reference.\nComplete terms can be found at http://www.ck12.org/terms. Printed: December 11, 2014",
+    "char_start": 0,
+    "char_end": 1573,
+    "page_number": 1
+  },
+  {
+    "parent_id": 1,
+    "text": "Ira Nirenberg\nEDITOR Boris Korsunsky",
+    "char_start": 0,
+    "char_end": 36,
+    "page_number": 2
+  },
+  {
+    "parent_id": 2,
+    "text": "- 1.1 Newton's First Law\n- 1.2 Newton's Second Law\n- 1.3 Newton's Third Law\n- 1.4 References\nNewton's three Laws of Motion are the core of our understanding of force , which is how objects affect each others' motion. In this chapter, we will cover the definition of force, an object's innate resistance to being moved by force -called inertia -and how forces interact with each other.",
+    "char_start": 0,
+    "char_end": 384,
+    "page_number": 3
+  },
+  {
+    "parent_id": 3,
+    "text": "The student will:\n- Describe what force is and different types of forces\n- Understand the meaning of inertia and Newton's First Law",
+    "char_start": 0,
+    "char_end": 131,
+    "page_number": 4
+  },
+  {
+    "parent_id": 4,
+    "text": "- force: Any effect on the motion of another object. This includes pushing and pulling, as well as resistance to being moved across or through.\n- inertia: The resistance of any object to changing its state of motion, equal to its mass.\n- mass: A measure of the amount of matter in an object. Weight on Earth's surface is based on mass, but an object's mass is the same wherever it is taken.\n- net force: The combination of all the forces on a single object.",
+    "char_start": 0,
+    "char_end": 457,
+    "page_number": 4
+  },
+  {
+    "parent_id": 5,
+    "text": "Isaac Newton was a 17 th century scholar, scientist, and mathematician who formalized our present understanding of force . Our everyday experience is that moving objects always tend to stop, but Newton proved that this was the result of other things getting in the way -like air resistance or friction. If you slide a book across a table, it comes to a stop. If you slide it along ice, it will go further before it stops. In the absence any opposing force, an object will slide forever. Newton's work showed that the 'natural' state of moving objects in the absence of an opposing force is not rest, but continuous motion.",
+    "char_start": 0,
+    "char_end": 622,
+    "page_number": 4
+  },
+  {
+    "parent_id": 6,
+    "text": "In everyday English, we use 'force' to mean pushing or being pushy. For example, someone is called 'forceful' if they insist on getting their way. In physics, pushing is a force, but force also means resisting being pushed. When you are standing, the ground is exerting force on you that keeps you from falling. The ground is not doing anything, but is still exerting a force known as a normal force.\nCommon types of forces include:\n1.",
+    "char_start": 0,
+    "char_end": 436,
+    "page_number": 4
+  },
+  {
+    "parent_id": 6,
+    "text": "The normal force is an object's resistance to things going through it. The force always points away from the flat surface -known as the normal or perpendicular to that surface.\n2. Friction is a force that a surface exerts when something tries to slide across it. A hockey rink has a low friction force.",
+    "char_start": 436,
+    "char_end": 739,
+    "page_number": 4
+  },
+  {
+    "parent_id": 6,
+    "text": "That means it's easy to slide across it. A football field has a medium friction force -if you fall you may slide a little on the grass. A tennis court has a high friction force -you won't slide at all if you fall, though you may tumble. The friction force also depends on your weight -the harder you're pushing on the ground, the harder it is for you to slip.\n3.",
+    "char_start": 739,
+    "char_end": 1102,
+    "page_number": 4
+  },
+  {
+    "parent_id": 6,
+    "text": "Air resistance is the force of drag that the air has on things moving through it, like the force on your hand held out the window of a moving car. The force depends on how fast you're going. If the car is going faster, your hand is pushed back harder. It also depends on the area facing the wind. If you hold your palm sideways, the\nwind pushes it harder than if you turn your palm down. A football going point-first has less air resistance than one that's sideways or tumbling.",
+    "char_start": 1102,
+    "char_end": 1581,
+    "page_number": 4
+  },
+  {
+    "parent_id": 6,
+    "text": "These three together are known as contact forces. Other forces include:\n1. Gravity is force that acts at a distance between any two objects. The more massive the object, the greater the force of gravity it exerts. In everyday life, only Earth itself is large enough to create noticeable force, but sensitive instruments can detect the pull of gravity from a mountain or other feature.\n2. Other fundamental forces include electrical force, magnetic force, and nuclear forces. These will be studied in other contexts.\nA net force is not a type of force, but rather the combination of all the forces on a given object.",
+    "char_start": 1581,
+    "char_end": 2196,
+    "page_number": 5
+  },
+  {
+    "parent_id": 7,
+    "text": "Galileo formulated what we now call Newton's First Law of Motion.",
+    "char_start": 0,
+    "char_end": 65,
+    "page_number": 5
+  },
+  {
+    "parent_id": 8,
+    "text": "A very important idea is implicit in Galileo's statement. Objects at rest and objects in uniform motion (constant velocity) are equivalent. Both states -rest and uniform motion -are arbitrary , they are, in effect, interchangeable. Any frame of reference (reference frame) which can be said to exhibit a state of 'at-rest' or uniform motion, with respect to any other frame of reference is said to be an inertial frame of reference. We usually associate a coordinate system with a frame of reference. If you're standing on a street corner and a bus passes, you see the passengers on the bus in motion and they see you in motion.",
+    "char_start": 0,
+    "char_end": 629,
+    "page_number": 5
+  },
+  {
+    "parent_id": 8,
+    "text": "If you're seated on the bus and a passenger gets up from her seat and walks down the length of the bus, you assume you're at rest and she's in motion.\nTypically, an at-rest reference frame is understood to mean a frame of reference attached to Earth.",
+    "char_start": 629,
+    "char_end": 880,
+    "page_number": 5
+  },
+  {
+    "parent_id": 8,
+    "text": "(In fact, the Earth is not a perfectly inertial frame of reference since it rotates, but it's a good approximation for most uses.) Any reference frame moving with constant velocity relative to you can be used as an at-rest reference frame. If you're in an elevator moving with constant velocity, up or down, and conduct an experiment to determine the acceleration of gravity, you'll measure the same value of the acceleration if you conduct the experiment standing on Earth -no matter what experiment you use! All inertial frames give rise to the same laws of physics.",
+    "char_start": 880,
+    "char_end": 1448,
+    "page_number": 5
+  },
+  {
+    "parent_id": 9,
+    "text": "1. You're in an elevator which is moving upward with a constant velocity of 3.0 m/s. You release a ball from waist height. You then perform the same experiment when you're standing on the ground. The time of fall to the elevator floor compared to the time of fall to the ground is:\n- a. Less\n- b. More\n- c. The same\nAnswer: C. All experimental results are the same regardless of which inertial frame is used to conduct the experiment. Inertia is one of the most baffling ideas in physics. One of the common choices in the question above is option A. Many people reason that since the elevator floor is moving upward, the ball will impact it sooner than it would the ground.",
+    "char_start": 0,
+    "char_end": 674,
+    "page_number": 5
+  },
+  {
+    "parent_id": 9,
+    "text": "Perhaps we can explain what is happening in the elevator by asking what we would see while standing on the Earth and viewing only the motion of the ball. Initially, we see the ball rising with a constant velocity of 3 m/s. At the instant the ball is dropped, we see the ball begin to slow down, as it continues to briefly ascend no differently FIGURE 1.1\nthan had the ball left own hand with a velocity of 3 m/s. The acceleration of gravity that the ball experiences is the same whether you toss the ball into the air or simply drop the ball. In the reference frame of the elevator, the ball simply appears to drop to the floor. The elevator floor is no more 'rushing up' to meet the ball then the 'stationary' Earth does. (We will be more precise with this statement when we discuss Newton's Third Law.)",
+    "char_start": 674,
+    "char_end": 1479,
+    "page_number": 5
+  },
+  {
+    "parent_id": 9,
+    "text": "We associate inertia with mass : the more mass, the more inertia. The more mass an object has, the more force is required to alter its state of motion. Pulling a table cloth out from under the dishes, putting a coin on your elbow and quickly retracting your elbow and catching the coin, and removing the support under a coin with a fast horizontal motion allowing the coin to drop through an opening it was suspended above, are all examples of tricks where an object's inertia is responsible for the perceived magic. An unfortunate example of inertia in action is so-called",
+    "char_start": 1479,
+    "char_end": 2053,
+    "page_number": 6
+  },
+  {
+    "parent_id": 9,
+    "text": "'whiplash injury.' Suppose a moving car rear-ends another car that is at rest. Imagine that the driver's seat of the 'front' car does not have a head rest. In that case, the car, and the driver's body, lurch forward, but the driver's head tends to stay in place due to its inertia, straining the neck. The resulting damage to the neck is called a whiplash injury. This bit of physics often creeps into the courtroom.",
+    "char_start": 2053,
+    "char_end": 2469,
+    "page_number": 7
+  },
+  {
+    "parent_id": 10,
+    "text": "It's not uncommon in science fiction shows to show a space ship 'towing' another disabled ship. As long as the towing ship is moving with constant velocity, there is no reason to keep towing. The disabled ship's inertia will maintain the same velocity since there is negligible friction in deep space. In reality, we can send unmanned probes into deep space with only enough fuel to break out of Earth's orbit. Once the probe is moving fast enough to escape the Earth's gravity, its thrusters are turned off for months or years depending upon how far the journey.",
+    "char_start": 0,
+    "char_end": 563,
+    "page_number": 7
+  },
+  {
+    "parent_id": 11,
+    "text": "The New Horizons space probe will spend most of its year journey traveling nearly 60,000 km/h without a need of fuel as a result of its inertia. It will arrive at Pluto July 14, 2015.\nWe use the symbol F to mean force in physics and we use the Greek letter sigma, , read as 'the sum of' to express the condition under which Newton's First Law holds, that is:\nF = 0; the sum of all forces acting on an object is zero (in other words, the net force, Fnet on the object is zero, F = Fnet = 0). Under this condition the object may be at rest or have a constant velocity.",
+    "char_start": 0,
+    "char_end": 566,
+    "page_number": 7
+  },
+  {
+    "parent_id": 12,
+    "text": "A student holds a physics text book out the window of a helicopter ascending with a speed of 10 m/s. When the helicopter reaches a height of 100 m, she releases the text. The highest position above the ground that the book achieves is:\n- a. 100 m\n- b. Greater than 100 m\nAnswer: The correct answer is B. Due to the book's inertia it continues moving upward after being released. The unbalanced force of gravity slows the book down until it reaches its highest position above the ground. (The book's highest position is approximately 105 m.)",
+    "char_start": 0,
+    "char_end": 540,
+    "page_number": 7
+  },
+  {
+    "parent_id": 13,
+    "text": "- Define Newton's Second Law and net force\n- Calculate acceleration from force and mass\n- Calculate force from acceleration and mass\n- Calculate mass from force and acceleration",
+    "char_start": 0,
+    "char_end": 177,
+    "page_number": 8
+  },
+  {
+    "parent_id": 14,
+    "text": "Kick a small stone and it moves fairly fast. Kick a larger stone with the same force and it doesn't move so fast. We hypothesize that force is capable of producing acceleration and the size of acceleration is dependent upon the mass of the object to which the force is applied. If we use, without stating a precision definition, the term 'mass,' we see a relationship between the net force, acceleration, and mass.\nNewton's Second Law: The acceleration, a , of an object is directly proportional to the net force, S F , upon it and inversely proportional to its mass, m .\nAs long as one force is involved, this is pretty simple. The more massive something is, the harder you have to push it -and the harder you push it, the more you can accelerate it.",
+    "char_start": 0,
+    "char_end": 752,
+    "page_number": 8
+  },
+  {
+    "parent_id": 14,
+    "text": "These are all linearly proportional, which means that they are found by simple multiplication. Suppose on a muddy day, an opposing player with the ball loses his footing and starts slipping toward you, and you bring him to a stop. Because he slipped, he's not pushing back, so your push is the only force on him. Suppose later that game, a similar case happens.",
+    "char_start": 752,
+    "char_end": 1114,
+    "page_number": 8
+  },
+  {
+    "parent_id": 14,
+    "text": "Here are some cases of how linear proportionality works in a case like this:\n- If you use twice as much force, you can accelerate the next player twice as quickly, bringing him to a stop in half the time.\n- If you use twice as much force, you can accelerate a player twice as massive, bringing them to a stop in the same time. If the new player is twice as massive, it would take twice as much force to accelerate them the same amount. Alternately, if the new player is twice as massive and you apply the same force, he will only accelerate half as much. He would come to a stop more slowly, taking twice as long.\n- If the new player comes to a stop twice as quickly (twice the acceleration), then he may have had twice the force applied to him. Alternately, if the new player comes to a stop twice as quickly (twice the acceleration), then he may have the same force applied to him, but he is only half as massive.",
+    "char_start": 1114,
+    "char_end": 2029,
+    "page_number": 8
+  },
+  {
+    "parent_id": 15,
+    "text": "When you calculate force, if you use mass in kilograms (kg) and acceleration in meters per second squared (m/s 2 ), then the resulting force comes out in a unit called the 'Newton,' after Isaac Newton. If you're using other units, you'll need to convert. In American Imperial units, the pound is used as a measure of both mass and force. The conversions are:\n- 1 pound (lbs) = 0.45 kilograms (kg)\n- 1 pound (lbs) = 4.4 Newtons (N)\nSide Note: The unit 'Newton' is written with a capital N. Units that are named after people are capitalized just like that person's name, while other units, like meter and kilogram, are not.",
+    "char_start": 0,
+    "char_end": 621,
+    "page_number": 9
+  },
+  {
+    "parent_id": 16,
+    "text": "Mass is the 'stuff' (matter) that an object possesses. The pull of gravity on mass is the mass's weight. The more mass an object has, the more inertia it has, and the more weight it has at a particular location.\nHowever, we do not need gravity to define mass.",
+    "char_start": 0,
+    "char_end": 260,
+    "page_number": 9
+  },
+  {
+    "parent_id": 16,
+    "text": "Imagine, for instance, a rectangular block of wood of mass m resting upon a horizontal frictionless surface.\nFIGURE 1.3\nAblock accelerates along a frictionless table due to a horizontal force of 30.0 N acting upon it. (The force of gravity and the normal force also act upon the block, but these forces do not enter into our discussion. We will have more to say about these when we discuss free-body diagrams.)",
+    "char_start": 260,
+    "char_end": 671,
+    "page_number": 9
+  },
+  {
+    "parent_id": 16,
+    "text": "Measuring the position of the block as a function of time, we are able to determine the acceleration of the block is 2 . 00 m / s 2 . Since F = ma , we have 30 N = m ( 2 . 0 m / s 2 ) and m = 15 kg .",
+    "char_start": 671,
+    "char_end": 871,
+    "page_number": 9
+  },
+  {
+    "parent_id": 16,
+    "text": "Notice we did not use gravity to determine the mass of the block.\nHad we weighed the block we would have found its weight to be 147 N. Using W = mg , we find the block's mass as 15 kg.\nhttp://demonstrations.wolfram.com/NewtonsSecondLaw",
+    "char_start": 871,
+    "char_end": 1106,
+    "page_number": 9
+  },
+  {
+    "parent_id": 17,
+    "text": "1. Newton's First Law defines what we mean by an inertial frame. Physics is easier to interpret from the point of view of an inertial frame.\n2. One object may be subject to many forces. In a situation where an object has forces acting upon it yet the object moves with a constant velocity, the net force on the object is zero. For example: A person places a 100 N force upon a box while moving it with a constant velocity of 2 m/s. This statement is indirectly stating that another 100 N force (or forces adding up to 100 N) is directed opposite the 100-N force that the person is applying.",
+    "char_start": 0,
+    "char_end": 590,
+    "page_number": 9
+  },
+  {
+    "parent_id": 18,
+    "text": "Mass is a scalar quantity having units of kilograms. Weight is a vector quantity measured in Newtons. Your mass does not change regardless of where you are in the universe. Your weight on the other hand is dependent upon gravitational acceleration. Hence, your weight changes depending upon which planet you're on. We use the word gravity to represent the force that keeps our feet on the ground.",
+    "char_start": 0,
+    "char_end": 397,
+    "page_number": 10
+  },
+  {
+    "parent_id": 18,
+    "text": "When we jump, we don't just keep moving upward. We reach a high point, depending on how much effort we put into the jump, and then fall back to Earth. Galileo determined that the acceleration, g , due to gravity for all falling bodies close to Earth's surface has a numerical value of about 10 m/s 2 . It is important not to confuse the acceleration due to gravity, g , and the force of gravity W or mg .\nWeight, W , is defined as the product of mass, m , and acceleration due to gravity, g : W = mg . The weight of a 1.0 kg mass is: W =( 10 m/s 2 )( 1 . 0kg ) = 10 kg \u00d7 m/s 2 = 10N. The weight is 10 Newtons.",
+    "char_start": 397,
+    "char_end": 1006,
+    "page_number": 10
+  },
+  {
+    "parent_id": 19,
+    "text": "1. The mass of a 1.00-N weight is:\n- a. 1.0 kg\n- b. 10. kg\n- c. 0.10 kg\nAnswer: C. W = mg so m = W g . Putting in the weight of 1 Newton and g , we get 1 N 10 m / s 2 = 0 . 10kg.\n2. What is the force of gravity acting on a 15.0-kg mass?",
+    "char_start": 0,
+    "char_end": 237,
+    "page_number": 10
+  },
+  {
+    "parent_id": 19,
+    "text": "<!-- formula-not-decoded -->\n3. Find the acceleration due to gravity in the following cases.\n- a. A 70.0 kg astronaut weighs 261.1 N on the Mars. Find the acceleration of gravity on the surface of the Mars.\n- b. A70.0 kg astronaut weighs 113.4 N on the Moon. Find the acceleration of gravity on the surface of the Moon.",
+    "char_start": 237,
+    "char_end": 556,
+    "page_number": 10
+  },
+  {
+    "parent_id": 20,
+    "text": "<!-- formula-not-decoded -->\n<!-- formula-not-decoded -->\nhttp://www.flashscience.com/motion/weight_on_planets.htm\nhttp://demonstrations.wolfram.com/FreeFallOnTheSolarSystemPlanetsAndTheMoon/",
+    "char_start": 0,
+    "char_end": 191,
+    "page_number": 10
+  },
+  {
+    "parent_id": 21,
+    "text": "- Understand Newton's Third Law\n- Understand the difference between countering force and action-reaction\n- Use Newton's three laws to solve problems in one dimension",
+    "char_start": 0,
+    "char_end": 165,
+    "page_number": 11
+  },
+  {
+    "parent_id": 22,
+    "text": "- center of mass : The point at which all of the mass of an object is concentrated.\n- dynamics : Considers the forces acting upon objects.\n- free-body diagram (FBD) : A diagram that shows those forces that act upon an object/body.",
+    "char_start": 0,
+    "char_end": 230,
+    "page_number": 11
+  },
+  {
+    "parent_id": 23,
+    "text": "F = Ma",
+    "char_start": 0,
+    "char_end": 6,
+    "page_number": 11
+  },
+  {
+    "parent_id": 24,
+    "text": "It was Newton who realized singular forces could not exist: they must come in pairs. In order for there to be an 'interaction' there must be at least two objects, each 'feeling' the other's effect.\nNewton's Third Law: Whenever two objects interact, they must necessarily place equal and opposite forces upon each other.\nMathematically, Newton's Third Law is expressed as FAB = -FBA , where the subscript AB means the force exerted on A by B and the subscript BA means the force exerted on B by A . Forces FAB and FBA are identical forces and never act upon the same object. Forces that are equal and opposite and act upon the same object are not a pair.",
+    "char_start": 0,
+    "char_end": 653,
+    "page_number": 11
+  },
+  {
+    "parent_id": 25,
+    "text": "We use Newton's laws to solve dynamics problems. Dynamics, unlike kinematics, considers the forces acting upon objects. Whether it is a system of stars gravitationally bound together or two colliding automobiles, we can use Newton's laws to analyze and quantify their motion. Of Newton's three laws, the major mathematical 'workhorse' used to investigate these and endless other physical situations is Newton's Second Law (N2L): F = Ma .\nIn using Newton's laws, we assume that the acceleration is constant in all of the examples in the present chapter. Newton's laws can certainly deal with situations where the acceleration is not constant, but for the most part, such situations are beyond the level of this book. A notable exception to this is when we investigate oscillatory motion.",
+    "char_start": 0,
+    "char_end": 787,
+    "page_number": 11
+  },
+  {
+    "parent_id": 25,
+    "text": "As a last simplification we assume that all forces act upon the center of mass of an object. The center of mass of an object can be thought of as that point where all of the mass of an object is concentrated. if your finger were placed at this point, the object would remain balanced. The 50 cm point is, for example, the center of mass of a meter stick.",
+    "char_start": 787,
+    "char_end": 1141,
+    "page_number": 11
+  },
+  {
+    "parent_id": 26,
+    "text": "A diagram showing those forces that act upon a body is called a free-body diagram (FBD) . The forces in a FBD show the direction in which each force acts, and, when possible, the relative magnitude of the each force by the length of the force vector. Each force in a FBD must be labeled appropriately so it is clear what each arrow represents.",
+    "char_start": 0,
+    "char_end": 343,
+    "page_number": 12
+  },
+  {
+    "parent_id": 27,
+    "text": "In the Figure 1.5, a 1.0 kg bull statue is resting on a mantelpiece. Analyze the forces acting on the bull and their relationship to each other. There are two vertical forces that act upon the bull:\n1. The Earth pulling down on the center of mass of the bull with a force of W = mg =( 1 . 0 )( 9 . 8 ) = 9 . 8 N\n2. The floor pushing back against the weight of the bull, with a normal force FN . The term normal force comes from mathematics, where normal means that the force is perpendicular to a surface. The normal force vector (often stated as 'the normal') is drawn perpendicular to the surface that the bull rests upon. Normal forces are usually associated with a push upon an object, not a pull.",
+    "char_start": 0,
+    "char_end": 702,
+    "page_number": 12
+  },
+  {
+    "parent_id": 27,
+    "text": "Answer: Using N2L we write: F = Ma , where F = FN -mg = ma = 0, where a = 0. The negative sign ( -mg ) indicates that the Earth pulls on the statue downward. Usually, when solving problems with N2L, forces that point down and to the left are expressed negatively and forces that point up and to the right are expressed positively.",
+    "char_start": 702,
+    "char_end": 1033,
+    "page_number": 12
+  },
+  {
+    "parent_id": 27,
+    "text": "These are just conventions and any consistent set of conventions is permissible. It is also important (when enough information is provided) to draw the length of a vector in proportion to its magnitude. In the diagram above, FN and mg are drawn the same length, reflecting the fact that they have the same magnitude. Important: in the diagrams, the arrows must originate inside the object, pointing 'outward'",
+    "char_start": 1033,
+    "char_end": 1442,
+    "page_number": 12
+  },
+  {
+    "parent_id": 27,
+    "text": "The statue is stationary so it has zero acceleration. This reduces the problem to Fn = mg , which intuitively seems reasonable. When the problem is solved, it shows the magnitudes of the forces are equal. It must be kept in mind that their directions are opposite and that they are not a N3L pair.",
+    "char_start": 1442,
+    "char_end": 1739,
+    "page_number": 12
+  },
+  {
+    "parent_id": 28,
+    "text": "In the Figure 1.6, Mr. Joe Loose is hanging from a rope for dear life. Joe's mass is 75 kg. Use g = 9 . 8 m / s 2 .",
+    "char_start": 0,
+    "char_end": 115,
+    "page_number": 12
+  },
+  {
+    "parent_id": 29,
+    "text": "Answer: We assume the mass of the rope is negligible. Including the mass of the rope is not particularly difficult, but we're just starting out!\nThe convention in physics is to use label T , for 'tension'. A tension force is transmitted through a string, cord, or rope.\nOnce again, we apply F = Ma , where F = T -mg = ma = 0 since a = 0.\n<!-- formula-not-decoded -->",
+    "char_start": 0,
+    "char_end": 366,
+    "page_number": 13
+  },
+  {
+    "parent_id": 30,
+    "text": "A 4900 N block of ice, initially at rest on a frictionless horizontal surface, has a horizontal force of 100 N applied to it.\nAnswer: Always begin by drawing an FBD of the problem.\nTypically, applied forces are either written as F or Fab . If there are multiple forces, depending on the wording of the problem, each force may have a subscript that reflects its meaning, or may just be numbered.",
+    "char_start": 0,
+    "char_end": 394,
+    "page_number": 13
+  },
+  {
+    "parent_id": 31,
+    "text": "3a. Find the mass of the block of ice in Figure 1.7, use 9 . 8 m / s 2 for g .\n<!-- formula-not-decoded -->\n3b. Find the acceleration of the block of ice in Figure 1.7.\n<!-- formula-not-decoded -->",
+    "char_start": 0,
+    "char_end": 198,
+    "page_number": 14
+  },
+  {
+    "parent_id": 31,
+    "text": "<!-- formula-not-decoded -->\n3c. Find the velocity of the block at t = 100 s\n<!-- formula-not-decoded -->\n3d. Find the displacement of the block at t = 100 s. <!-- formula-not-decoded -->",
+    "char_start": 198,
+    "char_end": 385,
+    "page_number": 14
+  },
+  {
+    "parent_id": 32,
+    "text": "In Figure 1.8, Block A has a mass of 10.00 kg and Block B has a mass of 6.00 kg. Both blocks are in contact with each other, with Block A experiencing an applied 70.0 N force to the right as shown. Note that both blocks have the same acceleration.\nNote: When referring to more than one mass we often use the word 'system.'",
+    "char_start": 0,
+    "char_end": 322,
+    "page_number": 14
+  },
+  {
+    "parent_id": 33,
+    "text": "Answer: As Block A moves to the right it experiences a force from Block B to the left.\nThis force is labeled: -FAB (force on A by B )\nBlock B is pushed to the right with the same force that it exerts upon block A , according to N3L\nThis force is labeled: FBA (force B by A ); the magnitudes of FAB and FBA are, of course, equal, according to N3L.\n4b. Find the acceleration of the system.\nAnswer: We use N2L applied to each block:\nBlock A : f = MA . F = 70 . 0 -FAB = 10 . 00 a .\nBlock B : F = MA . F = FBA = 6 . 00 a .\nWe have a system of two equations and two unknowns since the magnitudes of FAB and FBA are identical.\nAdding FBA to left side of the Block A equation and 6 . 00 a to the right side of it, we have:\n<!-- formula-not-decoded -->\nNotice that on the left side of the resulting equation, the sum of -FAB and FBA is zero and on the right side of the equation the sum is 10 . 00 a + 6 . 00 a . The N3L pair of forces, -FAB and FBA is considered as a pair of internal forces with respect to the system. When solving a system of equations having an N3L pair of forces, these internal forces add up to zero. Additionally, the right-hand side of the equation must always equal the total mass of the system. For this example ( mA + mB ) a . In more complicated problems, care must be taken if different parts of the system have different accelerations.\n4c.",
+    "char_start": 0,
+    "char_end": 1363,
+    "page_number": 14
+  },
+  {
+    "parent_id": 33,
+    "text": "What is the magnitude of the force between Block A and Block B ( FAB or FBA )?\nAnswer: This is answered by solving either the Block A or Block B equation. The Block B equation is certainly easy to solve. Dropping the subscript: F = 6 . 00 ( 4 . 375 ) = 26 . 25 = 26 . 3 N",
+    "char_start": 1363,
+    "char_end": 1634,
+    "page_number": 15
+  },
+  {
+    "parent_id": 34,
+    "text": "The Atwood Machine (invented by English mathematician Reverend George Atwood, 1746-1807) is used to demonstrate Newton's Second Law, notably in determining the gravitational acceleration, g .",
+    "char_start": 0,
+    "char_end": 191,
+    "page_number": 15
+  },
+  {
+    "parent_id": 35,
+    "text": "One end of the rope in Figure 1.11 is attached to a 3.2-kg mass, m 1 and the other end is attached to a 2.0-kg mass m 2. Assume the system is frictionless and the rope has negligible mass.\n5a. Draw FBDs for the m 1 and m 2.",
+    "char_start": 0,
+    "char_end": 223,
+    "page_number": 15
+  },
+  {
+    "parent_id": 36,
+    "text": "5b. Determine the acceleration of the system. Use g = 9 . 8 m / s 2 .\nAnswer: Before we begin, we decide in which direction the system accelerates. Since the mass of the m 2 is smaller than the mass of m 1 , m 2 will accelerate up and m 1 will accelerate down. Therefore the tension in the rope is greater than the weight of m 1 but smaller than the weight of m 2. Using N2L we write the equations of motion for m 1and m 2.",
+    "char_start": 0,
+    "char_end": 424,
+    "page_number": 15
+  },
+  {
+    "parent_id": 36,
+    "text": "<!-- formula-not-decoded -->\n<!-- formula-not-decoded -->\nThe equations are set up so that the acceleration has a consistent sign. Had we chosen the direction of the acceleration incorrectly, our answer would have been a negative number, informing us of our error. Solving the system of equations we have: <!-- formula-not-decoded -->",
+    "char_start": 424,
+    "char_end": 758,
+    "page_number": 15
+  },
+  {
+    "parent_id": 37,
+    "text": "Answer: Again, either equation will provide the answer. Using the second equation above, we have:\n<!-- formula-not-decoded -->\nOne possible check on the problem is to insure that: mg 2 < T < mg 1\n<!-- formula-not-decoded -->\nTherefore: 20\n< 24 < 31.\nIt is always wise to check your results for consistency.",
+    "char_start": 0,
+    "char_end": 306,
+    "page_number": 16
+  },
+  {
+    "parent_id": 38,
+    "text": "Atwood used a pendulum mechanism for timing the system of masses and adjusted the distances of the masses to ensure an integral number of seconds.\nhttp://www.youtube.com/watch?v=NnYG2cnRwgQ",
+    "char_start": 0,
+    "char_end": 189,
+    "page_number": 16
+  },
+  {
+    "parent_id": 39,
+    "text": "1. Newton's First Law of Motion: An object remains at rest or in a state of uniform motion unless acted upon by an unbalanced force.\n2. Newton's Second Law of Motion: The acceleration, a , that an object experiences is directly proportional to the net force acting on the object, F or ( Fnet ) , upon it and inversely proportional to its mass, m . F = Fnet = Ma\n3. Newton's Third Law of Motion: Whenever two objects interact they must necessarily place equal and opposite forces upon each other. Fab = -Fba",
+    "char_start": 0,
+    "char_end": 506,
+    "page_number": 17
+  },
+  {
+    "parent_id": 40,
+    "text": "1. Read the problem carefully and draw a rough sketch of what is happening.\n2. Draw a careful free-body diagram for each object in the problem.\n3. Write an equation associated with each free-body diagram using Newton's Second Law.\n4. Add other equations if necessary.\n5. Solve the system of simultaneous equations.\n6. Check your results to see if they are physically reasonable.",
+    "char_start": 0,
+    "char_end": 378,
+    "page_number": 17
+  },
+  {
+    "parent_id": 41,
+    "text": "1. Image copyright Denis Cristo, 2014; modified by CK-12 Foundation - Christopher Auyeung. http://www.s hutterstock.com . Used under license from Shutterstock.com\n2.",
+    "char_start": 0,
+    "char_end": 166,
+    "page_number": 19
+  },
+  {
+    "parent_id": 41,
+    "text": "Courtesy of Johns Hopkins University Applied Physics Laboratory/Southwest Research Institute/NASA. http ://commons.wikimedia.org/wiki/File:New_horizons_Pluto.jpg . Public Domain\n3. Christopher Auyeung. CK-12 Foundation .\n4. Image copyright Denis Cristo, 2014; modified by CK-12 Foundation - Christopher Auyeung. http://www.s hutterstock.com . Used under license from Shutterstock.com\n5. Laura Guerin. CK-12 Foundation .\n6. Image copyright artenot, 2014; modified by CK-12 Foundation - Raymond Chou. http://www.shutterstock. com . Used under license from Shutterstock.com\n7. Raymond Chou. CK-12 Foundation .\n8. Christopher Auyeung, Raymond Chou. CK-12 Foundation .\n9. Christopher Auyeung, Raymond Chou. CK-12 Foundation .\n10. From Emmanuel Muller-Baden, Ed. (1905). http://commons.wikimedia.org/wiki/File:Atwoods_machine.png . Public Domain\n11. Christopher Auyueng, Raymond Chou. CK-12 Foundation .",
+    "char_start": 166,
+    "char_end": 1063,
+    "page_number": 19
+  }
+]

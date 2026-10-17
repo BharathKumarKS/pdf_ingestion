@@ -1,0 +1,103 @@
+{
+  "fixture": "test_book.pdf",
+  "pages": 19,
+  "parents": 42,
+  "children": 66,
+  "parse_seconds": 6.8,
+  "E1_alignment": {
+    "Q1_count_agrees_plain": false,
+    "Q1_count_agrees_special": true,
+    "Q1_special_token_is_trailing": true,
+    "Q2_offsets_tile": true,
+    "Q3a_prefix_invariant": true,
+    "Q3a_max_abs_delta": 0.0,
+    "Q3a_control_eos_delta": 18.24911117553711,
+    "Q3a_n_content_tokens": 18,
+    "Q3a_api_vectors_base": 19,
+    "Q3a_api_vectors_ext": 29,
+    "Q3b_same_token_count": true,
+    "Q3b_first_changed_index": 1,
+    "Q3b_changed_tokens": [
+      "\u0120cat",
+      "\u0120dog"
+    ],
+    "Q3b_vectors_before_k_identical": true,
+    "Q3b_vectors_after_k_unchanged": false,
+    "Q3b_delta_at_k": 11.994773864746094,
+    "Q4_local_content_tokens": 5200,
+    "Q4_api_vectors": 5201,
+    "Q4_no_truncation": true
+  },
+  "E2_independent_recomputation": {
+    "children_checked": 66,
+    "max_abs_diff_dense_1024": 0.0,
+    "max_abs_diff_dense_64": 0.0,
+    "mismatches_gt_1e-4": [],
+    "n_mismatches": 0,
+    "fallback_children": 0,
+    "fallback_examples": [],
+    "max_abs_diff_if_indices_shifted_by_one": 0.09083904325962067,
+    "eos_strip_note": "The trailing special vector sits at the END, so a naive implementation that never strips it still pools raw[idx] == content[idx] for every offset-derived index \u2014 the strip is behaviour-neutral HERE and its value is the count assertion, which turns a future layout change (BOS at the front, a truncated response) into a loud error instead of a one-token shift of every child vector.",
+    "parent_token_counts": {
+      "min": 3,
+      "max": 547,
+      "total": 6773
+    },
+    "mrl_linearity_max_abs_diff": 5.960464477539063e-08
+  },
+  "E3_late_vs_isolation": {
+    "children_compared": 66,
+    "cosine_min": 0.9141135215759277,
+    "cosine_median": 0.999678373336792,
+    "cosine_max": 0.9999940395355225,
+    "n_cosine_below_0_999": 27,
+    "n_cosine_above_0_9999": 24,
+    "parent0_child_head": "Ira Nirenberg To access a customizable version of this book, as well as other in"
+  },
+  "E3_this_child": {
+    "synthetic_head": "This is the simplest machine of all, and it trades force for distance.",
+    "token_span": [
+      14,
+      29
+    ],
+    "cosine_late_vs_isolated": 0.8500497937202454,
+    "fixture_largest_divergence": {
+      "chunk_id": "b16d89f3-88f1-4f61-a4ac-0c61d5945d42",
+      "head": "<!-- formula-not-decoded -->\n<!-- formula-not-decoded -->\nThe equations are set up so that",
+      "chars": 334,
+      "cosine": 0.9141135215759277
+    }
+  },
+  "E4_cost": {
+    "model": "Qwen/Qwen3-Embedding-0.6B",
+    "fixture": "test_book.pdf",
+    "fixture_pages": 19,
+    "parse_seconds": 6.4,
+    "parents": 42,
+    "children": 66,
+    "parent_tokens_total": 6773,
+    "parent_tokens_max": 547,
+    "child_token_counts": {
+      "min": 3,
+      "median": 85,
+      "max": 372,
+      "mean": 99.8,
+      "under_64": 18,
+      "under_128": 51
+    },
+    "pooled_seconds": 1.04,
+    "pooled_response_mb": 1.67,
+    "per_token_seconds": 57.14,
+    "per_token_response_mb": 267.21,
+    "per_token_vectors_returned": 6815,
+    "per_token_vs_local_tokens": 42,
+    "slowdown_x": 55.0,
+    "payload_x": 160.3,
+    "extrapolation_to_968_pages": {
+      "scale_factor": 50.95,
+      "per_token_seconds": 2910.9,
+      "per_token_response_mb": 13613.6,
+      "parse_seconds": 328.2
+    }
+  }
+}

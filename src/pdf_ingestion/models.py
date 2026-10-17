@@ -1,8 +1,12 @@
 """Data contracts for the re-ingest chunking pipeline (E1/E2/E3).
 
 Mirrors the class repo's ``Labs/Week_6/sv_rag_pipeline/src/svrag/models.py``. ``ParentChunk``
-is produced by ``parent_chunker.py`` (E2); the child/enriched contracts arrive with the
-semantic chunker (E1) and the late-chunk embedder (E3).
+is produced by ``parent_chunker.py`` (E2).
+
+The child and enriched contracts do **not** live here: ``chunker.TextChunk`` is the child
+contract (Step 3 kept it there), and ``EnrichedChunk`` sits next to its producer in
+``late_chunk_embedder.py`` — exactly as ``EmbeddedChunk`` sits in ``embedder.py``. Importing
+``TextChunk`` here would be circular (``chunker`` imports ``models``).
 """
 from __future__ import annotations
 

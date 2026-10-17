@@ -1,0 +1,55 @@
+{
+  "passed": false,
+  "claims": [
+    {
+      "id": "C1",
+      "verdict": "confirmed",
+      "reason": "The probe shows that the local tokenizer with add_special_tokens=False produces exactly the content tokens, the API returns one extra trailing <|endoftext|> vector, and the counts match (plain tokens = API vectors \u2013 1). Offsets tile the text and the special token is trailing."
+    },
+    {
+      "id": "C2",
+      "verdict": "confirmed",
+      "reason": "The prefix\u2011invariance and token\u2011identity tests demonstrate that vector i corresponds to token i; a different mapping would fail these checks."
+    },
+    {
+      "id": "C3",
+      "verdict": "confirmed",
+      "reason": "Independent recomputation over all 66 children shows zero difference in both dense_1024 and dense_64, confirming the pooling logic."
+    },
+    {
+      "id": "C4",
+      "verdict": "confirmed",
+      "reason": "The trailing special vector is never included in any token index list; dropping it is behaviour\u2011neutral. The strip merely enforces the count assertion."
+    },
+    {
+      "id": "C5",
+      "verdict": "confirmed",
+      "reason": "Tests and evidence confirm mean(tok)[:64] == mean(tok[:64]) within float32 error, and dense_64 is the correctly normalised slice."
+    },
+    {
+      "id": "C6",
+      "verdict": "confirmed",
+      "reason": "All guard tests (no\u2011token span fallback, token/dimension mismatch, orphan child) pass and raise the expected errors or warnings."
+    },
+    {
+      "id": "C7",
+      "verdict": "confirmed",
+      "reason": "The median cosine of 0.9997 indicates a very small effect on this small\u2011parent fixture, which is consistent with the expectation that larger parents would show a larger effect."
+    },
+    {
+      "id": "C8",
+      "verdict": "confirmed",
+      "reason": "The cost accounting matches the evidence: per\u2011token output is ~160\u00d7 the pooled payload and ~55\u00d7 the wall time, extrapolating to ~2911\u202fs and ~13.6\u202fGB for 968 pages."
+    }
+  ],
+  "logic_errors": [
+    "In LateChunkEmbedder.embed_parent, the code calls a non\u2011existent method `self._embed_isolated(c)` when offsets are empty. The intended method is `self.embed_isolated(c)`."
+  ],
+  "suggestions": [
+    "Rename the call to `self._embed_isolated(c)` to `self.embed_isolated(c)` to avoid an AttributeError.",
+    "Add a defensive check in `_content_tokens` to handle the unlikely case of an empty token matrix, returning a zero vector or raising a clear error.",
+    "Document the behaviour of dropping the trailing special vector in `_content_tokens` for clarity.",
+    "Consider logging a warning when `n_api == n_local` to alert users that the API did not return a trailing special token."
+  ],
+  "summary": "All claims are supported by the evidence, but the module contains a logic error due to a misspelled method call."
+}

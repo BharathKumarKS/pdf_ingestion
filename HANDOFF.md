@@ -33,9 +33,17 @@
 > parent exactly, no child crosses a parent. Segmentation model = chonkie's default (local
 > `potion-base-32M`); the indexed vectors stay the cluster dense model. §E1 carries the merge
 > measurement (91 → 66, −27%).
-> Suite **315 pass / 5 fail** (same 5 pre-existing). **Next: Step 4 (E3 `late_chunk_embedder.py`) —
-> start with the Qwen3 tokenizer-alignment probe, NOT the module** (plan §Step 4 "FIRST ACTION":
-> §2.1 verified the local↔API token alignment for *jina* only, and R2 selects Qwen3).
+> **Step 4 (E3 `late_chunk_embedder.py`; 12 tests + 1 slow) DONE 2026-10-17.** The plan's FIRST
+> ACTION — the **Qwen3** local-tokenizer↔cluster-token alignment probe — ran live first and
+> **CONFIRMED the alignment** (local tokenizer plain + exactly one trailing `<|endoftext|>` vector;
+> offsets tile; appending text leaves earlier vectors bit-identical; a word swap moves only its own
+> index and later; no truncation at 5,200 tokens) → **R2's 1024d + 64d stands, no jina fallback**.
+> Also measured: per-token cost ≈ 160× the pooled payload / 55× the wall time → ~48 min and
+> ~13.6 GB for 968 pages (fine as the Step 8 background job; only *parents* get a per-token call).
+> **Independent review (round 1) found a real defect** — a call to the non-existent
+> `self._embed_isolated` on the zero-token-parent branch — fixed + regression test; round 2
+> `passed: true`. Evidence `logs/p1/step4/` (README = the review record), register §E3b.
+> Suite **327 pass / 5 fail** (same 5 pre-existing). **Next: Step 5 (E5 `is_content`).**
 >
 > **Steps 2–3 went through independent review 2026-10-17** (verifier = `openai/gpt-oss-20b`, a
 > different model from the author's). It found one genuine defect — a parent with no provenance
@@ -390,8 +398,9 @@ unresolvable numbers, not more knowledge.
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
 | 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) + **3d code (`4697961`)** + **3d-ii (`3a18da4`, `18250f1` — 33 usable visual labels, §B4d)** + **Session 4 (`e69c347`, `f109379`)** + **Session 4b (`769e60d` harness fixes; §D4 reframed; funnel re-run) + step 4 (2026-10-16)** — v2 = 200 (166 answerable + 34 negatives); **abstention 17/34 = 0.500 (met), Faith 0.661, visual lane 33 q R@20 0.960** (`p0-9-gold-v2_2026-10-17_0422.md`). **✅ P0-9 is MEASURED — both halves of the pre-registered decision now have numbers (reranker unresolved; abstention met).** Reranker decision deferred to a post-re-ingest ablation (§D13). on `feat/p0-9-gold-dataset-v2` |
 
-Test suite: **314 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`, re-measured 2026-10-17 —
-306/5 before the P1 Step 3 tests, +8 from `tests/test_semantic_chunker.py`). The 5 are
+Test suite: **327 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`, re-measured 2026-10-17 —
+315/5 before the P1 Step 4 tests, +12 from `tests/test_late_chunk_embedder.py`, whose 13th test is
+the slow live one). The 5 are
 **pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
 and 3 search tests return 0 results. **Not regressions; do not "fix" them here.**
 
@@ -410,7 +419,11 @@ every commit that changes source. `delegate_task` already runs on a different mo
 real if it is invoked: Steps 2 and 3 shipped unreviewed on 2026-10-17 and the reviewer immediately
 found a genuine defect (a parent with no provenance silently gave every child `page_number=None`).
 Budget `max_tokens` ≥32k for the reviewer — on a 300-line diff the hidden reasoning trace alone
-exceeded 16k output tokens and the verdict came back empty.
+exceeded 16k output tokens and the verdict came back empty. **Step 4 re-measured the ceiling:
+32k is not always enough either** — one round ran 216 s, produced 126,818 characters of hidden
+reasoning, hit `finish_reason=length` and returned empty content; trimming the prompt (drop the
+test source) got a verdict. Treat an empty round as **no verdict, never a pass**, and expect two
+rounds to be needed when the first one finds a defect (fix → re-ask on the fixed code).
 
 ---
 

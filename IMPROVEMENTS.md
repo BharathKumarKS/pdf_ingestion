@@ -4,7 +4,7 @@ Everything known-but-not-yet-done, in one place so it can be taken in a single p
 Each entry says **what**, **why it matters**, and **the evidence** — so nothing has to be
 re-derived later. Add to this file rather than leaving a note in a commit message.
 
-Last updated: 2026-10-16
+Last updated: 2026-10-17
 
 ---
 
@@ -903,6 +903,15 @@ embedding.** The middle and back of that pipeline are missing.
   setting. **Not changed yet** — the plan keeps the merge behaviour, and the threshold is a
   measurement, not a code choice: settle it with the funnel's candidate counts after the
   re-ingest (§E1 caveat) rather than by guessing now.
+- **Re-measured 2026-10-17, for the Step 4 unit question** (`logs/p1/step4/probe_child_units.py`,
+  `child_units.json`): **6 of 66 children (9%) sit BELOW the 32-token threshold** (3 of them below
+  16). Token counts: min 3 / p25 62 / median 85 / max 372. The merge **never re-checks the grown
+  child's size**, so a merge can land under the threshold again — and the first child of every
+  parent is promoted unconditionally. The survivors are the expected shapes: `F = Ma` (3 tokens),
+  a copyright/editor line (8), objectives bullet lists (26, 31, 31). Note the overlap with **§E5** —
+  most of them are front-matter or objective lists, which is exactly what chunk-level `is_content`
+  is for. Still a measurement to settle after the re-ingest (funnel candidate counts), not a code
+  change now.
 
 ### E2. Parent/child hierarchy (hierarchical markdown → parent chunks) ⚠️ requires re-ingest
 - **What:** use Docling's markdown heading structure to define **parent** chunks
@@ -957,6 +966,60 @@ embedding.** The middle and back of that pipeline are missing.
   (pinned by `tests/test_cluster_embedder.py`), i.e. a late-chunked vector still has a valid 64d view.
   This is the E3 method chosen for the P1 re-ingest — no LLM calls.
 - **Evidence:** live probes 2026-10-16 (`.hermes/plans/2026-10-16-p1-reingest-plan.md` §2.1).
+
+#### E3b. Step 4 LANDED 2026-10-17 — Qwen3 alignment verified, `late_chunk_embedder.py` built
+
+- **What:** `src/pdf_ingestion/late_chunk_embedder.py` (+ `EnrichedChunk`). Per parent: one cluster
+  call with `return_token_embeddings=True`; local tokenizer for offsets; mean-pool the token vectors
+  inside each child's char span; L2-normalise → `dense_1024`, MRL-slice 1024→64 → `dense_64`.
+  Children are **never** embedded individually in the late path (that is the `embed_isolated` twin,
+  kept as the E3 control and as the `late_chunk_enabled=False` path).
+- **The FIRST ACTION the plan demanded (alignment for Qwen3, not just jina) — CONFIRMED.**
+  `logs/p1/step4/probe_qwen3_alignment.py` → `alignment.json`, live against
+  `10.0.10.70:8123`: the local `Qwen/Qwen3-Embedding-0.6B` tokenizer called with
+  `add_special_tokens=False` yields exactly the content tokens; the endpoint returns **exactly one
+  extra TRAILING `<|endoftext|>` vector** (so `matrix[:-1]` is the content matrix); offsets tile the
+  text; appending text leaves every earlier vector **bit-identical** (max |Δ| 0.0, control: the
+  EOS position moves by 18.2); a one-word swap moves index *k* and later (11.99) and leaves every
+  index before *k* bit-identical; a 5,200-token input is **not** truncated (5201 vectors).
+  → R2's 1024d + 64d design holds; the jina fallback was **not** needed. The plan's §2.1 alignment
+  claim is now verified for the model R2 actually selects.
+- **Independent recomputation** (`logs/p1/step4/verify_evidence.py` → `evidence.json`): over all
+  **66 children** of `test_book.pdf`, pooling recomputed from the raw endpoint response by hand
+  agrees with the module to **max |Δ| = 0.0** on both `dense_1024` and `dense_64`; 0 fallbacks;
+  MRL linearity holds to 6e-8.
+- **E3 effect size on the fixture — small, and that is the honest reading:** late-vs-isolation
+  cosine over 66 children = **min 0.914 / median 0.9997 / max 0.99999** (27 below 0.999). The
+  synthetic dangling-*"This"* child (the plan's acceptance case) gives **0.850**. The small median
+  is expected *on this fixture*: Docling parents are tiny there (max 547 tokens over 19 pages) and
+  the semantic children are large fractions of their parents, so "parent context" adds little the
+  child did not already contain. On the 968-page book parents reach 5000 tokens and children stay
+  ~400 chars, so the child/parent ratio — and with it the effect — should be materially larger.
+  **This is a prediction to re-measure at Step 10, not a claim.**
+- **Cost — measured, then extrapolated** (`probe_late_chunk_cost.py` → `cost.json`): per-token
+  output is **~160×** the pooled payload and **~55×** the wall time (57.1 s / 267 MB for the
+  fixture's 6,773 parent tokens). Extrapolated to 968 pages: **~2,911 s (~48 min)** and
+  **~13.6 GB** of JSON, plus ~5.5 min of Docling parse. Acceptable as the Step 8 background job;
+  it is why only **parents** get a per-token call. (One batch of 42 parents in a single request is
+  what produced the 267 MB response — batching at `embedding_batch_size` is the safer shape.)
+- **The strip is assertive, not load-bearing** — stated plainly because it is easy to overclaim:
+  the extra vector sits at the END, so an offset-derived index list never contains it and
+  `raw[idx] == content[idx]`. Dropping it changes **no** child's vector. Its value is the **count
+  assertion** (`n_api == n_local + 1`, else `n_api == n_local`, else raise), which turns a future
+  layout change — a BOS at the front, a truncated response — into a loud error instead of a
+  silent one-token shift of every child vector. Measured cost of that failure mode: shifting the
+  indices by one changes a child vector by up to **0.0908** (≈ a real ranking change).
+- **Guards:** a span overlapping no token falls back to the **parent mean** with a warning (not a
+  zero vector, not a dropped child); a token-count or dimension mismatch **raises**; children
+  referencing an unknown parent raise; a parent tokenizing to zero tokens falls back to isolation.
+- **Tests:** `tests/test_late_chunk_embedder.py` — **12 fast** (mock transport carrying the real
+  endpoint contract: one extra trailing vector) + **1 slow** (real Qwen3 tokenizer + real cluster).
+  Suite at the floor.
+- **Independent review found a real defect** (round 1, `openai/gpt-oss-20b`, single-turn): the
+  zero-token-parent branch called `self._embed_isolated`, which does not exist — an AttributeError
+  on a reachable path, and the one branch with no test. Fixed, regression test added
+  (`test_parent_that_tokenizes_to_zero_tokens_falls_back_to_isolation`), round 2 → `passed: true`,
+  `logic_errors: []`. Record: `logs/p1/step4/README.md`.
 
 ### E4. Stale docstrings describing a pipeline that was never built ✅ fixed
 - `chunker.py` claimed *"Chonkie-based semantic chunker"*, *"Two-pass chunking … Semantic

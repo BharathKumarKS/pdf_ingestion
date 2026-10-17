@@ -1,0 +1,32 @@
+{
+  "model": "Qwen/Qwen3-Embedding-0.6B",
+  "fixture": "test_book.pdf",
+  "fixture_pages": 19,
+  "parse_seconds": 6.4,
+  "parents": 42,
+  "children": 66,
+  "parent_tokens_total": 6773,
+  "parent_tokens_max": 547,
+  "child_token_counts": {
+    "min": 3,
+    "median": 85,
+    "max": 372,
+    "mean": 99.8,
+    "under_64": 18,
+    "under_128": 51
+  },
+  "pooled_seconds": 1.04,
+  "pooled_response_mb": 1.67,
+  "per_token_seconds": 57.14,
+  "per_token_response_mb": 267.21,
+  "per_token_vectors_returned": 6815,
+  "per_token_vs_local_tokens": 42,
+  "slowdown_x": 55.0,
+  "payload_x": 160.3,
+  "extrapolation_to_968_pages": {
+    "scale_factor": 50.95,
+    "per_token_seconds": 2910.9,
+    "per_token_response_mb": 13613.6,
+    "parse_seconds": 328.2
+  }
+}

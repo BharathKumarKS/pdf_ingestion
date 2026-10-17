@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "claims": [
+    {
+      "id": "C1",
+      "verdict": "confirmed",
+      "reason": "Tokenization and vector counts still match the documented behaviour; the trailing special token is correctly dropped."
+    },
+    {
+      "id": "C2",
+      "verdict": "confirmed",
+      "reason": "Vector-to-token mapping remains one\u2011to\u2011one; the prefix\u2011invariance and identity tests still pass."
+    },
+    {
+      "id": "C3",
+      "verdict": "confirmed",
+      "reason": "Pooling logic is unchanged; recomputation over all children still yields zero difference."
+    },
+    {
+      "id": "C4",
+      "verdict": "confirmed",
+      "reason": "Trailing special vector is still omitted from token indices; the count assertion is still enforced."
+    },
+    {
+      "id": "C5",
+      "verdict": "confirmed",
+      "reason": "Mean\u2011pooling and MRL slicing order remain the same; mean(tok)[:64] == mean(tok[:64]) holds."
+    },
+    {
+      "id": "C6",
+      "verdict": "confirmed",
+      "reason": "All guard tests continue to raise the expected errors or warnings."
+    },
+    {
+      "id": "C7",
+      "verdict": "confirmed",
+      "reason": "Median cosine similarity remains unchanged; the small\u2011parent effect is still observed."
+    },
+    {
+      "id": "C8",
+      "verdict": "confirmed",
+      "reason": "Cost accounting calculations are unaffected by the method\u2011name fix."
+    }
+  ],
+  "logic_errors": [],
+  "suggestions": [],
+  "summary": "The logic error was fixed, the regression test exercises the intended branch, no new defects were introduced, and all original claims remain valid."
+}

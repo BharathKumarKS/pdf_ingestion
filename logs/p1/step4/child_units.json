@@ -1,0 +1,64 @@
+{
+  "min_chunk_tokens": 32,
+  "parents": 42,
+  "children": 66,
+  "token_counts": {
+    "min": 3,
+    "p25": 62,
+    "median": 85,
+    "max": 372
+  },
+  "children_below_threshold": 6,
+  "children_below_half_threshold": 3,
+  "smallest_children": [
+    {
+      "parent_id": 23,
+      "token_count": 3,
+      "chars": 6,
+      "text_head": "F = Ma"
+    },
+    {
+      "parent_id": 1,
+      "token_count": 8,
+      "chars": 36,
+      "text_head": "Ira Nirenberg\nEDITOR Boris Korsunsky"
+    },
+    {
+      "parent_id": 7,
+      "token_count": 14,
+      "chars": 65,
+      "text_head": "Galileo formulated what we now call Newton's First Law of Motion."
+    },
+    {
+      "parent_id": 3,
+      "token_count": 26,
+      "chars": 131,
+      "text_head": "The student will:\n- Describe what force is and different types of forc"
+    },
+    {
+      "parent_id": 13,
+      "token_count": 31,
+      "chars": 177,
+      "text_head": "- Define Newton's Second Law and net force\n- Calculate acceleration fr"
+    },
+    {
+      "parent_id": 21,
+      "token_count": 31,
+      "chars": 165,
+      "text_head": "- Understand Newton's Third Law\n- Understand the difference between co"
+    },
+    {
+      "parent_id": 34,
+      "token_count": 35,
+      "chars": 191,
+      "text_head": "The Atwood Machine (invented by English mathematician Reverend George "
+    },
+    {
+      "parent_id": 28,
+      "token_count": 39,
+      "chars": 115,
+      "text_head": "In the Figure 1.6, Mr. Joe Loose is hanging from a rope for dear life."
+    }
+  ],
+  "note": "The merge folds a child into the previous child of the same parent and never re-checks the grown child's size, so children below min_chunk_tokens survive: the first child of every parent is promoted unconditionally, and a merge can land under the threshold again."
+}

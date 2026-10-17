@@ -1,0 +1,82 @@
+{
+  "model": "Qwen/Qwen3-Embedding-0.6B",
+  "url": "http://10.0.10.70:8123/embed-text/v1/embeddings",
+  "checks": {
+    "Q1_count_agrees_plain": false,
+    "Q1_count_agrees_special": true,
+    "Q1_special_token_is_trailing": true,
+    "Q2_offsets_tile": true,
+    "Q3a_prefix_invariant": true,
+    "Q3a_max_abs_delta": 0.0,
+    "Q3a_control_eos_delta": 18.24911117553711,
+    "Q3a_n_content_tokens": 18,
+    "Q3a_api_vectors_base": 19,
+    "Q3a_api_vectors_ext": 29,
+    "Q3b_same_token_count": true,
+    "Q3b_first_changed_index": 1,
+    "Q3b_changed_tokens": [
+      "\u0120cat",
+      "\u0120dog"
+    ],
+    "Q3b_vectors_before_k_identical": true,
+    "Q3b_vectors_after_k_unchanged": false,
+    "Q3b_delta_at_k": 11.994773864746094,
+    "Q4_local_content_tokens": 5200,
+    "Q4_api_vectors": 5201,
+    "Q4_no_truncation": true
+  },
+  "texts": [
+    {
+      "text": "The cat sat on the mat.",
+      "len_chars": 23,
+      "local_tokens_special": 8,
+      "local_tokens_plain": 7,
+      "api_vectors": 8,
+      "api_dim": 1024,
+      "extra_special_ids": [
+        151643
+      ],
+      "special_token_is_last": true
+    },
+    {
+      "text": "Energy E = \u00bdmv\u00b2 is conserved; the gradient \u2207T drives heat flow.",
+      "len_chars": 63,
+      "local_tokens_special": 21,
+      "local_tokens_plain": 20,
+      "api_vectors": 21,
+      "api_dim": 1024,
+      "extra_special_ids": [
+        151643
+      ],
+      "special_token_is_last": true
+    },
+    {
+      "text": "This is the second law: heat flows spontaneously from hot to cold, never the reverse.",
+      "len_chars": 85,
+      "local_tokens_special": 19,
+      "local_tokens_plain": 18,
+      "api_vectors": 19,
+      "api_dim": 1024,
+      "extra_special_ids": [
+        151643
+      ],
+      "special_token_is_last": true
+    },
+    {
+      "text": "In the chapter on thermodynamics we saw that entropy never decreases in an isolated system.",
+      "len_chars": 91,
+      "local_tokens_special": 18,
+      "local_tokens_plain": 17,
+      "api_vectors": 18,
+      "api_dim": 1024,
+      "extra_special_ids": [
+        151643
+      ],
+      "special_token_is_last": true
+    }
+  ],
+  "verdict": {
+    "aligned": true,
+    "rule": "tokenize with add_special_tokens=False for offsets; the API matrix has exactly one extra TRAILING <|endoftext|> vector \u2014 drop it before span mapping"
+  }
+}
