@@ -1262,7 +1262,37 @@ dead code from the day it lands. `process_pdf` is the whole API.
   5,048 chunks) — `save_document` is the single write point and it runs only after *every* parent
   is embedded. The cluster was healthy before and after (a pooled call to `:8123` returned 200 in
   0.14 s immediately afterwards), so this was a **transient stall, not an outage**.
-- **Measured throughput (from the log, all 260 completed parents):** median **5.13 s/parent**
+- **⛔ ATTEMPT 2 ALSO FAILED 2026-10-18 07:02:17 → 07:55:53 (53.6 min, exit 1) — the endpoint
+  itself collapsed, and the retry could not save it.** Same pipeline, with the §I16 fix in place
+  (retry + 8 workers). Parse 07:02:17 → 07:05:13 (341 parents, 3,796 children — **identical to
+  attempt 1**, chunking is deterministic). Late-chunk ran **fast while healthy**: 142 parents in
+  409.7 s = **2.89 s/parent, 470 tok/s** (attempt 1: 5.13 s/parent, 214 tok/s). Then the last
+  parent completed at **07:12:05** and the log went **silent for 21.5 minutes**. The first retry
+  was logged at **07:33:35**; from there 597 retries (589 `ConnectTimeout`, 8 `ReadTimeout`) ran
+  at a steady ~26/min until 07:55:36, then the process died. **Nothing written again** — `v2` =
+  0 points, SQLite untouched.
+- **What this proves about the fix, and what it does not.** The retry **worked**: it converted a
+  single-failure abort into ~600 attempts over 22 minutes instead of dying at the first timeout.
+  It could not save the run because the service was *actually gone*, not stalling — `ConnectTimeout`
+  means nothing was accepting the connection. The failure moved from "one bad read kills 86 min of
+  work" to "a genuinely dead endpoint kills the run after 22 min of retrying", which is the correct
+  behaviour for both.
+- **The 21.5-minute silent window is the §I16 open item, now measured.** The workers were blocked
+  inside requests that never returned and never tripped a read timeout (httpx's read timeout is per
+  *read operation*, not per request — see §I16). So the retry had nothing to catch during that
+  window: it only began firing once the sockets finally errored. **A hard total-request deadline is
+  the fix**; without it any single hung request can silently consume the run.
+- **⚠️ Whether the 8 workers contributed to the collapse is UNPROVEN and cannot be excluded.**
+  Evidence that it did: the endpoint was healthy at 470 tok/s for 7 minutes under 8× load and then
+  stopped accepting connections entirely — a crash/OOM signature, not a gradual slowdown. Evidence
+  that it did not: the same endpoint measured **84 tok/s serial** on the morning of attempt 2 vs
+  **214 tok/s** during attempt 1, i.e. it was already ~2.5× degraded *before* attempt 2 started and
+  independently of this client; other cluster services (`:8000` sparse, LLM) stayed healthy; the
+  Qdrant holds **34 collections** from other students, so the box is shared and contended. The
+  honest reading: a cluster-side problem that concurrent load may have accelerated. **Do not re-run
+  at 8 workers without deciding this.** §I18 records the probe's blind spot that made 8 look safer
+  than it was.
+- **Measured throughput, attempt 1 (from the log, all 260 completed parents):** median **5.13 s/parent**
   (mean 9.35, max **136.5**), parent size median 1,190 tokens (mean 1,387, max 4,762), median
   **214 tokens/s** (min **9**). The endpoint **degrades as the run proceeds** — the first 50
   parents averaged 10.8 s, the last 50 **16.5 s**, at near-identical token counts (1,378 vs 1,472).
@@ -1696,6 +1726,29 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
 - **Cost:** small to medium; no re-ingest needed to change it, but it only pays off on the next
   index run.
 - **Not blocking Step 8's re-run.**
+
+### I18. NEW 2026-10-18 (found by Step 8 attempt 2) — the concurrency ramp probe used ONE payload size, so it never tested the real size distribution
+
+- **What:** `probe_concurrency_knee.py` fired N concurrent requests of a **fixed 1,749-token**
+  payload and found throughput still rising at 16 workers with no errors, which is why 8 was chosen
+  as a "conservative" default. But the real corpus is not uniform: attempt 1 measured parent sizes
+  with **median 1,190 tokens, mean 1,387, max 4,762**. At 8 workers the in-flight footprint is
+  therefore up to **8 concurrent requests of ~2.7× the probed size**, and a per-token response is
+  ~160× the pooled payload (§E3) — a measured 4,647-token parent returns ~19 MB. The probe never
+  exercised that regime, so **"no collapse up to 16" does not transfer to 8 workers on this corpus**.
+- **Why it matters:** this is the same class of error the repo has recorded twice before — §B4a
+  (a ColPali endpoint probed with the wrong request shape) and §I11 (a copied endpoint that read as
+  authoritative). A concurrency probe validates a *regime*, and a fixed payload size is a regime
+  assumption that was never stated. Attempt 2 then ran 8 workers against the real distribution and
+  the endpoint stopped accepting connections after 7 minutes (§E7).
+- **Fix (not applied):** a ramp probe should sweep **both** axes — workers × payload size — or at
+  minimum use the real corpus's p95 size rather than a mid-range constant. Cheap to redo: the probe
+  is ~5 minutes. Until then, treat 8 as an **unvalidated** setting and prefer 2–4.
+- **Related and also not applied:** a **total-request deadline** (the §I16 open item). Attempt 2's
+  21.5-minute silent window happened inside requests that never tripped a per-read timeout, so
+  neither the retry nor any timeout bounded them. Combined with no checkpoint, one hung request can
+  silently consume an entire run. The deadline is the higher-value fix of the two.
+- **Cost:** small (probe re-run), small-to-medium (deadline), medium (checkpointing).
 
 ---
 

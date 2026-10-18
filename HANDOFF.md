@@ -94,8 +94,8 @@
 > endpoint returns **unnormalised** pooled vectors and only the index side normalised, so any
 > dot-product consumer was off by ~6,000× (no retrieval number moved — Qdrant normalises for
 > COSINE). Evidence `logs/p1/step8/`; register `IMPROVEMENTS.md` §E6 "SWITCHED 2026-10-17".
-> **⛔ Step 8 attempt 1 FAILED 2026-10-17 20:05:54 → 21:32:15 (86 min, exit 1); the fix has since
-> landed and attempt 2 is running.** The run
+> **⛔ Step 8 attempt 1 (86 min) and attempt 2 (53.6 min) BOTH FAILED — nothing written, and the
+> endpoint itself collapsed on attempt 2. Decision needed before attempt 3.** The run
 > `scripts/ingest_base_textbook.py --pdf …feynman… --collection-name knowledge_base_v2 --reindex`
 > got **further than the plan expected and then lost all of it**: Docling parsed 968 pages in
 > **4 min** → **341 parents → 3,796 children** → the late-chunk phase ran **260 of 341 parents**
@@ -121,6 +121,18 @@
 > outlive any timeout — the 42-minute gap is consistent with that. Needs a total-request deadline
 > or a checkpoint. **§I17 (new):** the two remaining serial-batch lanes (ColBERT batch 4 ≈ 949
 > requests, SPLADE batch 32 ≈ 119) are ~15 min and were deliberately NOT bundled into this fix.
+> **Attempt 2 (2026-10-18 07:02:17 → 07:55:53) failed differently and instructively:** with the fix
+> live, late-chunk ran **fast while healthy — 142 parents in 409.7 s = 2.89 s/parent, 470 tok/s**
+> (attempt 1: 5.13 s/parent, 214 tok/s) — then the endpoint **stopped accepting connections**.
+> The log went **silent for 21.5 min** (last parent 07:12:05, first retry 07:33:35), then 597
+> retries (589 `ConnectTimeout`) over 22 min, then death. **The retry did its job** — it turned a
+> one-failure abort into 600 attempts instead of dying at the first timeout; it could not save a
+> genuinely dead service. **⚠️ Whether the 8 workers contributed is UNPROVEN and not excludable**:
+> the endpoint was already **84 tok/s serial** that morning vs 214 during attempt 1, other cluster
+> services stayed healthy, and the Qdrant holds **34 collections from other students** — but it
+> also died with a crash/OOM signature after 7 min of 8× load. **§I18: the ramp probe used a fixed
+> 1,749-token payload while the real corpus runs to 4,762 tokens, so "no collapse up to 16" does
+> not transfer — treat 8 as UNVALIDATED.** Do not re-run at 8 without deciding this.
 > **Pre-flight that landed** (all measured, all tracked): cluster probed; both optional lanes
 > resolved live — SPLADE and ColBERT are both **cluster**-served, no model download; the exact
 > entry point dry-run on the 19-page fixture into a throwaway collection (**82 s**, 42 parents →

@@ -278,6 +278,52 @@ failed run's 42-minute gap is consistent with exactly that. A hard total-request
 per-parent checkpoint) would close it; neither is a small change. Registered as open in §I16
 rather than claimed fixed.
 
+## Attempt 2 — 2026-10-18 07:02:17 → 07:55:53 (53.6 min, exit 1)
+
+Same pipeline, **with the §I16 fix live** (retry + 8 workers). It got further, faster, and then the
+endpoint itself collapsed.
+
+| phase | result |
+|---|---|
+| Docling parse | 07:02:17 → 07:05:13 — 341 parents, 3,796 children (**identical to attempt 1**) |
+| late-chunk, healthy | **142 parents in 409.7 s = 2.89 s/parent, 470 tok/s** (attempt 1: 5.13 s/parent, 214 tok/s) |
+| last parent completed | **07:12:05** |
+| silent window | **21.5 minutes** — no log lines at all |
+| first retry logged | 07:33:35 |
+| retries | **597** (589 `ConnectTimeout`, 8 `ReadTimeout`) at a steady ~26/min until 07:55:36 |
+| written | **nothing** — `v2` = 0 points, SQLite untouched |
+
+**The retry did its job.** It converted "one bad read kills 86 minutes of work" into ~600 attempts
+over 22 minutes instead of dying at the first timeout. It could not save the run because the
+service was *actually gone*, not stalling — `ConnectTimeout` means nothing was accepting the
+connection. That is the correct behaviour in both cases.
+
+**The 21.5-minute silent window is the §I16 open item, now measured.** The workers sat inside
+requests that never returned and never tripped a read timeout (httpx's read timeout is per *read
+operation*, not per request), so the retry had nothing to catch until the sockets finally errored.
+**A hard total-request deadline is the fix.**
+
+### ⚠️ Did the 8 workers cause the collapse? Unproven, and not excludable.
+
+| points to "yes" | points to "no" |
+|---|---|
+| healthy at 470 tok/s for 7 min under 8× load, then stopped accepting connections entirely — a crash/OOM signature, not a gradual slowdown | the endpoint measured **84 tok/s serial** that morning vs **214 tok/s** during attempt 1 — already ~2.5× degraded before attempt 2 started, independent of this client |
+| 8 concurrent per-token responses, each up to ~19 MB, is a much bigger in-flight footprint than any probe exercised | other cluster services (`:8000` sparse, LLM) stayed healthy throughout |
+| | Qdrant holds **34 collections from other students** — the box is shared and contended |
+
+Honest reading: **a cluster-side problem that concurrent load may have accelerated.** Registered
+as §I18, including the probe's blind spot — it fired a fixed **1,749-token** payload while the real
+corpus runs to **4,762 tokens** (median 1,190), so "no collapse up to 16 workers" does not transfer
+to 8 workers on this corpus. **8 is an unvalidated setting.**
+
+### Next (recommended, in order)
+
+1. **Re-run the ramp probe sweeping workers × payload size** (~5 min) — validate against the real
+   size distribution instead of a mid-range constant.
+2. **Add a hard total-request deadline** (§I16) — the higher-value robustness fix; without it one
+   hung request can silently consume a run.
+3. **Then attempt 3 at a validated worker count** (2–4 expected, not 8).
+
 ## Verification of the real run (pending a successful run)
 
 ```
