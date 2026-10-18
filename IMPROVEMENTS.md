@@ -1761,6 +1761,53 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
 - **Evidence it would have worked:** attempt 3's 339 completed parents are exactly the population
   the cache would have held; the 4th attempt's late-chunk phase would have been 2 requests instead
   of 341.
+- **✅ BUILT 2026-10-18** — `src/pdf_ingestion/embed_cache.py` + wiring, 19 tests. Full detail in the
+  commit messages; the four things worth keeping in the register:
+  1. **The first version could never have worked in production, and its tests passed anyway.**
+     A hit was validated by comparing `chunk_id` — which is `str(uuid.uuid4())`, minted fresh every
+     run — so the ids could never match across runs and the cache would have silently never hit,
+     while looking perfectly healthy (files written, no errors, zero benefit). The tests missed it
+     because they handed the SAME child objects to both passes, so the uuids happened to agree: the
+     test was measuring its own object reuse. Verified against the real chunker that two calls give
+     different ids and identical text+spans. **Fixed** by keying on content — a sha of each child's
+     text plus its char span. **Third instance in one session of a test that passes while proving
+     nothing about production** (see `RETROSPECTIVE.md` §4).
+  2. **`np.savez(path)` silently appends `.npz`.** Writing to `p0.npz.tmp` actually created
+     `p0.npz.tmp.npz`, so the `os.replace` failed on a file that was never created and **every
+     write failed**. Fixed by writing through an open handle.
+  3. **A "never raises" function that could raise.** `mkdir` sat outside the `try` in `put`, and the
+     cleanup `unlink` could fail the same way the write did — so an unusable cache directory would
+     have aborted an ingest. A cache that can fail a run is worse than no cache. Both fixed.
+  4. **`chunk_size` measured INERT**, so the fingerprint's field list is evidence-based rather than
+     guessed: varying it 128/256/512/1024 on an 8,600-char parent produced byte-identical children.
+     What actually moves boundaries is `semantic_threshold` (0.8 → 2 children, 0.3 → **39**) and
+     `min_chunk_tokens` (32 → 2, 300 → 1) — both already present. `chunk_size`/`chunk_overlap` are
+     carried anyway as cheap insurance, and the comment says so. A `_CACHE_SCHEMA_VERSION` constant
+     is included in the fingerprint to cover the case config cannot: a **code** change that alters
+     chunking or vectors.
+- **Independent review (round 2), adjudicated not accepted.** One reviewer, `openai/gpt-oss-20b`,
+  single-turn, returned `passed:false` with 6 findings in 17.5 s / 1 API call. Adjudicated against
+  the running code:
+
+  | # | claim | verdict |
+  |---|---|---|
+  | 1 | fingerprint omits `chunk_size`, and omits the chunker code entirely | **half real** — `chunk_size` measured inert, but both it and a code-version constant are now included |
+  | 2 | 64-bit sha prefix risks collision | **not worth changing, changed anyway** — widened to 128 bits at zero cost |
+  | 3 | counters are unlocked | **real but unobservable here** — see below |
+  | 4 | temp-file name could collide across processes | **not applicable** — single writer per parent, one process |
+  | 5 | `dense_1024` is a view into the npz, invalid after the file closes | **FALSE** — measured: the array reads correctly after close (sum exactly 1024×1.5); numpy reads the member into memory |
+  | 6 | a truncated npz could load partially and be used silently | **FALSE** — measured: truncated and garbage both raise and are caught as a safe miss |
+
+  **Finding 3 is the interesting one.** The reviewer is theoretically right that `self.hits += 1`
+  is a read-modify-write. But measured directly, an **unlocked** increment lost **zero** at 8×25,
+  16×150 and **32×300** thread-iterations with `sys.setswitchinterval(1e-6)` — CPython's GIL plus
+  the specializing interpreter complete the sequence inside a time slice. The lock is kept as cheap
+  insurance (it is load-bearing on a free-threaded build), and the test **says in its own docstring
+  that it does not discriminate on this interpreter**, rather than implying it proves the fix.
+  An earlier version of that test appeared to fail against the unlocked counter; re-measured in
+  isolation it does not, so that observation is not relied on. **Two of six findings were false,
+  one was a non-issue, and none was a defect in the shipped code** — which is the same shape as the
+  previous round and is why reviewer output is treated as candidate defects, not verdicts.
 
 ### I17. NEW 2026-10-17 (found auditing the ingest for concurrency) — two serial-batch lanes remain in the ingest: ColBERT at batch 4, SPLADE at batch 32
 

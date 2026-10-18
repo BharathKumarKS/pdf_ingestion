@@ -27,6 +27,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import os
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -40,6 +41,12 @@ if TYPE_CHECKING:  # pragma: no cover - typing only, keeps this module import-li
 
 # The config fields that change chunk boundaries or the vectors themselves. Anything here
 # invalidates the cache; anything not here must not, or a stale entry could be reused silently.
+#
+# `chunk_size` / `chunk_overlap` are included although they measured INERT: varying chunk_size
+# across 128/256/512/1024 on an 8,600-character parent produced byte-identical children (the
+# semantic segmentation, driven by `semantic_threshold`, decides the boundaries; 0.8 -> 2 children
+# and 0.3 -> 39). They are here as cheap insurance against that changing, and that is recorded so
+# the inclusion is honest rather than cargo-cult.
 _FINGERPRINT_FIELDS = (
     "dense_model",
     "dense_dim",
@@ -47,8 +54,17 @@ _FINGERPRINT_FIELDS = (
     "parent_max_tokens",
     "semantic_threshold",
     "min_chunk_tokens",
+    "chunk_size",
+    "chunk_overlap",
     "late_chunk_enabled",
 )
+
+# Bump this whenever the CHUNKING or EMBEDDING CODE changes in a way that alters the children or
+# the vectors, even if no config value does. Config fields cannot capture a code change, and a
+# stale entry reused after one would be silently wrong — the exact class of bug this module exists
+# to avoid. Not automatic: hashing the module source would make every cache entry invalid on every
+# refactor, which is worse than the discipline of bumping this.
+_CACHE_SCHEMA_VERSION = 1
 
 
 def fingerprint(pdf_path: str | Path, cfg) -> str:
@@ -59,14 +75,19 @@ def fingerprint(pdf_path: str | Path, cfg) -> str:
     """
     h = hashlib.sha256()
     h.update(Path(pdf_path).read_bytes())
+    h.update(f"\x00schema={_CACHE_SCHEMA_VERSION}".encode())
     for field in _FINGERPRINT_FIELDS:
         h.update(f"\x00{field}={getattr(cfg, field, None)}".encode())
     return h.hexdigest()[:16]
 
 
 def _text_sha(text: str) -> str:
-    """Short content digest of a child's text — the cache's real identity check."""
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
+    """Content digest of a child's text — the cache's real identity check.
+
+    128 bits, not the 64 a 16-character prefix would give. The cost is zero and the alternative is
+    a birthday-bound collision argument nobody should have to make about their cache.
+    """
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:32]
 
 
 @dataclass
@@ -124,9 +145,24 @@ class EmbeddingCache:
     def __init__(self, root: str | Path, key: str) -> None:
         self._dir = Path(root) / key
         self._key = key
+        self._lock = threading.Lock()
         self.hits = 0
         self.misses = 0
         self.writes = 0
+
+    def _bump(self, field: str) -> None:
+        """Increment a counter under a lock.
+
+        `get`/`put` are called from up to `late_chunk_workers` threads on one shared instance, and
+        `self.hits += 1` is a read-modify-write. The lock is cheap insurance, and it is stated as
+        insurance rather than as a fix for an observed bug: measured directly, an UNLOCKED `+= 1`
+        on an int attribute lost zero increments at 8x25, 16x150 and 32x300 threads x iterations
+        with `sys.setswitchinterval(1e-6)` — CPython's GIL plus the specializing interpreter make
+        the sequence complete inside a time slice for this pattern. It becomes genuinely racy on a
+        free-threaded build, which is reason enough to keep it. See the matching test.
+        """
+        with self._lock:
+            setattr(self, field, getattr(self, field) + 1)
 
     @property
     def directory(self) -> Path:
@@ -139,7 +175,7 @@ class EmbeddingCache:
         """Return the cached entry, or ``None`` on a miss OR an unreadable entry."""
         path = self._path(parent_id)
         if not path.exists():
-            self.misses += 1
+            self._bump("misses")
             return None
         try:
             with np.load(path, allow_pickle=False) as z:
@@ -155,9 +191,9 @@ class EmbeddingCache:
         except Exception as exc:  # noqa: BLE001 - a bad entry is a miss, never a crash
             logger.warning("Embedding cache: entry {} unreadable ({}) — re-embedding",
                            path.name, type(exc).__name__)
-            self.misses += 1
+            self._bump("misses")
             return None
-        self.hits += 1
+        self._bump("hits")
         return entry
 
     def put(self, parent_id: int, chunks: list[EnrichedChunk]) -> None:
@@ -189,7 +225,7 @@ class EmbeddingCache:
                     model_name=np.asarray(chunks[0].model_name, dtype="U"),
                 )
             os.replace(tmp, final)
-            self.writes += 1
+            self._bump("writes")
         except Exception as exc:  # noqa: BLE001 - see docstring
             logger.warning("Embedding cache: could not write {} ({}) — continuing uncached",
                            final.name, type(exc).__name__)

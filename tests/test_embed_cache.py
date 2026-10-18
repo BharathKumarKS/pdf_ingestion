@@ -62,8 +62,72 @@ def test_fingerprint_changes_with_each_chunking_knob(tmp_path):
         ("min_chunk_tokens", 7),
         ("late_chunk_enabled", False),
         ("dense_model", "other/model"),
+        # measured inert (see _FINGERPRINT_FIELDS) but carried as cheap insurance
+        ("chunk_size", 128),
+        ("chunk_overlap", 8),
     ]:
         assert fingerprint(pdf, _cfg(**{field: value})) != base, f"{field} did not invalidate"
+
+
+def test_fingerprint_changes_with_the_schema_version(tmp_path, monkeypatch):
+    """Config fields cannot capture a CODE change. Bumping the version must invalidate.
+
+    Without this, a change to the chunker or the embedding path would keep reusing entries produced
+    by the old code — silently wrong, which is the failure this whole module is built to avoid.
+    """
+    pdf = _pdf(tmp_path)
+    base = fingerprint(pdf, _cfg())
+    monkeypatch.setattr("src.pdf_ingestion.embed_cache._CACHE_SCHEMA_VERSION", 99)
+    assert fingerprint(pdf, _cfg()) != base
+
+
+def test_counters_are_exact_under_concurrency(tmp_path):
+    """`get`/`put` run on up to N worker threads; `x += 1` is a read-modify-write.
+
+    **This test does NOT discriminate on CPython 3.11, and that is recorded deliberately.** The
+    reviewer flagged the unlocked counters, and it is theoretically right — but measured directly,
+    an unlocked `+= 1` on an int attribute lost **zero** increments at 8x25, 16x150 and
+    **32x300** with `sys.setswitchinterval(1e-6)`. The GIL plus the specializing interpreter make
+    the read-modify-write complete within a time slice for this access pattern. An earlier version
+    of this test appeared to fail against the unlocked counter; re-measured in isolation, it does
+    not, so that observation is not relied on here.
+
+    So what is this test for? Two things, both real:
+      * a **free-threaded** Python (3.13+ without the GIL) makes this genuinely racy, and the lock
+        is load-bearing there rather than decorative;
+      * it pins the counts exactly, so a future refactor to a non-atomic counter (or to a shared
+        dict of counters) fails here rather than in a log line nobody reads.
+
+    The honest summary for the register: the lock is cheap insurance, and the *risk* is accepted
+    rather than demonstrated.
+    """
+    import threading as _threading
+
+    cache = EmbeddingCache(tmp_path, "key")
+    parent = _parent()
+    chunks = _chunks(parent, [(0, 10)])
+    for pid in range(40):
+        cache.put(pid, chunks)
+
+    errors: list[BaseException] = []
+
+    def hammer(pid: int) -> None:
+        try:
+            for _ in range(25):
+                cache.get(pid)   # hit
+                cache.get(999)   # miss
+        except BaseException as exc:  # noqa: BLE001
+            errors.append(exc)
+
+    threads = [_threading.Thread(target=hammer, args=(pid,)) for pid in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert not errors
+    assert cache.hits == 8 * 25, f"lost increments: {cache.hits} != 200"
+    assert cache.misses == 8 * 25, f"lost increments: {cache.misses} != 200"
 
 
 # ── Round trip ─────────────────────────────────────────────────────────────
