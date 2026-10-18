@@ -177,6 +177,16 @@ Each step ends with: unit tests green (stubs, offline) → a small live probe �
 - Reuse the `_NON_CHAPTER` list already in `store.py:1362`, promoted to a shared helper.
 - Tag each child; write the flag into the Qdrant payload + SQLite; filter retrieval on it.
 - Verify: `tests/test_backmatter_gate.py` extended; the known mixed page (DB 936) splits correctly.
+- **IMPLEMENTED 2026-10-17** — `src/pdf_ingestion/content_filter.py`; chunker tags children;
+  payload + SQLite + retrieval filter wired. Evidence `logs/p1/step5/` (probe → `evidence.json`),
+  register `IMPROVEMENTS.md` §E5 "outcome". Suite 341 pass / 5 pre-existing fail. **Deviation from
+  the plan, forced by measurement:** the `_NON_CHAPTER` keyword list alone does **not** catch the
+  page-936 index rows (they carry no keyword), so two structural signals — an exact index heading
+  and an index-table layout — were added; without them the plan's own acceptance test fails. The
+  page bounds are left in place (the rule's front-matter recall gap is registered in §E5). SQLite
+  `chunks.is_content` was done here although Step 7 also lists it; Step 7 now only needs
+  `parent_id` + the new collection schema. Independent review (single-turn, evidence embedded,
+  `openai/gpt-oss-20b`): **`passed: true`, C1–C5 confirmed, no findings**.
 
 ### Step 6 — §D4 per-PDF-page numbering
 - `page_number` comes from the parent's provenance char→page map (Step 2), not `_page_for_offset`.

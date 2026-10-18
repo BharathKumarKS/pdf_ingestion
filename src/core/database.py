@@ -64,6 +64,8 @@ class Chunk(SQLModel, table=True):
     char_start: int = 0
     char_end: int = 0
     token_count: int = 0
+    # E5 — front/back-matter classification, set at ingest from the chunk's own text.
+    is_content: bool = Field(default=True, index=True)
     version: int = Field(default=1)
     is_active: bool = Field(default=True, index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -149,6 +151,7 @@ def _migrate_add_columns(engine) -> None:
     migrations = [
         ("documents", "colpali_status", "TEXT DEFAULT 'pending'"),
         ("documents", "source_path",    "TEXT"),
+        ("chunks",    "is_content",     "BOOLEAN DEFAULT 1"),
     ]
     with engine.connect() as conn:
         for table, column, col_type in migrations:

@@ -1,0 +1,82 @@
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 3715.06it/s]
+2026-10-17 16:43:34.841 | INFO     | src.pdf_ingestion.chunker:_get_chunker:83 - chonkie SemanticChunker ready (threshold=0.8, chunk_size=512)
+2026-10-17 16:43:34.841 | SUCCESS  | src.pdf_ingestion.chunker:chunk_parents:108 - Chunked document d → 1 children from 1 parents
+2026-10-17 16:43:34.844 | SUCCESS  | src.pdf_ingestion.chunker:chunk_parents:108 - Chunked document d → 1 children from 1 parents
+{
+  "corpus": {
+    "n_chunks": 5048,
+    "false_negatives_content_dropped": 5,
+    "false_negative_samples": [
+      {
+        "chunk_index": 1999,
+        "page": 395,
+        "head": "|-----------------------------------------------------------"
+      },
+      {
+        "chunk_index": 2043,
+        "page": 403,
+        "head": "|------------------------------------------------|----------"
+      },
+      {
+        "chunk_index": 3114,
+        "page": 628,
+        "head": "What we know of how it does that is the subject of the next "
+      },
+      {
+        "chunk_index": 3240,
+        "page": 652,
+        "head": "## bibliography\n\nCommittee on Colorimetry, Optical Society o"
+      },
+      {
+        "chunk_index": 4668,
+        "page": 936,
+        "head": "We might like to turn the idea around and think that the tru"
+      }
+    ],
+    "false_positives_noncontent_kept": 242,
+    "false_positive_sample_count": 242,
+    "page_936_content_chunks_kept": [
+      4660,
+      4661,
+      4662,
+      4663,
+      4664,
+      4665,
+      4666,
+      4667
+    ],
+    "page_936_index_chunks_dropped": [
+      4668,
+      4669,
+      4670,
+      4671,
+      4672,
+      4673,
+      4674,
+      4675,
+      4676,
+      4677,
+      4678,
+      4679,
+      4680,
+      4681,
+      4682,
+      4683
+    ]
+  },
+  "guards": {
+    "refractive_index_heading_is_content": true,
+    "chapter_31_1_index_of_refraction_is_content": true,
+    "content_trig_table_is_content": true,
+    "numeric_data_table_is_content": true,
+    "index_heading_is_not_content": false,
+    "copyright_is_not_content": false,
+    "separator_furniture_is_not_content": false
+  },
+  "wiring": {
+    "chunker_tags_index_children_non_content": true,
+    "chunker_tags_prose_children_content": true,
+    "index_child_count": 1,
+    "prose_child_count": 1
+  }
+}

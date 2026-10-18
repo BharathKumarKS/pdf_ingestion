@@ -84,7 +84,7 @@ def test_children_carry_parent_context():
     children = SemanticChunker(_cfg()).chunk_parents("doc", "global", [parent])
     assert all(c.parent_id == 7 for c in children)
     assert all(c.parent_text == PROSE for c in children)
-    assert all(c.is_content is True for c in children)   # E5 sets the real value in Step 5
+    assert all(c.is_content is True for c in children)   # prose parent → content (E5)
 
 
 def test_chunk_index_is_global_and_sequential():

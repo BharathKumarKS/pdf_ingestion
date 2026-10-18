@@ -117,3 +117,37 @@ def test_search_excludes_back_matter(settings, monkeypatch):
                        source_type="base_textbook", limit=10, query_text="energy")
     pages = [r["page_number"] for r in out]
     assert pages == [100], pages
+
+
+# ── E5: retrieval filters on the ingest-time is_content flag ─────────────────
+
+def _cond_keys(filter_) -> set[str]:
+    """Keys carrying a ``must_not`` FieldCondition on a filter."""
+    return {c.key for c in (filter_.must_not or []) if getattr(c, "key", None)}
+
+
+def test_search_filters_on_is_content(settings, monkeypatch):
+    from src.pdf_ingestion.store import DocumentStore
+
+    store = DocumentStore(settings)  # no page bounds — is_content is the only filter
+    seen = {}
+
+    def _fake_search(**kw):
+        seen["filter"] = kw.get("filter_")
+        return _Resp([
+            _Hit(1, 0.9, {"page_number": 100, "source_type": "base_textbook",
+                          "text": "content", "is_content": True}),
+            _Hit(2, 0.8, {"page_number": 950, "source_type": "base_textbook",
+                          "text": "index", "is_content": False}),   # non-content
+            _Hit(3, 0.7, {"page_number": 101, "source_type": "base_textbook",
+                          "text": "legacy"}),                        # pre-re-ingest: no field
+        ])
+
+    monkeypatch.setattr(store, "_qdrant_search", _fake_search)
+
+    out = store.search(np.zeros(settings.embedding_dim, dtype=np.float32), tenant_id="global",
+                       source_type="base_textbook", limit=10, query_text="energy")
+
+    assert [r["text"] for r in out] == ["content", "legacy"]   # index dropped, legacy kept
+    assert "is_content" in _cond_keys(seen["filter"])          # filter pushed to Qdrant too
+

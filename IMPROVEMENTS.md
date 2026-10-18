@@ -1051,6 +1051,47 @@ embedding.** The middle and back of that pipeline are missing.
   (0.3% of 5,048) remain retrievable. Do not chase the remainder with page arithmetic; this
   item is the fix.
 
+#### E5 outcome — P1 Step 5 (2026-10-17): the rule, and its measured limits
+
+**Landed:** `src/pdf_ingestion/content_filter.py` (the promoted `_NON_CHAPTER` list + two
+structural signals), wired into the chunker (tags every child), the Qdrant payload
+(`is_content`), SQLite (`chunks.is_content`), the RAPTOR/card rebuild, and retrieval
+(`must_not is_content == False`, both in the Qdrant filter and as a Python post-filter).
+Evidence: `logs/p1/step5/probe_is_content.py` → `evidence.json`; tests
+`tests/test_content_filter.py` + `tests/test_backmatter_gate.py`.
+
+**The keyword list alone is not enough — measured, not assumed.** On the real corpus none of
+the page-936 index rows contain a `_NON_CHAPTER` marker: they are pipe-table rows
+(`| Angle | Avogadro's number, 41-18, II-8-9 |`) and separator rows (`|---…---|`). A rule
+seeded only with the keyword list would **not** satisfy the plan's own acceptance test
+(page 936 splits). Two structural signals were therefore added: an **index heading** matched
+as a whole line (`## Index -1`, `## Name Index` — so `## The Origin of the Refractive Index`,
+a real chapter on p533, is *not* caught) and an **index table** layout (≥⅓ of lines are
+"term, page-ref" entries *and* ≥½ the lines are pipe rows — so a content table of bare
+numbers, `| 60 ◦ | 8 ◦ |`, is not caught).
+
+**Measured against a page-region oracle** (pages ≥937 back matter, <34 front matter;
+page-936 index run = chunks 4669–4683), 5,048 chunks:
+
+| metric | value |
+|---|---|
+| page 936 | **splits correctly** — content 4660–4667 kept, index 4668–4683 dropped |
+| false negatives (content dropped) | **5** — 2 pure separator rows (no text), 2 chapter bibliographies (`## bibliography`), 1 boundary chunk (4668) whose prose ends with the `## Index` heading. **No prose or numeric table is dropped.** |
+| false positives (non-content kept) | **242** — the remaining recall gap |
+
+**Known gap (the 242):** front-matter *prose* (publisher's note, preface — no keyword in the
+chunk itself) and the TOC / Name-Index continuation rows (different layout: `| 1-1 | …`, or
+rows that start with a page ref). These stay covered by the page bounds (`min_content_page` /
+`max_content_page`) until the Step 8 run zeroes them; **do not zero the page bounds until
+this recall gap is closed or measured as immaterial at Step 10.** Extending the rule (e.g.
+parent-heading context, a TOC dot-leader signal) is a follow-up, not a blocker for Step 5.
+
+**Backward compatibility (why this can land before the re-ingest):** `must_not
+is_content == False` never excludes a point that *lacks* the field, and the Python
+post-filter keeps `is_content is None`. So the current index (points written before the
+re-ingest carry no `is_content`) is unchanged, and the filter takes effect on the rebuilt
+one.
+
 ---
 
 ## F. Card & graph lanes

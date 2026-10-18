@@ -12,6 +12,7 @@ from sqlmodel import Session, select
 
 from src.core.config import Settings, get_settings
 from src.core.database import Card, Chunk, Document, PageImage, RaptorNode, get_engine, get_qdrant
+from src.pdf_ingestion import content_filter
 from src.pdf_ingestion.card_generator import GeneratedCard
 from src.pdf_ingestion.embedder import EmbeddedChunk
 from src.pdf_ingestion.parser import ParsedDocument
@@ -50,6 +51,8 @@ def _build_payload(
         "embedding_version":  ec.model_name,
         "char_start":         ec.chunk.char_start,
         "char_end":           ec.chunk.char_end,
+        # E5 — front/back-matter classification, written at ingest and filtered on at search.
+        "is_content":         ec.chunk.is_content,
     }
 
 
@@ -118,6 +121,7 @@ class DocumentStore:
                     char_start=ec.chunk.char_start,
                     char_end=ec.chunk.char_end,
                     token_count=ec.chunk.token_count,
+                    is_content=ec.chunk.is_content,
                 ))
             session.commit()
 
@@ -206,7 +210,13 @@ class DocumentStore:
                 key="page_number",
                 range=Range(gt=self._cfg.max_content_page),
             ))
-        _has_page_bounds = (self._cfg.min_content_page > 0 or self._cfg.max_content_page > 0)
+        # E5 — exclude chunks classified as front/back matter at ingest. A must_not on
+        # ``is_content == False`` never excludes a point that lacks the field, so this is a
+        # no-op on an index written before the re-ingest and takes effect on the rebuilt one
+        # (where it replaces the page bounds above).
+        _must_not.append(FieldCondition(
+            key="is_content", match=MatchValue(value=False),
+        ))
 
         if source_type is None:
             filter_ = Filter(
@@ -226,7 +236,7 @@ class DocumentStore:
             else:
                 must.append(FieldCondition(key="tenant_id",
                             match=MatchValue(value=tenant_id)))
-            filter_ = Filter(must=must, must_not=_must_not if _has_page_bounds else [])
+            filter_ = Filter(must=must, must_not=_must_not)
 
         response = self._qdrant_search(
             query_vector=query_vector,
@@ -247,6 +257,10 @@ class DocumentStore:
                 r for r in results
                 if 0 < (r.get("page_number") or 0) <= self._cfg.max_content_page
             ]
+
+        # E5 — drop chunks classified as non-content. Explicit ``is False`` so points written
+        # before the re-ingest (no ``is_content`` field) are kept.
+        results = [r for r in results if r.get("is_content") is not False]
 
         return results
 
@@ -1358,21 +1372,9 @@ def generate_phase2_artifacts(
         raise ValueError(f"No chunks for document {document_id}")
 
     # Skip front/back matter — these produce low-quality cards
-    # (copyright notices as objectives, errata as definitions, etc.)
-    _NON_CHAPTER = [
-        "table of contents", "## preface", "\npreface\n",
-        "## bibliography", "bibliography\n", "## subject index",
-        "## index\n", "## acknowledgment", "## references\n",
-        "list of figures", "list of tables",
-        "errata\n", "## errata", "erratum", "typographical error",
-        "all rights reserved", "copyright ©", "© 20", "© 19",
-        "printed in the united states", "isbn ", "library of congress",
-    ]
-
-    def _is_chapter(text: str) -> bool:
-        sample = text.lower()[:500]
-        return not any(kw in sample for kw in _NON_CHAPTER)
-
+    # (copyright notices as objectives, errata as definitions, etc.).
+    # E5: the keyword list moved to ``content_filter`` (shared with ingest + retrieval); the
+    # structural index rule is now part of it too.
     chunk_objects = [
         TextChunk(
             chunk_id=c.id,
@@ -1386,7 +1388,7 @@ def generate_phase2_artifacts(
             page_number=c.page_number,
         )
         for c in chunks_db
-        if _is_chapter(c.text)
+        if content_filter.is_content(c.text)
     ]
     skipped = len(chunks_db) - len(chunk_objects)
     if skipped:

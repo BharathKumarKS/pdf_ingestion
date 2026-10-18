@@ -34,6 +34,7 @@ from typing import Optional
 from loguru import logger
 
 from src.core.config import Settings, get_settings
+from src.pdf_ingestion import content_filter
 from src.pdf_ingestion.models import ParentChunk
 
 
@@ -158,7 +159,7 @@ class SemanticChunker:
                     page_number=parent.page_for_offset(char_start),
                     parent_id=parent.parent_id,
                     parent_text=parent.text,
-                    is_content=True,
+                    is_content=content_filter.is_content(text),
                 )
             )
         return out
@@ -222,6 +223,7 @@ class SemanticChunker:
                     char_end=char_end,
                     token_count=token_count,
                     page_number=_page_for_offset(char_start, page_map) if page_map else None,
+                    is_content=content_filter.is_content(text),
                 )
             )
 
