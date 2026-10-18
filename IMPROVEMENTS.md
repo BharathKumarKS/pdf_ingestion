@@ -1292,6 +1292,28 @@ dead code from the day it lands. `process_pdf` is the whole API.
   honest reading: a cluster-side problem that concurrent load may have accelerated. **Do not re-run
   at 8 workers without deciding this.** §I18 records the probe's blind spot that made 8 look safer
   than it was.
+- **⛔ ATTEMPT 3 FAILED 2026-10-18 08:41:17 → 09:48:05 (66.8 min, exit 1) — it reached 339 of 341
+  parents and discarded everything.** The closest yet, and the clearest possible demonstration of
+  the checkpoint gap. **⚠️ It also ran at 8 workers, not the 4 that had been decided** — `.env`
+  carries `LATE_CHUNK_WORKERS=8` (added when 8 was still the default), `.env` overrides the config
+  default, and the run was launched without asserting the effective value. Author's error, and the
+  reason it is recorded here rather than quietly re-run.
+- **The numbers:** 339/341 parents in **3826.4 s = 63.8 min**, 480,559 tokens, **11.29 s/parent,
+  126 tok/s**. Only **15 retries** in the whole run (8 `ConnectTimeout` at 09:14–09:21, 7
+  simultaneous `ReadTimeout` at 09:41:24), then parent 340 finished at **09:47:57** and the last
+  parent(s) hit `ConnectTimeout` until the attempts were exhausted. **Nothing written again** —
+  `v2` = 0 points, SQLite still 5,048 chunks / 1 document.
+- **The retry and deadline both behaved correctly.** 15 retries absorbed 15 transient failures that
+  would each have killed attempt 1 outright, and the 09:41 stall (7 workers timing out together,
+  ~300 s of no data) was bounded by the per-read timeout rather than hanging. The failure was a
+  genuinely unreachable endpoint at the very end, which no retry policy can fix.
+- **Concurrency did NOT pay under sustained load — measured, and it contradicts the burst probe.**
+  At 8 workers the run achieved **126 tok/s**; serial attempt 1 achieved **214 tok/s** median and the
+  morning serial probe **84 tok/s**. Against the same morning endpoint, 8 workers bought only ~**1.5×**
+  over serial (126 vs 84), not the 4–7× the burst probe promised. This is the strongest evidence yet
+  that §I18's method note is the real lesson: **a burst probe cannot predict sustained behaviour on
+  this endpoint.** 11.29 s/parent at 8 workers vs 5.13 s/parent at 1 worker in attempt 1 — the
+  "concurrency" setting was slower than serial by 2.2×, on a comparable corpus.
 - **Measured throughput, attempt 1 (from the log, all 260 completed parents):** median **5.13 s/parent**
   (mean 9.35, max **136.5**), parent size median 1,190 tokens (mean 1,387, max 4,762), median
   **214 tokens/s** (min **9**). The endpoint **degrades as the run proceeds** — the first 50
@@ -1710,7 +1732,35 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   per-parent checkpoint: a failure at parent 340 of 341 discards the whole document, because
   `save_document` is the only write point. The retry and the deadline make that much less likely
   (two independent failure shapes are now handled) but they do not make it cheap. Registered, not
-  claimed fixed.
+  claimed fixed. **⚠️ This is now the single most valuable remaining fix — see §I19.**
+
+### I19. NEW 2026-10-18 (found by Step 8 attempt 3) — the ingest has no checkpoint, so 339/341 parents of finished work can be discarded by one unreachable request
+
+- **What:** the ingest computes every parent's embeddings in memory and writes **once**, at the end,
+  via `save_document`. There is no per-parent persistence and no resume. Attempt 3 completed
+  **339 of 341 parents** (63.8 min, 480,559 tokens) and then hit `ConnectTimeout` on the last
+  parent(s); the process aborted and **all 63.8 minutes were discarded** — `knowledge_base_v2` is
+  still at 0 points. Attempts 1 and 2 lost 86 and 53.6 minutes the same way.
+- **Why it is now the top fix:** three consecutive failures have each discarded a nearly-complete
+  document, and the pattern is stable — the endpoint is flaky enough that *some* failure is likely
+  on any 60–90 minute run, so the expected cost of a re-run is the full run every time. With a
+  checkpoint, attempt 4 would need only the **2 missing parents**; without one it needs all 341.
+  Retry and the deadline (both now landed) reduce the *probability* of an abort; a checkpoint reduces
+  its *cost*, which is the part that is currently unbounded.
+- **Why it is not a two-line change (and was not bundled):** the obvious version — write to Qdrant
+  and SQLite per parent batch — would make a partially-written collection look complete to every
+  downstream reader (the funnel, the eval, the UI), which is a worse failure than a clean abort. The
+  safer shape is a **side-car resume cache**: for each (pdf content hash, `parent_id`), persist that
+  parent's pooled child vectors (`dense_1024`, `dense_64`, `token_span`) to disk as the parent
+  completes; on re-run, load the cache, embed only the missing parents, and keep `save_document` as
+  the single atomic write point. That preserves the one-write invariant, needs no schema change, and
+  is invalidated by hashing the PDF plus the chunking config (parent_max_tokens, semantic_threshold,
+  min_chunk_tokens) so a config change cannot silently reuse stale vectors.
+- **Cost:** medium — a cache module, its invalidation key, and tests. Needs independent review like
+  any other source change. No re-ingest of the corpus is implied (it only affects the run).
+- **Evidence it would have worked:** attempt 3's 339 completed parents are exactly the population
+  the cache would have held; the 4th attempt's late-chunk phase would have been 2 requests instead
+  of 341.
 
 ### I17. NEW 2026-10-17 (found auditing the ingest for concurrency) — two serial-batch lanes remain in the ingest: ColBERT at batch 4, SPLADE at batch 32
 

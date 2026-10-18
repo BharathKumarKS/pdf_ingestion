@@ -94,8 +94,9 @@
 > endpoint returns **unnormalised** pooled vectors and only the index side normalised, so any
 > dot-product consumer was off by ~6,000× (no retrieval number moved — Qdrant normalises for
 > COSINE). Evidence `logs/p1/step8/`; register `IMPROVEMENTS.md` §E6 "SWITCHED 2026-10-17".
-> **⛔ Step 8 attempt 1 (86 min) and attempt 2 (53.6 min) BOTH FAILED — nothing written, and the
-> endpoint itself collapsed on attempt 2. Decision needed before attempt 3.** The run
+> **⛔ Step 8 attempts 1–3 ALL FAILED — nothing written. Attempt 3 reached 339/341 parents (99.4%)
+> and discarded 63.8 min. The retry + deadline fixes work; what is missing is a CHECKPOINT (§I19).**
+> The run
 > `scripts/ingest_base_textbook.py --pdf …feynman… --collection-name knowledge_base_v2 --reindex`
 > got **further than the plan expected and then lost all of it**: Docling parsed 968 pages in
 > **4 min** → **341 parents → 3,796 children** → the late-chunk phase ran **260 of 341 parents**
