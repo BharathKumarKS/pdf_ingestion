@@ -324,6 +324,31 @@ to 8 workers on this corpus. **8 is an unvalidated setting.**
    hung request can silently consume a run.
 3. **Then attempt 3 at a validated worker count** (2–4 expected, not 8).
 
+## Real-endpoint validation of the streaming deadline (2026-10-18)
+
+The reviewer of the deadline diff returned `passed: true` with no findings — but with **1 API call
+in 19.2 s**, the same read-and-agree pattern as before, and it did not engage with the one question
+that decides whether the design works at all: **does `iter_bytes()` actually stream incrementally on
+real traffic, or does httpx buffer the whole body and yield one chunk?** If it buffered, the
+deadline would be a single check at the end and the tests (which use `MockTransport`) would be
+proving nothing about production.
+
+So it was measured against the **live endpoint** instead of argued:
+
+| check | result |
+|---|---|
+| real streaming read | **18,719 chunks**, 65.9 MB, **time-to-first-chunk 0.66 s**, total 3.19 s |
+| is it incremental? | **yes** — the deadline gets ~18,700 checkpoints per request, not one |
+| new code path, real endpoint | per-token `(1682, 1024)` in 5.48 s · pooled `(1024,)` norm **1.000** · query `(1024,)` norm **1.000** |
+
+The third row matters independently: the change moved the client from `client.post(...)` to
+`client.stream("POST", ...)`, and **MockTransport cannot prove that swap is safe against a real
+server**. It is — the per-token, pooled and query paths all return correctly-shaped, correctly
+normalised vectors through the new code.
+
+Recorded because "the mock passed" and "the endpoint works" are different claims, and only the
+second one matters for a run against the cluster.
+
 ## Verification of the real run (pending a successful run)
 
 ```
