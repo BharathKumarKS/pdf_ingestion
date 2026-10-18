@@ -1839,6 +1839,34 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   index run.
 - **Not blocking Step 8's re-run.**
 
+### I20. NEW 2026-10-18 (found by Step 8 attempt 4's failure) — `save_document` is NOT the atomic write point it is documented as
+
+- **What:** the design rests on "`save_document` is the single write point, so an abort leaves both
+  stores untouched". It is a single *entry* point, but it is **not atomic**: it (1) commits SQLite,
+  (2) encodes SPLADE, (3) encodes ColBERT, (4) upserts Qdrant in batches. A failure at any step
+  after (1) leaves the two stores disagreeing. Measured on attempt 4: the run reached step (4),
+  Qdrant rejected the payload as too large, and the result was **3,796 chunk rows in SQLite for a
+  document with zero points in Qdrant**, plus **128 points already written** by the batches that had
+  succeeded — a half-written collection that every downstream reader would treat as real.
+- **Why it matters:** it is the same hazard the resume cache was deliberately designed *around*
+  (§I19: "incremental writes would make a partially-written collection look complete"). The
+  protection was placed in the cache and not applied to the writer it was protecting. Two of the
+  four steps can fail for mundane reasons (a size limit, a network blip), and the failure is
+  invisible: the SQLite document row looks complete, and `chunk_count` says 3,796.
+- **Cleanup required before a re-run, and it is not automatic:** the orphaned `documents` row and
+  its `chunks` must be deleted by hand, and the partially-written collection deleted, or the next
+  run adds a *third* document row and leaves 128 orphan points with a foreign `document_id`.
+- **Fix (not applied — needs a decision, not a patch):** either (a) upsert Qdrant **before**
+  committing SQLite, so the store that can be verified cheaply is the last to change; or (b) write
+  a `status` column on the document row (`pending` → `complete`) and have every reader filter on it,
+  so a half-written document is invisible rather than merely inconsistent; or (c) make the batch
+  loop transactional with a rollback of the SQLite rows on failure. **(b) is the most robust and the
+  smallest reader-side change**, and it also fixes the duplicate-filename issue registered in §E7 —
+  a document is only "there" when its status says so.
+- **Cost:** medium. No re-ingest needed; it changes what a reader sees, so it needs its own tests.
+- **Found because attempt 4 got further than any previous run** — this bug was hidden behind the
+  earlier failures for three attempts.
+
 ### I18. NEW 2026-10-18 (found by Step 8 attempt 2) — the concurrency ramp probe used ONE payload size, so it never tested the real size distribution
 
 - **What:** `probe_concurrency_knee.py` fired N concurrent requests of a **fixed 1,749-token**

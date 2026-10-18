@@ -26,6 +26,66 @@ from src.pdf_ingestion.raptor_tree import RaptorNodeData
 _VISUAL_DEDUPE_OVERFETCH = 5
 
 
+# ── Qdrant upsert batching ─────────────────────────────────────────────────
+
+# Qdrant rejects a request whose JSON body exceeds 32 MiB (33554432 bytes) with
+# `400 Bad Request: JSON payload ... is larger than allowed`. Measured on the Feynman re-ingest:
+# 3,796 points with ColBERT enabled serialised to 34,769,658 bytes in a single 128-point batch.
+# So the batch is bounded by BYTES, with a point cap as a secondary guard, rather than by a fixed
+# count — the per-point size varies with the chunk's token count and with which lanes are enabled.
+_UPSERT_MAX_BYTES = 8 * 1024 * 1024      # ~4x headroom under the 32 MiB cap
+_UPSERT_MAX_POINTS = 256                 # never let a batch grow unbounded on tiny points
+
+# Bytes per float as JSON text, e.g. "-0.0123456789012345," — a deliberate over-estimate so the
+# budget errs on the safe side. Under-estimating is the failure mode that produces a 400.
+_JSON_BYTES_PER_FLOAT = 24
+
+
+def _estimate_point_bytes(point) -> int:
+    """Rough serialised size of one point — vectors dominate, so payload is counted crudely.
+
+    Estimates from the array shapes instead of serialising: at ~35 MB per 128 points, measuring by
+    encoding the JSON twice would cost real time for no extra safety. Over-estimating is safe
+    (more, smaller batches); under-estimating is not, so the per-float constant is generous.
+    """
+    total = 0
+    for vec in (point.vector or {}).values():
+        if hasattr(vec, "indices"):                 # Qdrant SparseVector
+            total += 16 * len(vec.indices)
+        elif vec and isinstance(vec[0], list):      # multi-vector (ColBERT): n_tokens x dim
+            total += _JSON_BYTES_PER_FLOAT * sum(len(row) for row in vec)
+        else:                                       # flat dense vector
+            total += _JSON_BYTES_PER_FLOAT * len(vec)
+    for value in (point.payload or {}).values():    # chunk text + parent text + metadata
+        if isinstance(value, str):
+            total += len(value)
+    return total + 256                              # fixed per-point JSON overhead
+
+
+def _iter_upsert_batches(
+    points: list,
+    max_bytes: int = _UPSERT_MAX_BYTES,
+    max_points: int = _UPSERT_MAX_POINTS,
+):
+    """Yield batches of points whose estimated serialised size fits Qdrant's request cap.
+
+    A generator over the input, so the caller never holds a second copy of a payload that can be
+    tens of megabytes. Extracted from ``save_document`` so the batching rule can be tested directly
+    rather than only through a full ingest.
+    """
+    batch: list = []
+    size = 0
+    for point in points:
+        estimated = _estimate_point_bytes(point)
+        if batch and (size + estimated > max_bytes or len(batch) >= max_points):
+            yield batch
+            batch, size = [], 0
+        batch.append(point)
+        size += estimated
+    if batch:
+        yield batch
+
+
 # ── Qdrant payload builder ─────────────────────────────────────────────────
 
 # The KB collection's full-dimension dense vector. The re-ingest retires ``dense_768``
@@ -239,11 +299,19 @@ class DocumentStore:
                 payload=_build_payload(ec, parsed_doc, tenant_id, source_type,
                                        is_global_baseline, meta),
             ))
-        for i in range(0, len(points), 128):
-            self._qdrant.upsert(
-                collection_name=self._cfg.qdrant_collection,
-                points=points[i : i + 128],
-            )
+        # Batch by ESTIMATED BYTES, not by a fixed point count.
+        #
+        # A fixed 128 points used to be fine and is not any more: with ColBERT enabled each point
+        # carries a per-token multi-vector (~100 tokens x 128 dims x ~20 bytes of JSON ≈ 270 KB),
+        # so 128 points serialise to ~34.7 MB — over Qdrant's 32 MB (33554432 byte) request cap.
+        # Measured: the first re-ingest to reach this point died with
+        # `400 Bad Request: JSON payload (34769658 bytes) is larger than allowed`.
+        #
+        # A byte budget is the right unit because the limit is in bytes and the per-point size
+        # varies with the chunk's token count and with which lanes are enabled. See
+        # `_iter_upsert_batches` / `_estimate_point_bytes`.
+        for batch in _iter_upsert_batches(points):
+            self._qdrant.upsert(collection_name=self._cfg.qdrant_collection, points=batch)
         logger.success("Qdrant: upserted {} points for doc {}", len(points), doc_id)
         return doc_id
 
