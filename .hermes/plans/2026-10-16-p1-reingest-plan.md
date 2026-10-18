@@ -191,6 +191,31 @@ Each step ends with: unit tests green (stubs, offline) → a small live probe �
 ### Step 6 — §D4 per-PDF-page numbering
 - `page_number` comes from the parent's provenance char→page map (Step 2), not `_page_for_offset`.
 - Verify: re-run the §D4 measurement (first/last chunk page vs PDF page) — the 0/−1 spread should collapse.
+- **VERIFIED 2026-10-17 — no source change.** The code landed in Step 3 (children take
+  `page_number` from `parent.page_for_offset`), so Step 6 is the measurement only. Measured with
+  `logs/p1/step6/probe_page_numbering.py` against an **independent extractor** (PyMuPDF page text
+  via `PageStore`; the page numbers came from Docling provenance), head-only — the claim is that
+  `page_number` is the page of the chunk's **start**. **Both paths on the same unit** (an
+  independent reviewer refuted the first version for comparing "first chunk per page" against
+  "every child"), on the 968-page book:
+
+  | path | sampling | n | offset 0 | offset −1 | other |
+  |---|---|---|---|---|---|
+  | old (deployed DB) | all chunks | 5047 | 1888 (**71.5%**) | 333 (12.6%) | +1: 322, +2: 73, +3: 20, −2: 3 |
+  | old (deployed DB) | first per page | 756 | 230 (54.4%) | 192 (45.4%) | +1: 1 |
+  | **new (parent-aware)** | **all children** | 3796 | **2150 (99.95%)** | **1 (0.05%)** | — |
+  | new (parent-aware) | first per page | 933 | 547 (**100%**) | 0 | — |
+
+  The offset collapses to 0 on both units; **0** children without a page. The reviewer's fix also
+  showed the old path's "45% at −1" was a first-chunk-per-page artifact — over all its chunks the
+  old path spreads both ways. The 1,645 children whose head the oracle cannot locate (Docling vs
+  PyMuPDF serialisation) are reported separately; their mid/tail fallback shows **one** −1, so they
+  hide no wrong-page cluster. Evidence + method: `logs/p1/step6/README.md`, `realbook.json`,
+  `children.json`, `testbook.json`.
+- **The plan's Step 3 note ("removing the dead path") moves to Step 7.** The legacy flat path is
+  **not** dead: `store.ingest_document` (`store.py:1315`) still calls `build_page_map` +
+  `chunk_document`, so `_page_for_offset` and `chunk_document` can only be removed when Step 7
+  rewires the ingest to the parent-aware path. Removing them here would break the live ingest.
 
 ### Step 7 — schema + write path
 - `database._ensure_*`: new collection with `dense_64` + `dense_1024` + `colbert` + `sparse`

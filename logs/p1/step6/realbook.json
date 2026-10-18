@@ -1,0 +1,220 @@
+{
+  "pdf": "feynman-lectures-on-physics-volume1.pdf",
+  "new_path_parent_aware": {
+    "all_chunks": {
+      "considered": 3796,
+      "head_located": 2151,
+      "head_not_locatable": 1645,
+      "no_page_number": 0,
+      "too_short": 0,
+      "fallback_located": 935,
+      "fallback_unlocatable": 710,
+      "head_offset_distribution": {
+        "+0": 2150,
+        "-1": 1,
+        "located": 2151
+      },
+      "head_offset_zero_fraction": 0.9995,
+      "unlocatable_head_fallback_offsets": {
+        "+0": 785,
+        "+1": 148,
+        "+2": 1,
+        "-1": 1,
+        "located": 935
+      },
+      "fallback_offset_nonzero_samples": [
+        {
+          "claimed_page": 4,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 10,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 34,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 45,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 47,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 59,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 60,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 69,
+          "fallback_offset": 1
+        }
+      ]
+    },
+    "first_per_page": {
+      "considered": 933,
+      "head_located": 547,
+      "head_not_locatable": 386,
+      "no_page_number": 0,
+      "too_short": 0,
+      "fallback_located": 248,
+      "fallback_unlocatable": 138,
+      "head_offset_distribution": {
+        "+0": 547,
+        "located": 547
+      },
+      "head_offset_zero_fraction": 1.0,
+      "unlocatable_head_fallback_offsets": {
+        "+0": 244,
+        "+1": 3,
+        "-1": 1,
+        "located": 248
+      },
+      "fallback_offset_nonzero_samples": [
+        {
+          "claimed_page": 104,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 625,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 635,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 940,
+          "fallback_offset": -1
+        }
+      ]
+    }
+  },
+  "old_path_deployed_db": {
+    "all_chunks": {
+      "considered": 5047,
+      "head_located": 2639,
+      "head_not_locatable": 2357,
+      "no_page_number": 0,
+      "too_short": 51,
+      "fallback_located": 1403,
+      "fallback_unlocatable": 954,
+      "head_offset_distribution": {
+        "+0": 1888,
+        "-1": 333,
+        "+1": 322,
+        "+2": 73,
+        "+3": 20,
+        "-2": 3,
+        "located": 2639
+      },
+      "head_offset_zero_fraction": 0.7154,
+      "unlocatable_head_fallback_offsets": {
+        "+0": 998,
+        "+1": 262,
+        "-1": 76,
+        "+2": 52,
+        "+3": 13,
+        "-2": 2,
+        "located": 1403
+      },
+      "fallback_offset_nonzero_samples": [
+        {
+          "claimed_page": 3,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 3,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 3,
+          "fallback_offset": 2
+        },
+        {
+          "claimed_page": 5,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 5,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 11,
+          "fallback_offset": -1
+        },
+        {
+          "claimed_page": 12,
+          "fallback_offset": 3
+        },
+        {
+          "claimed_page": 18,
+          "fallback_offset": 1
+        }
+      ]
+    },
+    "first_per_page": {
+      "considered": 756,
+      "head_located": 423,
+      "head_not_locatable": 330,
+      "no_page_number": 0,
+      "too_short": 3,
+      "fallback_located": 236,
+      "fallback_unlocatable": 94,
+      "head_offset_distribution": {
+        "+0": 230,
+        "-1": 192,
+        "+1": 1,
+        "located": 423
+      },
+      "head_offset_zero_fraction": 0.5437,
+      "unlocatable_head_fallback_offsets": {
+        "+0": 180,
+        "-1": 49,
+        "+1": 6,
+        "-2": 1,
+        "located": 236
+      },
+      "fallback_offset_nonzero_samples": [
+        {
+          "claimed_page": 11,
+          "fallback_offset": -1
+        },
+        {
+          "claimed_page": 65,
+          "fallback_offset": 1
+        },
+        {
+          "claimed_page": 81,
+          "fallback_offset": -1
+        },
+        {
+          "claimed_page": 84,
+          "fallback_offset": -1
+        },
+        {
+          "claimed_page": 101,
+          "fallback_offset": -1
+        },
+        {
+          "claimed_page": 134,
+          "fallback_offset": -1
+        },
+        {
+          "claimed_page": 144,
+          "fallback_offset": -1
+        },
+        {
+          "claimed_page": 151,
+          "fallback_offset": -1
+        }
+      ]
+    }
+  }
+}

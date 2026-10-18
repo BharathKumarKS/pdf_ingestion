@@ -677,6 +677,29 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   funnel re-run on it. §D4 is hereby a *known, symmetric* label-noise floor, not an open
   defect; the durable fix (page numbers assigned per PDF page) folds into the E1/E2/E3
   re-ingest. Proceed to the Session 4b funnel re-run.
+- **✅ DURABLE FIX LANDED AND VERIFIED — P1 Steps 3+6 (2026-10-17).** The parent-aware path (E2/E1)
+  assigns `page_number` from Docling's per-element provenance (`prov.charspan`/`page_no`) at the
+  child's start offset, not from a chunk-start page map. Measured with
+  `logs/p1/step6/probe_page_numbering.py` against an **independent extractor** (PyMuPDF page text
+  via `PageStore`; the numbers came from Docling), head-only, on the 968-page book, **both paths on
+  the same unit**:
+
+  | path | sampling | n | offset 0 | offset −1 | other |
+  |---|---|---|---|---|---|
+  | old (deployed DB) | all chunks | 5047 | 1888 (71.5%) | 333 (12.6%) | +1: 322, +2: 73, +3: 20, −2: 3 |
+  | old (deployed DB) | first per page | 756 | 230 (54.4%) | 192 (45.4%) | +1: 1 |
+  | **new (parent-aware)** | **all children** | 3796 | **2150 (99.95%)** | **1 (0.05%)** | — |
+  | new (parent-aware) | first per page | 933 | 547 (100%) | 0 | — |
+
+  The offset collapses to 0 on both units; **0** children without a page. The 1,645 children whose
+  head PyMuPDF cannot locate (serialisation difference) are reported separately; their mid/tail
+  fallback shows **one** −1, so no wrong-page cluster hides there. An independent reviewer refuted
+  the first version of this measurement for comparing unequal samplings; the fix (measure both
+  units on both paths) also showed the recorded "45% at −1" was a first-chunk-per-page artifact —
+  over **all** its chunks the old path spreads both ways (71.5% at 0, 12.6% at −1, 12.2% at +1,
+  tail to ±3). Evidence: `logs/p1/step6/README.md`. **Not yet deployed** — `store.ingest_document`
+  still uses the legacy path until Step 7; the funnel/label numbers move only after the Step 8
+  re-ingest, and §D13's reranker ablation is the first thing that reads them.
 
 ### D5. `generate_negatives.py` verifies at stride 15 — weaker than the Session 3b re-scan
 - **What:** `generate_negatives.py` accepts a candidate if its own two-pass scan (stride 15,

@@ -1,0 +1,33 @@
+{
+  "new_path_parent_aware": {
+    "pdf": "test_book.pdf",
+    "parents": 42,
+    "children": 66,
+    "head_located": 44,
+    "head_not_locatable": 21,
+    "no_page_number": 0,
+    "too_short": 1,
+    "fallback_located": 15,
+    "fallback_unlocatable": 6,
+    "head_offset_distribution": {
+      "+0": 44,
+      "located": 44
+    },
+    "head_offset_zero_fraction": 1.0,
+    "unlocatable_head_fallback_offsets": {
+      "+0": 14,
+      "+1": 1,
+      "located": 15
+    },
+    "fallback_offset_nonzero_samples": [
+      {
+        "chunk_index": 0,
+        "claimed_page": 1,
+        "fallback_offset": 1
+      }
+    ]
+  },
+  "old_path_deployed_db": {
+    "skipped": "--no-db"
+  }
+}

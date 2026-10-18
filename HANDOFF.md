@@ -52,7 +52,17 @@
 > (content 4660–4667 kept, index 4668–4683 dropped), 5 false negatives all explained, 242 false
 > positives = the front-matter recall gap (**§E5 outcome**; page bounds left in place). Evidence
 > `logs/p1/step5/`. Review (single-turn, evidence embedded): `passed: true`, C1–C5 confirmed.
-> Suite **341 pass / 5 fail** (same 5 pre-existing). **Next: Step 6 (§D4 per-PDF-page numbering).**
+> **Step 6 (§D4 per-PDF-page numbering) VERIFIED 2026-10-17 — no source change.** The code landed
+> in Step 3 (children take `page_number` from `parent.page_for_offset`), so Step 6 is the
+> measurement. Against an **independent extractor** (PyMuPDF text; the numbers came from Docling),
+> head-only, **both paths on the same unit** on the 968-page book: offset 0 **71.5% → 99.95%** (all
+> chunks 5047 → all children 3796; offset −1 333 → **1**), and **100%** on first-per-page
+> (54.4% → 100%). 0 children without a page. An independent reviewer **refuted the first version**
+> for comparing unequal samplings — the fix also showed the recorded "45% at −1" was itself a
+> first-chunk-per-page artifact. Round 2 `passed: true`, M1–M5 confirmed. Evidence
+> `logs/p1/step6/` (README + `realbook.json` + cached `children.json`). The plan's "remove the dead
+> path" moves to Step 7 — the legacy `chunk_document` is still called by `store.ingest_document`.
+> Suite **341 pass / 5 fail** (same 5 pre-existing). **Next: Step 7 (schema + write path).**
 >
 > **Steps 2–3 went through independent review 2026-10-17** (verifier = `openai/gpt-oss-20b`, a
 > different model from the author's). It found one genuine defect — a parent with no provenance

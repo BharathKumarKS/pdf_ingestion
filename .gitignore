@@ -108,6 +108,12 @@ minio/
 # SV cluster access sample package (vendored, not ours to version)
 sv_ray_cluster_access/
 
+# P1 Step 6 probe working files: the cached Docling parse (~2 MB, re-derivable with
+# `--children-cache`, and it would otherwise change on every re-parse) and the run's stderr log.
+# The probe, its JSON output and the README ARE tracked — they are the evidence.
+logs/p1/step6/children.json
+logs/p1/step6/realbook.err
+
 # Hermes agent session artifacts. Plans are deliverables (HANDOFF.md points a fresh
 # session at them), so they are tracked; anything else Hermes writes here is churn.
 .hermes/*
