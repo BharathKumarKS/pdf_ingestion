@@ -1,0 +1,27 @@
+{
+  "splade_enabled": true,
+  "sv_sparse_url": "http://10.0.10.70:8000/embed-text/v1/sparse-embeddings",
+  "colbert_enabled": true,
+  "sv_colbert_url": "http://10.0.10.70:8000/embed-text/v1/multivector-embeddings",
+  "model_cache_dir": "./data/models",
+  "splade": {
+    "class": "ClusterSpladeEmbedder",
+    "n_vectors": 2,
+    "first_indices": 60,
+    "first_values_nonzero": 60,
+    "max_value": 2.370457410812378,
+    "seconds": 0.2,
+    "ok": true
+  },
+  "colbert": {
+    "class": "ClusterColBERTEmbedder",
+    "n_matrices": 2,
+    "shape": [
+      20,
+      128
+    ],
+    "seconds": 0.2,
+    "ok": true
+  },
+  "all_ok": true
+}

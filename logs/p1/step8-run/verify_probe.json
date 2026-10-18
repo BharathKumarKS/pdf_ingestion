@@ -1,0 +1,50 @@
+{
+  "collection": "knowledge_base_probe",
+  "points_count_reported": 66,
+  "points_scrolled": 66,
+  "named_vectors": [
+    "colbert",
+    "dense_1024",
+    "dense_64"
+  ],
+  "dims": {
+    "colbert": [
+      128,
+      "Cosine"
+    ],
+    "dense_1024": [
+      1024,
+      "Cosine"
+    ],
+    "dense_64": [
+      64,
+      "Cosine"
+    ]
+  },
+  "sparse_vectors": [
+    "sparse"
+  ],
+  "points_carrying": {
+    "colbert": 66,
+    "dense_1024": 66,
+    "dense_64": 66
+  },
+  "points_carrying_sparse": {
+    "sparse": 66
+  },
+  "documents": {
+    "2ea08c8c-5ec1-4bc6-b1f1-09f52b9afa81": 66
+  },
+  "is_content_true": 66,
+  "with_parent_id": 65,
+  "without_parent_id": 1,
+  "sqlite_chunks_total": 66,
+  "sqlite_chunks_by_doc": {
+    "2ea08c8c-5ec1-4bc6-b1f1-09f52b9afa81": 66
+  },
+  "sqlite_documents": {
+    "2ea08c8c-5ec1-4bc6-b1f1-09f52b9afa81": "test_book.pdf"
+  },
+  "all_lanes_on_every_point": true,
+  "missing": {}
+}

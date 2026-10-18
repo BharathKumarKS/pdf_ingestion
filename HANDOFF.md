@@ -4,7 +4,7 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-17 (later same day: P1 Step 7b — the query-side dense-lane switch)** ·
+> **Last updated: 2026-10-17 (evening: **P1 Step 8 — the run, STARTED 20:05:54**)** ·
 > `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold set)
 > is MEASURED.** Sessions 1–3c, 3d, 3d-ii and **Session 4/4b (all four steps) are done.** The v2 A/B:
 > **rerank vs no-rerank R@20 Δ −0.0101, 95% CI [−0.0299, +0.0097] → UNRESOLVED at n=133** (the
@@ -94,9 +94,22 @@
 > endpoint returns **unnormalised** pooled vectors and only the index side normalised, so any
 > dot-product consumer was off by ~6,000× (no retrieval number moved — Qdrant normalises for
 > COSINE). Evidence `logs/p1/step8/`; register `IMPROVEMENTS.md` §E6 "SWITCHED 2026-10-17".
-> **Next: Step 8 (the run)** — `scripts/ingest_base_textbook.py --collection-name
-> knowledge_base_v2` against the cluster, as a background job. Full detail + the call-site table:
-> `IMPROVEMENTS.md` §E6.
+> **🔄 Step 8 (the run) STARTED 2026-10-17 20:05:54** — `scripts/ingest_base_textbook.py --pdf
+> …feynman… --collection-name knowledge_base_v2 --reindex` against the cluster, as a background
+> job (pid 58932, `logs/p1/step8-run/run_step8.sh` → `run_feynman.log`). **Pre-flighted first:**
+> cluster probed (Qdrant 10.0.10.65 ✓, dense lane :8123 ✓, `knowledge_base_v2` absent ✓); both
+> locally-resolved optional lanes probed (`logs/p1/step8-run/probe_embedders.json` — SPLADE and
+> ColBERT are both **cluster**-served, no model download); and the exact entry point dry-run on
+> the 19-page fixture into a throwaway collection (**82 s**, 42 parents → 66 children, all four
+> vectors on all 66 points, points == SQLite chunks). Two env values **must** be passed on the
+> command line — `QDRANT_HOST=10.0.10.65` and `SV_EMBED_URL=…:8123/embed-text/v1/embeddings`;
+> the latter is **missing from `.env`** (§I14) and the whole query path now needs it. `--reindex`
+> is mandatory (the old filename is already in `documents`). **Three new register entries:**
+> §E7 (this step, in progress — incl. the counts must be scoped by `document_id`, and the two
+> pending SQLite migrations that this run applies), §I14 (`SV_EMBED_URL` absent), §I15
+> (`save_document` swallows SPLADE/ColBERT failures → an incomplete index reports success;
+> mitigated by the new `logs/p1/step8-run/verify_collection.py`, which fails if any lane is
+> missing from any point). Full detail: `IMPROVEMENTS.md` §E6–§E7, §I14–§I15.
 >
 > **Steps 2–3 went through independent review 2026-10-17** (verifier = `openai/gpt-oss-20b`, a
 > different model from the author's). It found one genuine defect — a parent with no provenance
@@ -495,8 +508,8 @@ halves of the pre-registered decision now have numbers (reranker unresolved; abs
     currently swamp the reranker effect; **the reranker ablation (§D13) and every metric below
     re-measure on the rebuilt index.** Honour the `clean_stale_*` ordering (§B4b, §E5).
     **Steps 0–7b done (2026-10-17)** — code, schema, write path *and* the query-side dense-lane
-    switch. **What remains is Step 8 (the run)** and Step 9 (Phase 2/3 re-index, which also
-    releases §I12/§I13).
+    switch. **Step 8 (the run) is IN PROGRESS** (started 20:05:54, background; §E7). Then Step 9
+    (Phase 2/3 re-index, which also releases §I12/§I13).
 10. **Ranking** — overview MRR is the one genuinely bad number (report it ceiling-normalised, §D9,
     not the raw 0.14). Cheapest first: config (MMR λ / RRF) → the cross-encoder → hard-negative
     fine-tuning. **The index-page hypothesis is REFUTED (§B4g)** — nothing gates item 10 on a

@@ -1238,6 +1238,41 @@ dead code from the day it lands. `process_pdf` is the whole API.
 
 ---
 
+### E7. P1 Step 8 — the run: pre-flight measured; the re-ingest writes `knowledge_base_v2` 🔄 IN PROGRESS
+
+- **What:** `scripts/ingest_base_textbook.py --pdf …feynman… --collection-name knowledge_base_v2
+  --reindex` against the cluster — the E1/E2/E3 pipeline on the real 968-page book. Fresh
+  collection (plan R1/R-d): the deployed `knowledge_base` is untouched, so a failed run costs
+  nothing and rollback is pointing `QDRANT_COLLECTION` back.
+- **Environment (two things must be passed on the command line, not read from `.env`):**
+  `QDRANT_HOST=10.0.10.65` (blank in `.env`) and `SV_EMBED_URL=…:8123/embed-text/v1/embeddings`
+  (**absent from `.env` — §I14**). `--reindex` is also mandatory: without it the script finds the
+  old Feynman filename in `documents` and exits 0 having done nothing.
+- **Dry run on the 19-page fixture (2026-10-17, `logs/p1/step8-run/dryrun_testbook.log`):** the
+  exact entry point, real cluster, throwaway collection + scratch SQLite. 42 parents → 66 children,
+  **82 s wall**, all four vectors on all 66 points, points == SQLite chunks == 66. Stage split:
+  Docling parse ≈ 10 s (incl. ~9 s one-time model load), children 0.8 s, late-chunk 42 parents
+  **47.5 s**, SPLADE 6.4 s, ColBERT 9.8 s, Qdrant upsert 1.5 s.
+- **Consequence the plan's own verification misses — scope the counts by `document_id`.**
+  `save_document` always creates a **new** document uuid, so the run *adds* a second
+  `documents` row with the same filename and a second block of rows in `chunks`; the old doc
+  (`6d55c52b`, 5,048 chunks) is left in place deliberately (its points live in the deployed
+  collection). "Collection points == SQLite chunks" is therefore only true **per document_id** —
+  compared against the raw table it will read as a mismatch of exactly the old corpus. The admin
+  document list will also show the same filename twice until the old doc is retired (Step 10 /
+  §E6 territory — not changed here).
+- **Also observed:** the first run against the deployed SQLite applies the pending migrations
+  (`chunks.parent_id`, `chunks.is_content`). Existing 5,048 rows get **NULL**, which is the
+  intended §E5 behaviour — the retrieval filter is `must_not is_content == False`, so NULL rows
+  stay retrievable and the deployed index is unaffected.
+- **Verification tooling (landed with this step):** `logs/p1/step8-run/verify_collection.py`
+  scrolls every point of a collection and reports per-lane coverage, exiting non-zero if any
+  enabled lane is missing from any point — the check that catches **§I15**. Plus
+  `probe_embedders.py` (resolves each embedder factory and encodes real text, so a broken lane is
+  loud *before* a 1.5-hour run).
+
+---
+
 ## F. Card & graph lanes
 
 ### F1. Embed the question only, not question+answer ✅ code changed ⚠️ requires re-ingest
@@ -1500,6 +1535,55 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   `--legacy-embedder` mode).
 - **Cost:** small — two scripts, no re-ingest. Not on the critical path; do it before anyone needs
   a recovery.
+
+### I14. NEW 2026-10-17 (found pre-flighting Step 8) — `SV_EMBED_URL` is missing from the live `.env`, and the whole query path now needs it
+
+- **What:** `SV_COLBERT_URL` / `SV_SPARSE_URL` / `SV_RERANK_URL` are set in `.env`, but
+  **`SV_EMBED_URL` is not** — it exists only in `.env.example` (`:8123/embed-text/v1/embeddings`).
+  `Settings.sv_embed_url` therefore resolves to `""`, and `ClusterDenseEmbedder.__init__` raises
+  `ValueError("... requires sv_embed_url (set SV_EMBED_URL)")`.
+- **Why it matters now and not before:** §E6 moved the *entire* query side — the UI, `main.py`,
+  `evaluate_rag.py`, `funnel_boundary_recall.py`, `calibrate_eval_pages.py`, `why_colbert.py` and
+  the intent router — onto the cluster dense lane. Before the switch the dense lane was only used
+  by the re-ingest probes, which set the variable inline on the command line (as `logs/p1/step7/README.md`
+  documents). After the switch, **every query-side entry point fails at runtime on a machine whose
+  `.env` lacks the key** — which is this one. It fails loudly (a `ValueError`, not a silent
+  fallback), so nothing is corrupted; the app simply does not start a search.
+- **Consequence for the run:** Step 8 must export `SV_EMBED_URL` explicitly (the run script does),
+  and so must anyone who starts the app.
+- **Fix:** add `SV_EMBED_URL=http://10.0.10.70:8123/embed-text/v1/embeddings` to `.env`, beside the
+  other three. (`.env` is not agent-writable — the owner must add it, or it goes in via
+  `hermes config`/a manual edit.)
+- **Cost:** none. No re-ingest.
+- **Note the port split is real and is the §I11 class again:** the live `.env` points sparse/colbert/
+  rerank at `:8000` while `.env.example` says `:8123`. Both were probed 2026-10-17 and **both
+  answer** (SPLADE 200 with 60 non-zero indices; ColBERT 200 with a `(20, 128)` matrix) — but the
+  two files disagreeing about the same service is exactly how a future 404 gets introduced.
+
+### I15. NEW 2026-10-17 (found pre-flighting Step 8) — `save_document` swallows SPLADE/ColBERT failures, so an incomplete index is reported as a success
+
+- **What:** `DocumentStore.save_document` wraps both optional lanes in a bare
+  `try/except Exception -> logger.warning("... falling back to dense-only")`
+  (`store.py:204-211` SPLADE, `:215-222` ColBERT). A missing model, an unreachable endpoint or a
+  shape mismatch does **not** fail the ingest: the run completes, prints the green
+  "✓ Ingestion complete" panel, and writes points that carry only `dense_64` + `dense_1024`.
+- **Why it matters:** this is the §I9 shape at the *index* level rather than the query level, and
+  it is worse to detect. A point missing its `sparse` vector is still a valid point, still counted,
+  and still returned by a dense-only search — so every count-based check the plan prescribes
+  ("collection points == SQLite chunks") **passes on an index whose hybrid lane is empty**. The
+  failure surfaces much later, as "hybrid search adds nothing", with no error anywhere.
+- **Measured (Step 8 dry run, 2026-10-17):** on `test_book.pdf` both lanes were in fact healthy —
+  SPLADE via `ClusterSpladeEmbedder`, ColBERT via `ClusterColBERTEmbedder` (both at `:8000`), all
+  four vectors present on all 66 points. So this is a **latent** hazard, not a live break.
+- **Mitigation landed with Step 8:** `logs/p1/step8-run/verify_collection.py` scrolls every point
+  and reports, per named vector, how many points carry it — and **exits non-zero** if any lane is
+  missing from any point. That check is what the run's verification now uses, in addition to counts.
+- **Options for the real fix (not decided):** (a) collect the failures and raise at the end of
+  `save_document` if any lane that is `enabled` produced nothing; (b) keep the fallback but return
+  the per-lane counts so the ingest report can print "SPLADE 0/3,796" — the §I9 option (b) shape.
+  **(a) is recommended for the re-ingest path specifically**, where a half-written collection costs
+  a full re-run to correct.
+- **Cost:** small. No re-ingest.
 
 ---
 
