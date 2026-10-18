@@ -64,6 +64,8 @@ class Chunk(SQLModel, table=True):
     char_start: int = 0
     char_end: int = 0
     token_count: int = 0
+    # E2/E1 hierarchy — the Docling parent this child was cut from, set at ingest.
+    parent_id: Optional[int] = Field(default=None, index=True)
     # E5 — front/back-matter classification, set at ingest from the chunk's own text.
     is_content: bool = Field(default=True, index=True)
     version: int = Field(default=1)
@@ -152,6 +154,7 @@ def _migrate_add_columns(engine) -> None:
         ("documents", "colpali_status", "TEXT DEFAULT 'pending'"),
         ("documents", "source_path",    "TEXT"),
         ("chunks",    "is_content",     "BOOLEAN DEFAULT 1"),
+        ("chunks",    "parent_id",      "INTEGER"),
     ]
     with engine.connect() as conn:
         for table, column, col_type in migrations:
@@ -244,22 +247,29 @@ def get_qdrant(settings: Settings | None = None) -> QdrantClient:
 
 
 def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
-    """Create the knowledge_base collection with the 4-vector Nomic+ColBERT schema.
+    """Create the knowledge_base collection with the 4-vector schema.
 
-    Named vectors:
-        dense_64   — Nomic 64d MRL truncation (fast ANN first stage)
-        dense_768  — Nomic 768d full embedding (rescore second stage)
-        colbert    — ColBERT 128d token matrices, MaxSim comparator (third stage)
-        sparse     — SPLADE sparse vectors (optional fourth lane)
+    Named vectors (re-ingest schema, plan §5 Step 7):
+        dense_64    — MRL truncation of the dense model (fast ANN first stage)
+        dense_1024  — full dense embedding, ``dense_model`` native dim (rescore stage)
+        colbert     — ColBERT 128d token matrices, MaxSim comparator (third stage)
+        sparse      — SPLADE sparse vectors (optional fourth lane)
+
+    ``dense_768`` (Nomic) is **retired** here in favour of ``dense_1024`` (Qwen3, plan R2).
+    The name encodes the dimension and must track ``dense_dim`` — pinned by
+    ``tests/test_config_invariants.py::test_dense_vector_name_matches_configured_dim``.
+    An already-created collection is left alone: the deployed ``knowledge_base`` keeps
+    ``dense_768`` and stays queryable, because the write and read paths resolve the vector
+    name from the collection's own schema (plan R1, old-vs-new comparison).
 
     Nested prefetch in search():
-        dense_64(500) → dense_768(250) → colbert MaxSim(100)
+        dense_64(1000) → dense_1024(500) → colbert MaxSim(250), RRF over the live lanes
     """
     existing = {c.name for c in client.get_collections().collections}
     if cfg.qdrant_collection not in existing:
         vectors_config: dict = {
-            "dense_64": VectorParams(size=cfg.embedding_dim_low, distance=Distance.COSINE),
-            "dense_768": VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
+            "dense_64": VectorParams(size=cfg.dense_dim_low, distance=Distance.COSINE),
+            "dense_1024": VectorParams(size=cfg.dense_dim, distance=Distance.COSINE),
         }
         if cfg.colbert_enabled:
             vectors_config["colbert"] = VectorParams(
@@ -279,7 +289,7 @@ def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
 
         client.create_collection(**create_kwargs)
         logger.info(
-            "Created Qdrant collection '{}' (dense_64+dense_768{}{})",
+            "Created Qdrant collection '{}' (dense_64+dense_1024{}{})",
             cfg.qdrant_collection,
             "+colbert" if cfg.colbert_enabled else "",
             "+sparse" if cfg.splade_enabled else "",

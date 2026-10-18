@@ -268,17 +268,23 @@ class RaptorBuilder:
         return result.strip() or " ".join(texts[:2][:500])
 
     def _embed(self, text: str) -> Optional[np.ndarray]:
-        """Embed a summary using Jina v3 (or return None in stub mode)."""
+        """Embed a summary with the **dense-lane** model — the one that built the index.
+
+        A RAPTOR summary is stored in the same Qdrant collection as the chunks, in the same
+        full-dimension dense slot (plan R2), so it must be embedded by the same model: a
+        Nomic 768d summary against a ``dense_1024`` slot is a dimension error, not a
+        degraded result. It is a *passage*, so it is embedded raw — the query instruction
+        belongs on the query side only (plan §7 decision 3).
+        """
         cfg = self._cfg
         if cfg.use_stub_llm:
             rng = np.random.default_rng(seed=abs(hash(text)) % (2**31))
-            vec = rng.random(cfg.embedding_dim).astype(np.float32)
+            vec = rng.random(cfg.dense_dim).astype(np.float32)
             return vec / (np.linalg.norm(vec) + 1e-9)
 
         try:
-            from src.pdf_ingestion.embedder import get_embedder
-            embedder = get_embedder(cfg)
-            return embedder.embed_query(text)
+            from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
+            return get_cluster_embedder(cfg).embed_documents([text])[0]
         except Exception as exc:
             logger.warning("Embedding summary failed: {}", exc)
             return None

@@ -122,16 +122,6 @@ def test_empty_parent_is_skipped():
     assert all(c.parent_id == 1 for c in children)
 
 
-# ── Legacy flat path keeps the old shape ────────────────────────────────────
-
-def test_flat_chunk_document_leaves_the_hierarchy_fields_default():
-    chunks = SemanticChunker(_cfg()).chunk_document("doc", "global", PROSE)
-    assert chunks
-    assert all(c.parent_id is None and c.parent_text is None for c in chunks)
-    assert all(c.is_content is True for c in chunks)
-    assert chunks[0].char_start == 0
-
-
 # ── Real document (slow) ────────────────────────────────────────────────────
 
 @pytest.mark.slow

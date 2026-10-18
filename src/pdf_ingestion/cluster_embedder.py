@@ -70,6 +70,34 @@ class StubClusterEmbedder:
         return [self._unit(self._seed(t), (max(1, len(t) // 4), self.dim)) for t in texts]
 
 
+class StubTokenizer:
+    """Token offsets consistent with :class:`StubClusterEmbedder`'s token count.
+
+    The stub embedder returns ``max(1, len(text) // 4)`` vectors per text, so the stub
+    tokenizer must yield **exactly that many** offsets or ``LateChunkEmbedder._content_tokens``
+    raises on an alignment mismatch. They live in one file so the invariant is visible: the
+    real endpoint's count and the local tokenizer's count are the pair that must agree.
+
+    Mirrors the HF-fast call signature the late-chunk embedder uses. Offsets tile the text.
+    """
+
+    TOKENS_PER_CHAR = 4
+
+    def __call__(self, text, add_special_tokens=True, return_offsets_mapping=False):
+        n = max(1, len(text) // self.TOKENS_PER_CHAR)
+        step = max(1, len(text) // n)
+        offsets: list[tuple[int, int]] = []
+        start = 0
+        for i in range(n):
+            end = len(text) if i == n - 1 else min(start + step, len(text))
+            offsets.append((start, end))
+            start = end
+        out: dict = {"input_ids": list(range(n))}
+        if return_offsets_mapping:
+            out["offset_mapping"] = offsets
+        return out
+
+
 # -- SV cluster (GPU inference, no local model) --------------------------------
 
 class ClusterDenseEmbedder:
@@ -176,3 +204,15 @@ def get_cluster_embedder(
 def reset_cluster_embedder() -> None:
     global _cluster_embedder
     _cluster_embedder = None
+
+
+def get_query_vector(text: str, settings: Settings | None = None) -> np.ndarray:
+    """The query vector for the dense lane — the model that built the index.
+
+    A query must be embedded by the same model as the documents, or the two live in
+    different spaces: Nomic's 768d and Qwen3's 1024d are not comparable, and Qdrant rejects
+    a 768d query against a ``dense_1024`` slot outright. This is the single accessor for
+    that model, so the index side (``chunking_pipeline`` → ``LateChunkEmbedder``) and the
+    query side cannot drift apart. The instruction is prepended by ``embed_query``.
+    """
+    return get_cluster_embedder(settings).embed_query(text)

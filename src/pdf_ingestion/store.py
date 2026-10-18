@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Optional
 
@@ -15,6 +16,7 @@ from src.core.database import Card, Chunk, Document, PageImage, RaptorNode, get_
 from src.pdf_ingestion import content_filter
 from src.pdf_ingestion.card_generator import GeneratedCard
 from src.pdf_ingestion.embedder import EmbeddedChunk
+from src.pdf_ingestion.late_chunk_embedder import EnrichedChunk
 from src.pdf_ingestion.parser import ParsedDocument
 from src.pdf_ingestion.raptor_tree import RaptorNodeData
 
@@ -26,8 +28,43 @@ _VISUAL_DEDUPE_OVERFETCH = 5
 
 # ── Qdrant payload builder ─────────────────────────────────────────────────
 
+# The KB collection's full-dimension dense vector. The re-ingest retires ``dense_768``
+# (Nomic) in favour of ``dense_1024`` (Qwen3, plan R2), but the deployed ``knowledge_base``
+# still carries ``dense_768`` and R1 keeps it queryable so old and new can be compared. So
+# the name is **read off the collection** rather than hard-coded — newest first.
+_DENSE_VECTOR_NAMES = ("dense_1024", "dense_768")
+
+
+def _dense_name_from(vectors_cfg) -> str | None:
+    """The collection's full-dimension dense vector name, or None for a legacy schema."""
+    if isinstance(vectors_cfg, dict):
+        for name in _DENSE_VECTOR_NAMES:
+            if name in vectors_cfg:
+                return name
+    return None
+
+
+def _dense_vectors(ec, dim_low: int | None = None) -> tuple[np.ndarray, np.ndarray]:
+    """``(full-dim, low-dim)`` dense vectors from either chunk shape.
+
+    The re-ingest pipeline produces ``EnrichedChunk`` (``dense_1024`` / ``dense_64``); the
+    pre-reingest ``embedder.EmbeddedChunk`` produces ``embedding`` / ``embedding_low``. Both
+    reach this one write path, so the shape is adapted here rather than in two savers.
+    A mismatch between the vector's dim and the collection's slot is a loud Qdrant error.
+    ``dim_low`` is the fallback truncation when a legacy chunk carries no ``embedding_low``.
+    """
+    full = getattr(ec, "dense_1024", None)
+    if full is not None:
+        return np.asarray(full, dtype=np.float32), np.asarray(ec.dense_64, dtype=np.float32)
+    full = np.asarray(ec.embedding, dtype=np.float32)
+    low = np.asarray(ec.embedding_low, dtype=np.float32)
+    if low.size == 0 and dim_low:
+        low = full[:dim_low]
+    return full, low
+
+
 def _build_payload(
-    ec: EmbeddedChunk,
+    ec: EmbeddedChunk | EnrichedChunk,
     doc: ParsedDocument,
     tenant_id: str,
     source_type: str,
@@ -51,6 +88,11 @@ def _build_payload(
         "embedding_version":  ec.model_name,
         "char_start":         ec.chunk.char_start,
         "char_end":           ec.chunk.char_end,
+        # E2/E1 hierarchy — the Docling parent this child was cut from. ``parent_text`` is
+        # in the payload because it is what makes the hierarchy usable at retrieval time
+        # (plan §7 decision 4): a child can be answered with its whole section in view.
+        "parent_id":          ec.chunk.parent_id,
+        "parent_text":        ec.chunk.parent_text,
         # E5 — front/back-matter classification, written at ingest and filtered on at search.
         "is_content":         ec.chunk.is_content,
     }
@@ -70,12 +112,38 @@ class DocumentStore:
         self._engine = get_engine(self._cfg)
         self._warned_colbert_local = False  # log the inactive-lane warning once
 
+    # ── Collection schema ─────────────────────────────────────────────────
+
+    def _collection_vectors(self):
+        """The configured collection's vectors config, or None when it cannot be read."""
+        try:
+            return self._qdrant.get_collection(
+                self._cfg.qdrant_collection
+            ).config.params.vectors
+        except Exception as exc:
+            logger.warning(
+                "could not inspect vector config for '{}' ({}); assuming the "
+                "re-ingest schema — if the cluster is down, writes will fail",
+                self._cfg.qdrant_collection, exc,
+            )
+            return None
+
+    def _dense_vector_name(self) -> str:
+        """Name of this collection's full-dimension dense vector.
+
+        ``dense_1024`` on a collection built by the re-ingest, ``dense_768`` on the deployed
+        one. Defaults to the re-ingest name when the schema cannot be read: that is what
+        ``_ensure_collection`` creates, so the failure mode is a loud dimension error rather
+        than a silent write to a vector that does not exist.
+        """
+        return _dense_name_from(self._collection_vectors()) or "dense_1024"
+
     # ── Phase 1: write ────────────────────────────────────────────────────
 
     def save_document(
         self,
         parsed_doc: ParsedDocument,
-        embedded_chunks: list[EmbeddedChunk],
+        embedded_chunks: Sequence[EmbeddedChunk | EnrichedChunk],
         tenant_id: str,
         source_type: str,
         is_global_baseline: bool,
@@ -83,6 +151,9 @@ class DocumentStore:
     ) -> str:
         doc_id = parsed_doc.document_id
         meta   = extra_meta or {}
+        # The full-dimension dense slot of THIS collection — dense_1024 after the re-ingest,
+        # dense_768 on the deployed one (R1). Resolved once per document.
+        dense_name = self._dense_vector_name()
 
         db_doc = Document(
             id=doc_id,
@@ -121,6 +192,7 @@ class DocumentStore:
                     char_start=ec.chunk.char_start,
                     char_end=ec.chunk.char_end,
                     token_count=ec.chunk.token_count,
+                    parent_id=ec.chunk.parent_id,
                     is_content=ec.chunk.is_content,
                 ))
             session.commit()
@@ -151,11 +223,10 @@ class DocumentStore:
 
         points = []
         for i, ec in enumerate(embedded_chunks):
-            # Always include dual-dense Nomic MRL vectors
+            full, low = _dense_vectors(ec, dim_low=self._cfg.dense_dim_low)
             vector: dict = {
-                "dense_64":  (ec.embedding_low if len(ec.embedding_low) > 0
-                              else ec.embedding[:self._cfg.embedding_dim_low]).tolist(),
-                "dense_768": ec.embedding.tolist(),
+                "dense_64":  low.tolist(),
+                dense_name:  full.tolist(),
             }
             if self._cfg.colbert_enabled and colbert_mats[i] is not None:
                 vector["colbert"] = colbert_mats[i].tolist()
@@ -274,32 +345,24 @@ class DocumentStore:
         """
         Notebook-style retrieval funnel (see retrieval_funnel.ipynb):
 
-          [dense_64(500) → dense_768(250)]  ─┐
-          [splade(250), if enabled]           ─┤ → ColBERT MaxSim outer (top-N)
-                                               │   or RRF if no ColBERT
-                                               └─  or dense_768 if no SPLADE
+          [dense_64(1000) → dense_1024(500)]  ─┐
+          [splade(250), if enabled]            ─┤ → RRF over the live lanes
+                                                └─  or dense_1024 alone if SPLADE is off
 
-        Legacy fallback for old Jina single-vector collections (pre-reingest).
+        The dense names are read off the collection (``dense_1024`` after the re-ingest,
+        ``dense_768`` on the deployed one). Legacy fallback for old single-vector collections.
         Local file Qdrant skips ColBERT (Python MaxSim bug on real collections).
         """
         from qdrant_client.models import Fusion, FusionQuery, Prefetch
 
         cfg = self._cfg
 
-        # Schema detection — old Jina vs new 4-vector schema
-        vectors_cfg = None
-        try:
-            col_info    = self._qdrant.get_collection(cfg.qdrant_collection)
-            vectors_cfg = col_info.config.params.vectors
-            has_new_schema = isinstance(vectors_cfg, dict) and "dense_64" in vectors_cfg
-        except Exception as exc:
-            # NOTE: this used to swallow the error and leave vectors_cfg unbound, so the
-            # next line raised UnboundLocalError on EVERY query when the cluster was
-            # unreachable — a connection outage surfaced as a misleading crash. Log it.
-            logger.warning(
-                "schema detection failed for '{}' ({}); assuming legacy single-vector "
-                "schema — if the cluster is down, retrieval will fail", cfg.qdrant_collection, exc)
-            has_new_schema = False
+        # Schema detection — legacy single-vector vs the 4-vector schema. ``_collection_vectors``
+        # logs and returns None when the collection cannot be read, so an outage can no longer
+        # surface as an UnboundLocalError on the next line (the recorded failure mode).
+        vectors_cfg = self._collection_vectors()
+        has_new_schema = isinstance(vectors_cfg, dict) and "dense_64" in vectors_cfg
+        dense_name = _dense_name_from(vectors_cfg) or "dense_1024"
 
         if not has_new_schema:
             using = "dense" if isinstance(vectors_cfg, dict) and "dense" in vectors_cfg else None
@@ -313,13 +376,13 @@ class DocumentStore:
             )
 
         # Stage 1+2: dense funnel (always)
-        vec_64 = query_vector[:cfg.embedding_dim_low].copy()
+        vec_64 = query_vector[:cfg.dense_dim_low].copy()
         vec_64 /= np.linalg.norm(vec_64) + 1e-9
 
         dense_prefetch = Prefetch(
             prefetch=[Prefetch(query=vec_64.tolist(), using="dense_64", limit=1000)],
             query=query_vector.tolist(),
-            using="dense_768",
+            using=dense_name,
             limit=500,
         )
         prefetches = [dense_prefetch]
@@ -386,7 +449,7 @@ class DocumentStore:
             collection_name=cfg.qdrant_collection,
             prefetch=[dense_prefetch],
             query=query_vector.tolist(),
-            using="dense_768",
+            using=dense_name,
             query_filter=filter_,
             limit=limit,
             with_payload=True,
@@ -417,29 +480,19 @@ class DocumentStore:
                                  match=MatchValue(value=self._cfg.global_tenant_id))]),
                 ],
             )
-        # Legacy fallback: old collections use "dense" or unnamed vector
-        try:
-            col_info = self._qdrant.get_collection(self._cfg.qdrant_collection)
-            vectors_cfg = col_info.config.params.vectors
-            if isinstance(vectors_cfg, dict) and "dense_768" in vectors_cfg:
-                using = "dense_768"
-            elif isinstance(vectors_cfg, dict) and "dense" in vectors_cfg:
-                using = "dense"
-            else:
-                logger.warning(
-                    "RAPTOR search: collection '{}' has no named 'dense_768'/'dense' "
-                    "vector (config: {}) — querying the collection default, which may "
-                    "be the wrong vector",
-                    self._cfg.qdrant_collection, type(vectors_cfg).__name__,
-                )
-                using = None
-        except Exception as exc:
-            logger.error(
-                "RAPTOR search: could not inspect vector config for '{}' ({}); "
-                "querying the collection default — results may be wrong",
-                self._cfg.qdrant_collection, exc,
+        # Legacy fallback: old collections use "dense" or an unnamed vector. The full-dim
+        # dense name is read off the collection (dense_1024 after the re-ingest).
+        vectors_cfg = self._collection_vectors()
+        using = _dense_name_from(vectors_cfg)
+        if using is None and isinstance(vectors_cfg, dict) and "dense" in vectors_cfg:
+            using = "dense"
+        if using is None:
+            logger.warning(
+                "RAPTOR search: collection '{}' has no named 'dense_1024'/'dense_768'/'dense' "
+                "vector (config: {}) — querying the collection default, which may be the "
+                "wrong vector",
+                self._cfg.qdrant_collection, type(vectors_cfg).__name__,
             )
-            using = None
 
         response = self._qdrant.query_points(
             collection_name=self._cfg.qdrant_collection,
@@ -717,22 +770,25 @@ class DocumentStore:
                 ids=[c.qdrant_point_id for c in chunks],
                 with_vectors=True,
             )
+            dense_name = self._dense_vector_name()
+
             def _extract_dense(vec) -> np.ndarray:
-                # New 4-vector schema: extract dense_768 (primary embedding)
-                # Falls back to "dense" (old SPLADE schema) for backward compat
+                # 4-vector schema: the collection's full-dim dense lane (dense_1024 after
+                # the re-ingest, dense_768 before). Falls back to "dense" (old SPLADE
+                # schema) for backward compat.
                 if isinstance(vec, dict):
-                    vec = vec.get("dense_768") or vec.get("dense", [])
+                    vec = vec.get(dense_name) or vec.get("dense", [])
                 return np.array(vec, dtype=np.float32)
 
             id_to_vec = {str(r.id): _extract_dense(r.vector) for r in results}
             embeddings = np.array(
-                [id_to_vec.get(c.qdrant_point_id, np.zeros(self._cfg.embedding_dim))
+                [id_to_vec.get(c.qdrant_point_id, np.zeros(self._cfg.dense_dim))
                  for c in chunks],
                 dtype=np.float32,
             )
         except Exception as exc:
             logger.warning("Could not fetch chunk vectors: {}", exc)
-            embeddings = np.zeros((len(chunks), self._cfg.embedding_dim), dtype=np.float32)
+            embeddings = np.zeros((len(chunks), self._cfg.dense_dim), dtype=np.float32)
 
         return list(chunks), embeddings
 
@@ -919,12 +975,16 @@ class DocumentStore:
         for nd in nodes:
             if nd.embedding is None:
                 continue
-            vec_768 = nd.embedding.tolist()
+            vec_full = nd.embedding.tolist()
             vec_64 = nd.embedding[:self._cfg.embedding_dim_low].copy()
             vec_64 /= float(np.linalg.norm(vec_64)) + 1e-9
+            # NOTE (Step 7): the name follows the collection, but ``nd.embedding`` is still a
+            # Nomic 768d summary vector from raptor_tree.py. On a re-ingested collection the
+            # upsert therefore fails on a dimension mismatch — deliberately loud. Phase 2's
+            # summary embedder moves to the dense lane (cluster, 1024d) in Step 9.
             points.append(PointStruct(
                 id=nd.qdrant_point_id,
-                vector={"dense_64": vec_64.tolist(), "dense_768": vec_768},
+                vector={"dense_64": vec_64.tolist(), self._dense_vector_name(): vec_full},
                 payload={
                     "tenant_id":          nd.tenant_id,
                     "source_type":        "raptor_summary",
@@ -1299,47 +1359,24 @@ def ingest_pdf(
     extra_meta: dict | None = None,
     settings: Settings | None = None,
 ) -> dict:
-    """Parse → chunk → embed → store. Returns summary dict."""
-    from pathlib import Path
+    """Parse → parents → semantic children → late-chunked vectors → store. Returns summary dict.
 
-    from src.pdf_ingestion.chunker import SemanticChunker
-    from src.pdf_ingestion.embedder import get_embedder
-    from src.pdf_ingestion.parser import PDFParser
+    Delegates to :class:`chunking_pipeline.ChunkingPipeline`, which is the single ingest
+    path for the script, the UI's upload and the tests (plan §5 Step 7). The legacy flat
+    path (``chunker.chunk_document`` / ``build_page_map`` / ``_page_for_offset``) is gone:
+    it produced children with no parent context and page numbers that were off by 0/−1 on
+    ~45% of pages (§D4).
+    """
+    from src.pdf_ingestion.chunking_pipeline import ChunkingPipeline
 
-    cfg      = settings or get_settings()
-    parser   = PDFParser(use_gpu=cfg.use_gpu)
-    chunker  = SemanticChunker(settings=cfg)
-    embedder = get_embedder(settings=cfg)
-    store    = DocumentStore(settings=cfg)
-
-    parsed   = parser.parse(pdf_path)
-    page_map = chunker.build_page_map(parsed.full_text, parsed.pages)
-    chunks   = chunker.chunk_document(
-        document_id=parsed.document_id,
-        tenant_id=tenant_id,
-        full_text=parsed.full_text,
-        page_map=page_map,
-    )
-    if not chunks:
-        raise ValueError(f"No chunks produced from {pdf_path}")
-
-    embedded = embedder.embed_chunks(chunks)
-    doc_id   = store.save_document(
-        parsed_doc=parsed,
-        embedded_chunks=embedded,
+    cfg = settings or get_settings()
+    return ChunkingPipeline(settings=cfg).process_pdf(
+        pdf_path=pdf_path,
         tenant_id=tenant_id,
         source_type=source_type,
         is_global_baseline=is_global_baseline,
-        extra_meta={**(extra_meta or {}), "source_path": str(Path(pdf_path).resolve())},
+        extra_meta=extra_meta,
     )
-    return {
-        "document_id": doc_id,
-        "filename":    parsed.filename,
-        "page_count":  parsed.page_count,
-        "chunk_count": len(embedded),
-        "tenant_id":   tenant_id,
-        "source_type": source_type,
-    }
 
 
 # ── Phase 2 pipeline orchestrator ─────────────────────────────────────────

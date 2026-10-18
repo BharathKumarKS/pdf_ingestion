@@ -40,6 +40,7 @@ from src.pdf_ingestion.chunker import TextChunk
 from src.pdf_ingestion.cluster_embedder import (
     ClusterDenseEmbedder,
     StubClusterEmbedder,
+    StubTokenizer,
     get_cluster_embedder,
     mrl_slice,
 )
@@ -92,12 +93,18 @@ class LateChunkEmbedder:
 
     def _get_tokenizer(self):
         if self._tokenizer is None:
-            from transformers import AutoTokenizer
+            if self._cfg.use_stub_embedder:
+                # Tests: no download, and offsets that match StubClusterEmbedder's token
+                # count, so the real pooling path runs offline.
+                self._tokenizer = StubTokenizer()
+                logger.warning("StubTokenizer active — token offsets are synthetic")
+            else:
+                from transformers import AutoTokenizer
 
-            self._tokenizer = AutoTokenizer.from_pretrained(
-                self._cfg.dense_model, cache_dir=self._cfg.model_cache_dir
-            )
-            logger.info("Late-chunk tokenizer ready: {}", self._cfg.dense_model)
+                self._tokenizer = AutoTokenizer.from_pretrained(
+                    self._cfg.dense_model, cache_dir=self._cfg.model_cache_dir
+                )
+                logger.info("Late-chunk tokenizer ready: {}", self._cfg.dense_model)
         return self._tokenizer
 
     # -- Offsets ---------------------------------------------------------------

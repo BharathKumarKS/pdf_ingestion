@@ -20,9 +20,9 @@ class ParentChunk:
 
     ``page_map`` is the §D4 fix: it maps a character offset **in ``text``** to the PDF page
     that character came from, read off Docling's per-element provenance instead of inferred
-    from a chunk's start offset (``chunker._page_for_offset``, which is off by 0/−1 on ~45%
-    of pages). A parent that crosses a page break carries a boundary entry at the exact
-    character where the page changes.
+    from a chunk's start offset (the removed ``chunker._page_for_offset``, which was off by
+    0/−1 on ~45% of pages). A parent that crosses a page break carries a boundary entry at
+    the exact character where the page changes.
     """
 
     parent_id: int

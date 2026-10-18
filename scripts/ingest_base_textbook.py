@@ -36,6 +36,13 @@ def parse_args():
     parser.add_argument("--subject",  default=None,  help="Subject / domain")
     parser.add_argument("--grade",    default=None,  help="Target grade level")
     parser.add_argument("--reindex",  action="store_true", help="Force re-ingestion even if already stored")
+    parser.add_argument(
+        "--collection-name",
+        default=None,
+        help="Qdrant collection to write to (default: QDRANT_COLLECTION from .env). The "
+             "re-ingest writes to a NEW collection so the deployed index stays intact and "
+             "old-vs-new can be compared — plan R1.",
+    )
     return parser.parse_args()
 
 
@@ -51,6 +58,8 @@ def main():
     from src.pdf_ingestion.store import DocumentStore, ingest_pdf
 
     cfg = get_settings()
+    if args.collection_name:
+        cfg.qdrant_collection = args.collection_name
     cfg.ensure_dirs()
 
     # Check if already ingested (skip unless --reindex)
@@ -72,7 +81,8 @@ def main():
             f"File    : {pdf_path}\n"
             f"Title   : {args.title or 'auto-detect'}\n"
             f"Subject : {args.subject or 'unset'}\n"
-            f"Grade   : {args.grade or 'unset'}",
+            f"Grade   : {args.grade or 'unset'}\n"
+            f"Collection: {cfg.qdrant_collection}",
             title="Synapse — Base Textbook Ingestion",
         )
     )

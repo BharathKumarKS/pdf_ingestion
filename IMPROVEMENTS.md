@@ -1124,6 +1124,63 @@ one.
 
 ---
 
+### E6. P1 Step 7 — the write path lands; the dense-lane switch leaves the QUERY side open ⚠️ blocks Step 10
+
+**Landed 2026-10-17.** The re-ingest's write path exists end to end: `ChunkingPipeline`
+(`src/pdf_ingestion/chunking_pipeline.py`) is the single ingest path
+(`ParentChunker.convert` → `SemanticChunker.chunk_parents` → `LateChunkEmbedder.embed_children`
+→ `DocumentStore.save_document`), and `store.ingest_pdf` delegates to it — so the script, the
+UI upload and the tests all build the same index. The collection schema is
+`dense_64 + dense_1024 + colbert + sparse` (`dense_768` retired), the payload and SQLite both
+carry `parent_id` (+ `parent_text` in the payload, plan §7 decision 4), and the legacy flat
+path (`chunk_document` / `build_page_map` / `_page_for_offset`) is **deleted** — Step 6's
+deferred half.
+
+**Vector names are resolved from the collection, not hard-coded** (`store._dense_name_from`).
+The deployed `knowledge_base` still carries `dense_768`, and R1 keeps it queryable for the
+old-vs-new comparison, so a hard-coded `dense_1024` would have made the deployed index
+unwritable the moment this landed. Pinned by
+`tests/test_chunking_pipeline.py::test_save_document_writes_dense_768_into_a_dense_768_collection`.
+
+**Forced consequence — RAPTOR summaries moved to the dense lane.** A summary vector lives in
+the *same* collection and the *same* full-dimension slot as the chunks, so
+`raptor_tree._embed` had to switch from the local Nomic 768d embedder to the cluster's Qwen3
+(passages embedded raw; the query instruction stays on the query side). Without it Phase 2's
+upsert fails on a dimension mismatch — 14 test failures, not a silent degradation. Phase 2/3
+still belong to Step 9; this was the minimum to keep one collection coherent.
+
+**Evidence** (`logs/p1/step7/`): a live probe on `test_book.pdf` with the **real** cluster
+dense lane and the **real** Qwen3 tokenizer — 42 parents → 66 children (19 pages, the Step 2/3
+counts), the collection carrying exactly `colbert/dense_1024/dense_64`, every point 1024d+64d
+and unit-norm, Qdrant points == SQLite chunks == children (66), every payload with
+`parent_id`/`parent_text`/`is_content`, every child with an in-range page, and
+`dense_64 == mrl_slice(dense_1024, 64)` within 1e-5. Suite: **356 pass / 4 pre-existing fail /
+6 skipped** (the 6 skips are the live-E2E tests, which now need `SV_EMBED_URL`). ruff: 51
+findings before, 51 after — no new ones.
+
+**THE GAP — the query side still embeds with the retired model.** `get_query_vector` exists
+(`cluster_embedder.py`) as the single accessor for the dense-lane query, and the Step 7 tests
+use it, but these call sites still call the local Nomic embedder:
+
+| site | what breaks |
+|---|---|
+| `src/frontend/streamlit_app.py` (query, HyDE, graph query) | UI search against v2: dimension error |
+| `src/main.py` `/search` | same |
+| `scripts/evaluate_rag.py`, `scripts/funnel_boundary_recall.py`, `scripts/calibrate_eval_pages.py`, `scripts/why_colbert.py` | Step 10's funnel + ablation cannot run against v2 |
+| `scripts/reembed_chunks.py` | writes 768d vectors into the KB collection |
+| `src/core/intent_router.py` (prototypes **and** the `embedding_dim` schema check) | R-a: the classifier + prototypes are 768d; the router must retrain (`scripts/train_intent_classifier.py`) or it falls back to prototype cosine |
+
+This fails **loudly** (Qdrant rejects a 768d query against a `dense_1024` slot), and the
+deployed index is unaffected, so nothing is silently wrong today — but **Step 10 cannot
+measure until this is switched**. No re-ingest is needed to fix it: it is a code change plus
+one retrain run against the cluster. Registered as the next action in `HANDOFF.md`.
+
+**Deviation from the plan's module map:** `ChunkingPipeline.process_all_documents` was **not**
+written. It has no caller in a single-textbook repo, and an untested second entry point is
+dead code from the day it lands. `process_pdf` is the whole API.
+
+---
+
 ## F. Card & graph lanes
 
 ### F1. Embed the question only, not question+answer ✅ code changed ⚠️ requires re-ingest

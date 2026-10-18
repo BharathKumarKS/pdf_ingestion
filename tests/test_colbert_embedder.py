@@ -95,8 +95,8 @@ class TestColBERTIntegration:
         assert col is not None
 
     def test_search_with_colbert_enabled(self, stub_settings, tmp_path, sample_pdf):
+        from src.pdf_ingestion.cluster_embedder import get_query_vector
         from src.pdf_ingestion.store import ingest_pdf, DocumentStore
-        from src.pdf_ingestion.embedder import get_embedder
 
         stub_settings.sqlite_url = f"sqlite:///{tmp_path}/colbert_search.db"
 
@@ -109,8 +109,9 @@ class TestColBERTIntegration:
         )
 
         store = DocumentStore(stub_settings)
-        embedder = get_embedder(stub_settings)
-        q_vec = embedder.embed_query("kinetic energy formula")
+        # Dense-lane query: the index's dense slot is dense_1024 since the re-ingest, so a
+        # 768d Nomic query is a dimension error rather than a wrong-but-returning search.
+        q_vec = get_query_vector("kinetic energy formula", stub_settings)
 
         results = store.search(
             query_vector=q_vec,

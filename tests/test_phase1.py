@@ -49,6 +49,24 @@ class TestDatabase:
         collections = {c.name for c in client.get_collections().collections}
         assert settings.qdrant_collection in collections
 
+    def test_collection_has_the_four_reingest_vectors(self, settings):
+        """The re-ingest schema: dense_64 + dense_1024 (+colbert/+sparse), dense_768 retired."""
+        from src.core.database import get_qdrant
+        client = get_qdrant(settings)
+        vectors = client.get_collection(settings.qdrant_collection).config.params.vectors
+        assert isinstance(vectors, dict)
+        assert vectors["dense_64"].size == settings.dense_dim_low
+        assert vectors["dense_1024"].size == settings.dense_dim
+        assert "dense_768" not in vectors
+        assert vectors["colbert"].size == settings.colbert_dim
+
+    def test_chunks_table_has_parent_id(self, settings):
+        from sqlmodel import inspect as sql_inspect
+
+        from src.core.database import get_engine
+        cols = {c["name"] for c in sql_inspect(get_engine(settings)).get_columns("chunks")}
+        assert {"parent_id", "is_content"} <= cols
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 3. PDF Parser
@@ -86,7 +104,7 @@ class TestParser:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 4. Chunker
+# 4. Chunker (parent-aware: chunk_parents)
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestChunker:
@@ -101,22 +119,27 @@ class TestChunker:
         "The speed of light in vacuum is approximately three times ten to the eight metres per second."
     ) * 10  # Repeat to have enough content to chunk
 
+    @staticmethod
+    def _parent(text: str, parent_id: int = 0):
+        from src.pdf_ingestion.models import ParentChunk
+        return ParentChunk(parent_id=parent_id, text=text, page_map={0: 1})
+
     def test_produces_chunks(self, settings):
         from src.pdf_ingestion.chunker import SemanticChunker
         chunker = SemanticChunker(settings=settings)
-        chunks = chunker.chunk_document(
+        chunks = chunker.chunk_parents(
             document_id="test-doc-1",
             tenant_id="global",
-            full_text=self.SAMPLE_TEXT,
+            parents=[self._parent(self.SAMPLE_TEXT)],
         )
         assert len(chunks) > 0
 
     def test_chunks_have_required_fields(self, settings):
         from src.pdf_ingestion.chunker import SemanticChunker
-        chunks = SemanticChunker(settings=settings).chunk_document(
+        chunks = SemanticChunker(settings=settings).chunk_parents(
             document_id="test-doc-2",
             tenant_id="global",
-            full_text=self.SAMPLE_TEXT,
+            parents=[self._parent(self.SAMPLE_TEXT)],
         )
         for c in chunks:
             assert c.chunk_id
@@ -126,14 +149,19 @@ class TestChunker:
             assert c.text.strip()
             assert c.char_start >= 0
             assert c.char_end > c.char_start
+            # E2/E1: a child always knows its parent, and its page comes from the parent's
+            # provenance map rather than from a chunk-start offset (§D4).
+            assert c.parent_id == 0
+            assert c.parent_text == self.SAMPLE_TEXT
+            assert c.page_number == 1
 
     def test_chunk_texts_cover_original(self, settings):
         from src.pdf_ingestion.chunker import SemanticChunker
         text = "Alpha. Beta. Gamma. Delta. Epsilon. " * 30
-        chunks = SemanticChunker(settings=settings).chunk_document(
+        chunks = SemanticChunker(settings=settings).chunk_parents(
             document_id="cov-doc",
             tenant_id="global",
-            full_text=text,
+            parents=[self._parent(text)],
         )
         combined = " ".join(c.text for c in chunks).lower()
         for word in ["alpha", "beta", "gamma"]:
@@ -141,10 +169,10 @@ class TestChunker:
 
     def test_empty_text_returns_empty_list(self, settings):
         from src.pdf_ingestion.chunker import SemanticChunker
-        chunks = SemanticChunker(settings=settings).chunk_document(
+        chunks = SemanticChunker(settings=settings).chunk_parents(
             document_id="empty-doc",
             tenant_id="global",
-            full_text="   ",
+            parents=[self._parent("   ")],
         )
         assert chunks == []
 
@@ -253,8 +281,8 @@ class TestStore:
 
     def test_user_upload_isolated_from_global(self, sample_pdf, settings):
         """User PDF must not appear when querying the global tenant."""
+        from src.pdf_ingestion.cluster_embedder import get_query_vector
         from src.pdf_ingestion.store import DocumentStore, ingest_pdf
-        from src.pdf_ingestion.embedder import get_embedder
 
         # Ingest as user
         ingest_pdf(
@@ -265,8 +293,9 @@ class TestStore:
             settings=settings,
         )
 
-        embedder = get_embedder(settings)
-        q_vec = embedder.embed_query("Newton's laws of motion")
+        # The query must come from the model that built the index (the dense lane), not from
+        # the retired Nomic embedder: 768d against a dense_1024 slot is a dimension error.
+        q_vec = get_query_vector("Newton's laws of motion", settings)
         store = DocumentStore(settings)
 
         # Search scoped to user_alice with user_upload filter only
@@ -281,8 +310,8 @@ class TestStore:
 
     def test_hybrid_search_includes_global(self, sample_pdf, settings):
         """Hybrid search must pull from both user and global tenants."""
+        from src.pdf_ingestion.cluster_embedder import get_query_vector
         from src.pdf_ingestion.store import DocumentStore, ingest_pdf
-        from src.pdf_ingestion.embedder import get_embedder
 
         # Ingest as global baseline
         ingest_pdf(
@@ -301,8 +330,7 @@ class TestStore:
             settings=settings,
         )
 
-        embedder = get_embedder(settings)
-        q_vec = embedder.embed_query("energy conservation")
+        q_vec = get_query_vector("energy conservation", settings)
         store = DocumentStore(settings)
 
         # Hybrid: source_type=None → includes both tenants
@@ -319,25 +347,34 @@ class TestStore:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 7. End-to-end integration (uses real Jina v3 — mark as slow)
+# 7. End-to-end integration (real dense lane on the cluster — mark as slow)
 # ═══════════════════════════════════════════════════════════════════════════
 
 @pytest.mark.slow
 @pytest.mark.integration
 class TestIntegration:
     """
-    Full pipeline with real Nomic embed v1.5 + ColBERT v2.0, Docker Qdrant.
+    Full pipeline with the real dense lane (cluster Qwen3) + ColBERT v2.0, Docker Qdrant.
     Run with: uv run pytest -m integration -v
-    Requires:  docker compose up qdrant -d
+    Requires:  docker compose up qdrant -d, and SV_EMBED_URL set to the cluster's
+               /embed-text/v1/embeddings endpoint (the dense lane is the cluster since the
+               re-ingest, plan R2 — there is no local dense model any more).
     """
 
     def test_end_to_end_real_model(self, sample_pdf, tmp_path):
+        import os
+
         from src.core.config import Settings
         from src.pdf_ingestion.store import ingest_pdf
+
+        sv_embed_url = os.environ.get("SV_EMBED_URL", "")
+        if not sv_embed_url:
+            pytest.skip("SV_EMBED_URL not set — the dense lane is the cluster (plan R2)")
 
         settings = Settings(
             use_stub_embedder=False,
             use_stub_colbert=False,
+            sv_embed_url=sv_embed_url,
             qdrant_in_memory=False,
             sqlite_url=f"sqlite:///{tmp_path}/integration.db",
         )

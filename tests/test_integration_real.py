@@ -28,13 +28,22 @@ def reset_db_singletons():
 
 @pytest.fixture(scope="module")
 def real_settings(tmp_path_factory):
-    """Real Nomic embed v1.5 + in-memory Qdrant + isolated SQLite for this module."""
+    """Real **dense-lane** embedder + in-memory Qdrant + isolated SQLite for this module.
+
+    The dense lane is the cluster's Qwen3 since the re-ingest (plan R2), so the end-to-end
+    tests need ``SV_EMBED_URL`` and are skipped without it. The Nomic tests below are
+    unaffected: they exercise ``embedder.py`` directly, which the dense lane no longer uses
+    (its DA/concept lanes still do).
+    """
+    import os
+
     from src.core.database import reset_singletons
     reset_singletons()  # start clean
     from src.core.config import Settings
     db_path = tmp_path_factory.mktemp("integration") / "real.db"
     return Settings(
         use_stub_embedder=False,
+        sv_embed_url=os.environ.get("SV_EMBED_URL", ""),
         use_stub_colbert=True,   # skip ColBERT download in integration tests
         qdrant_in_memory=True,
         sqlite_url=f"sqlite:///{db_path}",
@@ -60,6 +69,11 @@ def ingested_result(real_settings, real_pdf):
     Ingest the sample PDF once for the whole module.
     All E2E tests read from this shared result.
     """
+    if not real_settings.sv_embed_url:
+        pytest.skip(
+            "SV_EMBED_URL not set — the dense lane is the cluster's Qwen3 since the "
+            "re-ingest (plan R2), so there is no offline dense lane to ingest with"
+        )
     from src.pdf_ingestion.store import ingest_pdf
     print(f"\n[Fixture] Ingesting {real_pdf.name} once for module…")
     result = ingest_pdf(

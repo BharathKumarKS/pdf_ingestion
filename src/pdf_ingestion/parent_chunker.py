@@ -8,7 +8,7 @@ them:
   *parents* the semantic chunker (E1) and the late-chunk embedder (E3) draw context from.
 * each parent carries a **char → page map** built from ``meta.doc_items[].prov[].charspan`` /
   ``page_no``, so a child's page number is the page its characters actually came from rather
-  than the chunk-start fuzz of ``chunker._page_for_offset`` (§D4).
+  than the chunk-start fuzz of the removed ``chunker._page_for_offset`` (§D4).
 
 Docling semantics this relies on (verified against Docling 2.117, 2026-10-17):
 ``Prov.charspan`` is relative to the **item's own** text, and an item that crosses a page

@@ -22,7 +22,8 @@
 > re-ran post-fix on the same 133 queries: **Δ −0.0101, CI [−0.0299, +0.0097] → still UNRESOLVED**.
 > §B4f, §D11, §I10 resolved. Artifacts: `p0-9-gold-v2_2026-10-17_0422.md` (step 4),
 > `p0-9-gold-v2-visual_2026-10-17_0410.md` (visual); outcome: pre-registration → "Step 4 outcome".
-> **Next: the re-ingest (E1/E2/E3) → the reranker ablation; Session 5 (human verification) runs now.**
+> **Next: the query-side dense-lane switch (§E6) → Step 8 (the run) → the reranker ablation;
+> Session 5 (human verification) runs now.**
 > **P1 re-ingest STARTED 2026-10-16** — plan: `.hermes/plans/2026-10-16-p1-reingest-plan.md`
 > (10 steps, decisions closed). Done: Step 0 (config), Step 1 (`cluster_embedder.py`, 11 tests),
 > **Step 2 (`parent_chunker.py` + `models.py`; 9 tests + 1 slow)** — `test_book.pdf` → **42** parents,
@@ -62,7 +63,27 @@
 > first-chunk-per-page artifact. Round 2 `passed: true`, M1–M5 confirmed. Evidence
 > `logs/p1/step6/` (README + `realbook.json` + cached `children.json`). The plan's "remove the dead
 > path" moves to Step 7 — the legacy `chunk_document` is still called by `store.ingest_document`.
-> Suite **341 pass / 5 fail** (same 5 pre-existing). **Next: Step 7 (schema + write path).**
+> Suite **356 pass / 4 fail** (the same pre-existing class: 2 SPLADE fixtures, 2 zero-result
+> searches) + 6 skips (the live-E2E tests, which now need `SV_EMBED_URL`).
+> **Step 7 (schema + write path) DONE 2026-10-17** — new `src/pdf_ingestion/chunking_pipeline.py`
+> is the single ingest path (`ParentChunker.convert` → `SemanticChunker.chunk_parents` →
+> `LateChunkEmbedder.embed_children` → `save_document`); `store.ingest_pdf` delegates to it and the
+> legacy flat path (`chunk_document`/`build_page_map`/`_page_for_offset`) is **deleted** (Step 6's
+> deferred half). Created schema = `dense_64 + dense_1024 + colbert + sparse`; the vector name is
+> **resolved from the collection** (`store._dense_name_from`) so the deployed `knowledge_base`
+> (still `dense_768`) stays writable — pinned by a test. Payload + SQLite carry
+> `parent_id`/`parent_text`. `raptor_tree._embed` moved to the dense lane (summaries share the
+> collection's slot; without it 14 tests fail). Live probe `logs/p1/step7/` on `test_book.pdf`
+> with the **real** cluster lane + **real** Qwen3 tokenizer: 42 parents → 66 children, exactly 3
+> named vectors present, Qdrant points == SQLite chunks == children (66),
+> `dense_64 == mrl_slice(dense_1024, 64)` to 1e-5. ruff: 51 findings before, 51 after.
+> **⛔ THE QUERY SIDE IS NOT SWITCHED** — the UI, `main.py`, `evaluate_rag`,
+> `funnel_boundary_recall`, `calibrate_eval_pages`, `why_colbert` and the intent router still
+> embed with the retired local Nomic 768d model. Against `knowledge_base_v2` that is a loud
+> dimension error (the deployed index is unaffected, so nothing is silently wrong today), but
+> **the funnel/ablation cannot measure until it is switched**, and the router needs its retrain
+> (R-a). Full detail + the call-site table: `IMPROVEMENTS.md` §E6.
+> **Next: (a) the query-side dense-lane switch + intent retrain, then (b) Step 8 (the run).**
 >
 > **Steps 2–3 went through independent review 2026-10-17** (verifier = `openai/gpt-oss-20b`, a
 > different model from the author's). It found one genuine defect — a parent with no provenance

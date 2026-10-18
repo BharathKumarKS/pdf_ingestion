@@ -1,0 +1,42 @@
+{
+  "pdf": "test_book.pdf",
+  "sv_embed_url": "http://10.0.10.70:8123/embed-text/v1/embeddings",
+  "dense_model": "Qwen/Qwen3-Embedding-0.6B",
+  "result": {
+    "document_id": "2e7df805-0cca-49b1-acf4-9a8aebc506a9",
+    "filename": "test_book.pdf",
+    "page_count": 19,
+    "parent_count": 42,
+    "chunk_count": 66,
+    "tenant_id": "global",
+    "source_type": "base_textbook"
+  },
+  "M1_collection_vectors": [
+    "colbert",
+    "dense_1024",
+    "dense_64"
+  ],
+  "M2_dims": [
+    [
+      1024,
+      64
+    ]
+  ],
+  "M2_unit_norms": true,
+  "M3_qdrant_points": 66,
+  "M3_sqlite_chunks": 66,
+  "M3_children": 66,
+  "M4_payloads_missing_hierarchy_fields": 0,
+  "M5_pages_without_number": 0,
+  "M5_page_min": 1,
+  "M5_page_max": 19,
+  "M6_dense_64_is_mrl_slice_of_dense_1024": true,
+  "sample_payload": {
+    "page_number": 1,
+    "parent_id": 0,
+    "is_content": true,
+    "char_start": 0,
+    "char_end": 1573
+  },
+  "sample_parent_text_chars": 1573
+}

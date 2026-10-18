@@ -1,7 +1,10 @@
 # P1 — the re-ingest (E1/E2/E3/E5 + §D4 + §I1). Execution plan.
 
-**Status:** planned 2026-10-16. **Steps 0–4 done** (P1-a + E1 + E2 + E3). Next: Step 5 (E5
-`is_content`). Supersedes the "Next: the re-ingest" line in `HANDOFF.md`.
+**Status:** planned 2026-10-16. **Steps 0–7 done** (P1-a config + `cluster_embedder`; E1 semantic
+chunking; E2 parents; E3 late chunking; E5 `is_content`; §D4 page numbering; the schema + write
+path). **Next: Step 8 (the run)** — but the query side must be switched to the dense lane first
+(`IMPROVEMENTS.md` §E6), or the funnel cannot read the new collection. Supersedes the "Next: the
+re-ingest" line in `HANDOFF.md`.
 **Scope owner decisions taken 2026-10-16** (all four settled — see §2).
 
 > Read `ARCHITECTURE.md` §8 (invariants/traps) and `IMPROVEMENTS.md` §E before the first change.
@@ -223,6 +226,26 @@ Each step ends with: unit tests green (stubs, offline) → a small live probe �
 - `store.save_document`: write `dense_1024`, `is_content`, `parent_id`, `parent_text`.
 - SQLite `_migrate_add_columns`: `chunks.parent_id`, `chunks.is_content`.
 - Verify: `tests/test_config_invariants.py` + `test_phase1.py` updated; collection created with the 4 named vectors.
+- **IMPLEMENTED 2026-10-17** — new `src/pdf_ingestion/chunking_pipeline.py` (the single ingest
+  path) + `store.ingest_pdf` rewired to it; `dense_768` retired in the created schema with the
+  vector name **resolved from the collection** (`store._dense_name_from`) so the deployed
+  `knowledge_base` stays writable and queryable (R1); payload + SQLite carry
+  `parent_id`/`parent_text`; the legacy flat path (`chunk_document` / `build_page_map` /
+  `_page_for_offset`) is **deleted** — this is Step 6's deferred half. `--collection-name` added
+  to `scripts/ingest_base_textbook.py`. Evidence `logs/p1/step7/` (live probe: real cluster
+  dense lane + real Qwen3 tokenizer, 42 parents → 66 children, 4 named vectors, counts agree,
+  `dense_64 == mrl_slice(dense_1024, 64)`); suite 356 pass / 4 pre-existing fail / 6 skip.
+  Register `IMPROVEMENTS.md` §E6.
+- **Two things Step 7 does NOT close** (both in §E6, both needed before Step 10):
+  1. **the query side** — the UI, `main.py`, `evaluate_rag`, `funnel_boundary_recall`,
+     `calibrate_eval_pages`, `why_colbert` and the intent router still embed with the retired
+     local Nomic 768d model. Loud (a dimension error), not silent, and the deployed index is
+     unaffected — but the funnel/ablation cannot run against `knowledge_base_v2` until it is
+     switched, and the router needs its retrain (R-a).
+  2. **Phase 2's other KB writers** — `raptor_tree._embed` moved to the dense lane here because
+     summaries share the collection's slot (without it, 14 tests fail); `save_raptor_tree` and
+     `reembed_chunks.py` are named in §E6 as the remaining 768d writers.
+- **Deviation:** `process_all_documents` was not written (no caller in a single-textbook repo).
 
 ### Step 8 — the run (background job)
 - `scripts/ingest_base_textbook.py --pdf …feynman… --collection-name knowledge_base_v2`

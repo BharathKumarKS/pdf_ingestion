@@ -114,6 +114,10 @@ sv_ray_cluster_access/
 logs/p1/step6/children.json
 logs/p1/step6/realbook.err
 
+# P1 Step 7 probe working file: the throwaway SQLite the probe ingests into (~190 KB,
+# regenerated on every run). The probe, its JSON output and the README ARE tracked.
+logs/p1/step7/probe.db
+
 # Hermes agent session artifacts. Plans are deliverables (HANDOFF.md points a fresh
 # session at them), so they are tracked; anything else Hermes writes here is churn.
 .hermes/*
