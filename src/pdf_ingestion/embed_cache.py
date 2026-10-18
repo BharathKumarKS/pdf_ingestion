@@ -64,11 +64,17 @@ def fingerprint(pdf_path: str | Path, cfg) -> str:
     return h.hexdigest()[:16]
 
 
+def _text_sha(text: str) -> str:
+    """Short content digest of a child's text — the cache's real identity check."""
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
+
+
 @dataclass
 class CachedParent:
     """One parent's pooled child vectors, as written by a previous run."""
 
-    child_ids: list[str]
+    text_sha: np.ndarray        # (n_children,) content digest of each child's TEXT
+    char_spans: np.ndarray      # (n_children, 2) int32 char_start/char_end
     dense_1024: np.ndarray      # (n_children, dense_dim)
     dense_64: np.ndarray        # (n_children, dense_dim_low)
     token_spans: np.ndarray     # (n_children, 2) int32
@@ -78,17 +84,27 @@ class CachedParent:
     def rebuild(self, children: list[TextChunk]) -> list[EnrichedChunk] | None:
         """Re-attach the cached vectors to ``children``, or ``None`` if they do not line up.
 
-        Returning ``None`` on any mismatch is deliberate: a cache that re-attaches vectors to the
+        **Validated on CONTENT, not identity.** The first version of this keyed on
+        ``chunk_id`` — which is ``str(uuid.uuid4())``, minted fresh on every run, so the ids could
+        never match across runs and the cache would have silently never hit in production. (It
+        passed its tests because they reused the same child objects, so the uuids happened to
+        agree.) What IS stable across runs with the same chunking config is the child's **text and
+        character span**, and those are what a hit is checked against.
+
+        Returning ``None`` on any mismatch is deliberate: a cache that re-attached vectors to the
         wrong children would corrupt the index silently, whereas a miss only costs one request.
-        The child ids are checked, not just the count, so a re-chunk that happens to produce the
-        same number of children is still rejected.
         """
         from src.pdf_ingestion.late_chunk_embedder import EnrichedChunk
 
-        if len(children) != len(self.child_ids):
+        if len(children) != len(self.text_sha):
             return None
-        if [c.chunk_id for c in children] != self.child_ids:
-            return None
+        for i, child in enumerate(children):
+            if _text_sha(child.text) != str(self.text_sha[i]):
+                return None
+            if (int(self.char_spans[i][0]), int(self.char_spans[i][1])) != (
+                child.char_start, child.char_end
+            ):
+                return None
         return [
             EnrichedChunk(
                 chunk=child,
@@ -128,7 +144,8 @@ class EmbeddingCache:
         try:
             with np.load(path, allow_pickle=False) as z:
                 entry = CachedParent(
-                    child_ids=[str(c) for c in z["child_ids"]],
+                    text_sha=z["text_sha"],
+                    char_spans=z["char_spans"],
                     dense_1024=z["dense_1024"],
                     dense_64=z["dense_64"],
                     token_spans=z["token_spans"],
@@ -161,7 +178,10 @@ class EmbeddingCache:
             with open(tmp, "wb") as fh:
                 np.savez(
                     fh,
-                    child_ids=np.asarray([c.chunk.chunk_id for c in chunks], dtype="U"),
+                    text_sha=np.asarray([_text_sha(c.chunk.text) for c in chunks], dtype="U"),
+                    char_spans=np.asarray(
+                        [(c.chunk.char_start, c.chunk.char_end) for c in chunks], dtype=np.int32
+                    ),
                     dense_1024=np.asarray([c.dense_1024 for c in chunks], dtype=np.float32),
                     dense_64=np.asarray([c.dense_64 for c in chunks], dtype=np.float32),
                     token_spans=np.asarray([c.token_span for c in chunks], dtype=np.int32),

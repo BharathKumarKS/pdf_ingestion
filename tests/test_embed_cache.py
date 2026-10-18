@@ -120,19 +120,75 @@ def test_rebuild_rejects_a_different_child_count(tmp_path):
     assert entry.rebuild(shorter) is None
 
 
-def test_rebuild_rejects_same_count_different_ids(tmp_path):
-    """A re-chunk can produce the same NUMBER of children with different ids — the ids are
-    checked precisely because a count check alone would accept that and corrupt the index."""
+def _regenerate(children):
+    """Same text and spans, brand-new chunk ids — exactly what a fresh chunker call produces."""
+    from src.pdf_ingestion.chunker import TextChunk
+
+    return [
+        TextChunk(
+            chunk_id=f"fresh-{i}-{id(c)}", document_id=c.chunk.document_id,
+            tenant_id=c.chunk.tenant_id, chunk_index=c.chunk.chunk_index, text=c.chunk.text,
+            char_start=c.chunk.char_start, char_end=c.chunk.char_end,
+            token_count=c.chunk.token_count, page_number=c.chunk.page_number,
+            parent_id=c.chunk.parent_id, parent_text=c.chunk.parent_text,
+        )
+        for i, c in enumerate(children)
+    ]
+
+
+def test_rebuild_hits_when_chunk_ids_are_regenerated(tmp_path):
+    """THE PRODUCTION SHAPE: a fresh chunker call mints new chunk ids for identical content.
+
+    ``chunk_id`` is ``str(uuid.uuid4())``, so a re-run of the pipeline produces different ids for
+    the same children. The first version of this cache keyed on those ids, which meant it could
+    never hit in production — and its tests passed anyway, because they reused the same child
+    objects. This test builds the children the way the pipeline actually does: same text and spans,
+    brand-new ids.
+    """
+
     cache = EmbeddingCache(tmp_path, "key")
     parent = _parent()
     original = _chunks(parent, [(0, 10), (10, 20)])
     cache.put(parent.parent_id, original)
 
-    impostors = [_child(100, PARENT_TEXT[0:10], 0, 10, parent),
-                 _child(101, PARENT_TEXT[10:20], 10, 20, parent)]
+    regenerated = _regenerate(original)
+    assert [c.chunk_id for c in regenerated] != [c.chunk.chunk_id for c in original]
+
+    entry = cache.get(parent.parent_id)
+    assert entry is not None
+    rebuilt = entry.rebuild(regenerated)
+    assert rebuilt is not None, "a regenerated id must NOT be treated as a miss"
+    for i, (before, after) in enumerate(zip(original, rebuilt)):
+        assert np.array_equal(before.dense_1024, after.dense_1024)
+        assert after.chunk is regenerated[i], "vectors must attach to the LIVE child objects"
+
+
+def test_rebuild_rejects_same_count_different_text(tmp_path):
+    """A re-chunk can produce the same NUMBER of children with different content — the text is
+    what is checked, because a count check alone would accept that and corrupt the index."""
+    cache = EmbeddingCache(tmp_path, "key")
+    parent = _parent()
+    original = _chunks(parent, [(0, 10), (10, 20)])
+    cache.put(parent.parent_id, original)
+
+    impostors = [_child(0, "totally different text", 0, 10, parent),
+                 _child(1, "also different", 10, 20, parent)]
     entry = cache.get(parent.parent_id)
     assert entry is not None
     assert entry.rebuild(impostors) is None
+
+
+def test_rebuild_rejects_same_text_different_span(tmp_path):
+    """Identical text at a different offset means different token context — not a valid hit."""
+    cache = EmbeddingCache(tmp_path, "key")
+    parent = _parent()
+    original = _chunks(parent, [(0, 10)])
+    cache.put(parent.parent_id, original)
+
+    moved = [_child(0, original[0].chunk.text, 5, 15, parent)]
+    entry = cache.get(parent.parent_id)
+    assert entry is not None
+    assert entry.rebuild(moved) is None
 
 
 def test_corrupt_entry_is_a_miss_not_a_crash(tmp_path):
@@ -199,15 +255,18 @@ def test_second_pass_re_embeds_nothing(tmp_path):
 
     embedder2, calls2 = _counting_embedder(cfg)
     emb2 = LateChunkEmbedder(settings=cfg, embedder=embedder2, tokenizer=FakeTokenizer())
-    second = emb2.embed_children(parents, children, cache=cache)
+    # Second pass with REGENERATED children — the production shape. Reusing the same objects here
+    # is what let the original uuid-keyed bug through: the ids only agree if you cheat.
+    fresh_children = _regenerate(first)
+    second = emb2.embed_children(parents, fresh_children, cache=cache)
 
     assert calls2 == [], "a warm cache must make ZERO cluster calls"
     assert cache.hits == 2, "both parents served from the cache on the second pass"
     assert cache.misses == 2, "and the misses are the first pass's — no new misses"
-    for a, b in zip(first, second):
+    for i, (a, b) in enumerate(zip(first, second)):
         assert np.array_equal(a.dense_1024, b.dense_1024)
         assert a.token_span == b.token_span
-        assert a.chunk.chunk_id == b.chunk.chunk_id
+        assert b.chunk is fresh_children[i], "vectors must attach to the LIVE regenerated children"
 
 
 def test_partial_cache_only_embeds_the_missing_parent(tmp_path):
@@ -270,12 +329,12 @@ def test_concurrent_path_also_uses_the_cache(tmp_path):
 
     embedder, calls = _counting_embedder(cfg)
     emb = LateChunkEmbedder(settings=cfg, embedder=embedder, tokenizer=FakeTokenizer())
-    emb.embed_children(parents, children, cache=cache)
+    first = emb.embed_children(parents, children, cache=cache)
     assert len(calls) == 5
 
     embedder2, calls2 = _counting_embedder(cfg)
     emb2 = LateChunkEmbedder(settings=cfg, embedder=embedder2, tokenizer=FakeTokenizer())
-    out = emb2.embed_children(parents, children, cache=cache)
+    out = emb2.embed_children(parents, _regenerate(first), cache=cache)
     assert calls2 == [], "the concurrent path must serve from cache"
     assert len(out) == 5
     assert [e.chunk.parent_id for e in out] == [0, 1, 2, 3, 4]
