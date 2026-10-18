@@ -102,6 +102,15 @@ class Settings(BaseSettings):
     # tolerates sustained load, not bursts. See IMPROVEMENTS.md §I18.
     late_chunk_workers: int = 4
 
+    # Resume cache for the late-chunk phase (IMPROVEMENTS.md §I19). The ingest writes once, at the
+    # end, so an abort at parent 340 of 341 discards the whole document — three Step 8 attempts
+    # lost 86, 53.6 and 63.8 minutes that way. With this on, each parent's vectors are
+    # checkpointed as they are produced and a re-run embeds only the parents still missing.
+    # The directory is named by a fingerprint over the PDF's bytes and the chunking config, so a
+    # changed knob cannot reuse stale vectors. Derived and re-derivable — safe to delete.
+    embed_cache_enabled: bool = True
+    embed_cache_dir: str = "./data/embed_cache"
+
     # Chunking
     chunk_size: int = 512
     chunk_overlap: int = 64

@@ -296,11 +296,13 @@ def test_backoff_grows_and_is_jittered(no_sleep):
     emb.embed_documents(["one"])
 
     assert len(no_sleep) == 3
-    # attempt 1 -> 2 s, 2 -> 4 s, 3 -> 8 s, each scaled by jitter in [0.5, 1.5)
+    # attempt 1 -> base 2 s, 2 -> 4 s, 3 -> 8 s, each scaled by jitter in [0.5, 1.5)
     assert 1.0 <= no_sleep[0] < 3.0
     assert 2.0 <= no_sleep[1] < 6.0
     assert 4.0 <= no_sleep[2] < 12.0
-    assert no_sleep[0] < no_sleep[1] < no_sleep[2], "backoff must grow"
+    # NB the DRAWN delays need not be ordered: the ranges overlap (attempt 1 can draw 2.9 s while
+    # attempt 2 draws 2.1 s), and asserting otherwise is a flaky test, not a stronger one. The
+    # growth is in the base, which the ranges above already pin.
 
 
 def test_retryable_status_5xx_is_retried(no_sleep):

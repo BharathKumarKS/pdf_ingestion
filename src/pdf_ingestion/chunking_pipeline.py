@@ -57,6 +57,27 @@ class ChunkingPipeline:
 
     # -- Public API ------------------------------------------------------------
 
+    def _make_cache(self, path: Path):
+        """The resume cache for this document, or ``None`` when disabled.
+
+        Constructed here rather than in ``__init__`` because the key needs the PDF, and the
+        fingerprint reads it — so this is the first point that can know what the cache is valid
+        for. A cache is a pure optimisation: any failure to build one must degrade to
+        ``None`` (embed everything), never abort the ingest.
+        """
+        if not getattr(self._cfg, "embed_cache_enabled", False):
+            return None
+        try:
+            from src.pdf_ingestion.embed_cache import EmbeddingCache, fingerprint
+
+            cache = EmbeddingCache(self._cfg.embed_cache_dir, fingerprint(path, self._cfg))
+            logger.info("Late-chunk resume cache: {}", cache.directory)
+            return cache
+        except Exception as exc:  # noqa: BLE001 - never fail an ingest over a cache
+            logger.warning("Resume cache unavailable ({}: {}) — embedding everything",
+                           type(exc).__name__, exc)
+            return None
+
     def process_pdf(
         self,
         pdf_path: str,
@@ -79,7 +100,8 @@ class ChunkingPipeline:
         if not children:
             raise ValueError(f"No chunks produced from {pdf_path}")
 
-        enriched = self._embedder.embed_children(parents, children)
+        cache = self._make_cache(path)
+        enriched = self._embedder.embed_children(parents, children, cache=cache)
 
         parsed = _parsed_document(doc, path, parents, doc_id, meta)
         saved_id = self._store.save_document(

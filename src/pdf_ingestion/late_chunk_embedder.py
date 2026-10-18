@@ -218,7 +218,10 @@ class LateChunkEmbedder:
         return out
 
     def embed_children(
-        self, parents: list[ParentChunk], children: list[TextChunk]
+        self,
+        parents: list[ParentChunk],
+        children: list[TextChunk],
+        cache=None,
     ) -> list[EnrichedChunk]:
         """Enrich a whole document's children, grouped by parent, in document order.
 
@@ -232,6 +235,12 @@ class LateChunkEmbedder:
         Results are reassembled in **parent order**, so the document order the store and the
         tests rely on is identical to the serial path — concurrency changes the wall clock,
         not the output.
+
+        ``cache`` is an optional :class:`~src.pdf_ingestion.embed_cache.EmbeddingCache`. When
+        given, a parent whose vectors are already checkpointed is rebuilt from disk instead of
+        re-embedded, and each freshly embedded parent is written back. That is what makes an
+        aborted run resumable: Step 8 attempt 3 finished 339 of 341 parents and lost all of it
+        (IMPROVEMENTS.md §I19).
         """
         by_parent: dict[int, list[TextChunk]] = {}
         for child in children:
@@ -246,11 +255,31 @@ class LateChunkEmbedder:
         if workers == 1 or len(parents) <= 1:
             out: list[EnrichedChunk] = []
             for parent in parents:
-                out.extend(self.embed_parent(parent, by_parent.get(parent.parent_id, [])))
+                out.extend(self._enrich_one(parent, by_parent.get(parent.parent_id, []), cache))
         else:
-            out = self._embed_parents_concurrently(parents, by_parent, workers)
+            out = self._embed_parents_concurrently(parents, by_parent, workers, cache)
 
+        if cache is not None:
+            logger.info("Late-chunk cache: {}", cache.summary())
         logger.success("Enriched {} children from {} parents", len(out), len(parents))
+        return out
+
+    def _enrich_one(self, parent: ParentChunk, kids: list[TextChunk], cache) -> list[EnrichedChunk]:
+        """One parent's children: from the checkpoint if possible, else embedded and cached."""
+        if cache is not None:
+            hit = cache.get(parent.parent_id)
+            if hit is not None:
+                rebuilt = hit.rebuild(kids)
+                if rebuilt is not None:
+                    return rebuilt
+                # A hit whose children no longer line up is a miss — never a silent mis-join.
+                logger.warning(
+                    "Late-chunk cache: entry for parent {} does not match the current children "
+                    "— re-embedding", parent.parent_id,
+                )
+        out = self.embed_parent(parent, kids)
+        if cache is not None and out:
+            cache.put(parent.parent_id, out)
         return out
 
     def _embed_parents_concurrently(
@@ -258,6 +287,7 @@ class LateChunkEmbedder:
         parents: list[ParentChunk],
         by_parent: dict[int, list[TextChunk]],
         workers: int,
+        cache=None,
     ) -> list[EnrichedChunk]:
         """``embed_parent`` over a thread pool, flattened back into parent order.
 
@@ -279,7 +309,9 @@ class LateChunkEmbedder:
         results: dict[int, list[EnrichedChunk]] = {}
         with ThreadPoolExecutor(max_workers=workers) as pool:
             futures = {
-                pool.submit(self.embed_parent, parent, by_parent.get(parent.parent_id, [])): idx
+                pool.submit(
+                    self._enrich_one, parent, by_parent.get(parent.parent_id, []), cache
+                ): idx
                 for idx, parent in enumerate(parents)
             }
             for fut in as_completed(futures):
