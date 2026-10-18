@@ -361,9 +361,10 @@ class TestPhase1Regression:
 
     def test_search_still_works_after_phase2(self, ingested_doc, p2_settings):
         from src.pdf_ingestion.store import generate_phase2_artifacts, DocumentStore
-        from src.pdf_ingestion.embedder import get_embedder
+        from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
         generate_phase2_artifacts(ingested_doc["document_id"], p2_settings)
-        embedder = get_embedder(p2_settings)
+        # Query-side dense lane — the collection's own slot (dense_dim), not the legacy 768d.
+        embedder = get_cluster_embedder(p2_settings)
         q_vec    = embedder.embed_query("Newton's law of motion")
         results  = DocumentStore(p2_settings).search(
             query_vector=q_vec,

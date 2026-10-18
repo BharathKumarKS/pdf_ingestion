@@ -199,6 +199,13 @@ class NomicEmbedder:
 # -- Factory -------------------------------------------------------------------
 
 def get_embedder(settings: Settings | None = None) -> StubEmbedder | NomicEmbedder:
+    """The legacy local Nomic embedder — **not** the query path.
+
+    Queries and the ``knowledge_base`` index both use the cluster dense lane
+    (``cluster_embedder.get_query_vector`` / ``get_cluster_embedder``). This remains only
+    for the derived-index writers whose collections have not been re-indexed yet (DA cards,
+    concept names) and ``reembed_chunks.py``. See ``config.embedding_model``.
+    """
     cfg = settings or get_settings()
     if cfg.use_stub_embedder:
         return StubEmbedder(dim=cfg.embedding_dim, dim_low=cfg.embedding_dim_low)

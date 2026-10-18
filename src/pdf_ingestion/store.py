@@ -976,12 +976,10 @@ class DocumentStore:
             if nd.embedding is None:
                 continue
             vec_full = nd.embedding.tolist()
-            vec_64 = nd.embedding[:self._cfg.embedding_dim_low].copy()
+            vec_64 = nd.embedding[:self._cfg.dense_dim_low].copy()
             vec_64 /= float(np.linalg.norm(vec_64)) + 1e-9
-            # NOTE (Step 7): the name follows the collection, but ``nd.embedding`` is still a
-            # Nomic 768d summary vector from raptor_tree.py. On a re-ingested collection the
-            # upsert therefore fails on a dimension mismatch — deliberately loud. Phase 2's
-            # summary embedder moves to the dense lane (cluster, 1024d) in Step 9.
+            # Step 7 moved ``raptor_tree._embed`` onto the dense lane, so ``nd.embedding`` is
+            # the same 1024d cluster vector as the chunks — one space, one collection slot.
             points.append(PointStruct(
                 id=nd.qdrant_point_id,
                 vector={"dense_64": vec_64.tolist(), self._dense_vector_name(): vec_full},
@@ -995,7 +993,7 @@ class DocumentStore:
                     "cluster_id":         nd.cluster_id,
                     "text":               nd.summary,
                     "child_chunk_count":  len(nd.child_ids),
-                    "embedding_version":  "nomic-v1.5",
+                    "embedding_version":  self._cfg.dense_model,
                 },
             ))
         for i in range(0, len(points), 64):

@@ -171,6 +171,50 @@ def test_query_prepends_the_instruction():
     assert reqs[0]["input"] == ["Instruct: test\nQuery: what is a lever"]
 
 
+def test_pooled_paths_normalise_an_unnormalised_endpoint():
+    """The endpoint does NOT return unit vectors — the client must normalise.
+
+    Measured live 2026-07 (Qwen3-Embedding-0.6B): pooled query norm ≈ 70, pooled passage
+    ≈ 84. The index side (``late_chunk_embedder._finish``) always normalised; the query
+    side did not, so a bare ``query @ doc`` was off by ~6,000. Invisible under Qdrant's
+    COSINE distance, fatal for any dot-product consumer.
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        body = json.loads(request.content.decode())
+        # Deliberately UNNORMALISED: scale a unit vector by 100.
+        data = [
+            {"index": i, "embedding": (_unit(np.random.default_rng(i), (1024,)) * 100).tolist()}
+            for i in range(len(body["input"]))
+        ]
+        return httpx.Response(200, json={"data": data})
+
+    emb = ClusterDenseEmbedder(settings=_settings(), client=_capturing_client(handler, []))
+
+    docs = emb.embed_documents(["one", "two"])
+    assert all(np.isclose(np.linalg.norm(d), 1.0, atol=1e-5) for d in docs)
+
+    q = emb.embed_query("one")
+    assert np.isclose(np.linalg.norm(q), 1.0, atol=1e-5)
+    # Same text → the two lanes agree once normalised (they differ only by the instruction).
+    assert float(np.dot(q, docs[0])) > 0.5
+
+
+def test_per_token_path_stays_raw():
+    """Per-token vectors must NOT be normalised: the mean is taken before normalising."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        raw = (_unit(np.random.default_rng(3), (5, 1024)) * 50).tolist()
+        return httpx.Response(200, json={"data": [{"index": 0, "embedding": [raw]}]})
+
+    emb = ClusterDenseEmbedder(settings=_settings(), client=_capturing_client(handler, []))
+    toks = emb.embed_documents_tokens(["hello world"])
+    assert toks[0].shape == (5, 1024)
+    assert np.linalg.norm(toks[0][0]) > 10.0, "per-token vectors must stay unnormalised"
+
+
 def test_missing_url_is_loud():
     with pytest.raises(ValueError, match="sv_embed_url"):
         ClusterDenseEmbedder(settings=_settings(sv_embed_url=""))

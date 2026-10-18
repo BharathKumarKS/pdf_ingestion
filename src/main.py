@@ -101,10 +101,12 @@ async def ingest_upload(
 @app.post("/search")
 def search(req: SearchRequest, settings: Settings = Depends(get_settings)):
     """Semantic search with optional source_type filtering."""
-    from src.pdf_ingestion.embedder import get_embedder
+    from src.pdf_ingestion.cluster_embedder import get_query_vector
 
-    embedder = get_embedder(settings)
-    query_vec = embedder.embed_query(req.query)
+    # The query-side dense lane (cluster Qwen3 + instruction) — the model that built the
+    # index. The retired local 768d Nomic embedder would be a dimension error against a
+    # re-ingested collection.
+    query_vec = get_query_vector(req.query, settings)
     store = DocumentStore(settings)
     results = store.search(
         query_vector=query_vec,

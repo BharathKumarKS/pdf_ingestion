@@ -85,8 +85,9 @@ def build_config_snapshot(cfg, threshold: float, tenant_id: str) -> dict:
         "tenant_id": tenant_id,
         "score_threshold": threshold,
         "embedding": {
-            "model": cfg.embedding_model,
-            "dim": cfg.embedding_dim,
+            # The dense lane — the model that built the index and embeds the query.
+            "model": cfg.dense_model,
+            "dim": cfg.dense_dim,
         },
         "retriever": {
             "type": "hybrid (SPLADE+dense RRF)" if cfg.splade_enabled else "dense",
@@ -1053,7 +1054,7 @@ def main():
     args = parse_args()
 
     from src.core.config import get_settings
-    from src.pdf_ingestion.embedder  import get_embedder
+    from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
     from src.pdf_ingestion.reranker  import get_reranker
     from src.pdf_ingestion.store     import DocumentStore
 
@@ -1080,7 +1081,9 @@ def main():
 
     # Initialise components
     store    = DocumentStore(cfg)
-    embedder = get_embedder(cfg)
+    # Query-side dense lane: cluster Qwen3 (1024d + the query instruction), matching the
+    # index. The retired local Nomic 768d embedder would be a loud dimension error here.
+    embedder = get_cluster_embedder(cfg)
     reranker = get_reranker(cfg)
     judge_fn = make_judge_fn(args)
 

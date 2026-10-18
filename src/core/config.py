@@ -34,9 +34,15 @@ class Settings(BaseSettings):
     min_content_page: int = 0            # skip chunks below this PDF page (filters TOC/preface)
     max_content_page: int = 0            # skip chunks above this PDF page (filters index/back matter; 0 = off)
 
-    # Embedding — Nomic MRL (replaces Jina v3; Apache 2.0, MRL capable)
+    # Legacy local dense embedder — the RETIRED Nomic MRL model. It no longer embeds
+    # queries and no longer builds the knowledge_base: the dense lane (dense_model below)
+    # does both, via cluster_embedder.get_query_vector / get_cluster_embedder.
+    # What still uses it: the derived-index writers whose collections have not been
+    # re-indexed yet — `index_derivative_artifacts.py` (DA cards), `graph_builder`
+    # (concept names) — and `reembed_chunks.py`. Plan Step 9 moves them to the dense lane,
+    # at which point this whole block retires.
     embedding_model: str = "nomic-ai/nomic-embed-text-v1.5"
-    embedding_dim: int = 768             # full Nomic dense dim
+    embedding_dim: int = 768             # legacy Nomic dense dim (DA + concept collections)
     embedding_dim_low: int = 64          # MRL truncation for fast ANN first-stage
     embedding_batch_size: int = 8        # 8 on CPU; set 32-64 with GPU
     max_context_tokens: int = 8192       # max tokens per context window
@@ -56,13 +62,15 @@ class Settings(BaseSettings):
     sv_rerank_url: str = ""             # e.g. http://10.0.10.51:8000/rerank/v1/rank
     sv_embed_url: str = ""               # dense text embeddings, e.g. http://10.0.10.70:8123/embed-text/v1/embeddings
 
-    # Dense embedder served by the cluster (the re-ingest's dense lane). Deliberately SEPARATE
-    # from embedding_model/embedding_dim above: the intent classifier is schema-checked against
-    # embedding_dim, so the switch is a deliberate, tested step rather than a config edit.
+    # Dense lane served by the cluster — the model that builds `knowledge_base` and embeds
+    # every query against it. Deliberately SEPARATE from embedding_model/embedding_dim
+    # above (the retired local Nomic embedder), because the intent classifier and the
+    # derived-index collections still live on that one; the split makes the switch an
+    # explicit, tested step rather than a config edit.
     # Qwen3-Embedding-0.6B is MRL-capable (32-1024); the endpoint IGNORES a `dimensions` param,
     # so the 64d view is sliced client-side and re-normalised.
     dense_model: str = "Qwen/Qwen3-Embedding-0.6B"
-    dense_dim: int = 1024                # native dim of dense_model
+    dense_dim: int = 1024                # native dim of dense_model; also the intent classifier's width
     dense_dim_low: int = 64              # MRL truncation for the fast ANN first stage
     # Qwen3 is instruction-aware: the model card measures a ~1-5% retrieval drop without a
     # query-side instruction. Documents need none. The query path must match the index, so this

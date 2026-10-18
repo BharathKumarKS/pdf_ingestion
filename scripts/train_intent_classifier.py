@@ -7,7 +7,8 @@ Steps
 1. Generate synthetic queries per intent using the configured LLM (Llama 3.2).
 2. Validate each (query, intent) pair using a different-family judge LLM
    (Claude / GPT-4 / any OpenAI-compatible) to avoid same-model confirmation bias.
-3. Embed validated queries with Jina v3 (same model used at runtime).
+3. Embed validated queries with the dense lane (cluster Qwen3-Embedding-0.6B) —
+   the same model that built the index and that embeds queries at runtime.
 4. Train Logistic Regression on the embeddings.
 5. Evaluate on 20% held-out split — per-class F1 + confusion matrix.
 6. Save model to data/models/intent_classifier.pkl.
@@ -327,7 +328,7 @@ def step_train(dataset: list[dict], args, output_dir: Path) -> None:
     import joblib
 
     from src.core.config import get_settings
-    from src.pdf_ingestion.embedder import get_embedder
+    from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
 
     # Filter to validated + judge-approved
     approved = [item for item in dataset if item.get("judge_yes") is True]
@@ -347,7 +348,10 @@ def step_train(dataset: list[dict], args, output_dir: Path) -> None:
         console.print(f"  {intent}: [cyan]{len(queries)}[/] queries")
 
     cfg      = get_settings()
-    embedder = get_embedder(cfg)
+    # The classifier's features must be the vectors the router sees at runtime: the dense
+    # lane's query embedding (cluster Qwen3 + query instruction), not the retired 768d
+    # local Nomic embedder. intent_router validates n_features_in_ against cfg.dense_dim.
+    embedder = get_cluster_embedder(cfg)
 
     texts  = [item["query"]  for item in approved]
     labels = [item["intent"] for item in approved]
@@ -411,6 +415,8 @@ def step_train(dataset: list[dict], args, output_dir: Path) -> None:
     metrics_path.write_text(json.dumps({
         "n_train":        len(X_train),
         "n_test":         len(X_test),
+        "embedding_model": cfg.dense_model,
+        "embedding_dim":   cfg.dense_dim,
         "overall_accuracy": overall_acc,
         "per_intent":     {k: v for k, v in report.items() if k in INTENTS},
         "by_intent_counts": {k: len(v) for k, v in by_intent.items()},

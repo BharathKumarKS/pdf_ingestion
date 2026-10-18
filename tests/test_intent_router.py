@@ -96,14 +96,14 @@ class TestIntentRouterSingleton:
 
 
 class TestIntentRouterWithEmbedder:
-    """Integration tests — uses real Jina embedder, marked slow."""
+    """Integration tests — real cluster dense lane, marked slow."""
 
     @pytest.mark.slow
     def test_factual_query_classified(self):
         from src.core.config import Settings
-        from src.pdf_ingestion.embedder import get_embedder
+        from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
         cfg = Settings(qdrant_in_memory=True)
-        embedder = get_embedder(cfg)
+        embedder = get_cluster_embedder(cfg)
         router = IntentRouter(settings=cfg)
 
         q_vec = embedder.embed_query("What is Newton's second law of motion?")
@@ -114,9 +114,9 @@ class TestIntentRouterWithEmbedder:
     @pytest.mark.slow
     def test_visual_query_classified(self):
         from src.core.config import Settings
-        from src.pdf_ingestion.embedder import get_embedder
+        from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
         cfg = Settings(qdrant_in_memory=True)
-        embedder = get_embedder(cfg)
+        embedder = get_cluster_embedder(cfg)
         router = IntentRouter(settings=cfg)
 
         q_vec = embedder.embed_query("Show me the diagram of the double-slit experiment")
@@ -126,9 +126,9 @@ class TestIntentRouterWithEmbedder:
     @pytest.mark.slow
     def test_overview_query_classified(self):
         from src.core.config import Settings
-        from src.pdf_ingestion.embedder import get_embedder
+        from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
         cfg = Settings(qdrant_in_memory=True)
-        embedder = get_embedder(cfg)
+        embedder = get_cluster_embedder(cfg)
         router = IntentRouter(settings=cfg)
 
         q_vec = embedder.embed_query("Give me an overview of classical mechanics")

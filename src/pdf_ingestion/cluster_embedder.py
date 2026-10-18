@@ -17,6 +17,15 @@ The last one sets ``return_token_embeddings: true``. That flag is what makes lat
 possible against the cluster at all: the default response is a single pooled vector per
 input, and no endpoint exposes a dense model's per-token hidden states otherwise.
 
+**The endpoint returns UNNORMALISED vectors** (measured 2026-10-17, Qwen3-Embedding-0.6B:
+pooled query norm ≈ 70.1, pooled passage ≈ 83.9, per-token ≈ 90–131). So the L2
+normalisation the docstrings promise is done **client-side** here, for the pooled paths
+only — per-token vectors must stay raw, because the mean is taken before normalising
+(``late_chunk_embedder._finish``). Leaving the pooled paths raw is invisible under Qdrant's
+COSINE distance (which normalises internally) and is a landmine for any consumer that does a
+dot product: the index side normalises, the query side did not, so a bare
+``query @ doc`` was off by a factor of ~6,000.
+
 MRL: the cluster **ignores** a ``dimensions`` parameter (verified 2026-10-16: asking
 Qwen3-Embedding-0.6B for 64/256/512 returns 1024 every time), so the low-dimensional view
 is sliced client-side and re-normalised — the same shape as ``NomicEmbedder._truncate``.
@@ -38,6 +47,12 @@ def mrl_slice(vec: np.ndarray, dim: int) -> np.ndarray:
     low = np.asarray(vec, dtype=np.float32)[:dim].copy()
     norm = float(np.linalg.norm(low)) + 1e-9
     return low / norm
+
+
+def l2_normalise(vec: np.ndarray) -> np.ndarray:
+    """Unit-length view of ``vec`` — the endpoint's pooled vectors are not normalised."""
+    arr = np.asarray(vec, dtype=np.float32)
+    return arr / (float(np.linalg.norm(arr)) + 1e-9)
 
 
 # -- Stub (fast unit tests, no network) ----------------------------------------
@@ -164,14 +179,14 @@ class ClusterDenseEmbedder:
     # -- Public API ------------------------------------------------------------
 
     def embed_documents(self, texts: list[str]) -> list[np.ndarray]:
-        """Pooled passage embeddings. Documents carry no instruction (per the model card)."""
+        """Pooled passage embeddings, L2-normalised. Documents carry no instruction."""
         if not texts:
             return []
-        return self._post(texts, token_embeddings=False)
+        return [l2_normalise(v) for v in self._post(texts, token_embeddings=False)]
 
     def embed_query(self, text: str) -> np.ndarray:
-        """Pooled query embedding, with the configured instruction prepended."""
-        return self._post([self._instruction + text], token_embeddings=False)[0]
+        """Pooled query embedding, L2-normalised, with the configured instruction."""
+        return l2_normalise(self._post([self._instruction + text], token_embeddings=False)[0])
 
     def embed_documents_tokens(self, texts: list[str]) -> list[np.ndarray]:
         """Per-token passage embeddings ``(n_tokens, dim)`` — the late-chunking input."""

@@ -381,6 +381,22 @@ Feature flags that change storage schema (require re-ingest when flipped):
     `not is_local`, so it is skipped in laptop file mode.
 21. **A 23-query gold set cannot resolve an effect below ~0.15** (σ_d=0.2315,
     SE≈0.05). Do not run another A/B on it — see `HANDOFF.md` P0-9.
+22. **Two dense embedders are live at once, and they are not interchangeable.** The
+    query path and `knowledge_base` use the cluster dense lane (`dense_model` /
+    `dense_dim`, Qwen3 1024d); `derivative_artifacts`, `concept_embeddings` and
+    `reembed_chunks.py` still use the retired local Nomic 768d (`embedding_model` /
+    `embedding_dim`). `store._dense_vector_name()` resolves the KB slot from the
+    collection, but the *dimension* comes from whichever embedder the caller used —
+    so a query vector from the wrong lane is a loud dimension error, never a silent
+    mis-rank. The UI therefore embeds a second `graph_vec` for the graph lane.
+    Moving the derived collections is plan Step 9 (`IMPROVEMENTS.md` §I12/§I13).
+23. **The cluster embedding endpoint returns UNNORMALISED vectors** (pooled query
+    norm ≈ 70, passage ≈ 84, per-token 90–131). The pooled paths normalise
+    client-side (`cluster_embedder.l2_normalise`); per-token stays raw because the
+    mean is taken before normalising. Qdrant's COSINE distance normalises
+    internally, so retrieval ranking is unaffected either way — but a bare
+    `query @ doc` dot product was off by ~6,000× before this was fixed, and a
+    docstring claiming "L2-normalised" hid it.
 
 ---
 

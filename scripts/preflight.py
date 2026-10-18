@@ -61,7 +61,9 @@ def check_config(cfg) -> dict:
     t.add_column("value")
     t.add_row("Qdrant", qdrant_target)
     t.add_row("Memgraph", f"{cfg.memgraph_host}:{cfg.memgraph_port}")
-    t.add_row("embedding", f"{cfg.embedding_model} ({cfg.embedding_dim}d + {cfg.embedding_dim_low}d MRL)")
+    t.add_row("embedding (query+index)", f"{cfg.dense_model} ({cfg.dense_dim}d + {cfg.dense_dim_low}d MRL)")
+    t.add_row("embedding (derived indexes)",
+              f"{cfg.embedding_model} ({cfg.embedding_dim}d) — DA/concept collections only")
     t.add_row("reranker", f"{cfg.reranker_model}  enabled={cfg.reranker_enabled}")
     t.add_row("colbert", f"enabled={cfg.colbert_enabled}  url={cfg.sv_colbert_url or '(local)'}")
     t.add_row("splade", f"enabled={cfg.splade_enabled}  url={cfg.sv_sparse_url or '(local)'}")
@@ -226,15 +228,18 @@ def check_classifier(cfg) -> None:
         model = joblib.load(path)
         width = getattr(model, "n_features_in_", None)
         ok_type = isinstance(model, LogisticRegression)
-        ok = ok_type and width == cfg.embedding_dim
+        # The router classifies the dense-lane query vector (cfg.dense_dim), so the
+        # classifier's feature width must match THAT — not the legacy 768d embedder.
+        ok = ok_type and width == cfg.dense_dim
         detail = (
             f"loaded {type(model).__name__}, n_features_in_={width} "
-            f"(embedder={cfg.embedding_dim})"
+            f"(dense lane={cfg.dense_dim})"
         )
         if not ok_type:
             detail = f"not a LogisticRegression ({type(model).__name__}) — predictions will be garbage"
-        elif width != cfg.embedding_dim:
-            detail += "  ← MISMATCH: predictions will be invalid"
+        elif width != cfg.dense_dim:
+            detail += ("  ← MISMATCH: predictions will be invalid; re-train with "
+                       "scripts/train_intent_classifier.py --train-only")
         record("intent-classifier", ok, detail)
     except Exception as exc:  # noqa: BLE001
         record("intent-classifier", False, f"failed to load: {type(exc).__name__}: {exc}")

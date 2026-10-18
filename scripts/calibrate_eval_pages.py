@@ -32,12 +32,13 @@ def main():
     args = p.parse_args()
 
     from src.core.config import get_settings
-    from src.pdf_ingestion.embedder import get_embedder
+    from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
     from src.pdf_ingestion.store import DocumentStore
 
     cfg      = get_settings()
     store    = DocumentStore(cfg)
-    embedder = get_embedder(cfg)
+    # Query-side dense lane (cluster Qwen3) — the model that built the index.
+    embedder = get_cluster_embedder(cfg)
 
     queries = json.loads(Path(args.query_file).read_text())
     queries = [q for q in queries if not q.get("id", "").startswith("_")]

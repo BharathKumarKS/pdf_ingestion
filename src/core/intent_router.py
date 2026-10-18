@@ -153,10 +153,11 @@ class IntentRouter:
                     f"expected sklearn LogisticRegression, got {type(clf).__name__}"
                 )
             n_feat = getattr(clf, "n_features_in_", None)
-            if n_feat != self._cfg.embedding_dim:
+            if n_feat != self._cfg.dense_dim:
                 raise ValueError(
-                    f"classifier expects {n_feat} features but the embedder produces "
-                    f"{self._cfg.embedding_dim}; re-train with the current embedder"
+                    f"classifier expects {n_feat} features but the dense lane produces "
+                    f"{self._cfg.dense_dim}; re-train with the current embedder "
+                    f"(uv run python scripts/train_intent_classifier.py --train-only)"
                 )
             self._clf = clf
             logger.info("IntentRouter: loaded trained classifier from {}", model_path)
@@ -170,8 +171,11 @@ class IntentRouter:
     def _ensure_prototypes(self) -> None:
         if self._proto_matrices is not None:
             return
-        from src.pdf_ingestion.embedder import get_embedder
-        embedder = get_embedder(self._cfg)
+        # The prototypes must live in the same space as the incoming query vector, so they
+        # come from the dense lane (cluster Qwen3 + the query instruction) — NOT the retired
+        # local 768d Nomic embedder. A mismatch here is a shape error on the first query.
+        from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
+        embedder = get_cluster_embedder(self._cfg)
         logger.info("IntentRouter: embedding {} prototype sets…", len(_PROTOTYPES))
         matrices: dict[Intent, np.ndarray] = {}
         for intent, phrases in _PROTOTYPES.items():
@@ -201,7 +205,8 @@ class IntentRouter:
             except Exception as exc:
                 logger.warning(
                     "IntentRouter: trained classifier failed ({}), falling back to prototypes. "
-                    "Re-train with 768d embeddings: uv run python scripts/train_intent_classifier.py",
+                    "Re-train against the dense lane: "
+                    "uv run python scripts/train_intent_classifier.py --train-only",
                     exc,
                 )
                 self._clf = None  # don't retry every query

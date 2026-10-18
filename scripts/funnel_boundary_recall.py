@@ -108,14 +108,19 @@ def main() -> int:
     from qdrant_client.models import Fusion, FusionQuery, Prefetch
 
     from src.core.config import get_settings
-    from src.pdf_ingestion.embedder import get_embedder
+    from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
     from src.pdf_ingestion.store import DocumentStore
 
     cfg = get_settings()
     store = DocumentStore(cfg)
-    embedder = get_embedder(cfg)
+    # Query-side dense lane (cluster Qwen3, 1024d + query instruction). The retired local
+    # Nomic 768d embedder is a loud dimension error against a re-ingested collection.
+    embedder = get_cluster_embedder(cfg)
     q = store._qdrant
     coll = cfg.qdrant_collection
+    # The full-dimension dense slot of THIS collection — dense_1024 after the re-ingest,
+    # dense_768 on the deployed one. Resolved, never hard-coded (plan R1).
+    dense_name = store._dense_vector_name()
 
     queries = [x for x in json.loads(Path(args.queries).read_text())
                if x.get("calibrated") and x.get("relevant_pages")]
@@ -147,6 +152,10 @@ def main() -> int:
         hyde_cache = json.loads(Path(args.hyde_cache).read_text())
         logger.info(f"HyDE cache loaded: {len(hyde_cache)} hypotheticals")
 
+    # Boundary key names are HISTORICAL identifiers, kept stable so this funnel's artifacts
+    # stay comparable across the A/B series. The vector each one names is resolved from the
+    # collection, so ``B2_dense768_500`` is the full-dense rung whether that slot is
+    # ``dense_768`` or ``dense_1024`` — the run records ``dense_vector_name`` to say which.
     BOUNDARIES = ["B1_dense64_1000", "B2_dense768_500", "B3_sparse_250",
                   "B4_rrf_union_100", "B5_colbert_100",
                   "B5b_retriever_top20", "B6_rerank_20"]
@@ -184,12 +193,12 @@ def main() -> int:
                 vec = np.asarray(embedder.embed_query(hyp), dtype=np.float32)
                 rerank_query = hyp
 
-        vec_64 = vec[: cfg.embedding_dim_low].copy()
+        vec_64 = vec[: cfg.dense_dim_low].copy()
         vec_64 /= np.linalg.norm(vec_64) + 1e-9
 
         dense_prefetch = Prefetch(
             prefetch=[Prefetch(query=vec_64.tolist(), using="dense_64", limit=1000)],
-            query=vec.tolist(), using="dense_768", limit=500,
+            query=vec.tolist(), using=dense_name, limit=500,
         )
         prefetches = [dense_prefetch]
 
@@ -218,10 +227,10 @@ def main() -> int:
                            with_payload=True).points
         row["pages"]["B1_dense64_1000"] = pages_of(post(r))
 
-        # B2 dense_64 -> dense_768 @500
+        # B2 dense_64 -> full dense @500
         dense_b2_points = q.query_points(
             collection_name=coll, prefetch=[dense_prefetch],
-            query=vec.tolist(), using="dense_768", query_filter=filt,
+            query=vec.tolist(), using=dense_name, query_filter=filt,
             limit=500, with_payload=True).points
         row["pages"]["B2_dense768_500"] = pages_of(post(dense_b2_points))
 
@@ -362,7 +371,13 @@ def main() -> int:
              "config": {"hyde": bool(args.hyde), "no_reranker": bool(args.no_reranker),
                         "no_colbert": bool(args.no_colbert),
                         "hyde_cache": args.hyde_cache,
-                        "top_k": TOP_K, "n_queries": len(per_query)},
+                        "top_k": TOP_K, "n_queries": len(per_query),
+                        # Self-describing: which dense slot the ``B2_dense768_500`` rung
+                        # actually used, and the query model that produced the vectors.
+                        "dense_vector_name": dense_name,
+                        "collection": coll,
+                        "embedding_model": cfg.dense_model,
+                        "embedding_dim": cfg.dense_dim},
              "per_query": [{k: (list(v) if isinstance(v, set) else v)
                             for k, v in row.items()} for row in per_query]},
             indent=2, default=str))

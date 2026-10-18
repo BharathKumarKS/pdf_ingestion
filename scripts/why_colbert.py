@@ -36,13 +36,17 @@ def main() -> int:
 
     from qdrant_client.models import Fusion, FusionQuery, Prefetch
     from src.core.config import get_settings
-    from src.pdf_ingestion.embedder import get_embedder
+    from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
     from src.pdf_ingestion.store import DocumentStore
 
     cfg = get_settings()
     store = DocumentStore(cfg)
     q, coll = store._qdrant, cfg.qdrant_collection
-    embedder = get_embedder(cfg)
+    # Query-side dense lane (cluster Qwen3, 1024d + query instruction).
+    embedder = get_cluster_embedder(cfg)
+    # The collection's own full-dimension dense slot — dense_1024 after the re-ingest,
+    # dense_768 on the deployed one. Never hard-coded (plan R1).
+    dense_name = store._dense_vector_name()
     random.seed(0)
 
     queries = [x for x in json.loads(Path(args.queries).read_text())
@@ -58,10 +62,10 @@ def main() -> int:
     for item in queries:
         rel = set(item["relevant_pages"])
         vec = np.asarray(embedder.embed_query(item["query"]), dtype=np.float32)
-        v64 = vec[: cfg.embedding_dim_low].copy(); v64 /= np.linalg.norm(v64) + 1e-9
+        v64 = vec[: cfg.dense_dim_low].copy(); v64 /= np.linalg.norm(v64) + 1e-9
 
         dp = Prefetch(prefetch=[Prefetch(query=v64.tolist(), using="dense_64", limit=1000)],
-                      query=vec.tolist(), using="dense_768", limit=500)
+                      query=vec.tolist(), using=dense_name, limit=500)
         pre = [dp]
         from src.pdf_ingestion.splade_embedder import get_splade_embedder
         sv = get_splade_embedder(cfg).encode_sparse(item["query"])
@@ -85,7 +89,7 @@ def main() -> int:
                              using="colbert", query_filter=filt, limit=100,
                              with_payload=True).points
         dns = q.query_points(collection_name=coll, prefetch=[dp], query=vec.tolist(),
-                             using="dense_768", query_filter=filt, limit=100,
+                             using=dense_name, query_filter=filt, limit=100,
                              with_payload=True).points
 
         rand = []

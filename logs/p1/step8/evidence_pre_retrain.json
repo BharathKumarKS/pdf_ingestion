@@ -1,0 +1,22 @@
+{
+  "query_vector_dim": 1024,
+  "query_vector_norm": 1.0,
+  "dense_dim": 1024,
+  "cos_query_vs_passage": 0.843624,
+  "instruction": "Instruct: Given a physics question, retrieve textbook passages that answer it\nQuery: ",
+  "mrl_slice_max_delta": 0.0,
+  "mrl_slice_dim": 64,
+  "classifier_path": "data/models/intent_classifier.pkl",
+  "classifier_exists": true,
+  "classifier_n_features_in": 768,
+  "router_accepted_classifier": false,
+  "prototype_intent": "factual",
+  "prototype_count": 35,
+  "prototype_dim": 1024,
+  "resolved_dense_vector_name": "dense_1024",
+  "collection_vector_names": [
+    "colbert",
+    "dense_1024",
+    "dense_64"
+  ]
+}

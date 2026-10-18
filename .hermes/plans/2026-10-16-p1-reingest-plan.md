@@ -2,9 +2,9 @@
 
 **Status:** planned 2026-10-16. **Steps 0–7 done** (P1-a config + `cluster_embedder`; E1 semantic
 chunking; E2 parents; E3 late chunking; E5 `is_content`; §D4 page numbering; the schema + write
-path). **Next: Step 8 (the run)** — but the query side must be switched to the dense lane first
-(`IMPROVEMENTS.md` §E6), or the funnel cannot read the new collection. Supersedes the "Next: the
-re-ingest" line in `HANDOFF.md`.
+path) **plus Step 7b, the query-side dense-lane switch (§E6), done 2026-10-17** — the funnel and
+the §D13 ablation can now read a rebuilt collection. **Next: Step 8 (the run).** Supersedes the
+"Next: the re-ingest" line in `HANDOFF.md`.
 **Scope owner decisions taken 2026-10-16** (all four settled — see §2).
 
 > Read `ARCHITECTURE.md` §8 (invariants/traps) and `IMPROVEMENTS.md` §E before the first change.
@@ -246,6 +246,31 @@ Each step ends with: unit tests green (stubs, offline) → a small live probe �
      summaries share the collection's slot (without it, 14 tests fail); `save_raptor_tree` and
      `reembed_chunks.py` are named in §E6 as the remaining 768d writers.
 - **Deviation:** `process_all_documents` was not written (no caller in a single-textbook repo).
+
+### Step 7b — the query-side dense-lane switch ✅ DONE 2026-10-17
+
+Closes item 1 above; the prerequisite for Step 8's measurement. No re-ingest needed.
+- Every §E6 call site moved to the cluster dense lane (`get_cluster_embedder` /
+  `get_query_vector` — the same `embed_query` signature, so a drop-in). The three scripts that
+  query Qdrant directly (`funnel_boundary_recall`, `why_colbert`, `calibrate_eval_pages`) also
+  had their hard-coded `using="dense_768"` replaced by the collection-resolved name — a second,
+  independent reason the funnel could not read v2.
+- **R-a discharged:** the router's schema check now compares `n_features_in_` against
+  `dense_dim`, prototypes come from the dense lane, and the classifier was **retrained at 1024d**
+  (`--train-only`, 1,158 queries, 96.6 % held-out accuracy). The retired 768d model is kept at
+  `data/models/intent_classifier_768d.pkl.bak`.
+- **Deliberately partial:** the concept-graph lane keeps the retired 768d embedder because
+  `concept_embeddings` is still 768d — registered as §I12, released by Step 9. `reembed_chunks.py`
+  and `validate_embedders.py` likewise — §I13.
+- **Found and fixed on the way:** the endpoint returns **unnormalised** pooled vectors; the index
+  side normalised, the query side (and `embed_documents`, hence RAPTOR summaries) did not. No
+  retrieval number moved (Qdrant normalises for COSINE), but any dot-product consumer was off by
+  ~6,000×. Pooled paths now normalise client-side.
+- **Evidence:** `logs/p1/step8/` (probe + `evidence.json` + `evidence_pre_retrain.json`, suite log).
+  Register: `IMPROVEMENTS.md` §E6 "SWITCHED 2026-10-17".
+- **Consequence to remember at Step 10:** the query path can no longer address the old
+  `dense_768` collection, so R1's old-vs-new comparison rests on the recorded artifacts
+  (`logs/p0-9/v2_*.json`) rather than on re-querying the deployed index.
 
 ### Step 8 — the run (background job)
 - `scripts/ingest_base_textbook.py --pdf …feynman… --collection-name knowledge_base_v2`

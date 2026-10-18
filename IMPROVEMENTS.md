@@ -1175,6 +1175,62 @@ deployed index is unaffected, so nothing is silently wrong today — but **Step 
 measure until this is switched**. No re-ingest is needed to fix it: it is a code change plus
 one retrain run against the cluster. Registered as the next action in `HANDOFF.md`.
 
+**SWITCHED 2026-10-17 — the query side is on the dense lane.** Every call site in the table
+above now embeds with the cluster dense lane (Qwen3, 1024d, query instruction), so the funnel
+and the §D13 ablation can read a rebuilt collection. No re-ingest was needed for this.
+
+| site | how it was switched |
+|---|---|
+| `src/frontend/streamlit_app.py` (query, HyDE) | `get_cluster_embedder(cfg)` — `embed_query` has the same signature, so it is a drop-in |
+| `src/main.py` `/search` | `get_query_vector(req.query, settings)` — the single-accessor form |
+| `scripts/evaluate_rag.py` | `get_cluster_embedder`; the config snapshot now reports `dense_model`/`dense_dim` |
+| `scripts/funnel_boundary_recall.py`, `why_colbert.py`, `calibrate_eval_pages.py` | dense lane **and** the hard-coded `using="dense_768"` replaced by the collection-resolved name (`store._dense_vector_name()`), which was a second, independent reason the funnel could not read v2 |
+| `src/core/intent_router.py` | prototypes embedded via the dense lane; the schema check now compares `n_features_in_` against `dense_dim` |
+| `scripts/train_intent_classifier.py` | features from the dense lane; the report records `embedding_model`/`embedding_dim` |
+| `scripts/preflight.py` | the classifier-width check compares against `dense_dim` |
+
+**The intent classifier was retrained at 1024d** (plan R-a) — 1,158 validated queries (250
+factual / 250 overview / 250 multihop / 408 visual), LogisticRegression, **96.6 % accuracy**
+on the 232-item held-out split (macro F1 0.96; the confusion is overview↔multihop, 4+2 of 232).
+The retired 768d model is preserved at `data/models/intent_classifier_768d.pkl.bak` (it is also
+still in git, `data/models/intent_classifier.pkl` being tracked). Until a retrain, the router
+now **rejects** the stale classifier loudly and falls back to 1024d prototypes — both states
+are captured in the evidence.
+
+**Evidence** (`logs/p1/step8/`): `probe_query_lane.py` run live against the cluster →
+`evidence_pre_retrain.json` and `evidence.json`. Measured: query vector 1024d and unit-norm;
+the query instruction IS applied (cosine against the same text embedded as a *passage* = 0.8436
+— near 1.0 would mean the instruction never reached the model); the 64d MRL view matches the
+inline `store` slice to 0.0; the 768d classifier is rejected pre-retrain and the 1024d one loads
+and routes factual/overview/visual correctly post-retrain; the dense vector name resolves to
+`dense_1024`. Suite: **361 pass / 4 pre-existing fail / 6 skip** (the 4 confirmed pre-existing
+on a clean HEAD worktree — 2 `test_splade.py` fixtures + 2 zero-result searches).
+
+**Finding while probing — the embedding endpoint returns UNNORMALISED vectors.** Measured:
+pooled query norm ≈ 70.1, pooled passage ≈ 83.9, per-token ≈ 90–131. The **index** side always
+normalised (`late_chunk_embedder._finish`); the **query** side did not, and neither did
+`embed_documents` (which is what `raptor_tree._embed` uses for summary vectors). Invisible under
+Qdrant's COSINE distance — it normalises internally, so no retrieval number moved — but any
+dot-product consumer was off by a factor of ~6,000, and the class docstring claimed
+"L2-normalised" the whole time. Fixed: the pooled paths normalise client-side (`l2_normalise`),
+per-token stays raw (the mean is taken before normalising), pinned by
+`test_cluster_embedder.py::test_pooled_paths_normalise_an_unnormalised_endpoint` and
+`::test_per_token_path_stays_raw`.
+
+**Consequence for R1's old-vs-new comparison.** One query path cannot address two different
+vector dimensions, so the deployed `knowledge_base` (`dense_768`) is no longer *queryable by the
+app* — the comparison now rests on the recorded artifacts (`logs/p0-9/v2_*.json`), not on
+re-querying the old index. Nothing is deleted; pointing `QDRANT_COLLECTION` back at
+`knowledge_base` is still a valid rollback, but it needs the query lane pointed back too
+(`EMBEDDING_DIM`/`get_embedder`), which is now a deliberate two-part switch.
+
+**Deliberately NOT switched — the concept-graph lane.** `graph_search` ranks **concept** nodes
+in `concept_embeddings`, which is still built by the retired 768d embedder, so the UI passes it a
+**separate** `graph_vec` (and the admin Graph Search tab still embeds with `get_embedder`).
+Passing the dense lane's `q_vec` there would be a dimension error. This is a hold-back, not an
+oversight — registered as **§I12**, released by Phase 3's re-index (plan Step 9). Two scripts that
+also still write/validate the retired model are registered as **§I13**.
+
 **Deviation from the plan's module map:** `ChunkingPipeline.process_all_documents` was **not**
 written. It has no caller in a single-textbook repo, and an untested second entry point is
 dead code from the day it lands. `process_pdf` is the whole API.
@@ -1396,6 +1452,53 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   concludes the lane is broken.
 - **Fixed:** the three URLs now point at `:8123`, with the two-service split written down beside them.
 - **Cost:** none. No re-ingest.
+
+### I12. NEW 2026-10-17 (found switching the query side, §E6) — `concept_embeddings` is still a 768d collection, so the graph lane is on its own lane
+
+- **What:** the query side moved to the cluster dense lane (Qwen3, 1024d), but
+  `concept_embeddings` — the collection the concept-graph lane ranks against
+  (`graph_builder._find_concepts_scored`) — is **still built by the retired local Nomic 768d
+  embedder** (`graph_builder.py:266`, `get_embedder(cfg).embed_query(name)`). The two spaces
+  cannot be mixed: a 1024d query against a 768d collection is a dimension error.
+- **Consequence:** the UI now embeds a **second** vector for that lane
+  (`streamlit_app.py`: `graph_vec = get_embedder(cfg).embed_query(query)`) and the admin Graph
+  Search tab still uses the retired embedder. So the switch is *complete for the KB lanes and
+  deliberately partial for the graph lane* — not an oversight, and no silent degradation:
+  the lane keeps working exactly as it did before.
+- **Why it matters beyond the UI:** `store.py` creates `concept_embeddings` (and
+  `derivative_artifacts`) at `cfg.embedding_dim` (768) in `_ensure_concept_collection` /
+  `_ensure_da_collection`. On a fresh machine those collections are *created* 768d, so the
+  split is not just legacy data — it is the current default. Any future "point the query side at
+  the dense lane everywhere" change must move these three collections in the same pass.
+- **Fix:** Phase 3's re-index (plan Step 9) rebuilds `concept_embeddings` with the dense lane and
+  re-embeds concept names; `_ensure_*_collection` switches to `dense_dim`; the second `graph_vec`
+  in the UI is deleted. **Also unblocks §G3 (entity resolution)**, which wants a re-write of the
+  concept nodes anyway.
+- **Cost:** needs a Phase-3 re-index (embedding calls for every concept name) — no re-ingest of
+  the text corpus.
+- **Not blocking Step 10.** The funnel and the reranker ablation live entirely in the text lane.
+
+### I13. NEW 2026-10-17 (found switching the query side, §E6) — two scripts still write/validate the retired 768d model
+
+- **What:** after the switch, `get_embedder` (the retired local Nomic embedder) is still called by:
+  - `scripts/reembed_chunks.py:54` — **writes 768d vectors into the KB collection.** It was
+    already stale for the 4-vector schema (it writes a bare `{"dense": [...]}`), and it now also
+    targets the wrong dimension, so running it against a rebuilt collection fails loudly on the
+    dimension rather than silently corrupting — which is the better of the two failure modes, but
+    it is not a working recovery path for the new index.
+  - `scripts/validate_embedders.py:115` — a diagnostic that checks query/passage discrimination of
+    the **local** embedder (it normalises both sides itself, so its own numbers stay valid). It now
+    validates a model the query path no longer uses, which reads as a green light for the wrong lane.
+- **Why it matters:** `reembed_chunks.py` is the documented recovery path when Qdrant is empty but
+  SQLite has chunks (its own docstring). After Step 8 that path is broken, and the failure is only
+  discovered at recovery time — the worst moment.
+- **Fix:** `reembed_chunks.py` moves to the dense lane and writes the full 4-vector payload
+  (`dense_64` + the collection's dense slot, + colbert/sparse where enabled) — i.e. it should
+  reuse `store.save_document`'s payload builder instead of re-declaring it. `validate_embedders.py`
+  should validate the dense lane (and keep the legacy check only as an explicit
+  `--legacy-embedder` mode).
+- **Cost:** small — two scripts, no re-ingest. Not on the critical path; do it before anyone needs
+  a recovery.
 
 ---
 

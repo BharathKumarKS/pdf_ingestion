@@ -4,7 +4,8 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-17** · `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold set)
+> **Last updated: 2026-10-17 (later same day: P1 Step 7b — the query-side dense-lane switch)** ·
+> `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold set)
 > is MEASURED.** Sessions 1–3c, 3d, 3d-ii and **Session 4/4b (all four steps) are done.** The v2 A/B:
 > **rerank vs no-rerank R@20 Δ −0.0101, 95% CI [−0.0299, +0.0097] → UNRESOLVED at n=133** (the
 > pre-registered rule is not met and cannot be met at a feasible n — §D9). **Step 4 ran 2026-10-16
@@ -22,8 +23,7 @@
 > re-ran post-fix on the same 133 queries: **Δ −0.0101, CI [−0.0299, +0.0097] → still UNRESOLVED**.
 > §B4f, §D11, §I10 resolved. Artifacts: `p0-9-gold-v2_2026-10-17_0422.md` (step 4),
 > `p0-9-gold-v2-visual_2026-10-17_0410.md` (visual); outcome: pre-registration → "Step 4 outcome".
-> **Next: the query-side dense-lane switch (§E6) → Step 8 (the run) → the reranker ablation;
-> Session 5 (human verification) runs now.**
+> **Next: Step 8 (the run) → the reranker ablation; Session 5 (human verification) runs now.**
 > **P1 re-ingest STARTED 2026-10-16** — plan: `.hermes/plans/2026-10-16-p1-reingest-plan.md`
 > (10 steps, decisions closed). Done: Step 0 (config), Step 1 (`cluster_embedder.py`, 11 tests),
 > **Step 2 (`parent_chunker.py` + `models.py`; 9 tests + 1 slow)** — `test_book.pdf` → **42** parents,
@@ -77,13 +77,24 @@
 > with the **real** cluster lane + **real** Qwen3 tokenizer: 42 parents → 66 children, exactly 3
 > named vectors present, Qdrant points == SQLite chunks == children (66),
 > `dense_64 == mrl_slice(dense_1024, 64)` to 1e-5. ruff: 51 findings before, 51 after.
-> **⛔ THE QUERY SIDE IS NOT SWITCHED** — the UI, `main.py`, `evaluate_rag`,
-> `funnel_boundary_recall`, `calibrate_eval_pages`, `why_colbert` and the intent router still
-> embed with the retired local Nomic 768d model. Against `knowledge_base_v2` that is a loud
-> dimension error (the deployed index is unaffected, so nothing is silently wrong today), but
-> **the funnel/ablation cannot measure until it is switched**, and the router needs its retrain
-> (R-a). Full detail + the call-site table: `IMPROVEMENTS.md` §E6.
-> **Next: (a) the query-side dense-lane switch + intent retrain, then (b) Step 8 (the run).**
+> **✅ THE QUERY SIDE IS SWITCHED (Step 7b, 2026-10-17)** — the UI, `main.py`, `evaluate_rag`,
+> `funnel_boundary_recall`, `calibrate_eval_pages`, `why_colbert` and the intent router now all
+> embed with the cluster dense lane (Qwen3, 1024d + query instruction), so the funnel and the
+> §D13 ablation can read a rebuilt collection. The three scripts that query Qdrant directly also
+> lost their hard-coded `using="dense_768"` (now resolved from the collection) — a second,
+> independent reason the funnel could not read v2. **R-a discharged:** the router's schema check
+> compares against `dense_dim`, its prototypes come from the dense lane, and the classifier was
+> **retrained at 1024d** (`--train-only`, 1,158 queries, **96.6 %** held-out accuracy; the 768d
+> model is kept at `data/models/intent_classifier_768d.pkl.bak`). **Deliberately partial:** the
+> concept-graph lane still embeds with the retired 768d model because `concept_embeddings` is
+> still 768d (the UI passes it a second, `graph_vec`) — **§I12**, released by Step 9; likewise
+> `reembed_chunks.py` / `validate_embedders.py` — **§I13**. **Found and fixed on the way:** the
+> endpoint returns **unnormalised** pooled vectors and only the index side normalised, so any
+> dot-product consumer was off by ~6,000× (no retrieval number moved — Qdrant normalises for
+> COSINE). Evidence `logs/p1/step8/`; register `IMPROVEMENTS.md` §E6 "SWITCHED 2026-10-17".
+> **Next: Step 8 (the run)** — `scripts/ingest_base_textbook.py --collection-name
+> knowledge_base_v2` against the cluster, as a background job. Full detail + the call-site table:
+> `IMPROVEMENTS.md` §E6.
 >
 > **Steps 2–3 went through independent review 2026-10-17** (verifier = `openai/gpt-oss-20b`, a
 > different model from the author's). It found one genuine defect — a parent with no provenance
@@ -438,11 +449,14 @@ unresolvable numbers, not more knowledge.
 | 8 | judge lane measured — **1040 judge calls, 0 failures** | `dce5efd`, `data/eval_results/p0-judge-canonical_2026-10-06_0010.md` |
 | 9 | **gold-set rebuild** | Sessions 1–3c done — `ca3324e`, `52d2179` (measure) + `5cbf564`, `4f112b0`, `fffc3b3`, `c9d8d0c`, `668cd0f` (tools) + `1870dc9`, `8e81572` (scan) + 3b (negatives pruned, index gate) + 3c (`871a5a4` tools, `a6971f3` 40 overview questions, then the book-wide scan) + **3d code (`4697961`)** + **3d-ii (`3a18da4`, `18250f1` — 33 usable visual labels, §B4d)** + **Session 4 (`e69c347`, `f109379`)** + **Session 4b (`769e60d` harness fixes; §D4 reframed; funnel re-run) + step 4 (2026-10-16)** — v2 = 200 (166 answerable + 34 negatives); **abstention 17/34 = 0.500 (met), Faith 0.661, visual lane 33 q R@20 0.960** (`p0-9-gold-v2_2026-10-17_0422.md`). **✅ P0-9 is MEASURED — both halves of the pre-registered decision now have numbers (reranker unresolved; abstention met).** Reranker decision deferred to a post-re-ingest ablation (§D13). on `feat/p0-9-gold-dataset-v2` |
 
-Test suite: **341 pass / 5 fail** (`uv run pytest tests/ -q -m "not slow"`, re-measured 2026-10-17 —
-327/5 before the P1 Step 5 tests, +14 from `tests/test_content_filter.py` (13) and the new
-`test_backmatter_gate.py::test_search_filters_on_is_content`). The 5 are
-**pre-existing** — `tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`,
-and 3 search tests return 0 results. **Not regressions; do not "fix" them here.**
+Test suite: **361 pass / 4 fail / 6 skip** (`uv run pytest tests/ -q -m "not slow"`, re-measured
+2026-10-17 after Step 7b — 356/4 before it, +3 `test_config_invariants.py` dense-lane tests and
++2 `test_cluster_embedder.py` normalisation tests). The 4 are **pre-existing** and were
+**re-confirmed on a clean `HEAD` worktree** (so they are not regressions from the query switch):
+`tests/test_splade.py` (×2) hardcode a missing `tests/data/sample_physics.pdf`, and
+`test_phase1.py::TestStore::test_hybrid_search_includes_global` +
+`test_phase2.py::TestPhase1Regression::test_search_still_works_after_phase2` return 0 results.
+The 6 skips are the live-E2E tests (they need `SV_EMBED_URL`). **Do not "fix" the 4 here.**
 
 ---
 
@@ -478,6 +492,9 @@ halves of the pre-registered decision now have numbers (reranker unresolved; abs
     per-PDF-page numbering. It removes the ±1 label fuzz (§D4) and the chunk-boundary noise that
     currently swamp the reranker effect; **the reranker ablation (§D13) and every metric below
     re-measure on the rebuilt index.** Honour the `clean_stale_*` ordering (§B4b, §E5).
+    **Steps 0–7b done (2026-10-17)** — code, schema, write path *and* the query-side dense-lane
+    switch. **What remains is Step 8 (the run)** and Step 9 (Phase 2/3 re-index, which also
+    releases §I12/§I13).
 10. **Ranking** — overview MRR is the one genuinely bad number (report it ceiling-normalised, §D9,
     not the raw 0.14). Cheapest first: config (MMR λ / RRF) → the cross-encoder → hard-negative
     fine-tuning. **The index-page hypothesis is REFUTED (§B4g)** — nothing gates item 10 on a
@@ -516,10 +533,12 @@ gates), with cost classes and re-ingest ordering: [`IMPROVEMENTS.md`](IMPROVEMEN
 | Feynman Vol 1 PDF | **968 pages** (`mdls kMDItemNumberOfPages`) — README now correct; `Docs/synapse_full_report.pdf` still says 940 |
 | Cluster `knowledge_base` | 5,135 points (5,051 chunks + 84 RAPTOR nodes), doc `6d55c52b` |
 | SQLite `chunks` | 5,048 — the 5,135−5,048 gap is **unexplained; re-measure, don't trust** |
-| Dense embedder | **Nomic 768d + 64d MRL** (`embedding_model` in `config.py`) |
+| Dense lane (query + `knowledge_base`) | **Qwen3-Embedding-0.6B, 1024d + 64d MRL** (`dense_model`/`dense_dim` in `config.py`), cluster `:8123`. The endpoint returns **unnormalised** vectors (norm ≈ 70–131) — normalised client-side for the pooled paths only. The query instruction IS applied (cos vs the same text as a passage = 0.8436) |
+| Legacy dense embedder | **Nomic 768d + 64d MRL** (`embedding_model`) — **retired from the query path and from `knowledge_base`** (2026-10-17, §E6). Still builds `derivative_artifacts` + `concept_embeddings` and `reembed_chunks.py` until Step 9 (§I12/§I13) |
+| Intent classifier | **Retrained at 1024d 2026-10-17** (`--train-only`, 1,158 queries, **96.6 %** held-out acc, macro F1 0.96). The router's schema check compares `n_features_in_` against `dense_dim`; a stale 768d model is rejected loudly → prototype fallback. 768d model kept at `data/models/intent_classifier_768d.pkl.bak` |
 | Reranker | `BAAI/bge-reranker-v2-m3` |
 | Chunker | `chonkie.SentenceChunker` (class named `SemanticChunker`) |
-| Intent classifier | 768d `LogisticRegression`, pinned `scikit-learn~=1.9`, schema-checked at load |
+| Intent classifier (versions) | `LogisticRegression` on `dense_dim` features, pinned `scikit-learn~=1.9`, schema-checked at load |
 | Card types | **8** in `CardType` (single source for `DA_CARD_TYPES`) |
 | Eval queries (v1) | 30 = 23 calibrated non-visual + 7 uncalibrated `visual` — **superseded by v2; do not use** |
 | Baseline (v1, 23 q) | Recall@20 **0.636** · Hit@20 1.000 · MRR 0.361 · NDCG@20 0.432 (`p0-judge-canonical_2026-10-06_0010.md`) — **not comparable to v2** (§D9) |
