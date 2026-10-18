@@ -220,6 +220,151 @@ def test_missing_url_is_loud():
         ClusterDenseEmbedder(settings=_settings(sv_embed_url=""))
 
 
+# ── Retry policy (plan Step 8 fix, §I16) ───────────────────────────────────
+
+def _flaky_handler(fail_times: int, exc_factory, calls: list):
+    """Handler that raises ``fail_times`` transient errors, then returns a valid response."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        if len(calls) <= fail_times:
+            raise exc_factory(request)
+        import json
+
+        body = json.loads(request.content.decode())
+        data = [
+            {"index": i, "embedding": _unit(np.random.default_rng(i), (1024,)).tolist()}
+            for i in range(len(body["input"]))
+        ]
+        return httpx.Response(200, json={"data": data})
+
+    return handler
+
+
+@pytest.fixture()
+def no_sleep(monkeypatch):
+    """Record backoff delays instead of sleeping them — the test must not wait ~14 s."""
+    delays: list[float] = []
+    monkeypatch.setattr(
+        "src.pdf_ingestion.cluster_embedder.time.sleep", lambda s: delays.append(s)
+    )
+    return delays
+
+
+def test_transient_timeout_is_retried_and_succeeds(no_sleep):
+    """The exact failure that killed the Step 8 run: a read timeout must not be fatal."""
+    calls: list = []
+    handler = _flaky_handler(2, lambda req: httpx.ReadTimeout("timed out", request=req), calls)
+    emb = ClusterDenseEmbedder(
+        settings=_settings(), client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
+
+    out = emb.embed_documents(["one", "two"])
+
+    assert len(out) == 2 and out[0].shape == (1024,)
+    assert len(calls) == 3, "two failures then a success = 3 attempts"
+    assert len(no_sleep) == 2, "one backoff per retry, none after the success"
+
+
+def test_backoff_grows_and_is_jittered(no_sleep):
+    calls: list = []
+    handler = _flaky_handler(3, lambda req: httpx.ReadTimeout("t", request=req), calls)
+    emb = ClusterDenseEmbedder(
+        settings=_settings(), client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
+
+    emb.embed_documents(["one"])
+
+    assert len(no_sleep) == 3
+    # attempt 1 -> 2 s, 2 -> 4 s, 3 -> 8 s, each scaled by jitter in [0.5, 1.5)
+    assert 1.0 <= no_sleep[0] < 3.0
+    assert 2.0 <= no_sleep[1] < 6.0
+    assert 4.0 <= no_sleep[2] < 12.0
+    assert no_sleep[0] < no_sleep[1] < no_sleep[2], "backoff must grow"
+
+
+def test_retryable_status_5xx_is_retried(no_sleep):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if len(calls) < 2:
+            calls.append(request)
+            return httpx.Response(503, text="backend busy")
+        calls.append(request)
+        return httpx.Response(200, json={"data": [{"index": 0, "embedding": [0.1] * 1024}]})
+
+    calls: list = []
+    emb = ClusterDenseEmbedder(
+        settings=_settings(), client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
+    out = emb.embed_documents(["one"])
+    assert len(calls) == 3, "two 503s then a success = 3 attempts"
+    assert out[0].shape == (1024,)
+    assert len(no_sleep) == 2
+
+
+def test_non_retryable_4xx_fails_immediately(no_sleep):
+    """A wrong request will fail identically every time — retrying only delays the error."""
+    calls: list = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(400, text="bad model")
+
+    emb = ClusterDenseEmbedder(
+        settings=_settings(), client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
+    with pytest.raises(httpx.HTTPStatusError):
+        emb.embed_documents(["one"])
+
+    assert len(calls) == 1, "4xx must not be retried"
+    assert no_sleep == [], "and must not sleep"
+
+
+def test_retries_are_bounded_and_the_last_error_surfaces(no_sleep):
+    calls: list = []
+    handler = _flaky_handler(99, lambda req: httpx.ReadTimeout("always", request=req), calls)
+    emb = ClusterDenseEmbedder(
+        settings=_settings(), client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
+
+    with pytest.raises(httpx.ReadTimeout):
+        emb.embed_documents(["one"])
+
+    assert len(calls) == 4, "1 initial attempt + 3 retries, then give up loudly"
+
+
+def test_timeouts_are_sized_per_path():
+    """Per-token responses are ~160x the pooled payload, so they get the longer read budget."""
+    seen: dict[str, float] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        key = "token" if _is_token_request(request) else "pooled"
+        seen[key] = request.extensions["timeout"]["read"]
+        import json
+
+        body = json.loads(request.content.decode())
+        if key == "token":
+            data = [{"index": 0, "embedding": [[[0.1] * 1024] * 3]}]
+        else:
+            data = [{"index": i, "embedding": [0.1] * 1024} for i in range(len(body["input"]))]
+        return httpx.Response(200, json={"data": data})
+
+    emb = ClusterDenseEmbedder(
+        settings=_settings(), client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
+    emb.embed_documents(["one"])
+    emb.embed_documents_tokens(["one"])
+
+    assert seen["pooled"] == 120.0
+    assert seen["token"] == 300.0
+    assert seen["token"] > seen["pooled"]
+
+
+def _is_token_request(request: httpx.Request) -> bool:
+    import json
+
+    return json.loads(request.content.decode()).get("return_token_embeddings") is True
+
+
 # ── Factory ────────────────────────────────────────────────────────────────
 
 def test_factory_returns_stub_under_stub_flag():

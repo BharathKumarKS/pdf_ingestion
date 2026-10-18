@@ -220,7 +220,19 @@ class LateChunkEmbedder:
     def embed_children(
         self, parents: list[ParentChunk], children: list[TextChunk]
     ) -> list[EnrichedChunk]:
-        """Enrich a whole document's children, grouped by parent, in document order."""
+        """Enrich a whole document's children, grouped by parent, in document order.
+
+        Parents are embedded **concurrently** (``late_chunk_workers``). This is the ingest's
+        dominant cost — one per-token POST per parent, each carrying ~5 s of fixed overhead
+        on top of the transfer — so it is ~100% time spent waiting on the cluster. That makes
+        **threads** the right tool: the GIL is released for the duration of each request, so
+        the workers overlap the waiting rather than the arithmetic. Processes would only add
+        pickling of large float matrices for no gain.
+
+        Results are reassembled in **parent order**, so the document order the store and the
+        tests rely on is identical to the serial path — concurrency changes the wall clock,
+        not the output.
+        """
         by_parent: dict[int, list[TextChunk]] = {}
         for child in children:
             by_parent.setdefault(child.parent_id, []).append(child)
@@ -230,11 +242,50 @@ class LateChunkEmbedder:
         if orphans:
             raise ValueError(f"Children reference parents that do not exist: {orphans}")
 
-        out: list[EnrichedChunk] = []
-        for parent in parents:
-            out.extend(self.embed_parent(parent, by_parent.get(parent.parent_id, [])))
+        workers = max(1, int(getattr(self._cfg, "late_chunk_workers", 1) or 1))
+        if workers == 1 or len(parents) <= 1:
+            out: list[EnrichedChunk] = []
+            for parent in parents:
+                out.extend(self.embed_parent(parent, by_parent.get(parent.parent_id, [])))
+        else:
+            out = self._embed_parents_concurrently(parents, by_parent, workers)
+
         logger.success("Enriched {} children from {} parents", len(out), len(parents))
         return out
+
+    def _embed_parents_concurrently(
+        self,
+        parents: list[ParentChunk],
+        by_parent: dict[int, list[TextChunk]],
+        workers: int,
+    ) -> list[EnrichedChunk]:
+        """``embed_parent`` over a thread pool, flattened back into parent order.
+
+        Keyed by position, not by ``parent_id``, so a repeated id cannot collapse two parents
+        into one slot. ``future.result()`` re-raises, so a parent that fails after its retries
+        abort the ingest loudly instead of silently shrinking the document.
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        # Resolve the tokenizer BEFORE the pool starts. `_get_tokenizer` lazy-loads with a bare
+        # `if self._tokenizer is None`, which is not atomic: without this, the first N workers
+        # can all pass the check and each build the model concurrently — wasteful, and it
+        # contends on the HuggingFace cache lock. (Encoding is safe from several threads; the
+        # unsynchronised *load* is the hazard, so warming it here is the whole fix.) It is also
+        # the slowest part of the first parent, so doing it once up front is strictly better.
+        self._get_tokenizer()
+
+        logger.info("Late-chunking {} parents with {} workers", len(parents), workers)
+        results: dict[int, list[EnrichedChunk]] = {}
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {
+                pool.submit(self.embed_parent, parent, by_parent.get(parent.parent_id, [])): idx
+                for idx, parent in enumerate(parents)
+            }
+            for fut in as_completed(futures):
+                results[futures[fut]] = fut.result()
+
+        return [ec for idx in range(len(parents)) for ec in results[idx]]
 
     def embed_query(self, text: str) -> np.ndarray:
         """Query vector from the same model.

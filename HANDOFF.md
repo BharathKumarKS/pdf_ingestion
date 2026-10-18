@@ -94,32 +94,40 @@
 > endpoint returns **unnormalised** pooled vectors and only the index side normalised, so any
 > dot-product consumer was off by ~6,000× (no retrieval number moved — Qdrant normalises for
 > COSINE). Evidence `logs/p1/step8/`; register `IMPROVEMENTS.md` §E6 "SWITCHED 2026-10-17".
-> **⛔ Step 8 (the run) — ATTEMPT 1 FAILED 2026-10-17 20:05:54 → 21:32:15 (86 min, exit 1).**
+> **⛔ Step 8 attempt 1 FAILED 2026-10-17 20:05:54 → 21:32:15 (86 min, exit 1); the fix has since
+> landed and attempt 2 is running.** The run
 > `scripts/ingest_base_textbook.py --pdf …feynman… --collection-name knowledge_base_v2 --reindex`
-> against the cluster. It got **further than the plan expected and then lost all of it**: Docling
-> parsed 968 pages in **4 min** → **341 parents → 3,796 children** → the late-chunk phase ran
-> **260 of 341 parents** (40.4 min, 360,685 tokens) → parent 260's per-token call to `:8123`
-> raised `httpx.ReadTimeout` and aborted the process. **Nothing was written** (`knowledge_base_v2`
-> = 0 points; SQLite still only the old doc) because `save_document` is the single write point and
-> runs only after *every* parent is embedded. **The cluster was healthy before and after** — a
-> pooled call to `:8123` returned 200 in 0.14 s right after — so it was a **transient stall, not
-> an outage**. **Root cause is a robustness gap, not a logic bug: §I16** —
-> `cluster_embedder._post` has **no retry** and a 120 s per-read timeout, and the ingest has **no
-> checkpoint**, so one bad read discards 86 min of cluster work. Measured variance says the tail is
-> the risky region (first 50 parents 10.8 s avg, last 50 **16.5 s**, at the same token counts; one
-> parent took 136 s for 1,180 tokens). **A re-run without the retry fix is a coin-flip.**
-> **Pre-flight that did land** (all measured, all tracked): cluster probed; both optional lanes
-> resolved live — SPLADE and ColBERT are both **cluster**-served, no model download; and the exact
+> got **further than the plan expected and then lost all of it**: Docling parsed 968 pages in
+> **4 min** → **341 parents → 3,796 children** → the late-chunk phase ran **260 of 341 parents**
+> (40.4 min, 360,685 tokens) → parent 260's per-token call to `:8123` raised `httpx.ReadTimeout`
+> and aborted. **Nothing was written** (`knowledge_base_v2` = 0 points; SQLite still only the old
+> doc) because `save_document` is the single write point and runs only after *every* parent is
+> embedded. **The cluster was healthy before and after** — a pooled call returned 200 in 0.14 s
+> right after — so it was a **transient stall, not an outage**.
+> **✅ FIXED (§I16):** `cluster_embedder._post` now has a bounded jittered retry (1+3 attempts,
+> retrying only `TransportError`/429/5xx; other 4xx fail fast) and **per-path read timeouts**
+> (120 s pooled / 300 s per-token — a measured 4,647-token parent legitimately took 92 s, so the
+> old flat 120 s could false-trip a healthy request). **And the loop that issues those calls was
+> strictly serial** — `LateChunkEmbedder.embed_children` now embeds parents concurrently
+> (`late_chunk_workers`, default 8), reassembled in parent order so the output is byte-identical.
+> Measured knee (`probe_concurrency_knee.py`): **84 tok/s at 1 worker → 597 at 16**, still rising,
+> so 8 is deliberately conservative. Serial latency is `≈ 5.2 s + tokens/53` — a **~5 s fixed
+> overhead per request**, i.e. ~30 min of the failed run was pure overhead. Suite **371 pass / 4
+> pre-existing fail / 6 skip**; ruff unchanged. Review: 2 reviewers on `openai/gpt-oss-20b` —
+> one pass (weak signal, spot-checked instead), one finding adjudicated as **half real**: the
+> claimed `TypeError` is **false**, but the shared tokenizer's **unsynchronised lazy load** is a
+> genuine race and is now fixed (warmed before the pool).
+> **Still open in §I16:** httpx's read timeout is per *read operation*, so a trickling body can
+> outlive any timeout — the 42-minute gap is consistent with that. Needs a total-request deadline
+> or a checkpoint. **§I17 (new):** the two remaining serial-batch lanes (ColBERT batch 4 ≈ 949
+> requests, SPLADE batch 32 ≈ 119) are ~15 min and were deliberately NOT bundled into this fix.
+> **Pre-flight that landed** (all measured, all tracked): cluster probed; both optional lanes
+> resolved live — SPLADE and ColBERT are both **cluster**-served, no model download; the exact
 > entry point dry-run on the 19-page fixture into a throwaway collection (**82 s**, 42 parents →
-> 66 children, all four vectors on all 66 points, points == SQLite chunks). Two env values **must**
-> be passed on the command line — `QDRANT_HOST=10.0.10.65` and
-> `SV_EMBED_URL=…:8123/embeddings`; the latter is **missing from `.env`** (§I14). `--reindex` is
-> mandatory (the old filename is already in `documents`). **Four register entries:** §E7 (this
-> step: pre-flight, the failure, the throughput measurements), §I14 (`SV_EMBED_URL` absent),
-> §I15 (`save_document` swallows SPLADE/ColBERT failures → an incomplete index reports success;
-> mitigated by the new `logs/p1/step8-run/verify_collection.py`), **§I16 (the retry/checkpoint gap
-> — blocks the re-run)**. Evidence: `logs/p1/step8-run/`. Full detail: `IMPROVEMENTS.md` §E6–§E7,
-> §I14–§I16.
+> 66 children, all four vectors on all 66 points). Two env values **must** be passed on the
+> command line — `QDRANT_HOST=10.0.10.65` and `SV_EMBED_URL=…:8123/embeddings`; the latter is
+> **missing from `.env`** (§I14). `--reindex` is mandatory. Evidence: `logs/p1/step8-run/`.
+> Full detail: `IMPROVEMENTS.md` §E6–§E7, §I14–§I17.
 >
 > **Steps 2–3 went through independent review 2026-10-17** (verifier = `openai/gpt-oss-20b`, a
 > different model from the author's). It found one genuine defect — a parent with no provenance

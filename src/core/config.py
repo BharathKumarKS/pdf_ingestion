@@ -86,6 +86,13 @@ class Settings(BaseSettings):
     late_chunk_enabled: bool = True      # embed children with parent context (cluster per-token)
     parent_max_tokens: int = 5000        # Docling HybridChunker parent size (class-repo default)
     semantic_threshold: float = 0.8      # chonkie SemanticChunker breakpoint
+    # Parents embedded concurrently. The late-chunk phase is ~100% waiting on the cluster
+    # (one per-token POST per parent, each with ~5 s of fixed overhead), so threads scale it
+    # almost linearly: measured 84 -> 597 tok/s from 1 to 16 workers on a 1,749-token payload
+    # (logs/p1/step8-run/probe_concurrency_knee.py). 8 is a deliberately conservative default
+    # — the knee was still rising at 16, but that was a short burst on a cluster shared with
+    # other students, and the same endpoint degrades under sustained load.
+    late_chunk_workers: int = 8
 
     # Chunking
     chunk_size: int = 512

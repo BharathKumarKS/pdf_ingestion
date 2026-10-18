@@ -32,10 +32,37 @@ is sliced client-side and re-normalised — the same shape as ``NomicEmbedder._t
 """
 from __future__ import annotations
 
+import random
+import time
+
 import numpy as np
 from loguru import logger
 
 from src.core.config import Settings, get_settings
+
+# -- Retry policy (plan Step 8 fix) --------------------------------------------
+#
+# The Step 8 run died on a SINGLE un-retried read timeout at parent 260 of 341 and threw away
+# 86 minutes, because `_post` issued each batch as one bare POST (IMPROVEMENTS.md §I16). The
+# endpoint is not down when this happens — a pooled call to the same URL answered 200 in 0.14 s
+# immediately after the abort — it stalls transiently, and in the 260 parents that succeeded
+# throughput ranged from 214 tok/s median down to 9 tok/s on one parent. So the fix is a
+# bounded retry on a fresh connection, not a longer wait on a wedged one.
+#
+# Retryable = the request could plausibly succeed if repeated: transport-level failures
+# (timeouts, connect/reset — `httpx.TransportError` is their common parent), HTTP 429, and 5xx.
+# NOT retryable: other 4xx — a malformed request or a wrong dimension will fail identically
+# every time, and retrying it only delays a loud error.
+_RETRY_ATTEMPTS = 4          # 1 initial attempt + 3 retries
+_RETRY_BACKOFF = 2.0         # seconds, doubling per attempt, jittered to avoid lockstep retries
+
+# Per-request read timeouts, sized to the response rather than shared. A pooled response is one
+# vector per input; a per-token response is ~160x the pooled payload (§E3) and legitimately
+# takes tens of seconds — a measured 4,647-token parent took 92 s end to end. The old flat
+# 120 s was marginal for the token path, so a slow-but-healthy large parent could trip it.
+_POOLED_TIMEOUT = 120.0
+_TOKEN_TIMEOUT = 300.0
+_CONNECT_TIMEOUT = 10.0      # fail fast on an unreachable host instead of waiting out the read
 
 
 def mrl_slice(vec: np.ndarray, dim: int) -> np.ndarray:
@@ -150,7 +177,11 @@ class ClusterDenseEmbedder:
     def _post(self, texts: list[str], token_embeddings: bool) -> list[np.ndarray]:
         import httpx
 
-        client = self._client or httpx.Client(timeout=120)
+        timeout = httpx.Timeout(
+            _TOKEN_TIMEOUT if token_embeddings else _POOLED_TIMEOUT,
+            connect=_CONNECT_TIMEOUT,
+        )
+        client = self._client or httpx.Client(timeout=timeout)
         results: list[np.ndarray] = []
         try:
             for i in range(0, len(texts), self._batch_size):
@@ -158,8 +189,7 @@ class ClusterDenseEmbedder:
                 payload: dict = {"model": self._model, "input": batch}
                 if token_embeddings:
                     payload["return_token_embeddings"] = True
-                resp = client.post(self._url, json=payload)
-                resp.raise_for_status()
+                resp = self._post_with_retry(client, payload, timeout)
                 items = resp.json()["data"]
                 # The server returns `index`; honour it rather than trusting array order
                 # (same contract as ClusterColBERTEmbedder — a reordered batch would
@@ -175,6 +205,47 @@ class ClusterDenseEmbedder:
             if self._client is None:
                 client.close()
         return results
+
+    @staticmethod
+    def _retryable(exc: Exception) -> bool:
+        """True when a repeat could plausibly succeed — see the retry policy above."""
+        import httpx
+
+        if isinstance(exc, httpx.TransportError):
+            # Timeouts, connect errors, read/write errors, protocol errors.
+            return True
+        if isinstance(exc, httpx.HTTPStatusError):
+            code = exc.response.status_code
+            return code == 429 or code >= 500
+        return False
+
+    def _post_with_retry(self, client, payload: dict, timeout):
+        """POST with bounded, jittered backoff on transient failures.
+
+        Raises the last error unchanged once the attempts are exhausted (or immediately for a
+        non-retryable one), so a genuine misconfiguration still fails loudly and fast.
+        """
+        last: Exception | None = None
+        for attempt in range(1, _RETRY_ATTEMPTS + 1):
+            try:
+                resp = client.post(self._url, json=payload, timeout=timeout)
+                resp.raise_for_status()
+                return resp
+            except Exception as exc:  # noqa: BLE001 - re-raised below
+                last = exc
+                if attempt >= _RETRY_ATTEMPTS or not self._retryable(exc):
+                    break
+                delay = _RETRY_BACKOFF * (2 ** (attempt - 1))
+                delay *= 0.5 + random.random()  # jitter: half to 1.5x
+                logger.warning(
+                    "Dense embed POST to {} failed ({}: {}) — retry {}/{} in {:.1f}s",
+                    self._url, type(exc).__name__, str(exc)[:120],
+                    attempt, _RETRY_ATTEMPTS - 1, delay,
+                )
+                time.sleep(delay)
+        # The loop only exits here via the `break` above, which always sets `last`.
+        assert last is not None
+        raise last
 
     # -- Public API ------------------------------------------------------------
 

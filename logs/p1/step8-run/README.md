@@ -176,6 +176,108 @@ one that would have saved this run.
 Extrapolated from the measurements: ≈ 62 min late-chunk + 4 min parse + ~6 min SPLADE + ~9 min
 ColBERT ≈ **1.5 h**, of which the last third is the risky region.
 
+## The fix (2026-10-17, same session) — retry + concurrency
+
+### What changed
+
+| file | change |
+|---|---|
+| `src/pdf_ingestion/cluster_embedder.py` | `_post` now goes through `_post_with_retry`; read timeout is per path (120 s pooled / **300 s per-token**) with a 10 s connect timeout |
+| `src/pdf_ingestion/late_chunk_embedder.py` | `embed_children` embeds parents concurrently via `ThreadPoolExecutor`, reassembled in parent order; the tokenizer is warmed before the pool starts |
+| `src/core/config.py` | `late_chunk_workers: int = 8` |
+
+### Retry policy
+
+Bounded at 1 + 3 attempts, jittered exponential backoff (2 s doubling, ×[0.5, 1.5)). Retries only
+what could plausibly succeed — `httpx.TransportError` (verified to be the parent of
+`httpx.ReadTimeout`: MRO `ReadTimeout → TimeoutException → TransportError`), HTTP 429, and 5xx.
+Other 4xx fail immediately with no sleep: a malformed request fails identically every time.
+
+The per-token timeout was raised on evidence, not caution — a measured 4,647-token parent took
+**92 s** end to end, so the old flat 120 s was marginal for a legitimately slow healthy request,
+and a false trip is its own bug.
+
+### Concurrency: why 8, and why threads
+
+Measured against the live endpoint, 1,749-token payload (`probe_concurrency_knee.py`):
+
+| workers | wall s | req/s | tok/s | s/req |
+|---|---|---|---|---|
+| 1 | 20.83 | 0.05 | 84 | 20.83 |
+| 2 | 17.82 | 0.11 | 196 | 8.91 |
+| 4 | 34.27 | 0.12 | 204 | 8.57 |
+| 8 | 36.28 | 0.22 | 386 | 4.53 |
+| 16 | 46.90 | 0.34 | **597** | 2.93 |
+
+Serial latency fits `seconds ≈ 5.2 + tokens/53` — a **~5 s fixed overhead per request**, which is
+why 341 serial parents burned ~30 min in overhead alone and why concurrency pays. The knee was
+still rising at 16, but 16 was a short burst on a cluster shared with other students, and the same
+endpoint measurably degrades under sustained load (10.8 s avg on the first 50 parents → 16.5 s on
+the last 50 in the failed run). **8 is the conservative default.**
+
+Threads, not processes: the phase is ~100% HTTP waiting, so the GIL is released per request and
+threads overlap the waiting. Processes would pickle large float matrices for no gain. (Docling
+does use processes — it is genuinely CPU-bound.)
+
+### Evidence that the output did not change
+
+`test_worker_count_does_not_change_the_output` runs the serial and pooled paths over 6 parents and
+asserts identical `chunk_id` order, identical `parent_id` order, identical `token_span`, and
+`np.allclose` vectors. `test_workers_overlap_the_cluster_wait` proves genuine overlap (6 parents ×
+0.25 s artificial delay complete in < 0.9 s). `test_a_failing_parent_aborts_loudly…` proves a lost
+parent raises rather than silently shrinking the document.
+
+### Test + lint state
+
+| | before this session | after |
+|---|---|---|
+| fast suite | 361 pass / 4 fail / 6 skip | **371 pass / 4 fail / 6 skip** |
+| ruff (touched files) | 4 findings | 4 findings — **no new** |
+
+The 4 failures are the known pre-existing class (2 SPLADE fixtures, 2 zero-result searches).
+
+## Independent review (round 1) — 2 reviewers, `openai/gpt-oss-20b`, single-turn, diff as DATA
+
+| task | scope | verdict |
+|---|---|---|
+| 1 | `cluster_embedder.py` retry | `passed: true`, no findings |
+| 2 | `late_chunk_embedder.py` + `config.py` | `passed: false`, 2 findings (both `risk`) |
+
+**Adjudicated, not accepted.** Task 1's pass is **weak evidence, not strong**: 1 API call, 19.9 s
+for a 200-line diff with seven specific questions — a read-and-agree pass. So each of its real
+risks was checked directly instead:
+
+| risk | checked how | result |
+|---|---|---|
+| is `httpx.ReadTimeout` actually a `TransportError`? | printed the MRO | **yes** — `ReadTimeout → TimeoutException → TransportError`; and `HTTPStatusError` is *not* a `TransportError`, so the `isinstance` order is irrelevant |
+| does a per-request `timeout=` override an injected client's own timeout? | client set to 1.0 s, request set to 300 s, read `request.extensions["timeout"]` | **yes, 300.0 won** — the injected client is a transport carrier in tests, so this is the intended behaviour |
+| can `assert last is not None` be stripped by `python -O` and change behaviour? | reasoned over the loop | **no** — the loop can only exit via `break`, which always sets `last` |
+
+Task 2's two findings:
+
+1. **"`int(getattr(...) or 1)` raises `TypeError` when the value is `None`" — FALSE.** The `or 1`
+   is inside the `int()` argument, so it is evaluated first. Executed: `None → 1`, `-5 → 1`,
+   attribute absent `→ 1`, `"6" → 6`. No `TypeError`. The reviewer misread the parenthesisation —
+   the diff-only-reviewer failure mode this repo has now recorded three times.
+2. **"the shared tokenizer is not thread-safe" — the stated reason is wrong, the concern is real.**
+   Encoding from several threads *is* safe (`PreTrainedTokenizerFast` encodes through a `&self`
+   Rust tokenizer and is used in multi-threaded data loading routinely). The genuine hazard is the
+   **unsynchronised lazy load**: `_get_tokenizer` guards with a bare `if self._tokenizer is None`,
+   so the first N workers can each pass the check and build the model concurrently — wasted work
+   plus HuggingFace cache-lock contention, and silent. **Fixed** by resolving the tokenizer before
+   the pool starts, pinned by `test_tokenizer_is_resolved_before_the_pool_starts`.
+
+Round 1 therefore produced **one real, actionable finding** (the tokenizer pre-warm) and one
+false positive. No claim was applied on faith.
+
+## Still open after this fix
+
+The retry does not cover every stall shape. httpx's read timeout is per *read operation*, not per
+request, so a body that trickles indefinitely resets the timer and can outlive any timeout — the
+failed run's 42-minute gap is consistent with exactly that. A hard total-request deadline (or a
+per-parent checkpoint) would close it; neither is a small change. Registered as open in §I16
+rather than claimed fixed.
+
 ## Verification of the real run (pending a successful run)
 
 ```

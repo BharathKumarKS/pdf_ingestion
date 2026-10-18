@@ -1,0 +1,47 @@
+{
+  "endpoint": "http://10.0.10.70:8123/embed-text/v1/embeddings",
+  "payload_tokens": 1749,
+  "rows": [
+    {
+      "workers": 1,
+      "wall_s": 20.83,
+      "requests_per_s": 0.05,
+      "tokens_per_s": 84.0,
+      "s_per_request": 20.83,
+      "errors": 0
+    },
+    {
+      "workers": 2,
+      "wall_s": 17.82,
+      "requests_per_s": 0.11,
+      "tokens_per_s": 196.0,
+      "s_per_request": 8.91,
+      "errors": 0
+    },
+    {
+      "workers": 4,
+      "wall_s": 34.27,
+      "requests_per_s": 0.12,
+      "tokens_per_s": 204.0,
+      "s_per_request": 8.57,
+      "errors": 0
+    },
+    {
+      "workers": 8,
+      "wall_s": 36.28,
+      "requests_per_s": 0.22,
+      "tokens_per_s": 386.0,
+      "s_per_request": 4.53,
+      "errors": 0
+    },
+    {
+      "workers": 16,
+      "wall_s": 46.9,
+      "requests_per_s": 0.34,
+      "tokens_per_s": 597.0,
+      "s_per_request": 2.93,
+      "errors": 0
+    }
+  ],
+  "knee_workers": 16
+}

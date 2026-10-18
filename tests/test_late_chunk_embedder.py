@@ -317,7 +317,113 @@ def test_enriched_chunk_wraps_the_child_unchanged():
     assert out.model_name == "Qwen/Qwen3-Embedding-0.6B"
 
 
-# ── 5. Live (slow): the plan's Step 4 acceptance check ───────────────────────
+# ── 5. Concurrency (plan Step 8 fix, §I16) ───────────────────────────────────
+
+def _many_parents_children(n: int = 6):
+    parents = [ParentChunk(parent_id=i, text=PARENT_TEXT, page_map={0: i + 1}) for i in range(n)]
+    children: list[TextChunk] = []
+    idx = 0
+    for parent in parents:
+        for start, end in ((0, 12), (12, 24)):
+            children.append(_child(idx, PARENT_TEXT[start:end], start, end, parent))
+            idx += 1
+    return parents, children
+
+
+def test_worker_count_does_not_change_the_output():
+    """Concurrency changes the wall clock, not the result or its order.
+
+    ``embed_children`` reassembles by parent position, so the document order the store and
+    every other test depend on must be byte-identical between the serial and pooled paths.
+    """
+    parents, children = _many_parents_children()
+    serial = _embedder(_cfg(late_chunk_workers=1)).embed_children(parents, children)
+    pooled = _embedder(_cfg(late_chunk_workers=4)).embed_children(parents, children)
+
+    assert [e.chunk.chunk_id for e in pooled] == [e.chunk.chunk_id for e in serial]
+    assert [e.chunk.parent_id for e in pooled] == [e.chunk.parent_id for e in serial]
+    for a, b in zip(serial, pooled):
+        assert a.token_span == b.token_span
+        assert np.allclose(a.dense_1024, b.dense_1024, atol=1e-6)
+        assert np.allclose(a.dense_64, b.dense_64, atol=1e-6)
+
+
+def test_workers_overlap_the_cluster_wait():
+    """The pool must genuinely run parents in parallel — this phase is ~100% cluster wait."""
+    import time as _time
+
+    cfg = _cfg(late_chunk_workers=6)
+    parents, children = _many_parents_children(6)
+    slow = _mock_cluster(cfg)
+    real = slow.embed_documents_tokens
+
+    def delayed(texts):
+        _time.sleep(0.25)
+        return real(texts)
+
+    slow.embed_documents_tokens = delayed
+    emb = LateChunkEmbedder(settings=cfg, embedder=slow, tokenizer=FakeTokenizer())
+
+    t0 = _time.time()
+    out = emb.embed_children(parents, children)
+    elapsed = _time.time() - t0
+
+    assert len(out) == 12
+    # 6 parents x 0.25 s serial = 1.5 s; with 6 workers ~0.25 s. Generous slack for CI.
+    assert elapsed < 0.9, f"parents did not overlap (took {elapsed:.2f}s)"
+
+
+def test_a_failing_parent_aborts_loudly_instead_of_shrinking_the_document():
+    """``future.result()`` re-raises: a lost parent must not silently reduce the chunk count."""
+    cfg = _cfg(late_chunk_workers=4)
+    parents, children = _many_parents_children(4)
+    broken = _mock_cluster(cfg)
+
+    def explode(texts):
+        raise httpx.ReadTimeout("timed out", request=httpx.Request("POST", URL))
+
+    broken.embed_documents_tokens = explode
+    emb = LateChunkEmbedder(settings=cfg, embedder=broken, tokenizer=FakeTokenizer())
+
+    with pytest.raises(httpx.ReadTimeout):
+        emb.embed_children(parents, children)
+
+
+def test_tokenizer_is_resolved_before_the_pool_starts(monkeypatch):
+    """The lazy tokenizer load must not race the workers.
+
+    ``_get_tokenizer`` guards with a bare ``if self._tokenizer is None``, so N workers starting
+    together could each build the model. The pool path warms it first; this pins that ordering,
+    because the failure it prevents (several concurrent model loads) is silent and only shows up
+    as wasted work and cache-lock contention.
+    """
+    cfg = _cfg(late_chunk_workers=8)
+    parents, children = _many_parents_children(8)
+    emb = _embedder(cfg)
+
+    order: list[str] = []
+    real_get = emb._get_tokenizer
+    monkeypatch.setattr(
+        emb, "_get_tokenizer", lambda: (order.append("tokenizer"), real_get())[1]
+    )
+    real_parent = emb.embed_parent
+
+    def observed_parent(parent, kids):
+        order.append("parent")
+        return real_parent(parent, kids)
+
+    monkeypatch.setattr(emb, "embed_parent", observed_parent)
+
+    emb.embed_children(parents, children)
+
+    assert order[0] == "tokenizer", (
+        "the tokenizer must be resolved before any parent is embedded, "
+        f"otherwise the workers race its lazy load (got {order[:3]})"
+    )
+    assert order.count("parent") == len(parents)
+
+
+# ── 6. Live (slow): the plan's Step 4 acceptance check ───────────────────────
 
 @pytest.mark.slow
 def test_live_late_chunked_vector_differs_from_its_isolation_twin():

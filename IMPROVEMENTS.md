@@ -1638,6 +1638,64 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   instead of one document. The retry is the small fix and the one that would have saved this run.
 - **Cost:** small for the retry (one function + tests + review); larger for checkpointing.
 - **Blocks Step 8's re-run** — see §E7. A re-run without this fix is a coin-flip.
+- **FIXED 2026-10-17 (same session):** `_post` now goes through `_post_with_retry` —
+  bounded (1 + 3 attempts), jittered exponential backoff (2 s doubling, ×[0.5, 1.5)), retrying
+  only what could plausibly succeed (`httpx.TransportError` — the parent of timeouts and
+  connect/read errors — plus HTTP 429 and 5xx; other 4xx fail immediately). The read timeout is
+  now **per path** instead of one flat 120 s: 120 s pooled, **300 s per-token**, with a 10 s
+  connect timeout. The per-token raise is justified by measurement, not caution — a 4,647-token
+  parent took **92 s** end to end against the live endpoint, so the old flat 120 s was marginal
+  for a legitimately slow large parent, and a false trip on a healthy request is its own bug.
+  Six tests pin the policy (retry-then-succeed, backoff growth + jitter, 5xx retried, 4xx not
+  retried and not slept on, attempts bounded at 4, per-path timeouts). Suite **370 pass / 4
+  pre-existing fail / 6 skip**; ruff identical to baseline.
+- **ALSO FIXED in the same pass — the reason the retry alone would not have been enough:**
+  the loop that *issues* those calls was strictly serial. `LateChunkEmbedder.embed_children`
+  now embeds parents concurrently via a `ThreadPoolExecutor` (`late_chunk_workers`, default 8),
+  reassembling results in parent order so the output is byte-identical to the serial path.
+  Measured against the live endpoint (`logs/p1/step8-run/probe_concurrency_knee.py`, 1,749-token
+  payload): aggregate throughput **84 tok/s at 1 worker → 597 tok/s at 16**, no errors, no
+  collapse. Serial latency is ≈ `5.2 s + tokens/53` — i.e. **~5 s of fixed per-request overhead**,
+  which is why concurrency pays here and why 341 serial parents cost ~30 min in overhead alone.
+  8 is the conservative default: the knee was still rising at 16, but that was a short burst on a
+  cluster shared with other students, and the same endpoint measurably degrades under sustained
+  load (first 50 parents 10.8 s avg → last 50 16.5 s in the failed run).
+- **Still open — the retry does not cover every stall shape.** httpx's read timeout is per *read
+  operation*, not per request, so a body that trickles indefinitely resets the timer and can
+  outlive any timeout; the failed run's 42-minute gap is consistent with exactly that. A hard
+  total-request deadline (or a checkpoint) would close it. Not done: it needs either a watchdog
+  thread or a streaming read loop, and neither is a small change. Registered honestly rather
+  than claimed fixed.
+
+### I17. NEW 2026-10-17 (found auditing the ingest for concurrency) — two serial-batch lanes remain in the ingest: ColBERT at batch 4, SPLADE at batch 32
+
+- **What:** with the late-chunk loop parallelised (§I16), the two remaining hot spots in the
+  ingest are both **serial batches of HTTP requests**:
+  - `ClusterColBERTEmbedder._post(..., batch_size=4)` — **4 texts per request**, so ~3,796
+    children need **~949 sequential requests**. Measured 9.8 s / 66 chunks on the fixture
+    (0.148 s/chunk) → **≈ 9.4 min** for the book.
+  - `ClusterSpladeEmbedder._post(..., batch_size=32)` — ~**119 sequential requests**. Measured
+    6.4 s / 66 chunks (0.097 s/chunk) → **≈ 6.1 min**.
+  Together ~15 min of the run's non-late-chunk cost, and unlike the late-chunk lane they were
+  never concurrency-audited.
+- **Why it matters:** the ingest is now dominated by whichever lane is serial. At 8 workers the
+  late-chunk phase should fall from ~62 min to roughly **10–25 min** — the range is wide because
+  the endpoint's own speed moves a lot: serial throughput measured **214 tok/s median during the
+  failed run** but only **84 tok/s** the next morning on the same payload. Do not quote a single
+  number for this until the re-run produces one.
+- **Estimate caveat:** the per-chunk costs were measured on the 19-page fixture, where per-request
+  overhead is amortised over few chunks; the book-scale figures are extrapolations, not
+  measurements. Confirm with a probe before acting.
+- **Fix (not applied — deliberately):** raise ColBERT's batch size (4 looks like a GPU-memory
+  default chosen for a local model, but this is the cluster serving it) and/or run both lanes'
+  batches concurrently with the same `ThreadPoolExecutor` pattern now used for late chunking.
+  Either way it needs its own endpoint-concurrency probe first: the whole reason the late-chunk
+  worker count is 8 and not 16 is that the knee was measured rather than assumed, and this
+  endpoint has already shown it degrades under sustained load. Bundling an unmeasured concurrency
+  change into the retry fix would repeat the mistake this project has made twice (§B4a, §I11).
+- **Cost:** small to medium; no re-ingest needed to change it, but it only pays off on the next
+  index run.
+- **Not blocking Step 8's re-run.**
 
 ---
 
