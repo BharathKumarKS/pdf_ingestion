@@ -4,143 +4,60 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-17 (late: **P1 Step 8 attempt 1 FAILED — transient stall at parent 260/341; §I16 blocks the re-run**)** ·
-> `feat/p0-9-gold-dataset-v2` · P0 items 1–8 done; **P0-9 (gold set)
-> is MEASURED.** Sessions 1–3c, 3d, 3d-ii and **Session 4/4b (all four steps) are done.** The v2 A/B:
-> **rerank vs no-rerank R@20 Δ −0.0101, 95% CI [−0.0299, +0.0097] → UNRESOLVED at n=133** (the
-> pre-registered rule is not met and cannot be met at a feasible n — §D9). **Step 4 ran 2026-10-16
-> 20:13–21:22** (`--skip-visual`, `logs/p0-9/session4b_step4.log`) and measured the second half:
-> **abstention 17/34 = 0.500** (> the 0.0 majority baseline → **met**; half the negatives still
-> answered) and the text-lane generation metrics (**Faith 0.661 · Ans.Rel 0.852 · Citation 1.000**,
-> n=133); the **visual lane** was measured separately (**33 q, R@20 0.960**). **Reranker decision:
-> keep it enabled for now — settle it with an ablation / A-B after the re-ingest (§D13).** 3c's
-> overview lane: **40 overview queries** (min 22 / median 58 / max 314 pages); negatives 23 → **34**.
-> **3d** settled the §B4a fork on option (a) (`4697961`); **3d-ii** (visual path + D8 judge + scan,
-> `3a18da4`) gave **33 usable visual queries** (§B4d, `18250f1`); **v2** assembled (`e69c347`) then
-> pruned by §D6 (`f109379`): **166 answerable + 34 negatives = 200** (17.0%). **Session 4b:** harness
-> fixes (`769e60d`); §D4 re-measured and **reframed** (one coordinate system + inherent ±1
-> chunk-boundary fuzz → **no labels changed**; §D4 is now a known symmetric noise floor); funnel
-> re-ran post-fix on the same 133 queries: **Δ −0.0101, CI [−0.0299, +0.0097] → still UNRESOLVED**.
-> §B4f, §D11, §I10 resolved. Artifacts: `p0-9-gold-v2_2026-10-17_0422.md` (step 4),
-> `p0-9-gold-v2-visual_2026-10-17_0410.md` (visual); outcome: pre-registration → "Step 4 outcome".
-> **Next: Step 8 (the run) → the reranker ablation; Session 5 (human verification) runs now.**
-> **P1 re-ingest STARTED 2026-10-16** — plan: `.hermes/plans/2026-10-16-p1-reingest-plan.md`
-> (10 steps, decisions closed). Done: Step 0 (config), Step 1 (`cluster_embedder.py`, 11 tests),
-> **Step 2 (`parent_chunker.py` + `models.py`; 9 tests + 1 slow)** — `test_book.pdf` → **42** parents,
-> every one with ≥1 in-range page and a heading stack (the plan's "43" was Docling's *default*
-> `max_tokens=512`; at the configured `parent_max_tokens=5000` it is 42).
-> **Step 3 (E1 `chunker.py` → chonkie `SemanticChunker`, parent-aware; 8 tests + 1 slow)** — 42
-> parents → **91 children** raw / **66** at the inherited `min_chunk_tokens=32`; spans tile each
-> parent exactly, no child crosses a parent. Segmentation model = chonkie's default (local
-> `potion-base-32M`); the indexed vectors stay the cluster dense model. §E1 carries the merge
-> measurement (91 → 66, −27%).
-> **Step 4 (E3 `late_chunk_embedder.py`; 12 tests + 1 slow) DONE 2026-10-17.** The plan's FIRST
-> ACTION — the **Qwen3** local-tokenizer↔cluster-token alignment probe — ran live first and
-> **CONFIRMED the alignment** (local tokenizer plain + exactly one trailing `<|endoftext|>` vector;
-> offsets tile; appending text leaves earlier vectors bit-identical; a word swap moves only its own
-> index and later; no truncation at 5,200 tokens) → **R2's 1024d + 64d stands, no jina fallback**.
-> Also measured: per-token cost ≈ 160× the pooled payload / 55× the wall time → ~48 min and
-> ~13.6 GB for 968 pages (fine as the Step 8 background job; only *parents* get a per-token call).
-> **Independent review (round 1) found a real defect** — a call to the non-existent
-> `self._embed_isolated` on the zero-token-parent branch — fixed + regression test; round 2
-> `passed: true`. Evidence `logs/p1/step4/` (README = the review record), register §E3b.
-> **Step 5 (E5 `is_content`) DONE 2026-10-17** — `src/pdf_ingestion/content_filter.py`: the
-> `_NON_CHAPTER` list promoted out of `store.py` **plus two structural signals**, wired into the
-> chunker (tags every child), the Qdrant payload, SQLite (`chunks.is_content`), the card rebuild,
-> and retrieval (`must_not is_content == False`). **The keyword list alone could not pass the
-> plan's acceptance test** — no page-936 index row carries a keyword — so an exact index-heading
-> rule and an index-table-layout rule were added; measured over 5,048 chunks: **page 936 splits**
-> (content 4660–4667 kept, index 4668–4683 dropped), 5 false negatives all explained, 242 false
-> positives = the front-matter recall gap (**§E5 outcome**; page bounds left in place). Evidence
-> `logs/p1/step5/`. Review (single-turn, evidence embedded): `passed: true`, C1–C5 confirmed.
-> **Step 6 (§D4 per-PDF-page numbering) VERIFIED 2026-10-17 — no source change.** The code landed
-> in Step 3 (children take `page_number` from `parent.page_for_offset`), so Step 6 is the
-> measurement. Against an **independent extractor** (PyMuPDF text; the numbers came from Docling),
-> head-only, **both paths on the same unit** on the 968-page book: offset 0 **71.5% → 99.95%** (all
-> chunks 5047 → all children 3796; offset −1 333 → **1**), and **100%** on first-per-page
-> (54.4% → 100%). 0 children without a page. An independent reviewer **refuted the first version**
-> for comparing unequal samplings — the fix also showed the recorded "45% at −1" was itself a
-> first-chunk-per-page artifact. Round 2 `passed: true`, M1–M5 confirmed. Evidence
-> `logs/p1/step6/` (README + `realbook.json` + cached `children.json`). The plan's "remove the dead
-> path" moves to Step 7 — the legacy `chunk_document` is still called by `store.ingest_document`.
-> Suite **356 pass / 4 fail** (the same pre-existing class: 2 SPLADE fixtures, 2 zero-result
-> searches) + 6 skips (the live-E2E tests, which now need `SV_EMBED_URL`).
-> **Step 7 (schema + write path) DONE 2026-10-17** — new `src/pdf_ingestion/chunking_pipeline.py`
-> is the single ingest path (`ParentChunker.convert` → `SemanticChunker.chunk_parents` →
-> `LateChunkEmbedder.embed_children` → `save_document`); `store.ingest_pdf` delegates to it and the
-> legacy flat path (`chunk_document`/`build_page_map`/`_page_for_offset`) is **deleted** (Step 6's
-> deferred half). Created schema = `dense_64 + dense_1024 + colbert + sparse`; the vector name is
-> **resolved from the collection** (`store._dense_name_from`) so the deployed `knowledge_base`
-> (still `dense_768`) stays writable — pinned by a test. Payload + SQLite carry
-> `parent_id`/`parent_text`. `raptor_tree._embed` moved to the dense lane (summaries share the
-> collection's slot; without it 14 tests fail). Live probe `logs/p1/step7/` on `test_book.pdf`
-> with the **real** cluster lane + **real** Qwen3 tokenizer: 42 parents → 66 children, exactly 3
-> named vectors present, Qdrant points == SQLite chunks == children (66),
-> `dense_64 == mrl_slice(dense_1024, 64)` to 1e-5. ruff: 51 findings before, 51 after.
-> **✅ THE QUERY SIDE IS SWITCHED (Step 7b, 2026-10-17)** — the UI, `main.py`, `evaluate_rag`,
-> `funnel_boundary_recall`, `calibrate_eval_pages`, `why_colbert` and the intent router now all
-> embed with the cluster dense lane (Qwen3, 1024d + query instruction), so the funnel and the
-> §D13 ablation can read a rebuilt collection. The three scripts that query Qdrant directly also
-> lost their hard-coded `using="dense_768"` (now resolved from the collection) — a second,
-> independent reason the funnel could not read v2. **R-a discharged:** the router's schema check
-> compares against `dense_dim`, its prototypes come from the dense lane, and the classifier was
-> **retrained at 1024d** (`--train-only`, 1,158 queries, **96.6 %** held-out accuracy). The 768d
-> model is recoverable from git (`git show 161e01b:data/models/intent_classifier.pkl`); a local
-> copy also sits at `data/models/intent_classifier_768d.pkl.bak` — **gitignored, so absent from a
-> fresh clone**. **Deliberately partial:** the
-> concept-graph lane still embeds with the retired 768d model because `concept_embeddings` is
-> still 768d (the UI passes it a second, `graph_vec`) — **§I12**, released by Step 9; likewise
-> `reembed_chunks.py` / `validate_embedders.py` — **§I13**. **Found and fixed on the way:** the
-> endpoint returns **unnormalised** pooled vectors and only the index side normalised, so any
-> dot-product consumer was off by ~6,000× (no retrieval number moved — Qdrant normalises for
-> COSINE). Evidence `logs/p1/step8/`; register `IMPROVEMENTS.md` §E6 "SWITCHED 2026-10-17".
-> **⛔ Step 8 attempts 1–3 ALL FAILED — nothing written. Attempt 3 reached 339/341 parents (99.4%)
-> and discarded 63.8 min. The retry + deadline fixes work; what is missing is a CHECKPOINT (§I19).**
-> The run
-> `scripts/ingest_base_textbook.py --pdf …feynman… --collection-name knowledge_base_v2 --reindex`
-> got **further than the plan expected and then lost all of it**: Docling parsed 968 pages in
-> **4 min** → **341 parents → 3,796 children** → the late-chunk phase ran **260 of 341 parents**
-> (40.4 min, 360,685 tokens) → parent 260's per-token call to `:8123` raised `httpx.ReadTimeout`
-> and aborted. **Nothing was written** (`knowledge_base_v2` = 0 points; SQLite still only the old
-> doc) because `save_document` is the single write point and runs only after *every* parent is
-> embedded. **The cluster was healthy before and after** — a pooled call returned 200 in 0.14 s
-> right after — so it was a **transient stall, not an outage**.
-> **✅ FIXED (§I16):** `cluster_embedder._post` now has a bounded jittered retry (1+3 attempts,
-> retrying only `TransportError`/429/5xx; other 4xx fail fast) and **per-path read timeouts**
-> (120 s pooled / 300 s per-token — a measured 4,647-token parent legitimately took 92 s, so the
-> old flat 120 s could false-trip a healthy request). **And the loop that issues those calls was
-> strictly serial** — `LateChunkEmbedder.embed_children` now embeds parents concurrently
-> (`late_chunk_workers`, default 8), reassembled in parent order so the output is byte-identical.
-> Measured knee (`probe_concurrency_knee.py`): **84 tok/s at 1 worker → 597 at 16**, still rising,
-> so 8 is deliberately conservative. Serial latency is `≈ 5.2 s + tokens/53` — a **~5 s fixed
-> overhead per request**, i.e. ~30 min of the failed run was pure overhead. Suite **371 pass / 4
-> pre-existing fail / 6 skip**; ruff unchanged. Review: 2 reviewers on `openai/gpt-oss-20b` —
-> one pass (weak signal, spot-checked instead), one finding adjudicated as **half real**: the
-> claimed `TypeError` is **false**, but the shared tokenizer's **unsynchronised lazy load** is a
-> genuine race and is now fixed (warmed before the pool).
-> **Still open in §I16:** httpx's read timeout is per *read operation*, so a trickling body can
-> outlive any timeout — the 42-minute gap is consistent with that. Needs a total-request deadline
-> or a checkpoint. **§I17 (new):** the two remaining serial-batch lanes (ColBERT batch 4 ≈ 949
-> requests, SPLADE batch 32 ≈ 119) are ~15 min and were deliberately NOT bundled into this fix.
-> **Attempt 2 (2026-10-18 07:02:17 → 07:55:53) failed differently and instructively:** with the fix
-> live, late-chunk ran **fast while healthy — 142 parents in 409.7 s = 2.89 s/parent, 470 tok/s**
-> (attempt 1: 5.13 s/parent, 214 tok/s) — then the endpoint **stopped accepting connections**.
-> The log went **silent for 21.5 min** (last parent 07:12:05, first retry 07:33:35), then 597
-> retries (589 `ConnectTimeout`) over 22 min, then death. **The retry did its job** — it turned a
-> one-failure abort into 600 attempts instead of dying at the first timeout; it could not save a
-> genuinely dead service. **⚠️ Whether the 8 workers contributed is UNPROVEN and not excludable**:
-> the endpoint was already **84 tok/s serial** that morning vs 214 during attempt 1, other cluster
-> services stayed healthy, and the Qdrant holds **34 collections from other students** — but it
-> also died with a crash/OOM signature after 7 min of 8× load. **§I18: the ramp probe used a fixed
-> 1,749-token payload while the real corpus runs to 4,762 tokens, so "no collapse up to 16" does
-> not transfer — treat 8 as UNVALIDATED.** Do not re-run at 8 without deciding this.
-> **Pre-flight that landed** (all measured, all tracked): cluster probed; both optional lanes
-> resolved live — SPLADE and ColBERT are both **cluster**-served, no model download; the exact
-> entry point dry-run on the 19-page fixture into a throwaway collection (**82 s**, 42 parents →
-> 66 children, all four vectors on all 66 points). Two env values **must** be passed on the
-> command line — `QDRANT_HOST=10.0.10.65` and `SV_EMBED_URL=…:8123/embeddings`; the latter is
-> **missing from `.env`** (§I14). `--reindex` is mandatory. Evidence: `logs/p1/step8-run/`.
-> Full detail: `IMPROVEMENTS.md` §E6–§E7, §I14–§I17.
+> **Last updated: 2026-10-18 (P1 Step 8 — attempt 5 RUNNING; four earlier attempts failed and are
+> fully diagnosed).** Branch `feat/p0-9-gold-dataset-v2`. **Read `RETROSPECTIVE.md` for the
+> project-wide lessons — it is the document this phase was worth.**
+>
+> **Where the re-ingest stands.** Goal: `scripts/ingest_base_textbook.py --pdf …feynman…
+> --collection-name knowledge_base_v2 --reindex` with `QDRANT_HOST=10.0.10.65` and
+> `SV_EMBED_URL=http://10.0.10.70:8123/embed-text/v1/embeddings`. Five attempts:
+>
+> | # | result |
+> |---|---|
+> | 1 | **no retry** — one transient read timeout discarded 86 min at parent 260/341 (§I16) |
+> | 2 | retry worked (600 attempts) but the **endpoint went down**; no checkpoint, 53.6 min lost |
+> | 3 | reached **339/341** parents, then unreachable endpoint; 63.8 min lost (§I19) |
+> | 4 | **reached the final write** — late-chunk 341/341 with **0 retries**, SQLite + SPLADE + ColBERT all done — then Qdrant rejected the upsert: **34.7 MB payload vs a 32 MiB cap** |
+> | 5 | **running now** (pid 95461, started 12:14:54), with the byte-budgeted upsert fix |
+>
+> **What is fixed and committed:** bounded retry + jittered backoff and per-path read timeouts
+> (`9215de8`); a **total-request deadline** for the trickling-body case that no read timeout bounds;
+> **`late_chunk_workers = 4`** (8 measured *slower* under sustained load — §I18); a **resume cache**
+> (`ed218f9`, `bf54a93`, `f0098a1`) so a re-run embeds only the missing parents; **byte-budgeted
+> Qdrant upsert batching** (`5675cb6`); and a launch-time **resolved-settings gate** in
+> `run_step8.sh` that prints and asserts the settings actually in force (attempt 3 ran at 8 workers
+> while everyone believed 4 — `.env` overrode the config default).
+>
+> **IMMEDIATE NEXT STEPS (in order)**
+> 1. **Check attempt 5**: `tail -40 logs/p1/step8-run/run_feynman.log` — look for `RUN COMPLETE`,
+>    a `Traceback`, or `Qdrant: upserted 3796 points`. It is a detached process; the log is the
+>    only state that matters and it survives this session.
+> 2. **If it failed**, read the traceback; the previous four failure shapes are all documented in
+>    `IMPROVEMENTS.md` §E7 so a new one should stand out.
+> 3. **Verify the collection** (the plan's own check is insufficient — see §I15, a count check
+>    passes on an index missing vector lanes):
+>    `uv run python logs/p1/step8-run/verify_collection.py knowledge_base_v2 --sqlite data/synapse.db`
+>    Expect: points == SQLite chunks **scoped by `document_id`** (SQLite also holds the old
+>    deployed doc `6d55c52b`, 5,048 chunks — that is intended, not a mismatch), all four lanes
+>    (`colbert`, `dense_1024`, `dense_64`, `sparse`) present on **every** point, and the per-token
+>    dims 128/1024/64.
+> 4. **Prove the cache actually hits.** Attempt 5 rewrote all 341 entries with a corrected digest,
+>    so a *second* run should log `Late-chunk cache: 341 hits / 0 misses`. This has never been
+>    demonstrated end to end — do it before trusting the cache.
+> 5. **Then Step 10** (re-measure: the §D13 reranker ablation on the rebuilt index, ceiling-normalised
+>    per §D9), and decide **§I20** (`save_document` is not atomic — it commits SQLite before
+>    upserting Qdrant, so a failure leaves 3,796 chunk rows for a document with zero points).
+>
+> **Cleanup that is NOT automatic** — a failed run leaves a half-written state: delete the orphaned
+> `documents` row and its `chunks`, and delete the partially-written collection, before re-running.
+> Attempt 4 needed exactly this (128 orphan points + a 3,796-chunk orphan row). Registered in §I20.
+>
+> **Open register items blocking or adjacent:** §I16 (checkpointing done; the deadline is done;
+> nothing left blocking), §I17 (ColBERT batch 4 / SPLADE batch 32 remain serial — ~15 min),
+> §I18 (probes must sweep payload size AND be sustained, not bursts), §I19 (cache: built, needs the
+> hit-proof in step 4), §I20 (atomicity). **§I14 is resolved** — `SV_EMBED_URL` is now in `.env`.
+>
+> Detail lives in `IMPROVEMENTS.md` §E6–§E7 and §I14–§I20; the evidence is `logs/p1/step8-run/`.
 >
 > **Steps 2–3 went through independent review 2026-10-17** (verifier = `openai/gpt-oss-20b`, a
 > different model from the author's). It found one genuine defect — a parent with no provenance

@@ -1,0 +1,53 @@
+{
+  "endpoint": "http://10.0.10.70:8123/embed-text/v1/embeddings",
+  "rows": [
+    {
+      "target": 200,
+      "actual_tokens": 277,
+      "seconds": 10.39,
+      "mb": 1.1,
+      "vectors": 278,
+      "ok": true
+    },
+    {
+      "target": 500,
+      "actual_tokens": 599,
+      "seconds": 15.83,
+      "mb": 2.5,
+      "vectors": 600,
+      "ok": true
+    },
+    {
+      "target": 1000,
+      "actual_tokens": 1197,
+      "seconds": 30.5,
+      "mb": 4.9,
+      "vectors": 1198,
+      "ok": true
+    },
+    {
+      "target": 2000,
+      "actual_tokens": 2347,
+      "seconds": 75.91,
+      "mb": 9.6,
+      "vectors": 2348,
+      "ok": true
+    },
+    {
+      "target": 3000,
+      "actual_tokens": 3497,
+      "seconds": 67.99,
+      "mb": 14.3,
+      "vectors": 3498,
+      "ok": true
+    },
+    {
+      "target": 4000,
+      "actual_tokens": 4647,
+      "seconds": 92.39,
+      "mb": 19.0,
+      "vectors": 4648,
+      "ok": true
+    }
+  ]
+}
