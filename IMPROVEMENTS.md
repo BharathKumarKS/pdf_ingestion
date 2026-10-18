@@ -1238,7 +1238,7 @@ dead code from the day it lands. `process_pdf` is the whole API.
 
 ---
 
-### E7. P1 Step 8 — the run: pre-flight measured; the re-ingest writes `knowledge_base_v2` 🔄 IN PROGRESS
+### E7. P1 Step 8 — the run: attempt 1 FAILED at 86 min (transient endpoint stall); pre-flight + diagnosis landed
 
 - **What:** `scripts/ingest_base_textbook.py --pdf …feynman… --collection-name knowledge_base_v2
   --reindex` against the cluster — the E1/E2/E3 pipeline on the real 968-page book. Fresh
@@ -1253,6 +1253,27 @@ dead code from the day it lands. `process_pdf` is the whole API.
   **82 s wall**, all four vectors on all 66 points, points == SQLite chunks == 66. Stage split:
   Docling parse ≈ 10 s (incl. ~9 s one-time model load), children 0.8 s, late-chunk 42 parents
   **47.5 s**, SPLADE 6.4 s, ColBERT 9.8 s, Qdrant upsert 1.5 s.
+- **⛔ ATTEMPT 1 FAILED 2026-10-17 20:05:54 → 21:32:15 (86 min), exit 1.** It got **further than
+  the plan expected** and then lost all of it: Docling parsed 968 pages in **4 min** (not the
+  "tens of minutes" the plan feared) → **341 parents → 3,796 children** → the late-chunk phase
+  ran **260 of 341 parents** (40.4 min, 360,685 tokens, 2,905 children) → parent 260's per-token
+  call to `:8123` stalled and raised `httpx.ReadTimeout` → the process aborted. **Nothing was
+  written:** `knowledge_base_v2` = 0 points, SQLite still holds only the old doc (`6d55c52b`,
+  5,048 chunks) — `save_document` is the single write point and it runs only after *every* parent
+  is embedded. The cluster was healthy before and after (a pooled call to `:8123` returned 200 in
+  0.14 s immediately afterwards), so this was a **transient stall, not an outage**.
+- **Measured throughput (from the log, all 260 completed parents):** median **5.13 s/parent**
+  (mean 9.35, max **136.5**), parent size median 1,190 tokens (mean 1,387, max 4,762), median
+  **214 tokens/s** (min **9**). The endpoint **degrades as the run proceeds** — the first 50
+  parents averaged 10.8 s, the last 50 **16.5 s**, at near-identical token counts (1,378 vs 1,472).
+  One parent took 136 s for only 1,180 tokens. So the tail of the run is the risky part, and the
+  abort landed exactly there. Extrapolated full run: **~1.5 h** (≈ 62 min late-chunk + 4 min
+  parse + ~6 min SPLADE + ~9 min ColBERT).
+- **Root cause is a robustness gap, not a logic bug — registered as §I16.**
+  `cluster_embedder._post` uses `httpx.Client(timeout=120)` and has **no retry**: one slow read
+  aborts the whole document. Combined with the write path having no checkpoint, a single transient
+  stall discards 86 minutes of cluster work. Re-running unchanged is a coin-flip at best — the
+  same stall occurred at parent 219 (136 s) earlier in the *successful* stretch.
 - **Consequence the plan's own verification misses — scope the counts by `document_id`.**
   `save_document` always creates a **new** document uuid, so the run *adds* a second
   `documents` row with the same filename and a second block of rows in `chunks`; the old doc
@@ -1584,6 +1605,39 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   **(a) is recommended for the re-ingest path specifically**, where a half-written collection costs
   a full re-run to correct.
 - **Cost:** small. No re-ingest.
+
+### I16. NEW 2026-10-17 (found by Step 8's failed run) — `cluster_embedder._post` has NO retry and a 120 s read timeout, so one transient stall discards a 90-minute run
+
+- **What:** `ClusterDenseEmbedder._post` (`cluster_embedder.py:150-177`) builds
+  `httpx.Client(timeout=120)` and issues each batch as a **single un-retried POST**. Any
+  `httpx.ReadTimeout` / `ConnectError` / 5xx propagates straight out of `embed_documents_tokens`,
+  through `LateChunkEmbedder.embed_parent`, and aborts the whole document. Measured: the Step 8
+  run died this way at parent **260 of 341**, after 86 minutes, having embedded 360,685 tokens.
+- **Why it is worse than a normal flaky-call bug:** the ingest has **no checkpoint**. The
+  pipeline is parse → children → embed *every* parent → `save_document`, and `save_document` is
+  the only write. So the failure mode is not "lose one parent", it is "lose the entire document" —
+  86 minutes of cluster work, and the next attempt starts from zero. The plan's R-d says the run is
+  "resumable only at document granularity", which is accurate but understates it: a *single* bad
+  read inside that document is enough.
+- **It is not an outage, it is variance.** A pooled call to the same endpoint returned 200 in
+  0.14 s immediately after the abort. In the 260 parents that *did* succeed, throughput ranged
+  from **214 tokens/s median** down to **9 tokens/s** on one parent that took 136 s for 1,180
+  tokens — i.e. the same stall happened earlier and got lucky. And the endpoint **degrades as the
+  run proceeds**: first 50 parents averaged 10.8 s, last 50 averaged 16.5 s at the same token
+  counts. The risky region is the tail, which is exactly where the abort landed.
+- **Why the 120 s timeout does not bound the damage:** httpx's read timeout is per *read
+  operation*, not per request. A response body that keeps trickling (the per-token payload is
+  ~160× the pooled one — §E3) resets the timer on every chunk, so a pathological stall can burn
+  far longer than 120 s before it trips. The measured gap between the last success and the abort
+  was **42 minutes**, consistent with a slow drip rather than a clean timeout.
+- **Fix (not yet applied):** bounded retry with exponential backoff around the POST in
+  `_post` (the repo's own `scripts/` code already uses a retry helper for the LLM path), plus a
+  read timeout sized for the per-token payload rather than the pooled one, and a log line when a
+  retry happens. Separately worth considering: a **per-parent checkpoint** (persist embeddings as
+  they are computed, or write the collection in parent batches) so the loss window is one parent
+  instead of one document. The retry is the small fix and the one that would have saved this run.
+- **Cost:** small for the retry (one function + tests + review); larger for checkpointing.
+- **Blocks Step 8's re-run** — see §E7. A re-run without this fix is a coin-flip.
 
 ---
 
