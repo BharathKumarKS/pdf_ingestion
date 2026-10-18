@@ -1690,12 +1690,27 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   8 is the conservative default: the knee was still rising at 16, but that was a short burst on a
   cluster shared with other students, and the same endpoint measurably degrades under sustained
   load (first 50 parents 10.8 s avg → last 50 16.5 s in the failed run).
-- **Still open — the retry does not cover every stall shape.** httpx's read timeout is per *read
-  operation*, not per request, so a body that trickles indefinitely resets the timer and can
-  outlive any timeout; the failed run's 42-minute gap is consistent with exactly that. A hard
-  total-request deadline (or a checkpoint) would close it. Not done: it needs either a watchdog
-  thread or a streaming read loop, and neither is a small change. Registered honestly rather
-  than claimed fixed.
+- **✅ FIXED 2026-10-18 — the total-request deadline, which is the shape the retry could not
+  catch.** `_post_json` now reads the response body in chunks against a wall clock and raises
+  `httpx.ReadTimeout` (deliberately — it is a `TransportError`, so the retry treats it as
+  transient and re-issues on a fresh connection) once one request exceeds its budget:
+  **300 s pooled, 900 s per-token**. The per-read timeout above cannot do this job: it is per
+  *read operation*, so a trickling body resets it on every chunk. Measured cost of the gap —
+  attempt 2 sat **silent for 21.5 minutes** inside exactly such requests, and because no timeout
+  fired, the retry had nothing to catch. Three tests pin it: a deliberately slow-dripping response
+  stream (81 chunks, would take ~6 s unbounded) is cut off, retried 4 times with 3 backoffs, and
+  finishes in under 3 s; a normal response is unaffected; and the per-token deadline is asserted
+  to exceed the pooled one. **A test-fixture bug found on the way:** the `no_sleep` fixture patched
+  `"...cluster_embedder.time.sleep"`, which resolves to the GLOBAL `time` module and therefore
+  neutered every other sleeper in the process — including the slow stream it was meant to be
+  measuring against, which is why the first version of the test passed vacuously ("did not raise").
+  It now replaces the module's own `time` binding via a shim, keeping the blast radius at one
+  module.
+- **Still open — checkpointing.** The deadline bounds a single request, but the ingest still has no
+  per-parent checkpoint: a failure at parent 340 of 341 discards the whole document, because
+  `save_document` is the only write point. The retry and the deadline make that much less likely
+  (two independent failure shapes are now handled) but they do not make it cheap. Registered, not
+  claimed fixed.
 
 ### I17. NEW 2026-10-17 (found auditing the ingest for concurrency) — two serial-batch lanes remain in the ingest: ColBERT at batch 4, SPLADE at batch 32
 
@@ -1744,6 +1759,33 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
 - **Fix (not applied):** a ramp probe should sweep **both** axes — workers × payload size — or at
   minimum use the real corpus's p95 size rather than a mid-range constant. Cheap to redo: the probe
   is ~5 minutes. Until then, treat 8 as an **unvalidated** setting and prefer 2–4.
+- **✅ RE-PROBED 2026-10-18 (`probe_knee_by_size.py`) — the result is "no harm shown", NOT
+  "8 is validated", and the default is now 4 on risk grounds.** 12 cells, 1/2/4/8 workers ×
+  1381/3497/5521 tokens (the last above the real corpus max of 4,762), **zero errors anywhere**,
+  and the service health-checked between every cell. So the "8 workers OOMs the endpoint" reading
+  of attempt 2 is **not supported by a short burst** — at any tested size, including one larger
+  than the real maximum.
+  **But the probe does not rank the worker counts.** One wave per cell is a tiny sample and the
+  endpoint's own variance swamps the signal — at 1381 tokens, 1 worker (307 tok/s) *beat* 2 workers
+  (167) and was beaten by 4 (552); at 3497 tokens, 1 worker (410) beat 2 (122), 4 (252) and was
+  close to 8 (429). Measured tok/s:
+
+  | payload | 1 w | 2 w | 4 w | 8 w |
+  |---|---|---|---|---|
+  | 1381 | 307 | 167 | **552** | 550 |
+  | 3497 | 410 | 122 | 252 | **429** |
+  | 5521 | 99 | 167 | 393 | **455** |
+
+  At 8 workers the aggregate is flat at ~430–550 tok/s across all three sizes, which is the one
+  stable thing in the table. **Default set to 4**: it is statistically indistinguishable from 8 at
+  the median size where most parents sit (552 vs 550), it halves the concurrent in-flight footprint
+  (~19 MB per large per-token response) on a cluster shared with other students, and the only
+  observed failure was 8 workers under *sustained* load — which a burst probe cannot test. Raise it
+  only with evidence about sustained load.
+- **Method note worth keeping:** a concurrency probe answers "does a burst break it", which is not
+  the question a 60-minute run asks. Both probes here were burst-shaped; neither could have caught
+  a degradation that needs minutes of load to appear. If this matters again, the probe has to hold
+  the load for minutes and watch for the drift the run showed (10.8 s → 16.5 s per parent).
 - **Related and also not applied:** a **total-request deadline** (the §I16 open item). Attempt 2's
   21.5-minute silent window happened inside requests that never tripped a per-read timeout, so
   neither the retry nor any timeout bounded them. Combined with no checkpoint, one hung request can

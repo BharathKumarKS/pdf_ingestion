@@ -64,6 +64,16 @@ _POOLED_TIMEOUT = 120.0
 _TOKEN_TIMEOUT = 300.0
 _CONNECT_TIMEOUT = 10.0      # fail fast on an unreachable host instead of waiting out the read
 
+# TOTAL wall-clock budget for one request, which the read timeout above does NOT provide.
+#
+# httpx's read timeout is per READ OPERATION, not per request: a body that keeps trickling resets
+# the timer on every chunk, so a stalled-but-alive transfer can outlive any read timeout. Measured
+# cost of not having this — Step 8 attempt 2 sat SILENT for 21.5 minutes inside such requests
+# (last parent 07:12:05, first retry 07:33:35), and because no timeout ever fired, the retry above
+# had nothing to catch. So the body is read in chunks against a clock; see `_post_json`.
+_POOLED_DEADLINE = 300.0
+_TOKEN_DEADLINE = 900.0      # ~19 MB at the largest measured parent; 900 s is generous but bounded
+
 
 def mrl_slice(vec: np.ndarray, dim: int) -> np.ndarray:
     """Matryoshka truncation: take the first ``dim`` coordinates and re-normalise.
@@ -181,6 +191,7 @@ class ClusterDenseEmbedder:
             _TOKEN_TIMEOUT if token_embeddings else _POOLED_TIMEOUT,
             connect=_CONNECT_TIMEOUT,
         )
+        deadline = _TOKEN_DEADLINE if token_embeddings else _POOLED_DEADLINE
         client = self._client or httpx.Client(timeout=timeout)
         results: list[np.ndarray] = []
         try:
@@ -189,8 +200,8 @@ class ClusterDenseEmbedder:
                 payload: dict = {"model": self._model, "input": batch}
                 if token_embeddings:
                     payload["return_token_embeddings"] = True
-                resp = self._post_with_retry(client, payload, timeout)
-                items = resp.json()["data"]
+                body = self._post_with_retry(client, payload, timeout, deadline)
+                items = body["data"]
                 # The server returns `index`; honour it rather than trusting array order
                 # (same contract as ClusterColBERTEmbedder — a reordered batch would
                 # otherwise attach embeddings to the wrong texts, silently).
@@ -206,6 +217,37 @@ class ClusterDenseEmbedder:
                 client.close()
         return results
 
+    def _post_json(self, client, payload: dict, timeout, deadline_s: float) -> dict:
+        """POST and read the **whole** body under a wall-clock deadline.
+
+        ``timeout`` bounds one read operation; it does not bound the request. A response that
+        keeps trickling resets httpx's read timer on every chunk, so a stalled-but-alive transfer
+        can outlive any per-read timeout — Step 8 attempt 2 lost **21.5 minutes** that way, with
+        no timeout firing and therefore nothing for the retry to catch (§I16). Reading in chunks
+        and checking the clock is what actually bounds it.
+
+        The deadline is raised as ``httpx.ReadTimeout`` deliberately: it is a ``TransportError``,
+        so the retry above treats it as transient and re-issues the request on a fresh connection
+        rather than aborting the document.
+        """
+        import json as _json
+
+        import httpx
+
+        started = time.monotonic()
+        with client.stream("POST", self._url, json=payload, timeout=timeout) as resp:
+            resp.raise_for_status()
+            chunks: list[bytes] = []
+            for chunk in resp.iter_bytes():
+                if time.monotonic() - started > deadline_s:
+                    raise httpx.ReadTimeout(
+                        f"one request exceeded its {deadline_s:.0f}s total deadline "
+                        f"(per-read timeout was {timeout.read}s, which never fired)",
+                        request=resp.request,
+                    )
+                chunks.append(chunk)
+        return _json.loads(b"".join(chunks))
+
     @staticmethod
     def _retryable(exc: Exception) -> bool:
         """True when a repeat could plausibly succeed — see the retry policy above."""
@@ -219,8 +261,8 @@ class ClusterDenseEmbedder:
             return code == 429 or code >= 500
         return False
 
-    def _post_with_retry(self, client, payload: dict, timeout):
-        """POST with bounded, jittered backoff on transient failures.
+    def _post_with_retry(self, client, payload: dict, timeout, deadline_s: float) -> dict:
+        """POST with bounded, jittered backoff on transient failures; returns the parsed body.
 
         Raises the last error unchanged once the attempts are exhausted (or immediately for a
         non-retryable one), so a genuine misconfiguration still fails loudly and fast.
@@ -228,9 +270,7 @@ class ClusterDenseEmbedder:
         last: Exception | None = None
         for attempt in range(1, _RETRY_ATTEMPTS + 1):
             try:
-                resp = client.post(self._url, json=payload, timeout=timeout)
-                resp.raise_for_status()
-                return resp
+                return self._post_json(client, payload, timeout, deadline_s)
             except Exception as exc:  # noqa: BLE001 - re-raised below
                 last = exc
                 if attempt >= _RETRY_ATTEMPTS or not self._retryable(exc):

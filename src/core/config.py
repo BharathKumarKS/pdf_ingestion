@@ -87,12 +87,20 @@ class Settings(BaseSettings):
     parent_max_tokens: int = 5000        # Docling HybridChunker parent size (class-repo default)
     semantic_threshold: float = 0.8      # chonkie SemanticChunker breakpoint
     # Parents embedded concurrently. The late-chunk phase is ~100% waiting on the cluster
-    # (one per-token POST per parent, each with ~5 s of fixed overhead), so threads scale it
-    # almost linearly: measured 84 -> 597 tok/s from 1 to 16 workers on a 1,749-token payload
-    # (logs/p1/step8-run/probe_concurrency_knee.py). 8 is a deliberately conservative default
-    # — the knee was still rising at 16, but that was a short burst on a cluster shared with
-    # other students, and the same endpoint degrades under sustained load.
-    late_chunk_workers: int = 8
+    # (one per-token POST per parent, each with ~5 s of fixed overhead), so threads scale it.
+    #
+    # 4, not 8, and the reasoning is risk rather than throughput. The two-axis probe
+    # (`logs/p1/step8-run/probe_knee_by_size.py`) fired 1/2/4/8 workers at 1381/3497/5521 tokens
+    # and saw ZERO errors in all 12 cells — including 8 workers at 5521 tokens, above the real
+    # corpus max of 4,762. But it does NOT rank 4 against 8: one wave per cell is too small a
+    # sample and the endpoint's own variance swamps the worker signal (1 worker beat both 2 and 4
+    # at some sizes). Measured tok/s at 8 workers was 550 / 429 / 455 across the three sizes, and
+    # at 4 workers 552 / 252 / 393 — indistinguishable at the median size, where most parents sit.
+    # Since 4 halves the concurrent in-flight footprint (~19 MB per large per-token response) on a
+    # cluster shared with other students, and the only observed failure was 8 workers under
+    # sustained load, 4 is the defensible default. Raise it only with evidence that the service
+    # tolerates sustained load, not bursts. See IMPROVEMENTS.md §I18.
+    late_chunk_workers: int = 4
 
     # Chunking
     chunk_size: int = 512

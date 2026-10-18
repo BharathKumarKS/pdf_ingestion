@@ -241,13 +241,33 @@ def _flaky_handler(fail_times: int, exc_factory, calls: list):
     return handler
 
 
+class _TimeShim:
+    """Records ``sleep`` calls without touching the real ``time`` module.
+
+    The obvious form — ``monkeypatch.setattr("...cluster_embedder.time.sleep", fake)`` — resolves
+    the attribute path to the GLOBAL ``time`` module and patches ``time.sleep`` process-wide, so
+    every other sleeper in the test (including a deliberately slow response stream) silently
+    becomes a no-op. Replacing the module's own ``time`` binding keeps the blast radius at one
+    module, and ``__getattr__`` forwards everything else (``monotonic``, ...) to the real module.
+    """
+
+    def __init__(self, sink: list[float]) -> None:
+        self._sink = sink
+
+    def sleep(self, seconds: float) -> None:
+        self._sink.append(seconds)
+
+    def __getattr__(self, name):
+        import time as _time
+
+        return getattr(_time, name)
+
+
 @pytest.fixture()
 def no_sleep(monkeypatch):
     """Record backoff delays instead of sleeping them — the test must not wait ~14 s."""
     delays: list[float] = []
-    monkeypatch.setattr(
-        "src.pdf_ingestion.cluster_embedder.time.sleep", lambda s: delays.append(s)
-    )
+    monkeypatch.setattr("src.pdf_ingestion.cluster_embedder.time", _TimeShim(delays))
     return delays
 
 
@@ -363,6 +383,87 @@ def _is_token_request(request: httpx.Request) -> bool:
     import json
 
     return json.loads(request.content.decode()).get("return_token_embeddings") is True
+
+
+# ── Total-request deadline (§I16, the 21.5-minute silent window) ────────────
+
+class _SlowStream(httpx.SyncByteStream):
+    """A response body delivered in small pieces with a pause between each.
+
+    This is the shape that defeated every per-read timeout: each individual read is fast, so
+    httpx's read timer is reset on every chunk and never fires, no matter how long the transfer
+    takes in total.
+    """
+
+    def __init__(self, pieces: list[bytes], delay: float) -> None:
+        self._pieces = pieces
+        self._delay = delay
+
+    def __iter__(self):
+        import time as _time
+
+        for piece in self._pieces:
+            _time.sleep(self._delay)
+            yield piece
+
+
+def test_total_deadline_bounds_a_slow_drip(monkeypatch, no_sleep):
+    """A trickling body must be bounded by wall clock, not by a per-read timeout."""
+    import json
+    import time as _time
+
+    monkeypatch.setattr("src.pdf_ingestion.cluster_embedder._TOKEN_DEADLINE", 0.3)
+    body = json.dumps(
+        {"data": [{"index": 0, "embedding": [[0.1] * 1024]}]}
+    ).encode()
+    pieces = [body[i : i + 64] for i in range(0, len(body), 64)]
+
+    calls: list = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(200, stream=_SlowStream(pieces, 0.02))
+
+    emb = ClusterDenseEmbedder(
+        settings=_settings(), client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
+
+    t0 = _time.monotonic()
+    with pytest.raises(httpx.ReadTimeout, match="total deadline"):
+        emb.embed_documents_tokens(["hello world"])
+    elapsed = _time.monotonic() - t0
+
+    # Unbounded, this body needs ~6 s to trickle through. Four attempts x 0.3 s deadline.
+    assert elapsed < 3.0, f"the deadline did not bound the transfer (took {elapsed:.1f}s)"
+    assert len(calls) == 4, "a deadline breach is a TransportError, so it must be retried"
+    assert len(no_sleep) == 3, "and backed off between attempts"
+
+
+def test_deadline_does_not_touch_a_normal_response():
+    """The happy path must be unaffected — a deadline is not a new failure mode."""
+    import json
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content.decode())
+        data = [
+            {"index": i, "embedding": _unit(np.random.default_rng(i), (1024,)).tolist()}
+            for i in range(len(payload["input"]))
+        ]
+        return httpx.Response(200, json={"data": data})
+
+    emb = ClusterDenseEmbedder(
+        settings=_settings(), client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
+    out = emb.embed_documents(["one", "two"])
+    assert len(out) == 2 and out[0].shape == (1024,)
+
+
+def test_deadline_is_sized_per_path():
+    """Same reasoning as the read timeout: the per-token body is orders of magnitude larger."""
+    from src.pdf_ingestion import cluster_embedder as ce
+
+    assert ce._TOKEN_DEADLINE > ce._POOLED_DEADLINE
+    assert ce._TOKEN_DEADLINE >= 300.0, "a large parent must not be cut off on a healthy transfer"
 
 
 # ── Factory ────────────────────────────────────────────────────────────────
