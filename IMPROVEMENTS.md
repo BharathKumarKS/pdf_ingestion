@@ -1192,8 +1192,9 @@ and the §D13 ablation can read a rebuilt collection. No re-ingest was needed fo
 **The intent classifier was retrained at 1024d** (plan R-a) — 1,158 validated queries (250
 factual / 250 overview / 250 multihop / 408 visual), LogisticRegression, **96.6 % accuracy**
 on the 232-item held-out split (macro F1 0.96; the confusion is overview↔multihop, 4+2 of 232).
-The retired 768d model is preserved at `data/models/intent_classifier_768d.pkl.bak` (it is also
-still in git, `data/models/intent_classifier.pkl` being tracked). Until a retrain, the router
+The retired 768d model is preserved at `data/models/intent_classifier_768d.pkl.bak` — **note it is
+gitignored (`data/models/*`), so a fresh clone does not get it**; the tracked copy is in git at
+`git show 161e01b:data/models/intent_classifier.pkl`. Until a retrain, the router
 now **rejects** the stale classifier loudly and falls back to 1024d prototypes — both states
 are captured in the evidence.
 

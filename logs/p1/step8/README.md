@@ -32,6 +32,11 @@ Register: `IMPROVEMENTS.md` §E6 → "SWITCHED 2026-10-17"; new items §I12, §I
 | Suite | 361 pass / **4 pre-existing fail** / 6 skip |
 | ruff (changed-file set) | **140 before, 140 after** — no new findings |
 
+The retired 768d model is recoverable from git (`git show 161e01b:data/models/intent_classifier.pkl`).
+A convenience copy sits at `data/models/intent_classifier_768d.pkl.bak`, but `data/models/*` is
+gitignored (only `intent_classifier.pkl` is un-ignored) — so **a fresh clone does not get the
+`.bak`**. The tracked path is the git one.
+
 ## The pre-existing 4 (do not "fix" here)
 
 Confirmed by running the same two tests on a **clean `HEAD` worktree** (`git worktree add`), so

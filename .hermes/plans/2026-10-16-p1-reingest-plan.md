@@ -257,8 +257,8 @@ Closes item 1 above; the prerequisite for Step 8's measurement. No re-ingest nee
   independent reason the funnel could not read v2.
 - **R-a discharged:** the router's schema check now compares `n_features_in_` against
   `dense_dim`, prototypes come from the dense lane, and the classifier was **retrained at 1024d**
-  (`--train-only`, 1,158 queries, 96.6 % held-out accuracy). The retired 768d model is kept at
-  `data/models/intent_classifier_768d.pkl.bak`.
+  (`--train-only`, 1,158 queries, 96.6 % held-out accuracy). The retired 768d model is recoverable
+  via `git show 161e01b:data/models/intent_classifier.pkl` (the local `.bak` is gitignored).
 - **Deliberately partial:** the concept-graph lane keeps the retired 768d embedder because
   `concept_embeddings` is still 768d — registered as §I12, released by Step 9. `reembed_chunks.py`
   and `validate_embedders.py` likewise — §I13.

@@ -84,8 +84,10 @@
 > lost their hard-coded `using="dense_768"` (now resolved from the collection) — a second,
 > independent reason the funnel could not read v2. **R-a discharged:** the router's schema check
 > compares against `dense_dim`, its prototypes come from the dense lane, and the classifier was
-> **retrained at 1024d** (`--train-only`, 1,158 queries, **96.6 %** held-out accuracy; the 768d
-> model is kept at `data/models/intent_classifier_768d.pkl.bak`). **Deliberately partial:** the
+> **retrained at 1024d** (`--train-only`, 1,158 queries, **96.6 %** held-out accuracy). The 768d
+> model is recoverable from git (`git show 161e01b:data/models/intent_classifier.pkl`); a local
+> copy also sits at `data/models/intent_classifier_768d.pkl.bak` — **gitignored, so absent from a
+> fresh clone**. **Deliberately partial:** the
 > concept-graph lane still embeds with the retired 768d model because `concept_embeddings` is
 > still 768d (the UI passes it a second, `graph_vec`) — **§I12**, released by Step 9; likewise
 > `reembed_chunks.py` / `validate_embedders.py` — **§I13**. **Found and fixed on the way:** the
@@ -535,7 +537,7 @@ gates), with cost classes and re-ingest ordering: [`IMPROVEMENTS.md`](IMPROVEMEN
 | SQLite `chunks` | 5,048 — the 5,135−5,048 gap is **unexplained; re-measure, don't trust** |
 | Dense lane (query + `knowledge_base`) | **Qwen3-Embedding-0.6B, 1024d + 64d MRL** (`dense_model`/`dense_dim` in `config.py`), cluster `:8123`. The endpoint returns **unnormalised** vectors (norm ≈ 70–131) — normalised client-side for the pooled paths only. The query instruction IS applied (cos vs the same text as a passage = 0.8436) |
 | Legacy dense embedder | **Nomic 768d + 64d MRL** (`embedding_model`) — **retired from the query path and from `knowledge_base`** (2026-10-17, §E6). Still builds `derivative_artifacts` + `concept_embeddings` and `reembed_chunks.py` until Step 9 (§I12/§I13) |
-| Intent classifier | **Retrained at 1024d 2026-10-17** (`--train-only`, 1,158 queries, **96.6 %** held-out acc, macro F1 0.96). The router's schema check compares `n_features_in_` against `dense_dim`; a stale 768d model is rejected loudly → prototype fallback. 768d model kept at `data/models/intent_classifier_768d.pkl.bak` |
+| Intent classifier | **Retrained at 1024d 2026-10-17** (`--train-only`, 1,158 queries, **96.6 %** held-out acc, macro F1 0.96). The router's schema check compares `n_features_in_` against `dense_dim`; a stale 768d model is rejected loudly → prototype fallback. 768d model recoverable via `git show 161e01b:data/models/intent_classifier.pkl` (the local `.bak` is gitignored) |
 | Reranker | `BAAI/bge-reranker-v2-m3` |
 | Chunker | `chonkie.SentenceChunker` (class named `SemanticChunker`) |
 | Intent classifier (versions) | `LogisticRegression` on `dense_dim` features, pinned `scikit-learn~=1.9`, schema-checked at load |
