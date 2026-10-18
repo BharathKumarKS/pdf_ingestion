@@ -30,8 +30,8 @@ Generated from `data/eval_queries_v2.json` by `scripts/build_review_sheet.py` (6
 | id | query | labels | pages to open | verdict | notes |
 |---|---|---|---|---|---|
 | gold-003 | Which section number is titled 'Thermionic emission'? | 1 | 30 | | |
-| gold-025 | According to Einstein's modification of Newton's laws, what replaces the old \(m v\) as… | 18 | 298, 302, 317, 330, 344  (of 18 labelled) | | |
-| gold-033 | According to the passage, what mathematical function of time is the displacement of a m… | 8 | 187, 384, 430, 431, 445  (of 8 labelled) | | |
+| gold-025 | According to Einstein's modification of Newton's laws, what replaces the old \(m v\) as the conserved quantity? | 18 | 298, 302, 317, 330, 344  (of 18 labelled) | | |
+| gold-033 | According to the passage, what mathematical function of time is the displacement of a mass on a spring proportional to? | 8 | 187, 384, 430, 431, 445  (of 8 labelled) | | |
 | gold-040 | Which dial is associated with changing the stiffness of the spring? | 1 | 450 | | |
 | gold-052 | In Fig. 34-1, what does the point A represent? | 1 | 589 | | |
 | gold-067 | What term does the passage use to refer to the majority of molecules in a gas? | 9 | 131, 694, 713, 728, 771  (of 9 labelled) | | |
@@ -42,12 +42,12 @@ Generated from `data/eval_queries_v2.json` by `scripts/build_review_sheet.py` (6
 
 | id | query | labels | pages to open | verdict | notes |
 |---|---|---|---|---|---|
-| gold-008 | How did astronomers discover that stars are made of atoms of the same kind as those on … | 1 | 79 | | |
-| gold-027 | Why does the passage state that we look at the 'blob' from different points of view whe… | 13 | 285, 310, 320, 331, 606  (of 13 labelled) | | |
-| gold-038 | Why, according to the passage, does the force only need to fight friction to keep an ef… | 1 | 427 | | |
-| gold-062 | How many independent directions contribute to the total kinetic energy of a gas particl… | 6 | 698, 707, 708, 710, 711  (of 6 labelled) | | |
-| gold-085 | How does the compressibility of radiation influence the motion of a Foucault pendulum i… | 3 | 30, 490, 921 | | |
-| gold-097 | How does the energy-time uncertainty principle affect the determination of the average … | 3 | 118, 707, 831 | | |
+| gold-008 | How did astronomers discover that stars are made of atoms of the same kind as those on Earth? | 1 | 79 | | |
+| gold-027 | Why does the passage state that we look at the 'blob' from different points of view when moving at different velocities? | 13 | 285, 310, 320, 331, 606  (of 13 labelled) | | |
+| gold-038 | Why, according to the passage, does the force only need to fight friction to keep an efficient oscillator steady after it has started oscillating? | 1 | 427 | | |
+| gold-062 | How many independent directions contribute to the total kinetic energy of a gas particle, and what is the resulting total kinetic energy? | 6 | 698, 707, 708, 710, 711  (of 6 labelled) | | |
+| gold-085 | How does the compressibility of radiation influence the motion of a Foucault pendulum in a rotating reference frame? | 3 | 30, 490, 921 | | |
+| gold-097 | How does the energy-time uncertainty principle affect the determination of the average kinetic energy of molecules in an ideal gas? | 3 | 118, 707, 831 | | |
 
 ## overview (answerable)
 
@@ -55,12 +55,12 @@ Generated from `data/eval_queries_v2.json` by `scripts/build_review_sheet.py` (6
 
 | id | query | labels | pages to open | verdict | notes |
 |---|---|---|---|---|---|
-| ovw-006 | How does Feynman build up the concept of quantum probability amplitudes throughout Volu… · topic: Quantum Probability Amplitudes | 46 | 30, 527, 661, 674, 932  (of 46 labelled) | | |
-| ovw-009 | How does Feynman develop the kinetic theory of gases throughout Volume 1, connecting mi… · topic: Kinetic Theory of Gases | 127 | 31, 699, 730, 779, 849  (of 127 labelled) | | |
-| ovw-024 | How does Feynman develop the concept of rotational dynamics throughout Volume 1, linkin… · topic: Rotational Dynamics | 36 | 146, 344, 360, 369, 932  (of 36 labelled) | | |
-| ovw-027 | How does Feynman develop the concept of diffusion from the microscopic random motion of… · topic: Diffusion | 35 | 31, 697, 746, 773, 834  (of 35 labelled) | | |
-| ovw-029 | How does Feynman's treatment of color vision evolve throughout The Feynman Lectures on … · topic: Color Vision | 34 | 610, 619, 628, 639, 651  (of 34 labelled) | | |
-| ovw-047 | How does Feynman's treatment of the interaction of light with matter evolve throughout … · topic: Interaction of Light with Matter | 95 | 30, 535, 600, 677, 932  (of 95 labelled) | | |
+| ovw-006 | How does Feynman build up the concept of quantum probability amplitudes throughout Volume 1, from the early wave function formalism to the detailed treatment of interference and measurement, and what are the key insights he emphasizes in linking these amplitudes to observable phenomena? · topic: Quantum Probability Amplitudes | 46 | 30, 527, 661, 674, 932  (of 46 labelled) | | |
+| ovw-009 | How does Feynman develop the kinetic theory of gases throughout Volume 1, connecting microscopic particle dynamics to macroscopic observables, and how does he integrate this with the broader themes of thermodynamics, statistical mechanics, and experimental evidence presented in the book? · topic: Kinetic Theory of Gases | 127 | 31, 699, 730, 779, 849  (of 127 labelled) | | |
+| ovw-024 | How does Feynman develop the concept of rotational dynamics throughout Volume 1, linking torque, angular momentum, and conservation laws, and illustrating these ideas with examples ranging from simple rotating rods to complex systems like gyroscopes and planetary motion? · topic: Rotational Dynamics | 36 | 146, 344, 360, 369, 932  (of 36 labelled) | | |
+| ovw-027 | How does Feynman develop the concept of diffusion from the microscopic random motion of particles to the macroscopic diffusion equation throughout Volume 1, and in what ways does he integrate this development with his discussions of kinetic theory, thermodynamics, and statistical mechanics? · topic: Diffusion | 35 | 31, 697, 746, 773, 834  (of 35 labelled) | | |
+| ovw-029 | How does Feynman's treatment of color vision evolve throughout The Feynman Lectures on Physics, Volume 1, linking the physics of light, the anatomy of the eye, and the psychological aspects of color perception, and what key insights does the book provide about the interplay between these domains? · topic: Color Vision | 34 | 610, 619, 628, 639, 651  (of 34 labelled) | | |
+| ovw-047 | How does Feynman's treatment of the interaction of light with matter evolve throughout Volume 1, from classical electrodynamics to quantum descriptions, and what key experimental phenomena are used to illustrate these transitions? · topic: Interaction of Light with Matter | 95 | 30, 535, 600, 677, 932  (of 95 labelled) | | |
 
 ## visual (answerable)
 
@@ -68,12 +68,12 @@ Generated from `data/eval_queries_v2.json` by `scripts/build_review_sheet.py` (6
 
 | id | query | labels | pages to open | verdict | notes |
 |---|---|---|---|---|---|
-| vis-005 | Show me the graph that plots the fraction of heads versus the number of tosses N for a … | 1 | 130 | | |
-| vis-008 | Show me the diagram of a parabolic trajectory of a falling body launched with an initia… | 1 | 176 | | |
-| vis-012 | Show the diagram that illustrates the coordinate transformation between the stationary … | 4 | 214, 217, 218, 285 | | |
-| vis-013 | Show the diagram of the torque produced by a force, including the force vector, the poi… | 1 | 339 | | |
-| vis-020 | Show me the diagram of a thin lens with two positive radii, including the labels for th… | 1 | 477 | | |
-| vis-027 | Show me the diagram of the wavefronts of a wave traveling at an angle to the coordinate… | 1 | 604 | | |
+| vis-005 | Show me the graph that plots the fraction of heads versus the number of tosses N for a particular sequence of penny tosses. | 1 | 130 | | |
+| vis-008 | Show me the diagram of a parabolic trajectory of a falling body launched with an initial horizontal velocity, including axes labeled \(x\) and \(y\) and the parabola curve (Fig. 8‑4). | 1 | 176 | | |
+| vis-012 | Show the diagram that illustrates the coordinate transformation between the stationary system and the moving system (the primed and unprimed coordinate axes) used to demonstrate that Newton’s laws retain the same form in both frames. | 4 | 214, 217, 218, 285 | | |
+| vis-013 | Show the diagram of the torque produced by a force, including the force vector, the point of application, the lever arm, and the angle between the force direction and the lever arm. | 1 | 339 | | |
+| vis-020 | Show me the diagram of a thin lens with two positive radii, including the labels for the lens surfaces and the two positive radii of curvature. | 1 | 477 | | |
+| vis-027 | Show me the diagram of the wavefronts of a wave traveling at an angle to the coordinate axes, as illustrated in Fig. 34-11. | 1 | 604 | | |
 
 ## negatives (must be unanswerable)
 

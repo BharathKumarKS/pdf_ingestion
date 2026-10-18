@@ -19,6 +19,11 @@ Design decisions (pre-registered in .hermes/plans/2026-10-16-p0-9-5-verification
   three evenly spaced pages are listed — over-labelling from a book-wide scan shows up at
   the edges of a label set.
 * **Deterministic**: fixed per-stratum seeds, so a re-run reproduces the same sample.
+* **Queries appear verbatim — never truncated.** The reviewer's job is to decide whether
+  the listed pages support the query, and a query cut mid-clause cannot be judged. Long
+  cells make the raw table wide; that is the correct trade for an artifact whose only
+  consumer is a human reading it. (Only the pipe/newline normalisation in ``_cell``
+  remains, because a raw ``|`` would break the row and the scorer's column split.)
 
 Usage:
     uv run python scripts/build_review_sheet.py                 # 6 per stratum = 30
@@ -58,10 +63,18 @@ def _pages_to_check(pages: list[int]) -> list[int]:
     return [pages[i] for i in idx]
 
 
-def _cell(text: str, limit: int = 88) -> str:
+def _cell(text: str, limit: int | None = None) -> str:
+    """Collapse newlines and escape pipes so the text survives one table cell.
+
+    ``limit`` is off by default: the reviewer judges whether the labelled pages
+    support the query, which is impossible against a query truncated mid-clause
+    (over half the v2 queries run past 88 chars, the longest to 405).
+    """
     text = " ".join(str(text).split())          # collapse newlines
     text = text.replace("|", r"\|")             # keep the table intact
-    return text if len(text) <= limit else text[: limit - 1] + "…"
+    if limit is not None and len(text) > limit:
+        return text[: limit - 1] + "…"
+    return text
 
 
 def main() -> int:
@@ -144,7 +157,7 @@ def main() -> int:
                 labels_cell = str(len(pages))
             query_cell = _cell(q.get("query", ""))
             if q.get("topic"):
-                query_cell += " · topic: " + _cell(q["topic"], 34)
+                query_cell += " · topic: " + _cell(q["topic"])
             out.append(f"| {q['id']} | {query_cell} | "
                        f"{labels_cell} | {pages_cell} | | |")
         out.append("")
