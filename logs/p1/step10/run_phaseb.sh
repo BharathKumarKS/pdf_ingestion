@@ -12,7 +12,10 @@
 # once already and made Step 8 attempt 3 run at the wrong worker count while everyone believed 4.
 set -uo pipefail
 
-REPO="/Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion"
+# Derived from the script's own location, NOT hardcoded: this harness has to run on the GPU VM too,
+# and a baked-in Mac path made it `exit 1` there before it did anything (logs/p1/step10/ is three
+# levels below the repo root).
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$REPO" || exit 1
 
 # Hermes exports PYTHONPATH pointing at its own python3.14 site-packages; left in place it shadows
