@@ -32,6 +32,43 @@ Last updated: 2026-10-17
 - **Cost:** ~82k embeddings locally on CPU — likely tens of minutes to hours.
 - **Note:** do A1 first if doing both, so this indexes the cleaned card set once.
 
+### A3. Card volume vs quality — is 8 types × N items per chunk the right shape? (owner question, 2026-10-18)
+- **What:** the owner asked whether we need this many cards per page, or whether we should generate
+  **fewer, higher-quality** cards rather than volume. Registered here so it is decided on evidence
+  before Phase 2 is re-run for the rebuilt index.
+- **Measured 2026-10-18 (SQLite `cards`, the deployed document `6d55c52b`):** **82,164** cards for
+  **5,048** chunks = **16.3 cards/chunk**; the 5,048 chunks carry **756 distinct pages**, so
+  **≈109 cards/page**. By type — `question` **32,002** (39 %), `factoid` **31,604** (38 %),
+  `objective` 5,018, `misconception` 4,340, `summary` 3,603, `definition` 2,606, `formula` 1,534,
+  `example` 1,457. The two multi-item types are **77 %** of the set. (Owner's figure of "5 cards per
+  page" does not match the measurement — recorded so the note is grounded.)
+- **The per-type rate is NOT out of band.** `question` = 32,002/5,048 = **6.3 per chunk** and
+  `factoid` = 6.3 per chunk. The course's stated band is **3–8 QA pairs per chunk**
+  (`Week_Plan/week-4-summer-lesson-plan.pdf`, `Week_Plan/week-10-summer-lesson-plan.pdf`,
+  `Slides/week_10_the-library-of-many-catalogues.pdf`). So the volume comes from **8 types × multiple
+  items each**, not from one type over-producing.
+- **What the course actually mandates (SupportVectors materials, repo root):**
+  - **QA pairs — 3–8 per chunk**: *"the only artifact that puts a query-shaped object in the index:
+    question as vector, answer in payload"*. ⚠️ That is **exactly §F1**, so §F1 is a
+    course-compliance fix, not a preference.
+  - **Factoids/propositions** — Dense X: *"self-containment, an **nli faithfulness filter**, a **cap
+    per chunk**"*. The project has **no faithfulness gate on cards at all** — nothing checks a card is
+    actually supported by its source chunk.
+  - **The monographic principle** (Otlet, week 9/10): **one atomic fact per card**; a card is
+    **typed**; progressive disclosure — *"a metadata side … and an information side"*.
+  - **Summaries at three altitudes** (chunk / section / document / corpus) — RAPTOR's job here.
+  - **Method, stated twice:** *"every index must earn its place through ablation"* (week 10), and
+    *"Run both over a fifty-chunk sample. Then do the thing engineers skip and should not: **read the
+    artifacts**"* (week 4 lab). So this is settled by measuring retrieval and eyeballing output — not
+    by argument.
+- **Hypotheses to test (not yet decided):** (a) cap items per chunk per type; (b) drop or merge the
+  low-yield types (`example` 1,457 and `formula` 1,534 are ~2 % each) — note the course names only
+  factoids, QA pairs and summaries; (c) add the course's **faithfulness filter** as a card gate;
+  (d) measure retrieval with a reduced set vs the full set (an ablation, per the course's own rule).
+- **⚠️ requires a Phase 2 re-run** (cards are generated, not indexed — the policy change is free, the
+  regeneration is not). Order after §A1, and before the §A2 DA re-index so DA indexes the final set.
+- **Related:** §A1, §A2, §F1, §F2, §I15. **No re-ingest of Phase 1.**
+
 ---
 
 ## B. UI / UX backlog — combine into one pass
@@ -708,6 +745,41 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   still uses the legacy path until Step 7; the funnel/label numbers move only after the Step 8
   re-ingest, and §D13's reranker ablation is the first thing that reads them.
 
+**Update 2026-10-19 (P1 Step 10 §3a–§3c) — the fix is verified ON THE DEPLOYED INDEX, and the
+"labels must be re-derived" premise turned out to be backwards.**
+
+Step 6 verified the code path *before* Step 8 deployed it. §3a re-ran the **same** measurement (the
+helpers are literally imported from `logs/p1/step6/probe_page_numbering.py`, so the two cannot
+drift) against what is actually in SQLite — `chunks.page_number` per document — and it reproduces
+Step 6 **chunk for chunk**:
+
+| document | sampling | n | offset 0 | offset −1 | other |
+|---|---|---|---|---|---|
+| `7ba61432` (new, deployed) | all children | 3796 | **2150 / 2151 = 0.9995** | 1 | — |
+| `7ba61432` (new, deployed) | first per page | 933 | **547 / 547 = 1.0000** | 0 | — |
+| `6d55c52b` (old, deployed) | all chunks | 5048 | 1888 / 2639 = 0.7154 | 333 | +1: 322, +2: 73, +3: 20, −2: 3 |
+| `6d55c52b` (old, deployed) | first per page | 757 | 230 / 423 = 0.5437 | 192 | +1: 1 |
+
+0 chunks without a `page_number`; 933 distinct pages. **The deployed index speaks PDF-page
+coordinates.** Evidence: `logs/p1/step10/{probe_deployed_page_numbering.py,a3a_probe.log,
+page_numbering_deployed.json}`.
+
+⚠️ **A verifier bug worth recording** (it produced a spurious FAIL on the first run): the probe
+applied the "offset 0 ≥ 99 %" floor to **both** documents. The old document is the *baseline*, not
+the thing under test — its ±1 cluster is the defect this fix removed, so asserting on it can only
+ever fail. Fixed: the floor is asserted on the new document only; the old one is reported.
+**Lesson: a verifier that asserts on the control as well as the treatment will always fail.**
+
+**The premise correction.** Step 10 §3 said "the labels were built against the old DB page numbering
+… so the labels must be re-derived against the new path". The truth is the reverse: the fix moved
+the **index** into the labels' coordinate system. `expand_gold_labels.py` labels come from the fitz
+scan, which is *already* PDF-page indexed — the same key the new index now emits. So the scan
+component needs no re-derivation, and §D4's own conclusion ("no edit can remove the fuzz") stands:
+the fuzz was removed by the index change, not by a label edit. What remained was a small,
+quantifiable residual — see §D6's 2026-10-19 update for the 4 unreachable generator pages, and
+`logs/p1/step10/{audit_gold_labels.py,a3b_audit.log,label_audit.json}` for the provenance split
+(generator vs scan) per lane. No re-ingest.
+
 ### D5. `generate_negatives.py` verifies at stride 15 — weaker than the Session 3b re-scan
 - **What:** `generate_negatives.py` accepts a candidate if its own two-pass scan (stride 15,
   then ±8 dense) finds no YES page. But a near-miss fact can sit on a page the stride never
@@ -753,6 +825,40 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   when sampling — exactly as `image_marker_pages` already does for the visual path.
 - **Related:** §D4 (DB↔PDF numbering) is a *different* label-precision defect; both are label
   validity, neither is a retrieval problem.
+
+**Update 2026-10-19 (P1 Step 10 §3b–§3c) — the deferred label edit is DONE, and the 4 pages turned
+out to be a §D4 defect wearing a §D6 costume.**
+
+`logs/p1/step10/audit_gold_labels.py` measured the provenance of every answerable label (the
+generator page is recorded in `calibration_note` in **three** formats — single-chunk, multi-page,
+and two kinds that carry no generator page at all; a parser that handles only the first silently
+under-reports multihop):
+
+| lane | queries | label pages | generator pages in labels | scan-only |
+|---|---|---|---|---|
+| factual | 53 | 506 | 53 (all single-chunk) | 453 |
+| multihop | 40 | 175 | 86 (17 single-chunk + 23 **multi-page**) | 89 |
+| overview | 40 | 2954 | 0 (topic-derived by construction) | 2954 |
+| visual | 33 | 47 | 0 (the note is traceability only, by design) | 47 |
+
+- **All 4 unreachable pages are MULTI-PAGE generator pages in old-DB numbering** — `gold-081`
+  `[23, 172, 627]`, `gold-087`/`gold-088` `[24, 169, 274]`, `gold-094` `[22, 108, 474]`. The
+  multi-page generator path never went through the scan expansion that re-pointed the single-chunk
+  ones, so its pages kept the old numbering — and page 22–24 sits below `min_content_page` 30.
+  **This is §D4's defect surfacing as a §D6 one**, not a generator sampling bug.
+- **Fix applied (option B, owner-approved):** `build_gold_v2.py` gained `_clamp_unretrievable()`,
+  which removes *individual* pages outside `[lo, hi]` from entries that survive the existing
+  whole-query drop. It is a clamp in the **assembler**, not an edit to the artifact — so a rebuild
+  re-applies it and a change to `max_content_page` propagates automatically. Rebuilt
+  `data/eval_queries_v2.json`; verified the diff is **exactly** those 4 pages and every other entry
+  is byte-identical.
+- **Measured effect:** unreachable label pages **4 → 0**; multihop label pages 175 → 171; text-lane
+  achievable maximum **0.9910 → 1.0000**. The §D9 ceiling is **unchanged** (0.8016 / overview
+  0.3992 — reproduced exactly by the audit), because §D9's ceiling is the top-K cut, a different
+  quantity from a page that cannot be retrieved at all. Both are now reported separately.
+- **Guard:** `tests/test_gold_schema.py` 7 passed after the rebuild.
+- **Evidence:** `logs/p1/step10/{audit_gold_labels.py,a3b_audit.log,label_audit.json,a3c_rebuild.log}`.
+  No re-ingest.
 
 ### D7. `required_n.py` silently falls back to the v1 query file
 - **What:** `--queries` defaults to `data/eval_queries.json` — **v1**, 30 entries, ids `vec-NNN`.
@@ -885,6 +991,161 @@ Rebuild the eval set; **everything else is unmeasurable without it**.
   extending until an arm wins and 0.011 needs n≈934. Keep the **factual-lane** loss (−0.0469, resolved)
   as the hypothesis to re-check in the ablation.
 - **Evidence:** `IMPROVEMENTS.md` §D2/§D9; pre-registration "Step 4 outcome" + "Session 4b re-run".
+
+**Update 2026-10-19 — the post-re-ingest ablation RAN. Still unresolved, but the noise floor halved.**
+
+Ran on the rebuilt index (`knowledge_base_v2`, 3,796 points, doc `7ba61432`) after A4+A5 cleared the
+§D14 gate. Harness `logs/p1/step10/run_step10_v2.sh`; verifier `logs/p1/step10/check_ab_arms.py`
+(**exit 0**). Both arms n=**133**, same collection, same HyDE cache (`logs/p0-9/v2_hyde.json`), same
+dense slot `dense_1024`. **§D10 stability: `B5b_retriever_top20` moved on 0 of 133 queries** — the
+A/B is valid, not void.
+
+- **Result: Δ = +0.0099 (rerank − no-rerank), SD_d 0.1411, SE 0.0122, 95 % CI [−0.0140, +0.0339] →
+  UNRESOLVED.** 33 worse / 36 better / 64 identical. The sign flipped from the old index's −0.0101,
+  which is what an effect that size inside this CI looks like.
+- **The real change is the variance, not the mean.** SD_d fell **0.2315 → 0.1411 (−39 %)** and the
+  required N for the pre-registered δ=0.05 fell **169 → 63** (`required_n.py`). n=133 now *exceeds*
+  the pre-registered requirement, so the test is no longer underpowered for δ=0.05 — the observed
+  0.0099 would still need N≈1,600, i.e. the effect is small, not merely unmeasured.
+- **The §D13 hypothesis did NOT reproduce.** The factual-lane loss (−0.0469, *resolved* on the old
+  index) is now Δ=**+0.0026**, CI [−0.0440, +0.0493] → **unresolved**. The re-ingest removed it, so
+  the "the reranker hurts factual" claim does not carry over to the rebuilt index. All three
+  per-type subgroups are unresolved (factual +0.0026 / multihop +0.0309 / overview −0.0013).
+- **Verdict per the pre-registered rule: UNRESOLVED → keep the reranker enabled, do not extend the
+  query set.** That is §D13's own fallback, unchanged; the rule did not need to be re-invented.
+- **Ceiling (§D9):** R@20 raw rerank 0.4153 vs no-rerank 0.4054 → ÷0.8016 = **0.5181 vs 0.5057**.
+  ⚠️ **Not comparable to §D12's 0.465.** §2 ran *before* Phase 2 (§0 Order A), so the candidate pool
+  is 3,796 chunks with **no RAPTOR nodes**; §D12's number was measured on a pool that had them.
+  Only the *paired delta* is meaningful here.
+- **Evidence:** `logs/p1/step10/run_step10_v2.log`, `v2_rerank.json`, `v2_norerank.json`,
+  `ab_verifier.log`, `ab_verdict.json`. No re-ingest.
+
+### D14. NEW 2026-10-18 (found pre-flighting Step 10) — the preflight gate cannot pass for a re-ingested collection
+- **What:** `scripts/preflight.py` requires Memgraph **unconditionally** and compares the graph's
+  chunk ids against `cfg.qdrant_collection` — the collection **under test**. Both fail for Step 10's
+  target `knowledge_base_v2`, for two independent reasons.
+- **Measured (2026-10-18 16:24):** `QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2 uv run
+  python scripts/preflight.py` → **exit 1, 2 BLOCKER(S)**, both graph:
+  `memgraph` FAIL (`localhost:7687` connection refused — the Docker daemon is not running) and
+  `graph.matches-qdrant` FAIL (cascades). **Every other check PASSED**: `qdrant.knowledge_base_v2`
+  3,796 points (`colbert,dense_1024,dense_64`), `intent-classifier` `n_features_in_=1024` == the
+  dense lane, all four endpoint probes HTTP 200, and a real completion
+  (`openai/gpt-oss-20b -> 'OK'`). Log: scratch `preflight.txt`.
+- **Why it matters — cause 1 (local service):** Memgraph is a local
+  `docker compose --profile phase3` service (ARCHITECTURE §11); the cluster hosts do not expose 7687
+  (probed 2026-10-18). The **funnel ablation never touches the graph** — `funnel_boundary_recall.py`
+  and `required_n.py` contain no Memgraph reference — so the gate is stricter than the measurement it
+  guards.
+- **Why it matters — cause 2 (structural, and the real defect):** even with Memgraph up, the check
+  **cannot** pass against a fresh collection. Chunk ids are `str(uuid.uuid4())` per ingest
+  (`src/pdf_ingestion/chunker.py:147`), so a graph built from the *previous* ingest shares no ids with
+  `knowledge_base_v2`; the check would report ~100 % dangling. The graph is rebuilt in Phase 3 /
+  Step 9, which the Step 10 plan §5 **defers by decision**. Consequence: the graph lane silently drops
+  for multihop queries in `evaluate_rag.py` (`try/except` at ~line 211 logs a warning and continues) —
+  exactly the §D11 class of failure the preflight exists to catch, now turned into a permanent
+  false-positive blocker.
+- **Fix (not done — direction is an owner decision):** (a) start Memgraph
+  (`docker compose --profile phase3 up -d memgraph`; the `--profile phase3` flag is required or it
+  silently does nothing); (b) **scope** the graph↔Qdrant check to the collection the graph was built
+  from, or skip it with an explicit "graph lane not measured" note when the collection under test is
+  not the graph's — otherwise a re-ingest transition can never pass the gate; (c) rebuild the graph
+  against the new collection — that is **Step 9**, deferred. (b) is the durable fix; (a) alone does
+  **not** clear the gate.
+- **No re-ingest.**
+
+**Update 2026-10-18 (after starting Memgraph — cause 1 cleared, cause 2 confirmed).** Docker Desktop
+was started and `docker compose --profile phase3 up -d memgraph` brought `synapse_memgraph` up. The
+preflight was re-run against `knowledge_base_v2`: **`memgraph` now PASSES** (`docs=1 chunks=5051
+concepts=7815`) but **`graph.matches-qdrant` FAILS with 5,051/5,051 graph chunk ids absent from Qdrant
+(100.0%)** → still exit 1, 1 BLOCKER. Cause 2 is therefore confirmed as the only remaining blocker, and
+**starting Memgraph did not clear the gate** — exactly as predicted above. Two further defects found
+in the same pass:
+- **The compose healthcheck is broken.** `docker-compose.yml` tests the container with `mg_client`,
+  which **does not exist** in `memgraph/memgraph:2.18.1` (`exec: "mg_client": executable file not found
+  in $PATH`), so the container reports **`unhealthy` permanently while serving Bolt on 7687 normally**
+  (v2.18.1, TCP open, driver connects). Anything that gates on container health would be misled.
+  `preflight.py` is not affected — it probes Bolt directly.
+- **The preflight's printed remedy is wrong here.** It advises
+  `clean_stale_graph.py --qdrant-host <host> --dry-run`, but that script's source of truth is
+  `cfg.qdrant_collection` — against `knowledge_base_v2` **every** graph document looks stale, and its
+  own no-overlap guard would **refuse** (exit 2) rather than delete. The graph is not stale: it is the
+  correct graph for the **deployed** `knowledge_base` (5,135 points, plan R1 — untouched). Do **not**
+  run it against `knowledge_base_v2`, and do not pass `--force`.
+- **Net:** the gate can only pass via fix **(b)** (scope the graph↔Qdrant check to the collection the
+  graph was built from, or skip it with an explicit "graph lane not measured" note) or fix **(c)**
+  (rebuild the graph = Step 9). Starting Memgraph was necessary but not sufficient.
+
+**Update 2026-10-19 — fix (c) was TAKEN; the gate now PASSES (exit 0).**
+
+Owner decision 2026-10-18: rebuild the graph (fix (c) — Step 9's *graph half* only; cards / DA /
+ColPali stayed deferred). Phase A built doc `7ba61432`'s graph (A3, 16 h 25 m — §I23). Then:
+
+- **A4 — `clean_stale_graph.py` with `QDRANT_COLLECTION=knowledge_base_v2 --qdrant-host 10.0.10.65`.**
+  Dry-run (read-only) showed exactly **1** stale document (`6d55c52b`, 5,051 chunks, 757 pages, 7,815
+  touched concepts) and `7ba61432` "keep (has vectors)"; the no-overlap guard did **not** fire, i.e.
+  graph and Qdrant genuinely overlap and the run was pointed at the right store. Applied with `--yes`,
+  **never `--force`**: removed **1 document / 5,051 chunks / 757 pages / 4,664 orphaned concepts**
+  (the other 3,151 touched concepts survive because `7ba61432`'s chunks still mention them —
+  `Concept` nodes are MERGEd by name).
+- **Measured before → after: `graph.matches-qdrant` 5,051/5,051 absent (100.0 %) → 0/3,796 absent
+  (0.0 %).** Memgraph now `docs=1 chunks=3,796 pages=933 concepts=7,834 edges=73,336`, density
+  **2.064/chunk** (old doc 1.547; floor 0.774). Old-document residue: **0 chunks / 0 pages**.
+- **A5 — `preflight.py` → exit 0, every check PASS.**
+- ⚠️ **The consequence predicted above is now realised, not hypothetical:** the deleted graph was the
+  **deployed** `knowledge_base`'s (5,135 points). The deployed app's multihop lane has **no graph**
+  until cutover. The Qdrant collection itself is untouched (plan R1). This was the accepted price of
+  fix (c) and it was accepted explicitly, with the reasoning that G3 (the additive build) had already
+  degraded that lane — `graph_search` filters on tenant, not `document_id` — so G4 is the repair.
+- **Fix (b) is still the durable fix and is still NOT done.** A future re-ingest recreates this exact
+  situation: the graph will again hold only the previous document, `graph.matches-qdrant` will again
+  report ~100 % dangling, and the gate will again fail. Fix (c) treats this instance; (b) treats the
+  class.
+- **Correction to the note above:** the earlier advice "Do **not** run `clean_stale_graph.py` against
+  `knowledge_base_v2`" applied while the graph held *only* the old document — at that point every
+  graph document was genuinely the deployed one's and deleting would have destroyed live data. After
+  the rebuild (A3) the old document is genuinely superseded, so running it against
+  `knowledge_base_v2` is correct. The guard's refusal behaviour is unchanged: it refuses on **zero**
+  overlap, which is the signature of the wrong Qdrant, not of a legitimate multi-document cleanup.
+- **Evidence:** `logs/p1/step10/{a4_dryrun.log,a4_apply.log,a4_verify.log,graph_after_cleanup.json,
+  a5_preflight.log}`. No re-ingest.
+
+---
+
+### D15. P1 Step 10 §3d — retrieval-only run on the rebuilt index: a SMOKE TEST, not a measurement (2026-10-19)
+
+- **What:** `scripts/evaluate_rag.py --query-file data/eval_queries_v2.json --retrieval-only
+  --skip-visual` on `knowledge_base_v2` (133 text queries), after the §3c label clamp.
+  `data/eval_results/p1-step10-retrieval-only_2026-10-20_0411.md`, exit 0, 200/200 processed.
+- **Result:** R@20 **0.452** · Hit@20 0.910 · MRR 0.728 · NDCG@20 0.508 · R@100 0.626 ·
+  abstention **28/34 = 0.824**. Per lane R@20: factual 0.570 · multihop 0.543 · overview 0.206.
+- **Ceiling-normalised against §D9** (text 0.8016 / factual 0.9557 / multihop 1.0000 / overview
+  0.3992) versus §D12's recorded baseline:
+
+  | lane | §D12 raw | §3d raw | Δ raw | §D12 ÷ceil | §3d ÷ceil | Δ ÷ceil |
+  |---|---|---|---|---|---|---|
+  | text (all 133) | 0.465 | 0.452 | −0.013 | 0.5801 | 0.5639 | −0.0162 |
+  | factual | 0.564 | 0.570 | +0.006 | 0.5901 | 0.5964 | +0.0063 |
+  | multihop | 0.619 | 0.543 | −0.076 | 0.6190 | 0.5430 | −0.0760 |
+  | overview | 0.178 | 0.206 | +0.028 | 0.4459 | 0.5160 | +0.0701 |
+
+- ⚠️ **These are NOT comparable to §D12, and the run is deliberately labelled a smoke test.** Four
+  independent differences, each sufficient on its own:
+  1. **The DA lane is absent** — dead on every query (§I12 update: 768-vs-1024). §D12's DA lane was
+     live. This is one fewer lane than §D12 had, in the recall direction.
+  2. **Retrieval-only** — §D12 measured abstention with generation available (a declining answer
+     counts); here abstention is score-threshold-only, so the **0.824 vs 0.500** jump is a *mode*
+     difference, not a quality improvement. Do not read it as progress.
+  3. **Index composition** — v2 is 3,796 chunks with no RAPTOR nodes; the old index was 5,135
+     (5,051 chunks + 84 RAPTOR).
+  4. **§3c's label clamp** landed between the two, moving the achievable maximum (0.9910 → 1.0000)
+     but not the §D9 ceiling.
+- **What it *is* good for:** it proves the retrieval path runs end-to-end on the rebuilt index and
+  produces a complete report — the §D11 class of failure (rc=0 with an empty report) did not recur.
+  It is also the first run to expose the dead DA lane, which is its most valuable output.
+- **The authoritative run is deferred to Phase E**, per the Step 9 plan's §4 and the owner's
+  decision (2026-10-19) — after Phase B/C/D, when DA / visual / graph are all about v2.
+- **Evidence:** `logs/p1/step10/a3d_retrieval_only.log`;
+  `data/eval_results/p1-step10-retrieval-only_2026-10-20_0411.md`. No re-ingest.
 
 ---
 
@@ -1587,6 +1848,38 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   the text corpus.
 - **Not blocking Step 10.** The funnel and the reranker ablation live entirely in the text lane.
 
+**Update 2026-10-19 (P1 Step 10 §3d) — measured: the claim "no silent degradation" holds for the UI
+but NOT for `evaluate_rag.py`, where the DA lane is dead on every query.**
+
+The Step 10 §3d retrieval-only run logged, for **every** query:
+
+    WARNING | store:search_da:604 - DA search failed (Unexpected Response: 400 (Bad Request)
+    b'{"status":{"error":"Wrong input: Vector dimension error: expected dim: 768, got 1024"}}'),
+    skipping DA lane
+
+- **Why:** `store.search_da(query_vector, …)` queries `derivative_artifacts` with the **caller's**
+  vector. `streamlit_app.py` avoids this by embedding a second 768d vector for the graph lane — that
+  is what makes the "no silent degradation" claim true *there*. `evaluate_rag.py` has no such second
+  vector: it passes the dense-lane 1024d vector straight in, so the query is rejected on every call
+  and `search_da`'s `except Exception` returns `[]`. **The DA lane contributes nothing to any
+  `evaluate_rag.py` number**, and nothing in the report says so — the only trace is a WARNING line
+  per query in the log.
+- **Consequence for the record:** every `evaluate_rag.py` measurement taken after the 2026-10-17
+  query-side switch (Step 7b, §E6) has had **one fewer lane than it appears to**. §D12's baseline
+  (2026-10-16) predates that switch, so its DA lane *was* live — one more reason §D12 and any later
+  run are not like-for-like. Counted in the §3d run: **152 DA-lane skips** across the 166 non-visual
+  queries.
+- **Why the preflight does not catch it:** `preflight.py` passes `qdrant.derivative_artifacts` on a
+  **point count** alone (81,837). It never issues a query against the lane, so a lane that cannot be
+  called at all still reads PASS. A dimension-compatibility probe per named-vector collection would
+  have caught this — worth folding into the §I12 fix.
+- **Fix:** the same one §I12 already names — Phase 3's re-index moves `derivative_artifacts` and
+  `concept_embeddings` to `dense_dim` in one pass. Until then, any `evaluate_rag.py` run must be
+  labelled "DA lane absent".
+- **Evidence:** `logs/p1/step10/a3d_retrieval_only.log` (the WARNING lines);
+  `data/eval_results/p1-step10-retrieval-only_2026-10-20_0411.md` (the report, which does not
+  mention the missing lane). No re-ingest.
+
 ### I13. NEW 2026-10-17 (found switching the query side, §E6) — two scripts still write/validate the retired 768d model
 
 - **What:** after the switch, `get_embedder` (the retired local Nomic embedder) is still called by:
@@ -1732,7 +2025,8 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   per-parent checkpoint: a failure at parent 340 of 341 discards the whole document, because
   `save_document` is the only write point. The retry and the deadline make that much less likely
   (two independent failure shapes are now handled) but they do not make it cheap. Registered, not
-  claimed fixed. **⚠️ This is now the single most valuable remaining fix — see §I19.**
+  claimed fixed. **⚠️ This was the single most valuable remaining fix — see §I19 (built
+  2026-10-18) and §I19a (in attempt 5, the run it was built for, it hit nothing).**
 
 ### I19. NEW 2026-10-18 (found by Step 8 attempt 3) — the ingest has no checkpoint, so 339/341 parents of finished work can be discarded by one unreachable request
 
@@ -1808,6 +2102,69 @@ Its own header declares it SupportVectors IP, not for reuse or sharing. Not impo
   isolation it does not, so that observation is not relied on. **Two of six findings were false,
   one was a non-issue, and none was a defect in the shipped code** — which is the same shape as the
   previous round and is why reviewer output is treated as candidate defects, not verdicts.
+
+#### I19a. NEW 2026-10-18 (found by Step 8 attempt 5) — the cache hit NOTHING in the run it was built for: a digest-width change with no schema bump left every entry permanently unmatched
+
+- **What:** attempt 5 logged `Late-chunk cache: 341 hits / 0 misses / 341 written (key
+  2ec020b785942cf2)` and then **rejected all 341 entries** — one
+  `Late-chunk cache: entry for parent N does not match the current children — re-embedding` warning
+  per parent, 341 of them, and the full **36.1-minute** late-chunk phase re-embedded from scratch.
+  The run that §I19's cache was built for is the one run where it delivered **zero** benefit.
+- **Root cause, measured.** Commit `f0098a1` widened the per-child digest `_text_sha` from
+  `sha1(text)[:16]` to `[:32]` — a change to the cache's **identity function** — while leaving
+  `_CACHE_SCHEMA_VERSION` at `1`. So the old entries stayed *reachable*: they sit in the same
+  fingerprint directory the current code computes, are read successfully by `get()`, and can never
+  compare equal, because `rebuild()` compares a 32-char digest against a stored 16-char string.
+  - Why attempt 4's entries are in the *new* directory: attempt 4 launched at **11:26:08** from a
+    working tree mid-edit — the 9 fingerprint fields and `schema=1` were already on disk, the
+    widening was not — and imported that half-edited module. It wrote its entries at 11:40–11:51.
+  - Evidence: the live directory held **341** entries in two vintages — ids **0–215 `<U32`**
+    (attempt 5, 12:19 onward) and **216–340 `<U16`** (attempt 4, 11:40–11:51). Recomputed for the
+    run's own config, `fingerprint()` returns `2ec020b785942cf2` exactly, so both vintages resolve
+    to one directory. 125 legacy entries remain on disk, unreachable by construction.
+- **Why it matters beyond the wasted 36 minutes:** the guard and the defect shipped in the **same
+  commit**. `_CACHE_SCHEMA_VERSION` exists precisely for "a CODE change that alters the children or
+  the vectors, even if no config value does" — and the change that broke the cache was a widening
+  of the digest, which is that case. A guard introduced alongside the defect it fails to catch is
+  the §I19 point 1 pattern again in a different costume: the previous instance was a test that
+  proved nothing about production; this is a version constant that guarded nothing.
+- **Second-order defect — the counter reads as success.** `get()` increments `hits` when the file
+  *loads*, before `rebuild()` validates it, so the summary line reported **341 hits / 0 misses**
+  for a run with **0** usable hits. Anyone reading the log (including the HANDOFF next-step that
+  said to look for exactly this line) would conclude the cache worked. A counter that fails in the
+  optimistic direction is worse than no counter.
+- **Cost:** small, no re-ingest implied (the cache only affects runs).
+- **Test gap:** the suite reuses freshly-written entries, so no test covers "an entry written by an
+  older identity scheme". That is the same object-reuse blind spot as §I19 point 1.
+- **✅ FIXED 2026-10-18** — two of the three fixes below, and deliberately **not** the first:
+  1. **NOT APPLIED — the schema bump is wrong here, and was rejected on evidence.** Attempt 5
+     rewrote **all 341** entries with the corrected 32-char digest, so the directory now holds a
+     single vintage (`<U32`, mtimes 12:19–12:55) and the mixed-directory problem no longer exists.
+     Bumping `_CACHE_SCHEMA_VERSION` to 2 would have discarded 341 entries **verified to work** and
+     re-cost the 36 minutes this item exists to save. The constant stays at `1`; a bump is owed only
+     when a future identity change lands while valid entries exist.
+  2. **APPLIED — the digest scheme is named and checked.** `_DIGEST_SCHEME = "sha1:32"` is written
+     into every entry and checked in `get`; a mismatch is a **miss** (counted as `stale`), never a
+     content mismatch. Entries predating the field — all 341 of attempt 5's — have the scheme read
+     off the stored array's width, which is exact because the width is the only thing the scheme
+     names. That fallback is what keeps the live cache valid rather than "fixing" it by discarding
+     it.
+  3. **APPLIED — a hit is counted after validation.** `get` no longer bumps `hits`; the embedder
+     calls `record_hit()` only once `rebuild()` has returned chunks, and a genuine content mismatch
+     under the current scheme is counted as `rejected`. `summary()` now reads
+     `341 hits / 0 misses / 0 stale / 0 rejected / 0 written`.
+- **Evidence.** New read-only probe `logs/p1/step8-run/probe_cache_hit.py` mirrors
+  `process_pdf` lines 95–104 and stops before `save_document`, so it touches neither Qdrant nor
+  SQLite (verified: cache mtimes, point count and SQLite rows all unchanged). Run against the live
+  cache with the dense lane pointed at a dead port, so a full hit needs no cluster at all:
+  **341 hits / 0 misses / 0 stale / 0 rejected / 0 embeddings issued / 0.8 s**, `VERDICT: HIT` —
+  once before the fix and once after. Tests: **22** in `test_embed_cache.py` (was 19); all three new
+  ones fail against the unfixed code, one of them on the behaviour rather than a missing attribute
+  (`assert 1 == 0` on `hits` for a rejected entry). Suite **406 pass / 4 pre-existing fail /
+  6 skip**; ruff clean on the touched files.
+- **The hit-proof is demonstrated** — HANDOFF's step-3 item is discharged without a second ingest.
+  What is *not* demonstrated end to end is a future scheme change behaving as designed on a real
+  run; that is pinned by test, not by a run.
 
 ### I17. NEW 2026-10-17 (found auditing the ingest for concurrency) — two serial-batch lanes remain in the ingest: ColBERT at batch 4, SPLADE at batch 32
 
@@ -1937,6 +2294,294 @@ chunks; only entity resolution changes what is written).
 re-chunk does not invalidate them. But any query whose answer was only findable *because*
 of the old boundaries may change behaviour — re-run the baseline after re-ingest and
 re-record it, rather than comparing across the two.
+
+### I21. NEW 2026-10-18 (found by the Step 10 Phase A2 probe) — the Phase 3 graph build does not apply the E5 content filter
+
+- **What:** `generate_phase3_artifacts` passes **every** chunk of the document to
+  `GraphBuilder.build_graph` (`store.py` ~1668: `store.get_chunks_with_embeddings(document_id)`, no
+  filter). §E5's `content_filter` — described in `generate_phase2_artifacts` as *"shared with ingest +
+  retrieval"* — **is** applied in Phase 2 (cards) and in retrieval, but **not** in Phase 3 (graph).
+- **Measured 2026-10-18 (A2 probe, doc `7ba61432`, `chunk_index` 100, page 27):** the probed chunk is
+  a **table-of-contents fragment** — `"Linear Systems and Review, 1 = . 25-1 Linear differential
+  equations . . ., 1 = . . ."` — and concept extraction returned **4 concepts** from it
+  (`Linear differential equations` / `Superposition principle` / `Oscillations in linear systems` /
+  `Analogous systems`), i.e. the TOC line was treated as physics content.
+- **Why it matters:** concepts harvested from front/back matter enter the graph and are matched by
+  `graph_search` at query time, so a query can be answered with a table-of-contents node. It is also
+  an inconsistency: Phase 2 and retrieval both gate on E5, Phase 3 does not. The old graph's
+  **7,815 concepts / 5,051 chunks** were built the same way, so the existing graph carries this too.
+- **Effect size: not measured.** The old index ran this way throughout P0-9, so the recorded numbers
+  already include it. Do not assume it is large; do not assume it is zero.
+- **Fix (not done — no code changes in Step 10):** apply `content_filter.is_content` in the Phase 3
+  graph path, mirroring `generate_phase2_artifacts`. Would change the concept set → requires a graph
+  rebuild, not a re-ingest.
+- **Evidence:** `logs/p1/step10/probe_graph_before.py` (the probe), `logs/p1/step10/graph_before.json`.
+- **No re-ingest** (graph rebuild only).
+
+### I22. NEW 2026-10-18 (found reading `build_graph` for the Step 10 graph plan) — `graph_stats["concept_nodes"]` reports MENTIONS edges, not distinct concepts
+
+- **What:** in `GraphBuilder.build_graph` the counter is incremented **inside the per-concept loop**,
+  which runs once per chunk (`graph_builder.py:362`, inside `for concept in concepts:` under
+  `for chunk in chunks:`). So `concept_node_count` counts **`(chunk, concept)` pairs** — i.e. MENTIONS
+  edges — while it is returned as `"concept_nodes"` (line 394) and surfaced as "Concept Nodes" /
+  "concept nodes" by `scripts/run_phase3.py:93` and `store.py:1692`.
+- **Measured contrast:** Memgraph holds **7,815 distinct** `Concept` nodes for the old document
+  (`6d55c52b`), and 5,051 chunks each mentioning several concepts — so the reported figure is a
+  substantially larger number than the distinct-concept count it is labelled as. The two are not the
+  same quantity and the label says it is.
+- **✅ CONFIRMED EMPIRICALLY 2026-10-19** (the Phase A build finished). For doc `7ba61432` the run
+  reported **`15619` concept nodes** in both the log line (`build_graph:387`) and the `run_phase3.py`
+  table, while Memgraph holds **7,834 distinct** `Concept` nodes for that document. **The reported
+  figure is almost exactly 2× the truth** (15,619 / 7,834 = 1.99) — consistent with ~2 MENTIONS per
+  concept, which is the (chunk, concept) pair count, as the code reads. Treat every previously
+  quoted "concept nodes" number as a MENTIONS count.
+- **Why it matters:** every run table and log line read so far has been read as "distinct concepts".
+  It also makes the figure useless as a **verifier** — a graph with half the concepts but the same
+  mention count would look unchanged. **This is why the Step 10 A3 verifier counts
+  `count(DISTINCT k)` in Memgraph rather than reading `graph_stats`.**
+- **Fix (not done — no code changes in Step 10):** count distinct names in a set and report that, or
+  rename the field to `mentions` and add a real `concept_nodes`. Report-side + counter only.
+- **No re-ingest** (no graph rebuild needed to fix the label).
+- **Evidence:** `src/pdf_ingestion/graph_builder.py:349–396`; `logs/p1/step10/verify_graph.py`.
+
+### I23. NEW 2026-10-18 (found watching the Step 10 Phase A graph build) — the Phase 3 graph build has no checkpoint and no retry, and burns a reasoning model on a JSON extraction task
+
+- **What:** three compounding defects, all measured on the live run of
+  `run_phase3.py --graph-only` for doc `7ba61432` (started 17:21:55, 3,796 chunks,
+  `concept_gen_workers=4`):
+  1. **No checkpoint.** `build_graph` extracts concepts for **all** chunks in memory before writing
+     anything, so an abort at any point discards every completed extraction. Same class as §I19,
+     different phase. Observed: 2,000 chunks of work held in RAM with no way to persist it.
+  2. **No retry, and failures are silent.** `src/core/llm.py::_call_openai` has **no retry** and a
+     120 s timeout; on timeout it returns `""`. `_extract_concepts` catches every exception and returns
+     an empty concept list, so those chunks get **zero concepts while `build_graph`'s `failed` counter
+     stays 0**. Measured: **12 timeouts in 4 h** (bursts at 19:23, 20:40, 21:10), i.e. 12 chunks that
+     will contribute no concepts and will not be reported.
+  3. **Throughput collapsed ~8× mid-run.** 23.3 chunks/min for the first 1,500 (≈10 s/call at 4
+     workers), then **3.0 chunks/min** for the next 500 (≈80 s/call). Projected remaining time:
+     **~10 h** for the last 1,796 chunks.
+- **Cause of the collapse — measured, two distinct factors:**
+  - **Model choice (ours).** A single realistic probe (2,000-char chunk, `response_format=json_object`):
+    `openai/gpt-oss-20b` → **12.9 s**, `completion_tokens 1244`, of which **4,495 chars were hidden
+    reasoning**; `Qwen/Qwen3-VL-8B-Instruct` → **3.2 s**, `completion_tokens 166`, **0 reasoning chars**.
+    Both returned valid JSON. **A reasoning model is being spent on a structured-extraction task.**
+    (Caveat: the two did not return the same content — 10 concepts / 10 prereqs vs 5 / 3 — so a swap
+    is a quality decision, not a free speedup.)
+  - **Contention (not ours).** A single call is 12.9 s *now* while the 4 concurrent in-flight calls
+    average ~80 s — so concurrency is costing ~6× on a **shared** cluster (ARCHITECTURE §11: `.65` is
+    shared with ~29 other bootcamp collections). **Do not raise `concept_gen_workers`**: §I18 already
+    measured 8 workers *slower* than 4, and more concurrency against a serialising server is the wrong
+    direction.
+- **Why it matters:** any future Phase 3 build on a book-sized corpus is a **multi-hour, uncheckpointed,
+  silently-lossy** job. It is not the graph code's cost that is surprising — it is that a 1-hour
+  estimate became 10 h with no failure signal.
+- **Fix (not done):** (a) checkpoint extractions keyed on chunk content, mirroring the Step 8 embed
+  cache (§I19); (b) bounded retry + a real failure count in `llm.py` / `_extract_concepts`; (c) settle
+  the extraction model deliberately (reasoning vs non-reasoning) with an output-quality comparison;
+  (d) move the **concept-name embedding** phase (7,815 unique names, local CPU, sequential, legacy
+  Nomic 768d) off the CPU — either to the cluster's GPU embed endpoint (§I12) or via an **MPS** path
+  in `embedder.py`, which today is `device = "cuda" if use_gpu else "cpu"` with **no availability
+  check** (unlike `parser.py`), so `USE_GPU=true` on this Mac would try `cuda` and fail. Measured:
+  `torch 2.8.0`, arm64, **cuda False / mps True**.
+- **No re-ingest** (Phase 3 only).
+- **Evidence:** `logs/p1/step10/graph_build.log`; scratch probes `lat.txt`, `usage.txt`, `mps.txt`.
+- **✅ FINAL MEASUREMENT 2026-10-19 — the run completed, and it took 16 h 25 m, not 2 h.**
+  `17:21:55 → 09:47:04` for 3,796 chunks. Progress: 2,500 at 21:35 → **3,000 at 05:55** (8 h 20 m for
+  one 500-block!) → 3,500 at 09:08 → extraction done 09:27. So the contention was not a 2.75-hour
+  window that passed: **throughput collapsed again overnight and stayed collapsed.** The earlier
+  "recovered, ETA ~23:30" reading was wrong — it was a brief lull, and my estimate was wrong for the
+  third time on this one job. **Total LLM failures: 44** (up from 12), reported as **"0 failed"** —
+  i.e. **~44 chunks (1.2% of 3,796) contributed no concepts and were never reported.** The graph still
+  passed its density check (2.064 concepts/chunk vs the old document's 1.547), so the losses are a
+  tail, not a collapse — but they are invisible without counting in Memgraph.
+  Lesson for any future Phase 3 run: **budget in days, not hours, on a shared cluster, and do not
+  trust a recovered throughput reading.**
+
+### I24. FIXED 2026-10-20 — `src/core/llm.py` had NO total-request deadline and NO retry: a trickling response hung a call for 41 minutes, and every Phase 2/3 LLM phase used it
+
+- **What (before):** `_call_openai` / `_call_ollama` issued **one un-retried POST** with
+  `timeout=OLLAMA_TIMEOUT` (120 s) and returned `""` on failure (logged ERROR).
+- **Why it mattered — this was §I16's defect in a second module.** §I16 established the mechanism
+  exactly: *"httpx's read timeout is per read operation, not per request. A response body that keeps
+  trickling resets the timer on every chunk."* It fixed that in `cluster_embedder._post_json` with a
+  wall-clock total-request deadline. **The shared LLM caller never got that fix**, and `_call_openai`
+  is what cards, RAPTOR summaries, concept extraction, HyDE and the judge all use.
+- **Measured 2026-10-19 (Phase B):** card generation began 21:54:16; chunks 69-70's eight card types
+  all timed out at **22:12:42-44**, then **no log line at all until 22:53:48** — a **41-minute silent
+  window** inside requests the 120 s read timeout could not bound, and with no retry nothing could
+  catch it. §I16 reports the *same* ~42-minute figure for the embed path: same failure shape.
+- **Fix (APPLIED 2026-10-20, `src/core/llm.py`):** the body is now read in chunks against a
+  wall-clock deadline (`_LLM_DEADLINE = 300 s`), raised as `httpx.ReadTimeout` so the retry treats it
+  as transient; bounded retry (3 attempts, jittered doubling backoff, `_LLM_RETRY_BACKOFF = 2 s`) on
+  transport errors, 429 and 5xx — never on other 4xx. The failure contract is unchanged (`""` + ERROR
+  log), and a failure before the first attempt (unbuildable client) also returns `""` rather than
+  raising. **Failures are now counted** — `llm_call_stats()` returns
+  `{calls, failures, retries, deadline_hits}` and is reset per measured run.
+- **Scope limit, deliberately recorded:** the fix covers the **raw** LLM path only. With
+  `use_instructor: true` in `config.yaml`, 4 of 8 card types (summary, question, objective, factoid)
+  go through `instructor`/`openai` SDK calls that never touch `llm.py`. `config.yaml` currently sets
+  **`use_instructor: false`** (and the Phase B log confirms *"instructor disabled in config.yaml —
+  using raw LLM"*), so all 8 types are covered today — but flipping that flag silently reopens §I24
+  for half the card types.
+- **Evidence:** `tests/test_llm_deadline_retry.py` (14 tests: deadline fires on a trickling body,
+  retry on 5xx/transport, no retry on 4xx, bounded attempts, counters, URL/payload contract);
+  `tests/test_fallback_chains.py` updated to the new transport boundary — its old
+  `monkeypatch.setattr(llm.httpx, "post", …)` was **silently inert** after this change and the test
+  made a *real* network call.
+- **No re-ingest.**
+
+### I25. FIXED 2026-10-20 — the card generator's per-card-type handler made a TOTAL card loss invisible: zero `Failed:` rows, exit 0
+
+- **What (before):** `generate_cards_for_chunk` caught each card type's exception, logged a WARNING
+  and returned `[]` **for that type**. The outer `generate_cards_for_chunks` then received a
+  **successful** future holding a short list, so its `failed` counter never incremented for a
+  timed-out card type, and the closing line read `Generated N cards for 3,791 chunks (0 failed)`.
+  `run_phase2.py` printed a `Failed:` row only when the **whole document** raised.
+- **Why it mattered:** the Phase B plan's fact (ii) — "a per-chunk exception is swallowed" —
+  **understated it**: the swallow is one level **deeper** (per card type) and produces **no `Failed:`
+  row at all**. B4's verifier check [1] ("no `Failed:` row in `phaseb_run.log`") therefore passes
+  **vacuously** on a run in which every card call failed. Measured on the aborted run: **16 `LLM CALL
+  FAILED` ERRORs, 16 card-type failures, `Failed:` rows = 0.**
+- **Fix (APPLIED 2026-10-20):** `generate_cards_for_chunk` now delegates to
+  `_generate_chunk_with_report`, which returns `(cards, failed_types)`. The per-type failures are
+  counted per run (`Counter`), checkpointed per chunk (§I27), logged in the closing line
+  (`… {} chunks with a failed card type, {} failed card-type calls, {} LLM failures of {} calls`),
+  and surfaced in `generate_phase2_artifacts`'s result as `failed_card_types` / `failed_chunks` /
+  `card_gen_stats`. `run_phase2.py` prints a **"Card types failed"** column, red when non-zero.
+- **What still catches it:** B4's checks **[3]** (distinct card-type set == the 8 in `CardType`) and
+  **[4]** (cards/content-chunk ratio). Keep both. **The log check is no longer the guard** — the
+  guard is `failed_card_types == {}`, read from the generator's own closing line.
+- **B4's check [1] was REPLACED 2026-10-20** (`logs/p1/step10/verify_phaseb_cards.py`). It now
+  requires the generator's closing line to be **present** (absence = the phase never reached the
+  end) and to read **0 failed chunks / 0 failed card-type calls / 0 LLM failures**, and it fails on
+  the "Card types that failed at least once" warning. The old `Failed:`-row check is kept as a
+  secondary signal only. **Self-tested on four logs:** the real aborted log → **FAIL** (it reported
+  0 `Failed:` rows, which is exactly the vacuous pass this fixes); a synthetic clean log → counters
+  clean; a synthetic failing log → FAIL on the counts *and* the warning; a log with no closing line
+  → FAIL.
+- **Evidence:** `tests/test_card_checkpoint.py::test_a_failed_card_type_is_retried_on_resume`
+  (asserts the counts), `tests/test_fallback_chains.py::test_a_dead_backend_is_counted`; the
+  verifier self-test above.
+- **No re-ingest.**
+
+### I26. ⛔ SUPERSEDED 2026-10-20 — the "knee between 8 and 16 in-flight calls" claim below is WRONG (it rested on a one-chunk burst probe and on timeouts taken with the defective §I24 caller). Read "MEASURED 2026-10-20" at the end of this entry, which replaces it: throughput scales to 32 in-flight with zero failures.
+
+- **Measured 2026-10-19, `openai/gpt-oss-20b` @ `10.0.10.70:8000`:**
+
+  | in-flight calls | config | per chunk | aggregate | errors |
+  |---|---|---|---|---|
+  | **8** (one chunk; the B1 probe, 3 runs) | `card_gen_workers=1` equivalent | **7.6 / 10.9 / 10.1 s** | ≈ **0.73-1.05 card-calls/s** | **0** |
+  | **16** (the real run) | `card_gen_workers=2` | **≈ 97 s** (74 chunks / 60 min) | ≈ **0.165 card-calls/s** | **16 timeouts** |
+
+- **So doubling concurrency cut aggregate throughput ≈4.4×.** The endpoint has no headroom at 16 —
+  it has **congestion collapse**, the same shape §I23 measured for the graph build (4 concurrent →
+  ~80 s/call against 12.9 s for a single call).
+- **Why the plan's ceiling was the wrong number:** it compared against **4.21 calls/s**, but that knee
+  was measured for the **VLM judge** (`Qwen/Qwen3-VL-8B-Instruct`, one page image, ~0.8 s/call) — a
+  different model, prompt size and response length. **A knee belongs to one model + one prompt shape
+  on one server; it does not transfer.** Card prompts are long and `gpt-oss-20b` emits a hidden
+  reasoning trace (§I23: 4,495 reasoning chars for a 2,000-char chunk), so its per-call cost is ~10×
+  the judge's.
+- **The ramp was structurally unmeasurable on the real run** (before §I27): `generate_cards_for_chunks`
+  wrote **nothing** until every chunk was done and there is **no cards-only flag** (`--raptor-only`
+  rebuilds RAPTOR, not cards) — so a restart to change the worker count discarded the entire card run.
+  **Now measured by a standalone probe instead:**
+  `logs/p1/step10/probe_card_throughput.py` (sweeps workers × wall-clock budget over a deterministic,
+  evenly-spaced 400-chunk sample; reports chunks/min, the last-60 s rate, p50/p90/max chunk wall time,
+  error counts and the checkpoint write cost). See **"Measured 2026-10-20"** below.
+- **Cheap-abort property confirmed, not assumed:** the aborted run left **0 cards, 0 RAPTOR nodes**,
+  `knowledge_base_v2` still at **3,796** points, and the old document's **82,164** active cards
+  untouched — the single write point makes a failed card run free.
+- **No re-ingest.**
+
+> ### ⛔ SUPERSEDED 2026-10-20 — the "congestion collapse" reading above is WRONG, and so is the
+> ### `CARD_GEN_WORKERS=1` recommendation that came from it. Read the measurement below instead.
+>
+> **Why it was wrong — two errors, both mine.** (a) The 8-in-flight comparison was a **one-chunk
+> probe** (7.6 / 10.9 / 10.1 s), i.e. a burst, and §I18's own rule says a burst does not measure
+> sustained throughput. The sustained per-chunk cost at 8 in-flight measures **78 s at p50**, not
+> 10 s — the probe was catching a fast moment, and both the "4.4× collapse" arithmetic and the
+> 10.6 h ETA were built on that number. (b) The real run's 16 "timeouts" were measured with the
+> **defective caller §I24 describes** — one un-retried POST, 120 s read timeout. A call that times
+> out produces no card and was never retried, so *lost work* was counted as *slowness*.
+
+**MEASURED 2026-10-20 — the card throughput sweep (controlled).** Instrument:
+`logs/p1/step10/probe_card_throughput.py`, over a deterministic, evenly-spaced 400-chunk content
+sample (`p50 103 / p90 205 / max 1,347` tokens), wall-clock budget per cell, **zero DB writes**.
+Sweep 1 ran `1,2,4`; the **control sweep then re-ran `1,4,1`** to separate "concurrency helps" from
+"the cluster got faster while I was measuring" — cells run in sequence with no repetition are
+confounded, and the fix is to measure the first cell again at the end.
+
+| sweep | workers | in-flight | chunks | **chunks/min** | last-60 s | p50 s | p90 s | max s | failed chunks | LLM failures | retries |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 1 | 8 | 12 | **3.77** | 3.0 | 88.4 | 150.3 | 190.8 | 0 | 0 | 0 |
+| 1 | 2 | 16 | 20 | **6.52** | 7.0 | 91.2 | 158.6 | 184.0 | 0 | 0 | 0 |
+| 1 | 4 | 32 | 32 | **10.42** | 13.0 | 104.5 | 167.5 | 184.2 | 0 | 0 | 4 |
+| ctrl | 1 | 8 | 10 | **3.02** | 1.0 | 63.7 | 132.4 | 198.7 | 0 | 0 | 0 |
+| ctrl | 4 | 32 | 21 | **8.36** | 10.0 | 82.6 | 138.9 | 150.8 | 0 | 0 | 1 |
+| ctrl | 1 | 8 | 8 | **2.74** | 1.0 | 80.6 | 108.3 | 175.2 | 0 | 0 | 0 |
+
+- **`workers=1` measured three times — 3.77 / 3.02 / 2.74 chunks/min (mean 3.18, spread 1.03),
+  including once at the very end of the session after the `workers=4` cell.** The cluster did **not**
+  drift during the sweep, so the scaling below is an effect of concurrency, not of time.
+- **Throughput rises monotonically and never collapses: 3.18 → 6.52 → 9.39 chunks/min.**
+  **2.05×** going 8 → 16 in-flight, **2.96×** going 8 → 32. Sublinear, but **still rising at 32
+  in-flight** — the knee was not reached.
+- **Zero failed chunks and zero LLM failures in all six cells (~40 min of load, 103 chunks).**
+  Five retries in total, all of which succeeded. **There is no collapse to reproduce at 16, and none
+  appeared at 32.**
+- **The sustained per-chunk cost is ~64-105 s at p50 in every cell**, against the **10.1 s** the
+  Phase B plan and the 10.6 h estimate were built on — an ~8× error in the planning number.
+- **ETA for 3,791 chunks: `workers=1` → ~19.9 h · `workers=2` → ~9.7 h · `workers=4` → ~6.7 h.**
+- **Checkpoint overhead measured: 3.0-3.6 ms per chunk write (fsync'd)** — negligible against
+  ~80 s/chunk, so §I27 does not slow the run down.
+- **What this does NOT establish, and must not be read as established:** `workers=8` (64 in-flight)
+  was **not** tested, and the trend was still rising at 4 — so the knee may be above 4, not at it.
+  The `workers=4` evidence is two cells (~5.5 min of load, 53 chunks), which is not a soak.
+  And `.70` is a **shared** cluster (§I18, §I23): 32 in-flight calls is a real load on a resource
+  other students are using, which is an etiquette question, not only a throughput one.
+- **Decision this supports (owner's call):** run at **`workers=4`** (~6.7 h) rather than 1 (~19.9 h),
+  with §I27's checkpoint making an abort cheap and §I24's deadline+retry making a transient stall
+  survivable. **Do not go back to `workers=1` on §I26's original reasoning** — that reasoning rested
+  on a burst probe and on timeouts the new caller would have retried.
+- **Evidence:** `logs/p1/step10/phaseb_throughput_probe.{log,json}` and
+  `..._control.{log,json}`.
+
+### I27. FIXED 2026-10-20 — the card phase had no checkpoint and no resume, so a ~10.6 h run was all-or-nothing
+
+- **What (before):** `generate_cards_for_chunks` held every card in memory and
+  `DocumentStore.save_cards` wrote **once**, after the last chunk. No resume, no cards-only rebuild
+  flag. An abort at chunk 3,700 of 3,791 discarded the entire card run.
+- **Why it mattered:** the only measured-healthy configuration for this workload is
+  `CARD_GEN_WORKERS=1` at ~10 s/chunk (§I26), i.e. **~10.6 hours** — and the endpoint had just been
+  observed hanging for 41 minutes (§I24) and collapsing under concurrency (§I26). Retry and the
+  deadline reduce the *probability* of an abort; only a checkpoint reduces its *cost*.
+- **Fix (APPLIED 2026-10-20):** `src/pdf_ingestion/card_checkpoint.py` — an append-only JSONL
+  side-car (`data/card_cache/<doc8>__<key>.jsonl`) that records each completed chunk's cards and the
+  card types that failed. A re-run skips the checkpointed chunks **and still returns their cards**, so
+  `save_cards` remains the single write point.
+  - **Key = `(document_id, card types, model)`**, not the chunk list. Entries are validated against
+    the chunk list being generated *now*, so a re-ingest (new `uuid4` chunk ids) simply matches
+    nothing and its cards are dropped rather than written. Keying the *file* on the sorted chunk list
+    was rejected: any knob that changed the filtered chunk set would make the previous 10.6 h
+    **unfindable** instead of partially reusable.
+  - **A chunk whose card types failed is NOT treated as done** — it is re-attempted on resume, so a
+    run aborted during an outage cannot resume having "completed" the chunks that timed out.
+  - **Header checked on read** (document / key / model / schema / digest-scheme), per §I19a: a
+    mismatched file is an honest miss, not a file that loads and is wrong.
+  - **Crash safety:** `flush()` + `fsync()` per write; a torn final line is truncated on load, so a
+    crash costs one chunk, never the file.
+  - Config: `card_checkpoint_enabled` (default true), `card_checkpoint_dir`, `card_checkpoint_every`;
+    `run_phase2.py --no-resume` discards it.
+- **Why not incremental SQLite writes (the alternative considered):** `save_cards` calls
+  `_deactivate_cards()` first, so saving every N chunks would **delete the previous interval's cards**,
+  leaving only the last batch. Even fixed, a partially-written card set in the DB is indistinguishable
+  from a complete one to `evaluate_rag.py`, the UI and §A3's volume count — §I25's failure class again.
+- **Evidence:** `tests/test_card_checkpoint.py` (15 tests: round-trip, resume issues no LLM calls,
+  only missing chunks regenerated, failed-type chunk retried, `resume=False`, disabled, stale entries
+  ignored, header checked on read, torn line truncated). The probe reports the write cost
+  (**~5 ms/chunk, fsync'd** — negligible against ~10 s/chunk).
+- **No re-ingest.**
 
 ### Visual-index cleanup rides along with the re-ingest (§B4b)
 

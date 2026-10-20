@@ -95,6 +95,7 @@ data/intent_classifier/
 # fingerprint over the PDF plus the chunking config — so it is machine-local by nature and
 # committing it would only pin one machine's corpus state.
 data/embed_cache/
+data/card_cache/
 # data/eval_results/ is deliberately NOT ignored — these artifacts ARE the regression
 # baseline the project compares against, and the "Definition of done" requires the run's
 # artifact to be committed. Ignoring this directory is why the report's "v10" figure had

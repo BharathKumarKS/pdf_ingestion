@@ -27,7 +27,9 @@ from __future__ import annotations
 
 import json
 import re
+import time
 import uuid
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from enum import Enum
@@ -38,6 +40,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from src.core.config import Settings, get_settings
+from src.pdf_ingestion.card_checkpoint import CardCheckpoint
 from src.pdf_ingestion.chunker import TextChunk
 
 
@@ -82,6 +85,33 @@ class GeneratedCard:
     content:     str
     answer:      Optional[str] = None   # question cards only
     metadata:    dict = field(default_factory=dict)
+
+
+def _cards_from_dicts(rows: list[dict]) -> list[GeneratedCard]:
+    """Rebuild `GeneratedCard`s from checkpoint rows (IMPROVEMENTS.md §I27).
+
+    Unknown keys are dropped rather than raising: a checkpoint written by an older schema must
+    degrade to a partial card, never to a crash that costs the run it was meant to protect.
+    """
+    known = set(GeneratedCard.__dataclass_fields__)
+    out: list[GeneratedCard] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        try:
+            out.append(GeneratedCard(**{k: v for k, v in row.items() if k in known}))
+        except TypeError:
+            continue
+    return out
+
+
+def _llm_call_stats() -> dict:
+    """This process's LLM call accounting (IMPROVEMENTS.md §I24), or {} if unavailable."""
+    try:
+        from src.core.llm import llm_call_stats
+        return llm_call_stats()
+    except Exception:  # pragma: no cover - accounting must never break generation
+        return {}
 
 
 # -- Pydantic response schemas (instructor enforces these) ---------------------
@@ -298,10 +328,27 @@ class StubLLM:
             ))
         return cards
 
-    def generate_cards_for_chunks(self, chunks: list[TextChunk]) -> list[GeneratedCard]:
+    def generate_cards_for_chunks(
+        self, chunks: list[TextChunk], *, resume: bool = True
+    ) -> list[GeneratedCard]:
+        """Deterministic template cards — no LLM, no checkpoint, same signature as the real one.
+
+        ``resume`` is accepted and ignored: the stub exists for tests and for
+        `USE_STUB_LLM` runs, where there is nothing worth checkpointing.
+        """
         all_cards: list[GeneratedCard] = []
         for chunk in chunks:
             all_cards.extend(self.generate_cards_for_chunk(chunk))
+        self.last_run_stats = {
+            "chunks_total":      len(chunks),
+            "chunks_resumed":    0,
+            "chunks_generated":  len(chunks),
+            "cards":             len(all_cards),
+            "failed_chunks":     0,
+            "failed_card_types": {},
+            "llm":               {},
+            "checkpoint_path":   None,
+        }
         return all_cards
 
 
@@ -351,7 +398,21 @@ class OllamaCardGenerator:
 
     def generate_cards_for_chunk(self, chunk: TextChunk) -> list[GeneratedCard]:
         """Generate all card types for one chunk, parallelised across types."""
+        cards, _failed = self._generate_chunk_with_report(chunk)
+        return cards
+
+    def _generate_chunk_with_report(
+        self, chunk: TextChunk
+    ) -> tuple[list[GeneratedCard], list[str]]:
+        """One chunk's cards **plus the card types that failed** (IMPROVEMENTS.md §I25).
+
+        The per-type handler below catches each type's exception so one bad call cannot lose
+        the chunk's other seven types — but returning a successful future holding a short list
+        makes a *total* failure indistinguishable from a quiet chunk: zero ``Failed:`` rows,
+        exit 0. So the failures are also returned, counted and checkpointed.
+        """
         all_cards: list[GeneratedCard] = []
+        failed_types: list[str] = []
         with ThreadPoolExecutor(max_workers=len(CardType)) as pool:
             futures = {
                 pool.submit(self._generate_one_type, chunk, ct): ct
@@ -363,52 +424,141 @@ class OllamaCardGenerator:
                 try:
                     all_cards.extend(future.result())
                 except Exception as exc:
+                    failed_types.append(ct.value)
                     logger.warning(
                         "Card type '{}' failed for chunk {} ({})",
                         ct.value, chunk.chunk_index, exc,
                     )
-        return all_cards
+        return all_cards, failed_types
 
-    def generate_cards_for_chunks(self, chunks: list[TextChunk]) -> list[GeneratedCard]:
-        """Generate all cards for all chunks, parallelised across chunks."""
+    def generate_cards_for_chunks(
+        self,
+        chunks: list[TextChunk],
+        *,
+        resume: bool = True,
+    ) -> list[GeneratedCard]:
+        """Generate all cards for all chunks, parallelised across chunks.
+
+        Checkpointed (IMPROVEMENTS.md §I27): each completed chunk is appended to a side-car
+        JSONL keyed by (document, chunk set, card types, model), and a re-run skips the chunks
+        already in it. The single SQLite write point (`DocumentStore.save_cards`) is unchanged,
+        so a partially-generated card set can never look complete to the eval or the UI.
+
+        resume=False discards an existing checkpoint and starts a fresh file.
+        """
         workers  = self._cfg.card_gen_workers
         all_cards: list[GeneratedCard] = []
         failed = 0
+        failed_type_counts: Counter[str] = Counter()
+
+        checkpoint = None
+        if getattr(self._cfg, "card_checkpoint_enabled", True):
+            try:
+                checkpoint = self._open_checkpoint(chunks, fresh=not resume)
+                all_cards.extend(_cards_from_dicts(checkpoint.cards))
+            except Exception as exc:  # a broken checkpoint must not lose the run
+                logger.warning("Card checkpoint unavailable ({}): continuing without one", exc)
+                checkpoint = None
+
+        pending = [c for c in chunks if checkpoint is None or c.chunk_id not in checkpoint.done]
 
         logger.info(
-            "Generating cards for {} chunks ({} worker threads)...",
+            "Generating cards for {} chunks ({} worker threads) — {} already checkpointed, "
+            "{} to do{}",
             len(chunks), workers,
+            len(chunks) - len(pending), len(pending),
+            f" [{checkpoint.path.name}]" if checkpoint is not None else " [no checkpoint]",
         )
+
+        every_n = int(getattr(self._cfg, "card_checkpoint_every", 25))
+        run_start = time.monotonic()
+        n_done = 0
 
         with ThreadPoolExecutor(max_workers=workers) as executor:
             future_to_chunk = {
-                executor.submit(self.generate_cards_for_chunk, chunk): chunk
-                for chunk in chunks
+                executor.submit(self._generate_chunk_with_report, chunk): chunk
+                for chunk in pending
             }
             for future in as_completed(future_to_chunk):
                 chunk = future_to_chunk[future]
                 try:
-                    cards = future.result()
+                    cards, chunk_failed = future.result()
                     all_cards.extend(cards)
-                    if chunk.chunk_index % 100 == 0:
-                        logger.debug(
-                            "Progress: {} cards, chunk {}",
-                            len(all_cards), chunk.chunk_index,
+                    n_done += 1
+                    failed_type_counts.update(chunk_failed)
+                    if chunk_failed:
+                        failed += 1
+                    if checkpoint is not None:
+                        checkpoint.record(
+                            chunk_id=chunk.chunk_id,
+                            chunk_index=chunk.chunk_index,
+                            cards=cards,
+                            failed_types=chunk_failed,
                         )
                 except Exception as exc:
+                    # The whole chunk raised (not one type): nothing to checkpoint for it, so a
+                    # resume re-attempts it rather than treating it as done.
                     failed += 1
                     logger.warning(
                         "All cards failed for chunk {} ({}), skipping",
                         chunk.chunk_index, exc,
                     )
 
+                now = time.monotonic()
+                if checkpoint is not None and checkpoint.due(every_n, 60.0):
+                    checkpoint.note_flushed()
+                    done_total = len(chunks) - len(pending) + n_done
+                    logger.info(
+                        "Checkpoint: {}/{} chunks done, {} cards, {} failed chunk(s) — {} "
+                        "({:.0f} min into the run)",
+                        done_total, len(chunks), len(all_cards), failed,
+                        checkpoint.path.name, (now - run_start) / 60.0,
+                    )
+
+        if checkpoint is not None:
+            checkpoint.close()
+
+        llm_stats = _llm_call_stats()
+        self.last_run_stats = {
+            "chunks_total":      len(chunks),
+            "chunks_resumed":    len(chunks) - len(pending),
+            "chunks_generated":  len(pending),
+            "cards":             len(all_cards),
+            "failed_chunks":     failed,
+            "failed_card_types": dict(failed_type_counts),
+            "llm":               llm_stats,
+            "checkpoint_path":   str(checkpoint.path) if checkpoint is not None else None,
+        }
+
         logger.success(
-            "Generated {} cards for {} chunks ({} failed)",
-            len(all_cards), len(chunks), failed,
+            "Generated {} cards for {} chunks ({} chunks with a failed card type, "
+            "{} failed card-type calls, {} LLM failures of {} calls)",
+            len(all_cards), len(chunks), failed, sum(failed_type_counts.values()),
+            llm_stats.get("failures", 0), llm_stats.get("calls", 0),
         )
+        if failed_type_counts:
+            logger.warning(
+                "Card types that failed at least once ({} distinct): {} — this is NOT a clean "
+                "run; the phase's exit criteria must read this count, not the absence of a "
+                "'Failed:' row (IMPROVEMENTS.md §I25).",
+                len(failed_type_counts),
+                ", ".join(f"{k}x{v}" for k, v in failed_type_counts.most_common()),
+            )
         return all_cards
 
     # -- Internals -------------------------------------------------------------
+
+    def _open_checkpoint(self, chunks: list[TextChunk], fresh: bool = False) -> CardCheckpoint:
+        """Open this run's checkpoint, discarding any existing one when ``fresh``."""
+        return CardCheckpoint.open(
+            directory=getattr(self._cfg, "card_checkpoint_dir", "./data/card_cache"),
+            document_id=chunks[0].document_id if chunks else "",
+            chunk_ids=[c.chunk_id for c in chunks],
+            card_types=[ct.value for ct in self._prompts],
+            model=(self._cfg.openai_model if self._cfg.llm_backend == "openai"
+                   else self._cfg.ollama_model),
+            fresh=fresh,
+        )
 
     # Nullable card types legitimately return bare "null" when the chunk has no
     # relevant content (e.g. formula on a biographical paragraph). Instructor

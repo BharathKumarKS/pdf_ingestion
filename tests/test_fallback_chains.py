@@ -71,13 +71,20 @@ def _cfg(backend: str = "openai", stub_llm: bool = False) -> Settings:
 
 
 # ── LLM: a failed call returns "" and says so ──────────────────────────────
+#
+# The transport boundary moved in the §I24 fix: `call_llm` no longer issues a bare
+# `httpx.post(...)`, it builds a `Client` and reads the body in chunks against a wall-clock
+# deadline. So these tests break the backend at `llm._post_json` — the one place a request is
+# actually made — rather than at `httpx.post`, which no longer exists and which would have left
+# the patch silently inert (and the test making a real call).
 
 @pytest.mark.parametrize("backend", ["openai", "ollama"])
 def test_llm_failure_returns_empty_string(monkeypatch, backend, log_records):
     def _boom(*args, **kwargs):
         raise ConnectionError("no route to host (simulated)")
 
-    monkeypatch.setattr(llm.httpx, "post", _boom)
+    monkeypatch.setattr(llm, "_post_json", _boom)
+    monkeypatch.setattr(llm, "_LLM_RETRY_BACKOFF", 0.01)
     out = llm.call_llm("hello", settings=_cfg(backend=backend))
     assert out == ""
     assert any("LLM CALL FAILED" in r for r in log_records), "dead backend must log at ERROR"
@@ -88,7 +95,8 @@ def test_llm_failure_is_not_the_stub_answer(monkeypatch):
     def _boom(*args, **kwargs):
         raise ConnectionError("simulated")
 
-    monkeypatch.setattr(llm.httpx, "post", _boom)
+    monkeypatch.setattr(llm, "_post_json", _boom)
+    monkeypatch.setattr(llm, "_LLM_RETRY_BACKOFF", 0.01)
     failed = llm.call_llm("hello", settings=_cfg())
     stubbed = llm.call_llm("hello", settings=_cfg(stub_llm=True))
     assert failed == ""
@@ -97,16 +105,37 @@ def test_llm_failure_is_not_the_stub_answer(monkeypatch):
 
 
 def test_empty_llm_response_is_flagged_by_the_caller_contract(monkeypatch):
-    """_call_openai with a 200 but no choices returns "" (not an exception)."""
-    class _Resp:
-        status_code = 200
-        def raise_for_status(self):
-            return None
-        def json(self):
-            return {"choices": []}
-
-    monkeypatch.setattr(llm.httpx, "post", lambda *a, **k: _Resp())
+    """A 200 with no choices returns "" (not an exception)."""
+    monkeypatch.setattr(llm, "_post_json", lambda *a, **k: {"choices": []})
     assert llm.call_llm("hello", settings=_cfg()) == ""
+
+
+def test_a_client_that_cannot_be_built_also_returns_empty_string(monkeypatch, log_records):
+    """A failure before the first attempt must not escape as an exception (§I24)."""
+    class _NoClient:
+        def __init__(self, *args, **kwargs):
+            raise ConnectionError("no route to host (simulated)")
+
+    monkeypatch.setattr(llm.httpx, "Client", _NoClient)
+    assert llm.call_llm("hello", settings=_cfg()) == ""
+    assert any("LLM CALL FAILED" in r for r in log_records)
+
+
+def test_a_dead_backend_is_counted(monkeypatch):
+    """§I24: the failure count is what a phase asserts on, so it must actually increment."""
+    import httpx
+
+    def _boom(*args, **kwargs):
+        raise httpx.ConnectError("simulated")
+
+    monkeypatch.setattr(llm, "_post_json", _boom)
+    monkeypatch.setattr(llm, "_LLM_RETRY_BACKOFF", 0.01)
+    llm.reset_llm_call_stats()
+    llm.call_llm("hello", settings=_cfg())
+    stats = llm.llm_call_stats()
+    assert stats["calls"] == 1
+    assert stats["failures"] == 1
+    assert stats["retries"] == llm._LLM_RETRY_ATTEMPTS - 1
 
 
 # ── Embedder: a failed encode degrades to ZERO vectors ─────────────────────

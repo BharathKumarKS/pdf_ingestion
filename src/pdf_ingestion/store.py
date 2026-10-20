@@ -1451,11 +1451,15 @@ def generate_phase2_artifacts(
     document_id: str,
     settings: Settings | None = None,
     raptor_only: bool = False,
+    resume: bool = True,
 ) -> dict:
     """Generate cards + RAPTOR tree for an already-ingested document.
 
     raptor_only=True skips card generation and rebuilds only the RAPTOR tree.
     Use this when cards are already correct but RAPTOR was built with zero vectors.
+
+    resume=False discards the card checkpoint and regenerates every card from scratch
+    (IMPROVEMENTS.md §I27); the default resumes whatever the last run checkpointed.
     """
     from src.pdf_ingestion.card_generator import get_card_generator
     from src.pdf_ingestion.chunker import TextChunk
@@ -1500,10 +1504,15 @@ def generate_phase2_artifacts(
     if raptor_only:
         n_cards = len(store.get_cards(document_id))
         logger.info("raptor_only=True — skipping card generation ({} existing cards)", n_cards)
+        card_stats: dict = {}
     else:
         generator = get_card_generator(cfg)
-        cards     = generator.generate_cards_for_chunks(chunk_objects)
+        cards     = generator.generate_cards_for_chunks(chunk_objects, resume=resume)
         n_cards   = store.save_cards(cards)
+        # §I25: the per-card-type handler swallows each type's exception, so the absence of a
+        # `Failed:` row is NOT evidence of a clean run. These counts are, and they travel with
+        # the result so the phase's exit criteria can assert on them.
+        card_stats = getattr(generator, "last_run_stats", {})
 
     builder = RaptorBuilder(settings=cfg)
     nodes   = builder.build_tree(
@@ -1530,6 +1539,10 @@ def generate_phase2_artifacts(
         "cards_generated": n_cards,
         "raptor_nodes":    n_nodes,
         "raptor_levels":   sorted({nd.level for nd in nodes}),
+        # §I25 — read these, not the absence of a `Failed:` row.
+        "failed_card_types": dict(card_stats.get("failed_card_types") or {}),
+        "failed_chunks":     int(card_stats.get("failed_chunks") or 0),
+        "card_gen_stats":    dict(card_stats),
     }
 
 

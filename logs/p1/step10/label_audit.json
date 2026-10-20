@@ -1,0 +1,3025 @@
+{
+  "window": [
+    30,
+    936
+  ],
+  "provenance": {
+    "factual": {
+      "queries": 53,
+      "labels": 506,
+      "generator_pages_in_labels": 53,
+      "scan_only_labels": 453,
+      "generator_kinds": {
+        "single-chunk": 53
+      }
+    },
+    "multihop": {
+      "queries": 40,
+      "labels": 171,
+      "generator_pages_in_labels": 82,
+      "scan_only_labels": 89,
+      "generator_kinds": {
+        "single-chunk": 17,
+        "multi-page": 23
+      }
+    },
+    "overview": {
+      "queries": 40,
+      "labels": 2954,
+      "generator_pages_in_labels": 0,
+      "scan_only_labels": 2954,
+      "generator_kinds": {
+        "none (topic-derived)": 40
+      }
+    },
+    "visual": {
+      "queries": 33,
+      "labels": 47,
+      "generator_pages_in_labels": 0,
+      "scan_only_labels": 47,
+      "generator_kinds": {
+        "none (visual note is traceability only)": 33
+      }
+    }
+  },
+  "unreachable_queries": [],
+  "ceiling_impact": {
+    "factual": {
+      "d9_ceiling": 0.9557089433962264,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    "multihop": {
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    "overview": {
+      "d9_ceiling": 0.39915215,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    "visual": {
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    }
+  },
+  "text_lane": {
+    "d9_ceiling": 0.8016440601503759,
+    "achievable_max_before": 1.0,
+    "achievable_max_after": 1.0
+  },
+  "rows": [
+    {
+      "id": "gold-003",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        30
+      ],
+      "generator_pages_in_labels": [
+        30
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-004",
+      "lane": "factual",
+      "n_pages": 3,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        30
+      ],
+      "generator_pages_in_labels": [
+        30
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-005",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        52
+      ],
+      "generator_pages_in_labels": [
+        52
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-008",
+      "lane": "multihop",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        79
+      ],
+      "generator_pages_in_labels": [
+        79
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-009",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        99
+      ],
+      "generator_pages_in_labels": [
+        99
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-010",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        99
+      ],
+      "generator_pages_in_labels": [
+        99
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-011",
+      "lane": "factual",
+      "n_pages": 3,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        125
+      ],
+      "generator_pages_in_labels": [
+        125
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-013",
+      "lane": "multihop",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        150
+      ],
+      "generator_pages_in_labels": [
+        150
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-014",
+      "lane": "factual",
+      "n_pages": 4,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        150
+      ],
+      "generator_pages_in_labels": [
+        150
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 3,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-015",
+      "lane": "factual",
+      "n_pages": 5,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        171
+      ],
+      "generator_pages_in_labels": [
+        171
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 4,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-016",
+      "lane": "factual",
+      "n_pages": 15,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        171
+      ],
+      "generator_pages_in_labels": [
+        171
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 14,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-017",
+      "lane": "factual",
+      "n_pages": 35,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        199
+      ],
+      "generator_pages_in_labels": [
+        199
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 34,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.571429,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-019",
+      "lane": "factual",
+      "n_pages": 16,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        226
+      ],
+      "generator_pages_in_labels": [
+        226
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 15,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-021",
+      "lane": "factual",
+      "n_pages": 5,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        252
+      ],
+      "generator_pages_in_labels": [
+        252
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 4,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-022",
+      "lane": "factual",
+      "n_pages": 5,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        252
+      ],
+      "generator_pages_in_labels": [
+        252
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 4,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-023",
+      "lane": "factual",
+      "n_pages": 2,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        273
+      ],
+      "generator_pages_in_labels": [
+        273
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-024",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        273
+      ],
+      "generator_pages_in_labels": [
+        273
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-025",
+      "lane": "factual",
+      "n_pages": 18,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        299
+      ],
+      "generator_pages_in_labels": [
+        299
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 17,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-026",
+      "lane": "factual",
+      "n_pages": 12,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        299
+      ],
+      "generator_pages_in_labels": [
+        299
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 11,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-027",
+      "lane": "multihop",
+      "n_pages": 13,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        321
+      ],
+      "generator_pages_in_labels": [
+        321
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 12,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-028",
+      "lane": "factual",
+      "n_pages": 4,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        321
+      ],
+      "generator_pages_in_labels": [
+        321
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 3,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-029",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        341
+      ],
+      "generator_pages_in_labels": [
+        341
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-030",
+      "lane": "factual",
+      "n_pages": 8,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        341
+      ],
+      "generator_pages_in_labels": [
+        341
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 7,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-031",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        360
+      ],
+      "generator_pages_in_labels": [
+        360
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-032",
+      "lane": "multihop",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        360
+      ],
+      "generator_pages_in_labels": [
+        360
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-033",
+      "lane": "factual",
+      "n_pages": 8,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        384
+      ],
+      "generator_pages_in_labels": [
+        384
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 7,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-034",
+      "lane": "factual",
+      "n_pages": 2,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        384
+      ],
+      "generator_pages_in_labels": [
+        384
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-035",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        403
+      ],
+      "generator_pages_in_labels": [
+        403
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-036",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        403
+      ],
+      "generator_pages_in_labels": [
+        403
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-037",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        427
+      ],
+      "generator_pages_in_labels": [
+        427
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-038",
+      "lane": "multihop",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        427
+      ],
+      "generator_pages_in_labels": [
+        427
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-039",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        450
+      ],
+      "generator_pages_in_labels": [
+        450
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-040",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        450
+      ],
+      "generator_pages_in_labels": [
+        450
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-041",
+      "lane": "factual",
+      "n_pages": 10,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        472
+      ],
+      "generator_pages_in_labels": [
+        472
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 9,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-042",
+      "lane": "factual",
+      "n_pages": 10,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        472
+      ],
+      "generator_pages_in_labels": [
+        472
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 9,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-043",
+      "lane": "factual",
+      "n_pages": 69,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        491
+      ],
+      "generator_pages_in_labels": [
+        491
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 68,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.289855,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-044",
+      "lane": "factual",
+      "n_pages": 134,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        491
+      ],
+      "generator_pages_in_labels": [
+        491
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 133,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.149254,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-045",
+      "lane": "factual",
+      "n_pages": 6,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        515
+      ],
+      "generator_pages_in_labels": [
+        515
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 5,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-046",
+      "lane": "factual",
+      "n_pages": 6,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        515
+      ],
+      "generator_pages_in_labels": [
+        515
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 5,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-047",
+      "lane": "factual",
+      "n_pages": 14,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        534
+      ],
+      "generator_pages_in_labels": [
+        534
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 13,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-048",
+      "lane": "multihop",
+      "n_pages": 9,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        534
+      ],
+      "generator_pages_in_labels": [
+        534
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 8,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-049",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        557
+      ],
+      "generator_pages_in_labels": [
+        557
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-050",
+      "lane": "factual",
+      "n_pages": 4,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        557
+      ],
+      "generator_pages_in_labels": [
+        557
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 3,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-051",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        589
+      ],
+      "generator_pages_in_labels": [
+        589
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-052",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        589
+      ],
+      "generator_pages_in_labels": [
+        589
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-053",
+      "lane": "factual",
+      "n_pages": 3,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        612
+      ],
+      "generator_pages_in_labels": [
+        612
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-054",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        612
+      ],
+      "generator_pages_in_labels": [
+        612
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-057",
+      "lane": "factual",
+      "n_pages": 3,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        662
+      ],
+      "generator_pages_in_labels": [
+        662
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-058",
+      "lane": "multihop",
+      "n_pages": 12,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        662
+      ],
+      "generator_pages_in_labels": [
+        662
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 11,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-059",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        686
+      ],
+      "generator_pages_in_labels": [
+        686
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-060",
+      "lane": "multihop",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        686
+      ],
+      "generator_pages_in_labels": [
+        686
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-061",
+      "lane": "factual",
+      "n_pages": 10,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        707
+      ],
+      "generator_pages_in_labels": [
+        707
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 9,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-062",
+      "lane": "multihop",
+      "n_pages": 6,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        707
+      ],
+      "generator_pages_in_labels": [
+        707
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 5,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-063",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        731
+      ],
+      "generator_pages_in_labels": [
+        731
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-064",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        731
+      ],
+      "generator_pages_in_labels": [
+        731
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-065",
+      "lane": "multihop",
+      "n_pages": 9,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        750
+      ],
+      "generator_pages_in_labels": [
+        750
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 8,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-067",
+      "lane": "factual",
+      "n_pages": 9,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        771
+      ],
+      "generator_pages_in_labels": [
+        771
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 8,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-068",
+      "lane": "multihop",
+      "n_pages": 5,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        771
+      ],
+      "generator_pages_in_labels": [
+        771
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 4,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-069",
+      "lane": "multihop",
+      "n_pages": 9,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        797
+      ],
+      "generator_pages_in_labels": [
+        797
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 8,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-070",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        797
+      ],
+      "generator_pages_in_labels": [
+        797
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-071",
+      "lane": "factual",
+      "n_pages": 29,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        824
+      ],
+      "generator_pages_in_labels": [
+        824
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 28,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.689655,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-072",
+      "lane": "multihop",
+      "n_pages": 13,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        824
+      ],
+      "generator_pages_in_labels": [
+        824
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 12,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-073",
+      "lane": "factual",
+      "n_pages": 21,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        841
+      ],
+      "generator_pages_in_labels": [
+        841
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 20,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.952381,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-074",
+      "lane": "multihop",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        841
+      ],
+      "generator_pages_in_labels": [
+        841
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-075",
+      "lane": "factual",
+      "n_pages": 10,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        864
+      ],
+      "generator_pages_in_labels": [
+        864
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 9,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-076",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        864
+      ],
+      "generator_pages_in_labels": [
+        864
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-077",
+      "lane": "factual",
+      "n_pages": 2,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        886
+      ],
+      "generator_pages_in_labels": [
+        886
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-078",
+      "lane": "multihop",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        886
+      ],
+      "generator_pages_in_labels": [
+        886
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-079",
+      "lane": "factual",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        915
+      ],
+      "generator_pages_in_labels": [
+        915
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-080",
+      "lane": "multihop",
+      "n_pages": 1,
+      "generator_kind": "single-chunk",
+      "generator_pages": [
+        915
+      ],
+      "generator_pages_in_labels": [
+        915
+      ],
+      "n_generator_in_labels": 1,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-081",
+      "lane": "multihop",
+      "n_pages": 4,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        23,
+        172,
+        627
+      ],
+      "generator_pages_in_labels": [
+        172,
+        627
+      ],
+      "n_generator_in_labels": 2,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-082",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        54,
+        135,
+        826
+      ],
+      "generator_pages_in_labels": [
+        54,
+        135,
+        826
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-083",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        30,
+        490,
+        921
+      ],
+      "generator_pages_in_labels": [
+        30,
+        490,
+        921
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-084",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        30,
+        490,
+        921
+      ],
+      "generator_pages_in_labels": [
+        30,
+        490,
+        921
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-085",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        30,
+        490,
+        921
+      ],
+      "generator_pages_in_labels": [
+        30,
+        490,
+        921
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-086",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        137,
+        224,
+        662
+      ],
+      "generator_pages_in_labels": [
+        137,
+        224,
+        662
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-087",
+      "lane": "multihop",
+      "n_pages": 2,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        24,
+        169,
+        274
+      ],
+      "generator_pages_in_labels": [
+        169,
+        274
+      ],
+      "n_generator_in_labels": 2,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-088",
+      "lane": "multihop",
+      "n_pages": 2,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        24,
+        169,
+        274
+      ],
+      "generator_pages_in_labels": [
+        169,
+        274
+      ],
+      "n_generator_in_labels": 2,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-089",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        97,
+        665,
+        765
+      ],
+      "generator_pages_in_labels": [
+        97,
+        665,
+        765
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-090",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        74,
+        735,
+        822
+      ],
+      "generator_pages_in_labels": [
+        74,
+        735,
+        822
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-091",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        95,
+        391,
+        788
+      ],
+      "generator_pages_in_labels": [
+        95,
+        391,
+        788
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-092",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        432,
+        687,
+        914
+      ],
+      "generator_pages_in_labels": [
+        432,
+        687,
+        914
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-093",
+      "lane": "multihop",
+      "n_pages": 13,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        301,
+        647,
+        932
+      ],
+      "generator_pages_in_labels": [
+        301,
+        647,
+        932
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 10,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-094",
+      "lane": "multihop",
+      "n_pages": 2,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        22,
+        108,
+        474
+      ],
+      "generator_pages_in_labels": [
+        108,
+        474
+      ],
+      "n_generator_in_labels": 2,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-095",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        219,
+        673,
+        934
+      ],
+      "generator_pages_in_labels": [
+        219,
+        673,
+        934
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-096",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        83,
+        252,
+        531
+      ],
+      "generator_pages_in_labels": [
+        83,
+        252,
+        531
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-097",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        118,
+        707,
+        831
+      ],
+      "generator_pages_in_labels": [
+        118,
+        707,
+        831
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-098",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        116,
+        248,
+        791
+      ],
+      "generator_pages_in_labels": [
+        116,
+        248,
+        791
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-099",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        42,
+        219,
+        321
+      ],
+      "generator_pages_in_labels": [
+        42,
+        219,
+        321
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-100",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        167,
+        490,
+        750
+      ],
+      "generator_pages_in_labels": [
+        167,
+        490,
+        750
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-101",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        214,
+        438,
+        649
+      ],
+      "generator_pages_in_labels": [
+        214,
+        438,
+        649
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-102",
+      "lane": "multihop",
+      "n_pages": 10,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        61,
+        398,
+        592
+      ],
+      "generator_pages_in_labels": [
+        61,
+        398,
+        592
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 7,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "gold-103",
+      "lane": "multihop",
+      "n_pages": 3,
+      "generator_kind": "multi-page",
+      "generator_pages": [
+        62,
+        264,
+        393
+      ],
+      "generator_pages_in_labels": [
+        62,
+        264,
+        393
+      ],
+      "n_generator_in_labels": 3,
+      "n_scan_only": 0,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-001",
+      "lane": "overview",
+      "n_pages": 115,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 115,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.173913,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-002",
+      "lane": "overview",
+      "n_pages": 51,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 51,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.392157,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-003",
+      "lane": "overview",
+      "n_pages": 22,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 22,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.909091,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-004",
+      "lane": "overview",
+      "n_pages": 85,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 85,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.235294,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-005",
+      "lane": "overview",
+      "n_pages": 44,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 44,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.454545,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-006",
+      "lane": "overview",
+      "n_pages": 46,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 46,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.434783,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-007",
+      "lane": "overview",
+      "n_pages": 49,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 49,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.408163,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-008",
+      "lane": "overview",
+      "n_pages": 33,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 33,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.606061,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-009",
+      "lane": "overview",
+      "n_pages": 127,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 127,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.15748,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-010",
+      "lane": "overview",
+      "n_pages": 36,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 36,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.555556,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-011",
+      "lane": "overview",
+      "n_pages": 131,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 131,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.152672,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-012",
+      "lane": "overview",
+      "n_pages": 27,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 27,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.740741,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-013",
+      "lane": "overview",
+      "n_pages": 157,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 157,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.127389,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-014",
+      "lane": "overview",
+      "n_pages": 58,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 58,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.344828,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-015",
+      "lane": "overview",
+      "n_pages": 82,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 82,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.243902,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-016",
+      "lane": "overview",
+      "n_pages": 43,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 43,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.465116,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-017",
+      "lane": "overview",
+      "n_pages": 155,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 155,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.129032,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-019",
+      "lane": "overview",
+      "n_pages": 31,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 31,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.645161,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-020",
+      "lane": "overview",
+      "n_pages": 33,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 33,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.606061,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-024",
+      "lane": "overview",
+      "n_pages": 36,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 36,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.555556,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-027",
+      "lane": "overview",
+      "n_pages": 35,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 35,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.571429,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-029",
+      "lane": "overview",
+      "n_pages": 34,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 34,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.588235,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-030",
+      "lane": "overview",
+      "n_pages": 73,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 73,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.273973,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-031",
+      "lane": "overview",
+      "n_pages": 76,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 76,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.263158,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-034",
+      "lane": "overview",
+      "n_pages": 25,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 25,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.8,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-035",
+      "lane": "overview",
+      "n_pages": 33,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 33,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.606061,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-036",
+      "lane": "overview",
+      "n_pages": 70,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 70,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.285714,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-037",
+      "lane": "overview",
+      "n_pages": 94,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 94,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.212766,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-038",
+      "lane": "overview",
+      "n_pages": 67,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 67,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.298507,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-039",
+      "lane": "overview",
+      "n_pages": 104,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 104,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.192308,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-040",
+      "lane": "overview",
+      "n_pages": 92,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 92,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.217391,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-041",
+      "lane": "overview",
+      "n_pages": 46,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 46,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.434783,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-042",
+      "lane": "overview",
+      "n_pages": 100,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 100,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.2,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-043",
+      "lane": "overview",
+      "n_pages": 119,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 119,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.168067,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-044",
+      "lane": "overview",
+      "n_pages": 314,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 314,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.063694,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-045",
+      "lane": "overview",
+      "n_pages": 55,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 55,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.363636,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-046",
+      "lane": "overview",
+      "n_pages": 114,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 114,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.175439,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-047",
+      "lane": "overview",
+      "n_pages": 95,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 95,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.210526,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-048",
+      "lane": "overview",
+      "n_pages": 24,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 24,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.833333,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "ovw-049",
+      "lane": "overview",
+      "n_pages": 23,
+      "generator_kind": "none (topic-derived)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 23,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 0.869565,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-001",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-002",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-003",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-005",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-006",
+      "lane": "visual",
+      "n_pages": 3,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 3,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-007",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-008",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-010",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-011",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-012",
+      "lane": "visual",
+      "n_pages": 4,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 4,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-013",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-014",
+      "lane": "visual",
+      "n_pages": 2,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-015",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-018",
+      "lane": "visual",
+      "n_pages": 2,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-019",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-020",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-021",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-022",
+      "lane": "visual",
+      "n_pages": 2,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-026",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-027",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-028",
+      "lane": "visual",
+      "n_pages": 2,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-029",
+      "lane": "visual",
+      "n_pages": 3,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 3,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-030",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-031",
+      "lane": "visual",
+      "n_pages": 2,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-032",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-033",
+      "lane": "visual",
+      "n_pages": 2,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-034",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-035",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-036",
+      "lane": "visual",
+      "n_pages": 2,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 2,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-037",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-038",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-039",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    },
+    {
+      "id": "vis-040",
+      "lane": "visual",
+      "n_pages": 1,
+      "generator_kind": "none (visual note is traceability only)",
+      "generator_pages": [],
+      "generator_pages_in_labels": [],
+      "n_generator_in_labels": 0,
+      "n_scan_only": 1,
+      "unreachable": [],
+      "unreachable_are_generator": [],
+      "d9_ceiling": 1.0,
+      "achievable_max_before": 1.0,
+      "achievable_max_after": 1.0
+    }
+  ]
+}

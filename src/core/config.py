@@ -167,6 +167,18 @@ class Settings(BaseSettings):
     # Card generation parallelism
     card_gen_workers: int = 4            # parallel Ollama threads for card generation
 
+    # Interval checkpoint for card generation (IMPROVEMENTS.md §I27). The card phase holds every
+    # card in memory and writes once, at the end, so an abort at chunk 3,700 of 3,791 discards the
+    # whole run — ~10.6 h at the only measured-healthy concurrency (§I26). With this on, each
+    # completed chunk is appended to a side-car JSONL and a re-run skips what is already there.
+    # The single SQLite write point (`save_cards`) is unchanged on purpose: a partially-written
+    # card set in the DB is indistinguishable from a complete one to the eval, the UI and §A3's
+    # volume count. The file is keyed by (document, chunk set, card types, model), so a re-ingest
+    # or a model change simply does not find it. Derived and re-derivable — safe to delete.
+    card_checkpoint_enabled: bool = True
+    card_checkpoint_dir: str = "./data/card_cache"
+    card_checkpoint_every: int = 25      # chunks between checkpoint log lines (writes are per chunk)
+
     # RAPTOR
     raptor_max_levels: int = 3
     raptor_min_cluster_size: int = 2     # minimum chunks per cluster

@@ -1,0 +1,70 @@
+{
+  "chunk_index": 449,
+  "page": 109,
+  "tokens": 103,
+  "elapsed_s": 10.15,
+  "cards_returned": 21,
+  "by_type": {
+    "definition": 1,
+    "example": 1,
+    "objective": 1,
+    "misconception": 1,
+    "summary": 1,
+    "question": 8,
+    "factoid": 8
+  },
+  "types_covered": 7,
+  "failures": [],
+  "sample": [
+    {
+      "type": "definition",
+      "title": "Triangulation",
+      "content": "Triangulation is a method of determining the distance between two points by measuring angles from a known baseline and applying trigonometric relationships. It allows measurement of large or inaccessible distances without physically traversing the entire span."
+    },
+    {
+      "type": "example",
+      "title": "Measuring distance between mountain tops by triangulation",
+      "content": "It would be difficult to measure the horizontal distance between two mountain tops using only a meter stick. We have found by experience that distance can be measured in another fashion: by triangulation."
+    },
+    {
+      "type": "objective",
+      "title": "Apply",
+      "content": "Apply triangulation techniques to calculate the horizontal distance between two remote points when direct measurement is impractical."
+    },
+    {
+      "type": "misconception",
+      "title": "Triangulation only measures angles, not distances",
+      "content": "Students often think triangulation is used only to determine angles. In reality, triangulation uses known distances and measured angles to calculate unknown distances, making it a powerful method for measuring large separations such as between mountain tops."
+    },
+    {
+      "type": "summary",
+      "title": "Summary",
+      "content": "Distance can be subdivided analogously to time: a smaller unit is chosen and the number of such units required to compose a larger unit is counted, allowing progressively finer measurements. However, practical measurement of large horizontal separations, such as between mountain peaks, cannot rely solely on a meter stick. Experience shows that distance can be determined by alternative methods, notably triangulation, which uses geometric relationships to infer lengths without direct physical measurement."
+    },
+    {
+      "type": "question",
+      "title": "How can distance be subdivided?",
+      "content": "How can distance be subdivided?"
+    },
+    {
+      "type": "question",
+      "title": "Why might a meter stick be impractical for measuring the distance between two mountain tops?",
+      "content": "Why might a meter stick be impractical for measuring the distance between two mountain tops?"
+    },
+    {
+      "type": "question",
+      "title": "What alternative method can be used to measure large horizontal distances?",
+      "content": "What alternative method can be used to measure large horizontal distances?"
+    },
+    {
+      "type": "question",
+      "title": "How does triangulation help determine distance?",
+      "content": "How does triangulation help determine distance?"
+    },
+    {
+      "type": "question",
+      "title": "What is the advantage of triangulation over a meter stick for long distances?",
+      "content": "What is the advantage of triangulation over a meter stick for long distances?"
+    }
+  ]
+}

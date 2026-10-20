@@ -1,0 +1,76 @@
+{
+  "document_id": "7ba61432-c5e0-416d-aecf-25a232523481",
+  "budget_minutes": 2.5,
+  "chunk_pool": 400,
+  "cells": [
+    {
+      "workers": 1,
+      "effective_concurrency": 8,
+      "elapsed_s": 198.7,
+      "drain_s": 14.8,
+      "chunks_completed": 10,
+      "cards": 201,
+      "chunks_per_min": 3.02,
+      "last60_chunks_per_min": 1.0,
+      "card_calls_per_min": 26.57,
+      "chunk_wall_p50_s": 63.74,
+      "chunk_wall_p90_s": 132.45,
+      "chunk_wall_max_s": 198.72,
+      "failed_chunks": 0,
+      "failed_card_types": {},
+      "llm": {
+        "calls": 88,
+        "failures": 0,
+        "retries": 0,
+        "deadline_hits": 0
+      },
+      "checkpoint_write_mean_ms": 3.7
+    },
+    {
+      "workers": 4,
+      "effective_concurrency": 32,
+      "elapsed_s": 150.8,
+      "drain_s": 24.6,
+      "chunks_completed": 21,
+      "cards": 405,
+      "chunks_per_min": 8.36,
+      "last60_chunks_per_min": 10.0,
+      "card_calls_per_min": 79.59,
+      "chunk_wall_p50_s": 82.58,
+      "chunk_wall_p90_s": 138.87,
+      "chunk_wall_max_s": 150.78,
+      "failed_chunks": 0,
+      "failed_card_types": {},
+      "llm": {
+        "calls": 200,
+        "failures": 0,
+        "retries": 1,
+        "deadline_hits": 0
+      },
+      "checkpoint_write_mean_ms": 3.11
+    },
+    {
+      "workers": 1,
+      "effective_concurrency": 8,
+      "elapsed_s": 175.2,
+      "drain_s": 12.5,
+      "chunks_completed": 8,
+      "cards": 159,
+      "chunks_per_min": 2.74,
+      "last60_chunks_per_min": 1.0,
+      "card_calls_per_min": 24.66,
+      "chunk_wall_p50_s": 80.56,
+      "chunk_wall_p90_s": 108.29,
+      "chunk_wall_max_s": 175.16,
+      "failed_chunks": 0,
+      "failed_card_types": {},
+      "llm": {
+        "calls": 72,
+        "failures": 0,
+        "retries": 0,
+        "deadline_hits": 0
+      },
+      "checkpoint_write_mean_ms": 2.3
+    }
+  ]
+}

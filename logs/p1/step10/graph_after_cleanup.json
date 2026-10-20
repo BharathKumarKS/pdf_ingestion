@@ -1,0 +1,28 @@
+{
+  "memgraph": {
+    "per_document": {
+      "7ba61432-c5e0-416d-aecf-25a232523481": {
+        "title": "The Feynman Lectures on Physics, Volume I",
+        "chunks": 3796,
+        "pages": 933,
+        "concepts": 7834
+      }
+    },
+    "totals": {
+      "documents": 1,
+      "chunks": 3796,
+      "pages": 933,
+      "concepts": 7834,
+      "edges": 73336
+    }
+  },
+  "old_doc_residue": {
+    "chunks": 0,
+    "pages": 0
+  },
+  "sqlite_chunks": {
+    "6d55c52b-47ae-45ff-bee0-a3ca01ac93ce": 5048,
+    "7ba61432-c5e0-416d-aecf-25a232523481": 3796
+  },
+  "verdict": "PASS"
+}

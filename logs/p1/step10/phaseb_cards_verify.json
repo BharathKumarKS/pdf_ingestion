@@ -1,0 +1,16 @@
+{
+  "document_id": "7ba61432-c5e0-416d-aecf-25a232523481",
+  "active_cards": 0,
+  "by_type": {},
+  "chunks_used": 0,
+  "orphan_cards": 0,
+  "foreign_doc_cards": 0,
+  "old_doc_active_cards": 82164,
+  "failures": [
+    "run log missing; the 'Failed:' row check could not be performed",
+    "ZERO active cards \u2014 the run wrote nothing (\u00a7I9 signature)",
+    "card types missing: ['summary', 'definition', 'example', 'misconception', 'question', 'objective', 'formula', 'factoid']",
+    "only 0.00 cards per content chunk \u2014 far below family"
+  ],
+  "verdict": "FAIL"
+}

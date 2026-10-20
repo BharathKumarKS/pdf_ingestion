@@ -4,9 +4,83 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-18 (P1 Step 8 — attempt 5 RUNNING; four earlier attempts failed and are
-> fully diagnosed).** Branch `feat/p0-9-gold-dataset-v2`. **Read `RETROSPECTIVE.md` for the
-> project-wide lessons — it is the document this phase was worth.**
+> **Last updated: 2026-10-20 morning (Phase B attempted 2026-10-19 and ABORTED; its two blockers
+> are now FIXED — the card run itself has NOT been relaunched).** Step 10
+> §0 pre-registration is written; §1's preflight gate failed and was registered as **§D14**. Owner
+> chose fix (c) — rebuild the graph (Step 9's *graph half*; cards / DA / ColPali still deferred).
+> **Phase A is complete:** A3 built doc `7ba61432`'s graph (16 h 25 m, verifier PASS), **A4 applied**
+> (old document's graph retired — `graph.matches-qdrant` 100 % → **0.0 %**), **A5 `preflight.py` exit
+> 0**, **§2 the reranker ablation RAN** (Δ **+0.0099**, CI **[−0.0140, +0.0339] → UNRESOLVED**, §D13
+> updated), and **§3 is done** — §3a verified the deployed page numbering, §3b audited the labels,
+> §3c(B) clamped 4 unreachable pages, §3d ran retrieval-only as a smoke test (**§D15**). **Next:
+> Phase B — planned at `.hermes/plans/2026-10-19-p1-step9-phaseB-plan.md`.** Branch
+> `feat/p0-9-gold-dataset-v2`. **Read `RETROSPECTIVE.md`** for the project-wide lessons.
+>
+> **PHASE B — where it actually stands (2026-10-20).** It was **run on 2026-10-19 and ABORTED** at
+> B2/B3: cards for 74 of 3,791 chunks in 60 minutes (~97 s/chunk, 16 timeouts, ETA ~51 h), killed by
+> hand. The abort was **clean** (0 cards, 0 RAPTOR nodes, `knowledge_base_v2` still 3,796 points, the
+> old doc's 82,164 active cards untouched). Three findings came out of it, all now registered:
+> **§I24** (`src/core/llm.py` had no total-request deadline and no retry — a 41-minute silent hang),
+> **§I25** (the per-card-type swallow made a *total* card loss invisible: zero `Failed:` rows,
+> exit 0), **§I26** (the concurrency knee). **§I24, §I25 and §I27 are now FIXED in code; the card run
+> has NOT been relaunched.**
+>
+> **⚠️ THE LAUNCH IS CURRENTLY BLOCKED — the lab network is DOWN (2026-10-20 ~09:00).** `B0b`'s
+> live-precondition probe **FAILED** (P2 Qdrant / P3 LLM / P4 embed all `Connection refused`), and
+> the hosts are unreachable at the network layer, not merely slow: **every port on `10.0.10.65` and
+> `10.0.10.70` is closed** (6333, 7687, 8000, 8123, 22), `traceroute` to either returns
+> **`!X` (administratively prohibited)** from `10.128.128.128` on the first hop, and the WireGuard
+> service `2026-Summer-Bharath-Kumar-KS` is up while `en0` reports **not associated with an AirPort
+> network**. The same endpoints answered 200 in 0.21 s and ran a 40-minute probe sweep until ~08:50,
+> so this is a **~15-minute-old change on this machine's side**, not a change in the project. **No
+> cluster work can run until it is restored** — the card run, B4/B5/B6, and the independent review
+> (whose verifier model lives on the cluster) are all blocked by it. **Check the network first.**
+>
+> **⚠️ COMMITTED BUT NOT REVIEWED.** The 2026-10-20 source changes are in **`2e9d2ae`** (branch
+> `feat/p0-9-gold-dataset-v2`, **not pushed**). The independent review **has not run** — see the
+> "Verifier model" row in Verified facts: the recorded reviewer is (a) on the down cluster and
+> (b) **no longer pinned in `config.yaml`**, so a `delegate_task` child would now inherit the
+> parent's own model, i.e. self-review. **The commit deliberately does not carry the `[verified]`
+> prefix.** Do not treat any child's `passed: true` as verification until the pin is restored.
+>
+> **Still uncommitted in the working tree** (another session's in-flight work — deliberately left
+> alone): `ARCHITECTURE.md`, `data/eval_queries_v2.json`, `scripts/build_gold_v2.py`,
+> `src/pdf_ingestion/embed_cache.py`, `src/pdf_ingestion/late_chunk_embedder.py`,
+> `tests/test_embed_cache.py`, `data/eval_results/p1-step10-retrieval-only_2026-10-20_0411.md`,
+> `logs/p1/step8-run/probe_cache_hit*`, and the older `.hermes/plans/2026-10-18-*` plans that
+> HANDOFF and the backlog reference.
+>
+> **THE CARD RUN IS THE ONLY THING LEFT BEFORE B4 — AND THE WORKER COUNT IS NOW MEASURED.**
+> The 2026-10-20 sweep (two sweeps, six cells, control-verified) **refutes §I26's original
+> conclusion**: throughput scales with concurrency and never collapses — 3.18 chunks/min at
+> `workers=1`, 6.52 at 2, **9.39 at 4**, with **zero failed chunks and zero LLM failures** at up to
+> **32 in-flight calls**, and `workers=1` re-measured at the end of the session to rule out drift.
+> **ETA for 3,791 chunks: ~19.9 h at 1 · ~9.7 h at 2 · ~6.7 h at 4.** The sustained per-chunk cost is
+> **~64-105 s at p50**, not the 10.1 s the plan's 10.6 h estimate was built on. Relaunching needs:
+> (1) `CARD_GEN_WORKERS` set in `.env` (currently **2**; **4 recommended, 1 no longer**);
+> (2) `run_phaseb.sh <workers>` (its B0 gate asserts what is actually in force); (3) B4/B5/B6 the
+> verifiers. **⚠️ `workers=8` was NOT tested** and the trend was still rising at 4 — the knee is
+> above 4 or not reached, but `.70` is a shared cluster and 32 in-flight is already a real load.
+> **The checkpoint makes this restartable** — see below.
+>
+> **What 2026-10-20 changed in the code (uncommitted at the time of writing):**
+> - `src/core/llm.py` — read the body in chunks against a **300 s wall-clock deadline**, raised as
+>   `httpx.ReadTimeout` so a **bounded retry** (3 attempts, jittered backoff) catches it; retries
+>   transport/429/5xx, never other 4xx. The `""` + ERROR contract is unchanged, and failures are now
+>   **counted** (`llm_call_stats()`). **Scope limit:** this covers the *raw* path only — with
+>   `use_instructor: true` four card types bypass it (config.yaml currently says `false`).
+> - `src/pdf_ingestion/card_checkpoint.py` (**new**) — the card phase is now **checkpointed and
+>   resumable**. Each completed chunk is appended to `data/card_cache/<doc8>__<key>.jsonl`
+>   (`flush`+`fsync`); a re-run skips what is done and **still returns those cards**, so
+>   `save_cards` remains the single write point. A chunk whose card types **failed** is *not* treated
+>   as done — it is re-attempted. `run_phase2.py --no-resume` discards it. **This is what makes a
+>   multi-hour card run restartable instead of all-or-nothing.**
+> - `generate_cards_for_chunks` now reports `failed_card_types` / `failed_chunks` through
+>   `generate_phase2_artifacts`, and `run_phase2.py` prints a **"Card types failed"** column.
+>   **That count, not the absence of a `Failed:` row, is the exit criterion (§I25).**
+> - New tests: `tests/test_llm_deadline_retry.py` (14), `tests/test_card_checkpoint.py` (15);
+>   `tests/test_fallback_chains.py` rewritten to the new transport boundary (its old
+>   `llm.httpx.post` patch was silently inert and the tests were making **real network calls**).
 >
 > **Where the re-ingest stands.** Goal: `scripts/ingest_base_textbook.py --pdf …feynman…
 > --collection-name knowledge_base_v2 --reindex` with `QDRANT_HOST=10.0.10.65` and
@@ -18,46 +92,158 @@
 > | 2 | retry worked (600 attempts) but the **endpoint went down**; no checkpoint, 53.6 min lost |
 > | 3 | reached **339/341** parents, then unreachable endpoint; 63.8 min lost (§I19) |
 > | 4 | **reached the final write** — late-chunk 341/341 with **0 retries**, SQLite + SPLADE + ColBERT all done — then Qdrant rejected the upsert: **34.7 MB payload vs a 32 MiB cap** |
-> | 5 | **running now** (pid 95461, started 12:14:54), with the byte-budgeted upsert fix |
+> | 5 | **SUCCEEDED** — 58.6 min (12:14:54 → 13:13:28), **0 errors**. Late-chunk 36.1 min, SPLADE 5.4, ColBERT 10.2, upsert 2.3. `knowledge_base_v2` = **3,796 points, all four lanes on every point**, `verify_collection.py` exit 0. The cache delivered nothing (§I19a) |
 >
 > **What is fixed and committed:** bounded retry + jittered backoff and per-path read timeouts
 > (`9215de8`); a **total-request deadline** for the trickling-body case that no read timeout bounds;
 > **`late_chunk_workers = 4`** (8 measured *slower* under sustained load — §I18); a **resume cache**
-> (`ed218f9`, `bf54a93`, `f0098a1`) so a re-run embeds only the missing parents; **byte-budgeted
+> (`ed218f9`, `bf54a93`, `f0098a1`, plus the §I19a fix) — **now proven to hit: 341/341 parents with
+> zero embeddings issued, verified read-only against a dead endpoint**;
+> **byte-budgeted
 > Qdrant upsert batching** (`5675cb6`); and a launch-time **resolved-settings gate** in
 > `run_step8.sh` that prints and asserts the settings actually in force (attempt 3 ran at 8 workers
 > while everyone believed 4 — `.env` overrode the config default).
 >
 > **IMMEDIATE NEXT STEPS (in order)**
-> 1. **Check attempt 5**: `tail -40 logs/p1/step8-run/run_feynman.log` — look for `RUN COMPLETE`,
->    a `Traceback`, or `Qdrant: upserted 3796 points`. It is a detached process; the log is the
->    only state that matters and it survives this session.
-> 2. **If it failed**, read the traceback; the previous four failure shapes are all documented in
->    `IMPROVEMENTS.md` §E7 so a new one should stand out.
-> 3. **Verify the collection** (the plan's own check is insufficient — see §I15, a count check
->    passes on an index missing vector lanes):
->    `uv run python logs/p1/step8-run/verify_collection.py knowledge_base_v2 --sqlite data/synapse.db`
->    Expect: points == SQLite chunks **scoped by `document_id`** (SQLite also holds the old
->    deployed doc `6d55c52b`, 5,048 chunks — that is intended, not a mismatch), all four lanes
->    (`colbert`, `dense_1024`, `dense_64`, `sparse`) present on **every** point, and the per-token
->    dims 128/1024/64.
-> 4. **Prove the cache actually hits.** Attempt 5 rewrote all 341 entries with a corrected digest,
->    so a *second* run should log `Late-chunk cache: 341 hits / 0 misses`. This has never been
->    demonstrated end to end — do it before trusting the cache.
-> 5. **Then Step 10** (re-measure: the §D13 reranker ablation on the rebuilt index, ceiling-normalised
->    per §D9), and decide **§I20** (`save_document` is not atomic — it commits SQLite before
->    upserting Qdrant, so a failure leaves 3,796 chunk rows for a document with zero points).
+> 1. **Attempt 5 is DONE — it SUCCEEDED** (see the table). Steps 1 and 3 of the previous version of
+>    this list are both discharged; the log is `logs/p1/step8-run/run_feynman.log` (753 lines, ends
+>    `=================== RUN COMPLETE ===================`, finished 13:13:28).
+> 2. **Verify the collection — DONE, exit 0.** `uv run python logs/p1/step8-run/verify_collection.py
+>    knowledge_base_v2 --sqlite data/synapse.db`: 3,796 points reported == 3,796 scrolled,
+>    `all_lanes_on_every_point: true`, `missing: {}`, dims `colbert 128 / dense_1024 1024 / dense_64
+>    64`, sparse on all 3,796, and points == SQLite chunks **scoped by `document_id`** (the old
+>    deployed doc `6d55c52b`, 5,048 chunks, is intended, not a mismatch). Two things it reports
+>    without judging: **3,795 of 3,796** points carry a `parent_id` (1 does not) and `is_content` is
+>    true on 3,791.
+> 3. ~~Prove the cache actually hits~~ **DONE 2026-10-18 — and without a second ingest.** The
+>    read-only probe `logs/p1/step8-run/probe_cache_hit.py` mirrors `process_pdf` lines 95–104 and
+>    stops before `save_document`; run against the live cache with the dense lane pointed at a
+>    **dead port**, it reports **341 hits / 0 misses / 0 stale / 0 rejected / 0 embeddings issued /
+>    0.8 s**, `VERDICT: HIT`. Attempt 5's zero-hit run was the digest-width defect — **§I19a, now
+>    FIXED** (the digest scheme is named in each entry and checked on read; a hit is counted only
+>    after `rebuild()` validates). The `_CACHE_SCHEMA_VERSION` bump that §I19a first proposed was
+>    rejected on evidence: it would have discarded 341 entries that work.
+> 4. **Step 10 — IN FLIGHT. RESUME HERE.**
+>    - **§0 DONE** — `.hermes/plans/2026-10-18-p1-step10-preregistration.md`. It corrects three plan
+>      numbers: the text lane is **133** (not 135); the endpoint is the final top-20 (**B6**), not
+>      B5b (B5b is arm-invariant by construction — it is the control); and the §D9 **R@20** ceiling is
+>      `mean(min(20,|rel|)/|rel|)` = **0.8016**, *not* the funnel's printed "Precision@20 ceiling" of
+>      0.4861. `required_n.py` prints **no CI**; the CI is `mean ± 1.96·SD/√n`.
+>    - **§1 FAILED → §D14.** The graph holds only the OLD document (`6d55c52b`); `knowledge_base_v2`
+>      is the new one (`7ba61432`). 5,051/5,051 graph chunk ids dangle (**100%**). Chunk ids are
+>      `uuid4()` per ingest, so **no environment action clears this**.
+>    - **Memgraph now runs locally**: Docker Desktop + `docker compose --profile phase3 up -d memgraph`.
+>      ⚠️ The container reports **`unhealthy` permanently** — its healthcheck runs `mg_client`, absent
+>      from `memgraph/memgraph:2.18.1`. **Check Bolt on 7687, never `.State.Health.Status`.**
+>    - **Owner decision: build the graph** (§D14 fix (c)) — but **"minimal first": ONLY the graph.**
+>      Cards / DA / ColPali stay deferred. Plan:
+>      `.hermes/plans/2026-10-18-p1-step9-downstream-pulled-forward-plan.md`.
+>    - **Phase A:** A1 settings gate ✅ · A2 before-snapshot + one-chunk LLM probe ✅
+>      (`logs/p1/step10/graph_before.json`) · **A3 build ✅ DONE, VERIFIER PASS** (2026-10-19 09:47:04).
+>      `logs/p1/step10/graph_build.log`, `graph_after.json`. **Took 16 h 25 m, not the 2 h I
+>      estimated** (§I23) — do not budget Phase 3 runs in hours on this shared cluster.
+>      Doc `7ba61432` now has **3,796 chunk nodes (== SQLite), 933 pages, 7,834 distinct concepts**,
+>      density **2.064/chunk** (old doc 1.547; floor 0.774). Old document verified **untouched**.
+>      ⚠️ The run reported "15619 concept nodes / 0 failed" — both wrong (§I22: that field is MENTIONS
+>      edges, ~2× the truth; and 44 real LLM timeouts were swallowed, §I23). **Count in Memgraph.**
+>    - **A4 ✅ APPLIED 2026-10-19 18:01** (dry-run re-verified live first — read-only — then `--yes`;
+>      **never `--force`**). Removed **1 document / 5,051 chunks / 757 pages / 4,664 orphaned
+>      concepts**. Verified from Bolt: graph now holds **1** document (`7ba61432`, 3,796 chunks ==
+>      SQLite, 933 pages, 7,834 concepts, 73,336 edges, density 2.064), old-doc residue **0/0**.
+>      `logs/p1/step10/{a4_dryrun.log,a4_apply.log,a4_verify.log,graph_after_cleanup.json}`.
+>      ⚠️ The deleted graph belonged to the **deployed** `knowledge_base` — the deployed app's multihop
+>      lane has no graph until cutover. Accepted consequence of fix (c) (§D14).
+>    - **A5 ✅ PASS 2026-10-19 18:02** — `preflight.py` **exit 0**, every check PASS,
+>      `graph.matches-qdrant` **0/3,796 absent (0.0 %)** (was 100 %). `logs/p1/step10/a5_preflight.log`.
+>    - **§2 ✅ RAN 2026-10-19 18:02–18:17 — verifier PASS, result UNRESOLVED.** n=**133** both arms,
+>      same collection + HyDE cache + `dense_1024`; §D10 check: `B5b_retriever_top20` moved on **0**
+>      queries → valid. **Δ = +0.0099** (rerank − no-rerank), SD_d **0.1411**, 95 % CI
+>      **[−0.0140, +0.0339]** → **UNRESOLVED** (33 worse / 36 better / 64 identical). R@20 raw 0.4153
+>      vs 0.4054 → ÷0.8016 = 0.5181 vs 0.5057. **SD_d fell 0.2315 → 0.1411** and required N for
+>      δ=0.05 fell **169 → 63** — n=133 now exceeds the pre-registered requirement. The §D13
+>      factual-lane loss (−0.0469, resolved on the old index) **did NOT reproduce**: now +0.0026,
+>      CI [−0.0440, +0.0493], unresolved. Evidence `logs/p1/step10/{run_step10_v2.log,
+>      v2_rerank.json,v2_norerank.json,ab_verifier.log,ab_verdict.json}`; §D13 updated.
+>    - **§3 ✅ DONE 2026-10-19 (a–d).** **§3a** — the deployed index's `page_number` re-measured
+>      against the PyMuPDF oracle (helpers imported from the Step 6 probe, so they cannot drift):
+>      new doc `7ba61432` **2150/2151 = 0.9995** offset 0 (1.0000 first-per-page), old doc `6d55c52b`
+>      **0.7154** as the baseline. Reproduces Step 6 chunk-for-chunk → **the deployed index speaks
+>      PDF-page coordinates**. **§3b** — label provenance audited (`logs/p1/step10/audit_gold_labels.py`):
+>      factual 53 generator + 453 scan-only labels; multihop 86 generator (17 single-chunk + 23
+>      **multi-page**) + 89 scan-only; overview/visual carry **no** generator page by construction.
+>      **§3c (option B, owner-approved)** — `build_gold_v2.py` gained `_clamp_unretrievable()`; the 4
+>      multihop pages in 22–24 (below `min_content_page` 30, all **multi-page generator** pages =
+>      §D4's defect as a §D6 one) were clamped. Diff verified to be **exactly** those 4 pages.
+>      Unreachable label pages **4 → 0**; text-lane achievable max **0.9910 → 1.0000**; §D9 ceiling
+>      unchanged (0.8016). `tests/test_gold_schema.py` 7 passed.
+>    - **§3d(ii) ✅ RAN — a SMOKE TEST, not a measurement (§D15).** R@20 0.452 · Hit@20 0.910 · MRR
+>      0.728 · abstention 0.824; per lane factual 0.570 / multihop 0.543 / overview 0.206.
+>      **Not comparable to §D12's 0.465** — four independent differences (see §D15).
+>    - ⚠️ **NEW FINDING (§I12 update): the DA lane is DEAD on every `evaluate_rag.py` query.**
+>      `derivative_artifacts` is 768d while the query side is 1024d → `search_da` returns `[]` for all
+>      152 non-visual queries, and the report says nothing. `preflight.py` misses it because it checks
+>      a point count, never issuing a query. §I12's "no silent degradation" holds for the UI only.
+>    - **NEXT: RELAUNCH Phase B's card run — ATTEMPTED 2026-10-19, ABORTED, blockers now FIXED.**
+>       Plan: `.hermes/plans/2026-10-19-p1-step9-phaseB-plan.md` (B0–B7, each with its verifier).
+>       **B0 gate ✅ PASS, B0b live preconditions ✅ ALL PASS, B1 one-chunk probe ✅ PASS ×3.** B3 was
+>       run and **killed by hand** at 74/3,791 chunks (see the Phase B banner above). **The harness and
+>       both verifiers are written and smoke-tested** (`run_phaseb.sh`, `verify_phaseb_cards.py`,
+>       `verify_phaseb_raptor.py`); the before-snapshot is measured
+>       (`logs/p1/step10/phaseb_before.json`).
+>       **The shape of it:** 3,791 content chunks × 8 card types ≈ **30,328 LLM calls** → ~60–76k cards.
+>       **What is different now:** the run is **checkpointed and resumable** (§I27) and every LLM call
+>       is **bounded and retried** (§I24), so an abort costs the chunks since the last checkpoint rather
+>       than the whole run, and exit 0 is no longer evidence — read `failed_card_types` (§I25).
+>       **⚠️ `verify_phaseb_cards.py` check [1] ("no `Failed:` row") is vacuous** — §I25. The real
+>       guards are checks [3] (distinct card-type set == the 8 in `CardType`) and [4] (cards/chunk
+>       ratio), plus the new `failed_card_types == {}` from `run_phase2.py`'s output.
+>       Then **C (DA re-index) → D (ColPali) → Phase E** (the authoritative `evaluate_rag.py` run).
+>       Phase C is what makes the DA lane live again (§I12).
+>    - **§2 harness**: `logs/p1/step10/run_step10_v2.sh` (steps 1–3; step 4 deliberately absent)
+>      + `logs/p1/step10/check_ab_arms.py` (verifier: same n, §D10 B5b-stability, ceilings, CI,
+>      per-type). **§4 is deferred** — it reads the DA/graph/visual lanes, still the old document's.
+>    - **RESOLVED — the owner question is closed.** §2 did **not** need §D14 fix (b): fix (c) cleared
+>      the gate, so §2 ran on the clean index as intended. Fix (b) is still the durable fix for the
+>      next re-ingest (§D14) and is still **not done**.
+>    - **§I20** is decided **after** Step 10, not during.
+>
+> **New register entries this session:** §D15 (the §3d retrieval-only run — a smoke test, and the run
+> that exposed the dead DA lane), §D14 (the preflight gate cannot pass for a re-ingested collection —
+> now discharged by fix (c), with fix (b) still open), §A3 (card volume vs quality — owner's question,
+> curriculum-grounded), §I21 (the Phase 3 graph build ignores the E5 content filter), §I22
+> (`graph_stats["concept_nodes"]` is really MENTIONS edges), §I23 (the Phase 3 graph build has no
+> checkpoint/retry, burns a reasoning model, and its throughput collapsed 8× under shared-GPU
+> contention — measured). **Updates to existing entries:** §D4 and §D6 (the deployed page-numbering
+> verification, the label-provenance audit, and the §3c clamp), §I12 (the DA lane is dead in
+> `evaluate_rag.py` — 768d collection, 1024d query). **§G (graph analytics: PPR, entity
+> resolution, community detection) is planned and SIGNED OFF but NOT started** —
+> `.hermes/plans/2026-10-18-p1-graph-analytics-plan.md`; **no new deps needed** (networkx 3.6.1 has
+> `leiden_communities`; Memgraph has `nxalg.pagerank`). **The SupportVectors course materials are at
+> the repo root** (`Week_Plan/`, `Week_Summary/`, `Slides/`, `Labs/`).
+>
+> **Register entries added 2026-10-20 (all four from the aborted Phase B run):** **§I24** FIXED —
+> `src/core/llm.py` had no total-request deadline and no retry (41-minute silent hang); **§I25**
+> FIXED — the per-card-type swallow made a total card loss invisible (0 `Failed:` rows, exit 0);
+> **§I26** — the card concurrency knee, and the standalone probe that replaced the structurally
+> unmeasurable ramp; **§I27** FIXED — the card phase had no checkpoint/resume, so a ~10.6 h run was
+> all-or-nothing.
 >
 > **Cleanup that is NOT automatic** — a failed run leaves a half-written state: delete the orphaned
 > `documents` row and its `chunks`, and delete the partially-written collection, before re-running.
 > Attempt 4 needed exactly this (128 orphan points + a 3,796-chunk orphan row). Registered in §I20.
+> Attempt 5 needed none of it — it recreated the collection at launch and left no orphan rows.
 >
 > **Open register items blocking or adjacent:** §I16 (checkpointing done; the deadline is done;
-> nothing left blocking), §I17 (ColBERT batch 4 / SPLADE batch 32 remain serial — ~15 min),
-> §I18 (probes must sweep payload size AND be sustained, not bursts), §I19 (cache: built, needs the
-> hit-proof in step 4), §I20 (atomicity). **§I14 is resolved** — `SV_EMBED_URL` is now in `.env`.
+> nothing left blocking), **§I19a (FIXED 2026-10-18 — the cache hit nothing in the run it was built
+> for: a digest-width change with no `_CACHE_SCHEMA_VERSION` bump, plus a counter that reported 341
+> hits for 0 usable ones; the scheme is now named and checked and hits are counted after
+> validation)**, §I17 (ColBERT batch 4 / SPLADE batch 32 remain serial — measured on attempt 5 at
+> **15.6 min combined**: ColBERT 10.2, SPLADE 5.4), §I18 (probes must sweep payload size AND be
+> sustained, not bursts), §I19 (cache: built, and now proven to hit), §I20 (atomicity).
+> **§I14 is resolved** — `SV_EMBED_URL` is now in `.env`.
 >
-> Detail lives in `IMPROVEMENTS.md` §E6–§E7 and §I14–§I20; the evidence is `logs/p1/step8-run/`.
+> Detail lives in `IMPROVEMENTS.md` §E6–§E7 and §I14–§I20; the procedure for the next action is
+> `.hermes/plans/2026-10-18-p1-step10-remeasure-plan.md`; the evidence is `logs/p1/step8-run/`.
 >
 > **Steps 2–3 went through independent review 2026-10-17** (verifier = `openai/gpt-oss-20b`, a
 > different model from the author's). It found one genuine defect — a parent with no provenance
@@ -514,7 +700,11 @@ gates), with cost classes and re-ingest ordering: [`IMPROVEMENTS.md`](IMPROVEMEN
 | Judge lane (v1, 23 q) | Faithfulness **0.701 (a floor)** · Ans.Relevance 0.927 · Citation 1.000 |
 | Judge gateway | **`http://10.0.10.70:8000`** — serves `Qwen/Qwen3-VL-8B-Instruct` (the D9 VLM) among 6 models; ~0.8 s per page judgment at concurrency 1. The P0-9 plan's `10.0.10.51:8000` is **dead**. |
 | Cluster LLM catalogue (probed 2026-10-17) | **Listed ≠ serving.** `/v1/models` returns 6 ids, but only **2 text models answer**: `openai/gpt-oss-20b` (200, ~0.3 s on a trivial prompt) and `Qwen/Qwen3-VL-8B-Instruct` (200). **`openai/gpt-oss-120b` is listed and 502 ×3** ("Backend inference unreachable"), as is `deepseek-ai/DeepSeek-R1-Distill-Qwen-7B` (backend `10.0.50.71` down). Same trap class as §B4a's ColPali endpoint — re-probe, never trust the catalogue. |
-| Verifier model | `delegate_task` children run **`openai/gpt-oss-20b`** (cluster) — `delegation.model` in `~/.hermes/config.yaml`, alias `sv-gptoss`. That is a *different* model from the main agent (`deepseek/deepseek-v4.1-flash`), so the independent-review step is free. `delegation.fallback_providers` is **`[]`** (it was the main agent's own model → a cluster outage silently turned the verifier into self-review). **Limit (measured 2026-10-17):** it cannot sustain a multi-turn *tool* session — after 25 API calls the provider rejected the request as malformed because the model's own harmony control tokens (`<\|channel\|>commentary`) had leaked into message content and the server could not parse the replayed history. Single-turn tool calling works. So the verifier runs **single-turn with the evidence embedded**, not as a tool-using agent; a mid-run protocol failure counts as *no verdict*, never a pass. |
+| Verifier model | ⚠️ **RE-MEASURED 2026-10-20 — the record below is STALE.** `delegation.model` and `delegation.provider` are **commented out** in `~/.hermes/config.yaml`, and `delegation.fallback_providers` is unset (not `[]`). With them unset, `delegate_task` children **inherit the parent model (`deepseek/deepseek-v4.1-flash`)** — i.e. the "independent" review is **self-review with a fresh context**, which is worse than no reviewer because it looks like a second opinion. **Before trusting any `passed: true` from a child, check what model it actually ran on.** To restore a real reviewer, pin `delegation.model` to a model that is *not* the parent's (the cluster's `openai/gpt-oss-20b` was the 2026-10-17 choice, but it is unreachable whenever the lab network is down — see the outage note). **Historical record (2026-10-17), kept because its limit still applies to any cluster reviewer:** children then ran `openai/gpt-oss-20b` (cluster, alias `sv-gptoss`); it **cannot sustain a multi-turn *tool* session** — after 25 API calls the provider rejected the request as malformed because the model's own harmony control tokens (`<\|channel\|>commentary`) had leaked into message content. Single-turn tool calling works, so that verifier ran **single-turn with the evidence embedded**; a mid-run protocol failure is *no verdict*, never a pass. |
+| Phase 2/3 LLM caller (2026-10-20) | `src/core/llm.py` — **300 s total-request deadline** (body read in chunks against a wall clock, raised as `ReadTimeout` so the retry catches it) + **3-attempt bounded retry** (jittered doubling backoff) on transport errors / 429 / 5xx, never on other 4xx. Failure contract unchanged (`""` + ERROR). Counters via `llm_call_stats()`. **⚠️ Covers the RAW path only** — with `use_instructor: true` in `config.yaml`, 4 of 8 card types go through the instructor/openai SDK and bypass it. `config.yaml` currently sets `use_instructor: false` (confirmed in `phaseb_run.log`), so all 8 are covered today. §I24 |
+| Card-generation checkpoint (2026-10-20) | `data/card_cache/<doc8>__<key>.jsonl`, append-only + `flush`/`fsync` per chunk, keyed on `(document_id, card types, model)`; entries validated against the current chunk list on read. A chunk with a **failed** card type is re-attempted on resume. `run_phase2.py --no-resume` discards. `save_cards` is still the single write point. §I27 |
+| Card-phase exit criterion (2026-10-20) | **`failed_card_types == {}`** in `run_phase2.py`'s output — NOT the absence of a `Failed:` row, which is vacuous (§I25). Still keep `verify_phaseb_cards.py` checks [3] (8 distinct card types) and [4] (cards/chunk ratio). |
+| **Card throughput, measured (2026-10-20)** | Sweep + control sweep, 6 cells, ~40 min, 103 chunks, **zero failed chunks / zero LLM failures**: **3.18 chunks/min at `workers=1` (measured 3×: 3.77/3.02/2.74 — the last one at the END of the session, so no drift), 6.52 at 2, 9.39 at 4 (32 in-flight)**. **ETA 3,791 chunks: ~19.9 h / ~9.7 h / ~6.7 h.** Sustained p50 chunk wall time **64-105 s** — NOT the 10.1 s the plan's 10.6 h estimate used. **`workers=8` untested; the trend was still rising at 4.** §I26 |
 
 ---
 

@@ -1,0 +1,34 @@
+{
+  "memgraph": {
+    "per_document": {
+      "6d55c52b-47ae-45ff-bee0-a3ca01ac93ce": {
+        "title": "The Feynman",
+        "chunks": 5051,
+        "pages": 757,
+        "concepts": 7815
+      },
+      "7ba61432-c5e0-416d-aecf-25a232523481": {
+        "title": "The Feynman Lectures on Physics, Volume I",
+        "chunks": 3796,
+        "pages": 933,
+        "concepts": 7834
+      }
+    },
+    "totals": {
+      "documents": 2,
+      "chunks": 8847,
+      "pages": 1690,
+      "concepts": 12498,
+      "edges": 127272
+    }
+  },
+  "sqlite_chunks": {
+    "6d55c52b-47ae-45ff-bee0-a3ca01ac93ce": 5048,
+    "7ba61432-c5e0-416d-aecf-25a232523481": 3796
+  },
+  "density": {
+    "old": 1.5472183725994852,
+    "new": 2.0637513171759747
+  },
+  "verdict": "PASS"
+}

@@ -29,12 +29,14 @@ def parse_args():
     g.add_argument("--tenant", help="Process ALL documents for this tenant")
     p.add_argument("--raptor-only", action="store_true",
                    help="Skip card generation, rebuild RAPTOR only (use when cards are good but RAPTOR used zero vectors)")
+    p.add_argument("--no-resume", action="store_true",
+                   help="Discard the card checkpoint and regenerate every card (IMPROVEMENTS.md §I27)")
     return p.parse_args()
 
 
-def run_for_doc(doc_id: str, raptor_only: bool = False) -> dict:
+def run_for_doc(doc_id: str, raptor_only: bool = False, resume: bool = True) -> dict:
     from src.pdf_ingestion.store import generate_phase2_artifacts
-    return generate_phase2_artifacts(doc_id, raptor_only=raptor_only)
+    return generate_phase2_artifacts(doc_id, raptor_only=raptor_only, resume=resume)
 
 
 def main():
@@ -60,23 +62,39 @@ def main():
     table.add_column("Document ID", style="cyan", no_wrap=True)
     table.add_column("Filename")
     table.add_column("Cards", justify="right")
+    table.add_column("Card types failed", justify="right")
     table.add_column("RAPTOR nodes", justify="right")
     table.add_column("Levels")
 
     for doc_id in doc_ids:
         console.print(f"\n[bold]Processing[/bold] {doc_id}…")
         try:
-            result = run_for_doc(doc_id, raptor_only=args.raptor_only)
+            result = run_for_doc(doc_id, raptor_only=args.raptor_only,
+                                 resume=not args.no_resume)
+            # §I25 — a per-card-type failure is swallowed by the generator, so this count is the
+            # only thing that distinguishes a clean run from one where every card call timed out.
+            failed_types = result.get("failed_card_types") or {}
+            failed_cell = (
+                "[green]0[/green]" if not failed_types
+                else f"[red]{sum(failed_types.values())}[/red] ({len(failed_types)} types)"
+            )
             table.add_row(
                 result["document_id"][:8] + "…",
                 result["filename"],
                 str(result["cards_generated"]),
+                failed_cell,
                 str(result["raptor_nodes"]),
                 str(result["raptor_levels"]),
             )
+            if failed_types:
+                console.print(
+                    f"[red]  ⚠ {sum(failed_types.values())} failed card-type call(s) — "
+                    f"{', '.join(f'{k}×{v}' for k, v in sorted(failed_types.items()))}"
+                    "[/red]"
+                )
         except Exception as exc:
             console.print(f"[red]  Failed: {exc}[/red]")
-            table.add_row(doc_id[:8] + "…", "—", "—", "—", str(exc)[:40])
+            table.add_row(doc_id[:8] + "…", "—", "—", "—", "—", str(exc)[:40])
 
     console.print(table)
 

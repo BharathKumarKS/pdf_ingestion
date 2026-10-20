@@ -1,0 +1,19 @@
+{
+  "memgraph": {
+    "per_document": {
+      "6d55c52b-47ae-45ff-bee0-a3ca01ac93ce": {
+        "title": "The Feynman",
+        "chunks": 5051,
+        "pages": 757,
+        "concepts": 7815
+      }
+    },
+    "totals": {
+      "documents": 1,
+      "chunks": 5051,
+      "pages": 757,
+      "concepts": 7815
+    }
+  },
+  "concept_embeddings_points": 11229
+}

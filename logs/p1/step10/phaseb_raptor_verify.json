@@ -1,0 +1,10 @@
+{
+  "document_id": "7ba61432-c5e0-416d-aecf-25a232523481",
+  "sqlite_nodes": 0,
+  "levels": {},
+  "failures": [
+    "ZERO active RAPTOR nodes",
+    "no raptor_summary points in the collection \u2014 RAPTOR was not persisted"
+  ],
+  "verdict": "FAIL"
+}

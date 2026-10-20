@@ -1,0 +1,46 @@
+{
+  "document_id": "7ba61432-c5e0-416d-aecf-25a232523481",
+  "settings": {
+    "qdrant_collection": "knowledge_base_v2",
+    "card_gen_workers": 2,
+    "card_types": [
+      "summary",
+      "definition",
+      "example",
+      "misconception",
+      "question",
+      "objective",
+      "formula",
+      "factoid"
+    ],
+    "effective_llm_concurrency": 16,
+    "raptor_max_levels": 3,
+    "raptor_min_cluster_size": 2
+  },
+  "chunks_total": 3796,
+  "chunks_content": 3791,
+  "chunks_skipped_non_chapter": 5,
+  "estimated_llm_calls": 30328,
+  "token_window": {
+    "window": 512,
+    "with_token_count": 3796,
+    "over_window": 6,
+    "max": 1347,
+    "median": 103
+  },
+  "cards_existing": 0,
+  "raptor_nodes_existing": 0,
+  "old_doc_active_cards": 82164,
+  "qdrant_points": 3796,
+  "qdrant_snapshot": {
+    "collection": "knowledge_base_v2",
+    "host": "10.0.10.65",
+    "points": 3796,
+    "vectors": [
+      "colbert",
+      "dense_1024",
+      "dense_64"
+    ],
+    "raptor_summary_points": 0
+  }
+}

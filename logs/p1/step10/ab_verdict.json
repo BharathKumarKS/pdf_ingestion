@@ -1,0 +1,18 @@
+{
+  "n": 133,
+  "mean_delta": 0.009948557089695319,
+  "sd_d": 0.14111030423328175,
+  "se": 0.012235815160326022,
+  "ci95": [
+    -0.014033640624543682,
+    0.03393075480393432
+  ],
+  "r20_rerank": 0.41530986774298667,
+  "r20_norerank": 0.40536131065329134,
+  "ceiling": 0.8016440517687851,
+  "b5b_moved": [],
+  "b4_moved": [],
+  "b5_moved": [],
+  "verdict": "UNRESOLVED \u2014 the CI straddles 0 \u2192 keep the reranker enabled, do not extend (\u00a7D13)",
+  "failures": []
+}
