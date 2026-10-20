@@ -4,8 +4,8 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-20 morning (Phase B attempted 2026-10-19 and ABORTED; its two blockers
-> are now FIXED — the card run itself has NOT been relaunched).** Step 10
+> **Last updated: 2026-10-20 mid-day (code fixes COMMITTED + PUSHED; card run BLOCKED on lab network
+> access — see the outage block below for the diagnosis and the 10-second test).** Step 10
 > §0 pre-registration is written; §1's preflight gate failed and was registered as **§D14**. Owner
 > chose fix (c) — rebuild the graph (Step 9's *graph half*; cards / DA / ColPali still deferred).
 > **Phase A is complete:** A3 built doc `7ba61432`'s graph (16 h 25 m, verifier PASS), **A4 applied**
@@ -25,23 +25,61 @@
 > exit 0), **§I26** (the concurrency knee). **§I24, §I25 and §I27 are now FIXED in code; the card run
 > has NOT been relaunched.**
 >
-> **⚠️ THE LAUNCH IS CURRENTLY BLOCKED — the lab network is DOWN (2026-10-20 ~09:00).** `B0b`'s
-> live-precondition probe **FAILED** (P2 Qdrant / P3 LLM / P4 embed all `Connection refused`), and
-> the hosts are unreachable at the network layer, not merely slow: **every port on `10.0.10.65` and
-> `10.0.10.70` is closed** (6333, 7687, 8000, 8123, 22), `traceroute` to either returns
-> **`!X` (administratively prohibited)** from `10.128.128.128` on the first hop, and the WireGuard
-> service `2026-Summer-Bharath-Kumar-KS` is up while `en0` reports **not associated with an AirPort
-> network**. The same endpoints answered 200 in 0.21 s and ran a 40-minute probe sweep until ~08:50,
-> so this is a **~15-minute-old change on this machine's side**, not a change in the project. **No
-> cluster work can run until it is restored** — the card run, B4/B5/B6, and the independent review
-> (whose verifier model lives on the cluster) are all blocked by it. **Check the network first.**
+> **⚠️ THE LAUNCH IS BLOCKED — NETWORK ACCESS TO THE LAB (diagnosed 2026-10-20, mid-day).**
+> `B0b`'s live-precondition probe **FAILED**: P2 Qdrant / P3 LLM / P4 embed all `Connection refused`.
+> The hosts are unreachable at the network layer, not merely slow — **every port on `10.0.10.65` and
+> `10.0.10.70` is closed** (6333, 7687, 8000, 8123, 22) and `traceroute` to either returns
+> **`!X` (administratively prohibited)** from `10.128.128.128` on the first hop. The same endpoints
+> answered 200 in 0.21 s and ran a 40-minute probe sweep until ~08:50.
 >
-> **⚠️ COMMITTED BUT NOT REVIEWED.** The 2026-10-20 source changes are in **`2e9d2ae`** (branch
-> `feat/p0-9-gold-dataset-v2`, **not pushed**). The independent review **has not run** — see the
-> "Verifier model" row in Verified facts: the recorded reviewer is (a) on the down cluster and
-> (b) **no longer pinned in `config.yaml`**, so a `delegate_task` child would now inherit the
-> parent's own model, i.e. self-review. **The commit deliberately does not carry the `[verified]`
-> prefix.** Do not treat any child's `passed: true` as verification until the pin is restored.
+> **Root cause, from the WireGuard config (`sar-gpu-vm` = `10.0.50.99`; screenshot 2026-10-20):**
+> there are **two** tunnels. The **lab** tunnel is `2026-Summer-Bharath-Kumar-KS` — Address
+> `192.168.12.25/32`, Endpoint `75.53.10.74:51820`, DNS `10.0.10.96`, and
+> **`AllowedIPs = 75.53.10.0/24, 10.0.0.0/16, 192.168.0.0/16`**. That `10.0.0.0/16` covers **both the
+> cluster (`10.0.10.x`) and the GPU VM (`10.0.50.x`)** — so no config edit is needed. But it was
+> **Inactive**; the tunnel that *was* up (`utun4` = `192.168.20.24`) is the **other** one ("Fall"),
+> which does not claim `10.0.0.0/16`, so lab traffic fell through to `en0`.
+>
+> **The `/8` trap (real, but not the blocker):** `en0` is `10.68.239.118 netmask 0xff000000`, so macOS
+> treats all of `10.0.0.0/8` as on-link via `en0`. Longest-prefix match means the tunnel's
+> `10.0.0.0/16` **wins** over it — *when the route is installed*. **Do not "fix" the netmask** (DHCP-
+> assigned) and **do not use `route add`** (lost on reboot / wifi change / every reconnect).
+>
+> **OPEN QUESTION (10 seconds of tunnel time settles it):** does the Summer tunnel install its route,
+> and does the peer forward `10.0.0.0/16`?
+>
+> ```bash
+> route -n get 10.0.10.70 | grep interface   # utunN = good · en0 = its route is not installing
+> nc -z -G 4 10.0.10.70 8000 && echo "LLM OK" || echo "LLM shut"
+> ```
+>
+> **Known side effect — "the internet is slow with the tunnel on".** Prime suspect: the tunnel's
+> **DNS servers** (`10.0.10.96, 192.168.12.1`) are only reachable *through* the tunnel, so activating
+> it makes macOS resolve **everything** via the lab DNS. AllowedIPs has no `0.0.0.0/0`, so ordinary
+> traffic never enters the tunnel — only DNS does, which is why it is "slow" and not "broken".
+> **Fix: clear the DNS field** in the tunnel's Edit screen (this project reaches everything by IP, so
+> lab-name resolution is worth nothing here). Second candidate: `192.168.0.0/16` in AllowedIPs pulls
+> a `192.168.x` home LAN into the tunnel. Distinguish with the tunnel on:
+> `scutil --dns | grep 'nameserver\[0\]'` (→ `10.0.10.96` = DNS cause) vs
+> `route -n get 192.168.1.1 | grep interface` (→ `utunN` = LAN-hijack cause).
+>
+> **The decision this feeds:** if clearing the DNS field fixes browsing, **stay on the Mac** — that is
+> the zero-overhead answer, and the tunnel also makes `sar-gpu-vm` reachable from any network. If it
+> does not, the card run would sit on the user's browsing for ~6.7 h, and *that* becomes the reason to
+> move the run to the VM (bootstrap **not yet written**: rsync `.env` + `data/synapse.db`, dep check,
+> B0b probe, tmux launch, row-level card export). Public wifi may also block **UDP 51820** outright —
+> a policy limit no client change fixes.
+>
+> **Nothing is launched. B4/B5/B6 and the independent review are blocked by the same thing.**
+>
+> **⚠️ COMMITTED AND PUSHED, BUT NOT REVIEWED.** The 2026-10-20 source changes are in **`151cb1f`**
+> plus **`597e7b9`** (the `run_phaseb.sh` VM-portability fix), branch `feat/p0-9-gold-dataset-v2`,
+> **pushed** to `origin` on 2026-10-20 (upstream now set; `origin/…` == HEAD). The independent review
+> **has not run** — see the "Verifier model" row in Verified facts: the recorded reviewer is
+> (a) on the cluster, reachable only when the tunnel is up, and (b) **no longer pinned in
+> `config.yaml`**, so a `delegate_task` child would now inherit the parent's own model, i.e.
+> self-review. **The commits deliberately do not carry the `[verified]` prefix.** Do not treat any
+> child's `passed: true` as verification until the pin is restored.
 >
 > **Still uncommitted in the working tree** (another session's in-flight work — deliberately left
 > alone): `ARCHITECTURE.md`, `data/eval_queries_v2.json`, `scripts/build_gold_v2.py`,
