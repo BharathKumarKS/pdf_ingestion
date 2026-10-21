@@ -1,0 +1,638 @@
+{
+  "comparison_primary": {
+    "leiden": {
+      "n_communities": 149,
+      "null_q": 0.286665,
+      "q": 0.601572,
+      "ratio": 2.0985,
+      "surplus": 0.314907
+    },
+    "louvain": {
+      "n_communities": 199,
+      "null_q": 0.28033,
+      "q": 0.589597,
+      "ratio": 2.1032,
+      "surplus": 0.309267
+    },
+    "resolution": 1.0,
+    "verdict": "PASS (one-sided)"
+  },
+  "connectedness": {
+    "leiden_all_connected_at_every_resolution": true,
+    "louvain_all_connected_at_every_resolution": false,
+    "louvain_disconnected_communities": {
+      "1.0": [
+        {
+          "index": 35,
+          "members": [
+            "Pythagorean theorem of musical intervals",
+            "air acceleration",
+            "air density",
+            "air displacement",
+            "air pressure",
+            "air velocity",
+            "audio tone frequency",
+            "bandwidth",
+            "beat",
+            "carrier frequency"
+          ],
+          "size": 75
+        }
+      ],
+      "2.0": [
+        {
+          "index": 131,
+          "members": [
+            "acceleration of a charge",
+            "azimuth angle",
+            "distance z",
+            "electric field of an accelerated charge",
+            "formula (30.18) or (30.19)",
+            "line of sight",
+            "oscillatory charges",
+            "perpendicular component of acceleration relative to line of sight",
+            "plane of charges",
+            "retardation"
+          ],
+          "size": 11
+        }
+      ]
+    }
+  },
+  "graph": {
+    "components": 89,
+    "density": 0.001224,
+    "directed_edges": 37300,
+    "isolates": 0,
+    "max_degree": 324,
+    "nodes": 7808,
+    "self_loops_dropped": 4,
+    "undirected_edges": 37296
+  },
+  "hierarchy_nesting": {
+    "0.5->1.0": {
+      "fraction_nested": 0.8725,
+      "n_coarse": 141,
+      "n_fine": 149,
+      "n_fine_wholly_inside_one_coarse": 130
+    },
+    "1.0->2.0": {
+      "fraction_nested": 0.7379,
+      "n_coarse": 149,
+      "n_fine": 145,
+      "n_fine_wholly_inside_one_coarse": 107
+    }
+  },
+  "ladder": {
+    "0.5": {
+      "leiden": {
+        "communities_sha256": "00871ac1844d37a6989a89c76e90c5f9bdddc225e8cccd85e6b17c8a621efc28",
+        "community_sizes": [
+          2788,
+          2643,
+          1204,
+          210,
+          136,
+          134,
+          71,
+          21,
+          20,
+          17,
+          15,
+          12,
+          12,
+          12,
+          11,
+          9,
+          9,
+          8,
+          8,
+          8
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 2788,
+          "n_communities": 141,
+          "n_multi_member": 141,
+          "n_singletons": 0
+        },
+        "n_communities": 141,
+        "null_q": 0.500237,
+        "null_q_observed_partition_on_null_graph": 0.16009,
+        "q": 0.716075,
+        "ratio": 1.4315,
+        "surplus": 0.215837
+      },
+      "leiden_weighted": {
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 2848,
+          "n_communities": 118,
+          "n_multi_member": 118,
+          "n_singletons": 0
+        },
+        "n_communities": 118,
+        "q": 0.713966
+      },
+      "louvain": {
+        "communities_sha256": "ab5fa206ec87ca9e66e2f4393418652ef7dbf050b5a827aa4a035d3bd389bcad",
+        "community_sizes": [
+          3434,
+          2844,
+          247,
+          169,
+          151,
+          68,
+          49,
+          20,
+          20,
+          20,
+          17,
+          17,
+          16,
+          15,
+          12,
+          12,
+          12,
+          11,
+          10,
+          9
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 3434,
+          "n_communities": 176,
+          "n_multi_member": 176,
+          "n_singletons": 0
+        },
+        "n_communities": 176,
+        "null_q": 0.500211,
+        "null_q_observed_partition_on_null_graph": 0.208323,
+        "q": 0.714972,
+        "ratio": 1.4293,
+        "surplus": 0.214761
+      }
+    },
+    "1.0": {
+      "leiden": {
+        "communities_sha256": "e6701bbd243cb17b2605c53fe4d343ae1483f90d132a0c27d3fcc705de9dcf8f",
+        "community_sizes": [
+          1678,
+          1225,
+          1096,
+          799,
+          607,
+          319,
+          311,
+          240,
+          202,
+          171,
+          139,
+          115,
+          103,
+          92,
+          57,
+          32,
+          21,
+          20,
+          18,
+          17
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 1678,
+          "n_communities": 149,
+          "n_multi_member": 149,
+          "n_singletons": 0
+        },
+        "n_communities": 149,
+        "null_q": 0.286665,
+        "null_q_observed_partition_on_null_graph": -0.001147,
+        "q": 0.601572,
+        "ratio": 2.0985,
+        "surplus": 0.314907
+      },
+      "leiden_weighted": {
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 1186,
+          "n_communities": 123,
+          "n_multi_member": 123,
+          "n_singletons": 0
+        },
+        "n_communities": 123,
+        "q": 0.613968
+      },
+      "louvain": {
+        "communities_sha256": "8512568967ef9bbb3de3dd360a589bdf274d42e8bbe97496a398add6aa0e779f",
+        "community_sizes": [
+          1825,
+          1517,
+          726,
+          648,
+          300,
+          281,
+          267,
+          265,
+          142,
+          140,
+          130,
+          111,
+          110,
+          104,
+          94,
+          79,
+          75,
+          60,
+          58,
+          31
+        ],
+        "connectivity": {
+          "all_connected": false,
+          "disconnected": [
+            {
+              "index": 35,
+              "members": [
+                "Pythagorean theorem of musical intervals",
+                "air acceleration",
+                "air density",
+                "air displacement",
+                "air pressure",
+                "air velocity",
+                "audio tone frequency",
+                "bandwidth",
+                "beat",
+                "carrier frequency"
+              ],
+              "size": 75
+            }
+          ],
+          "largest": 1825,
+          "n_communities": 199,
+          "n_multi_member": 199,
+          "n_singletons": 0
+        },
+        "n_communities": 199,
+        "null_q": 0.28033,
+        "null_q_observed_partition_on_null_graph": -0.001994,
+        "q": 0.589597,
+        "ratio": 2.1032,
+        "surplus": 0.309267
+      }
+    },
+    "2.0": {
+      "leiden": {
+        "communities_sha256": "2c58ceb9c1c84e514a29362f6ea8256ee65c2b42ff6cc10451f19824422d1d40",
+        "community_sizes": [
+          496,
+          441,
+          428,
+          419,
+          412,
+          390,
+          368,
+          362,
+          304,
+          270,
+          250,
+          247,
+          245,
+          239,
+          203,
+          200,
+          196,
+          176,
+          165,
+          128
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 496,
+          "n_communities": 145,
+          "n_multi_member": 145,
+          "n_singletons": 0
+        },
+        "n_communities": 145,
+        "null_q": 0.246223,
+        "null_q_observed_partition_on_null_graph": -0.045395,
+        "q": 0.532683,
+        "ratio": 2.1634,
+        "surplus": 0.28646
+      },
+      "leiden_weighted": {
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 476,
+          "n_communities": 143,
+          "n_multi_member": 143,
+          "n_singletons": 0
+        },
+        "n_communities": 143,
+        "q": 0.536197
+      },
+      "louvain": {
+        "communities_sha256": "04ad13ec66d13969fe136fd4cc0be18a642aa89ffc30b08da61b4f396cea1ebf",
+        "community_sizes": [
+          658,
+          599,
+          572,
+          540,
+          481,
+          385,
+          337,
+          299,
+          242,
+          215,
+          201,
+          197,
+          183,
+          180,
+          165,
+          165,
+          157,
+          133,
+          122,
+          116
+        ],
+        "connectivity": {
+          "all_connected": false,
+          "disconnected": [
+            {
+              "index": 131,
+              "members": [
+                "acceleration of a charge",
+                "azimuth angle",
+                "distance z",
+                "electric field of an accelerated charge",
+                "formula (30.18) or (30.19)",
+                "line of sight",
+                "oscillatory charges",
+                "perpendicular component of acceleration relative to line of sight",
+                "plane of charges",
+                "retardation"
+              ],
+              "size": 11
+            }
+          ],
+          "largest": 658,
+          "n_communities": 149,
+          "n_multi_member": 149,
+          "n_singletons": 0
+        },
+        "n_communities": 149,
+        "null_q": 0.239525,
+        "null_q_observed_partition_on_null_graph": -0.0541,
+        "q": 0.528885,
+        "ratio": 2.2081,
+        "surplus": 0.28936
+      }
+    }
+  },
+  "meta": {
+    "before_arm_reference": {
+      "artifact": "logs/p1/step10/g2_modularity_gate.json",
+      "note": "superseded — quote THIS artifact from now on",
+      "partitioner": "louvain (leiden unavailable then, §I33)",
+      "q_observed": 0.589597,
+      "q_rewired_null": 0.28033
+    },
+    "generated_by": "logs/p1/step10/g2_leiden_gate.py",
+    "graph_document_ids": [
+      "7ba61432-c5e0-416d-aecf-25a232523481"
+    ],
+    "graph_source": "memgraph localhost:7687 RELATES_TO",
+    "leiden_backend": "leidenalg + python-igraph (added 2026-10-21)",
+    "modularity_scorer": "networkx.community.modularity (same as the §I33 before arm)",
+    "no_llm_calls": true,
+    "no_reingest": true,
+    "nswap_factor": 10,
+    "partitioners": [
+      "leiden (leidenalg on igraph)",
+      "louvain (networkx, comparison arm)"
+    ],
+    "resolution": 1.0,
+    "resolutions_run": [
+      0.5,
+      1.0,
+      2.0
+    ],
+    "seed": 20261020,
+    "weight_primary": null,
+    "weight_secondary": "weight",
+    "what": "§G2 modularity gate on LEIDEN (owner decision 2026-10-21), re-running §I33"
+  },
+  "null_rewired": {
+    "degree_sequence_preserved": true,
+    "nswap_factor": 10
+  },
+  "one_sided_caveat": "ONE-SIDED RESULT — do not read a FAIL as evidence of no community structure. The graph carries TOC concepts because the Phase 3 build does not apply the E5 content filter (§I21), and the §G plan states §I21 'is a prerequisite for good communities, since TOC concepts are exactly the noise that fragments them'. So a PASS (Q beats the rewired null) is trustworthy even under that noise, while a FAIL is CONFOUNDED. Do not let a FAIL kill G2.",
+  "top_communities_leiden_res_1": [
+    {
+      "sample_members": [
+        "1/2 kT per degree of freedom",
+        "10^-13 centimeter",
+        "28",
+        "3/2 kT",
+        "Achilles",
+        "Anderson",
+        "Angular momentum conservation formula",
+        "Bernoulli probability",
+        "Bonner and Evans",
+        "Brownian movement",
+        "Cartesian components",
+        "Cartesian components of the electric field vector",
+        "Cartesian components of the momentum vector",
+        "Cartesian coordinate system",
+        "Cavendish"
+      ],
+      "size": 1678
+    },
+    {
+      "sample_members": [
+        "-irone",
+        "200-inch Palomar telescope",
+        "3/2 kT of energy",
+        "Absolute Velocity",
+        "Absolute rotation",
+        "Absolute square of amplitude",
+        "Absolute thermodynamic temperature",
+        "Absolute value",
+        "Absolute zero",
+        "Absorption",
+        "Absorption coefficient",
+        "Accelerating coordinate system",
+        "Acceleration",
+        "Acceleration due to gravity",
+        "Acceleration of center of mass"
+      ],
+      "size": 1225
+    },
+    {
+      "sample_members": [
+        "1/r variation of electric field strength",
+        "10 to an imaginary power",
+        "2π",
+        "AC Electric Oscillation",
+        "Absolute square",
+        "Absorption of light",
+        "Adding two waves",
+        "Addition",
+        "Additional phase",
+        "Additional time",
+        "Adiabatic law for ideal gas",
+        "Algebra",
+        "Algebraic equation",
+        "Algebraic laws",
+        "Algebraic manipulation"
+      ],
+      "size": 1096
+    },
+    {
+      "sample_members": [
+        "1/r dependence",
+        "10^-12 second",
+        "10^-8 cm",
+        "4πϵ0",
+        "Angle in air",
+        "Angle in water",
+        "Benjamin Franklin",
+        "Brewster",
+        "Brewster angle",
+        "Brewster's law",
+        "Chilean earthquake of May 1960",
+        "Christiaan Huygens",
+        "Color Vision",
+        "Coulomb's constant",
+        "Crystal growth"
+      ],
+      "size": 799
+    },
+    {
+      "sample_members": [
+        "Adiabatic",
+        "Affective future",
+        "Age of the Pyramids",
+        "Air density",
+        "Air temperature",
+        "Alpha Centauri",
+        "Amplitude of light",
+        "Analog circuit",
+        "Analog computer",
+        "Angle of incidence",
+        "Angle of refraction",
+        "Angstrom",
+        "Anisotropic substance",
+        "Annihilation",
+        "Anomalous dispersion"
+      ],
+      "size": 607
+    },
+    {
+      "sample_members": [
+        "Absorption characteristics of pigments",
+        "Absorption spectrum",
+        "Accommodation of the lens",
+        "Additive color mixing",
+        "Additive integration",
+        "After-image",
+        "Albert A. Michelson",
+        "Amplitude addition of many in-phase oscillators",
+        "Anatomy",
+        "Angle between axes",
+        "Animal vision",
+        "Apparent visual effect",
+        "Bee color vision",
+        "Bee perception of red flowers",
+        "Bee ultraviolet vision"
+      ],
+      "size": 319
+    },
+    {
+      "sample_members": [
+        "Acceleration vector",
+        "Additivity of moment of inertia",
+        "Analytic geometry",
+        "Angular Momentum",
+        "Angular acceleration",
+        "Angular momentum",
+        "Angular momentum formula",
+        "Angular momentum of a solid body",
+        "Angular position",
+        "Angular velocity",
+        "Anti-commutativity of cross product",
+        "Apparatus",
+        "Apparent speed of light",
+        "Arc length",
+        "Argument about the two halves"
+      ],
+      "size": 311
+    },
+    {
+      "sample_members": [
+        "1/2 mv^2",
+        "16 feet",
+        "Absolute velocity",
+        "Action equals reaction",
+        "Algebraic Cosine",
+        "Algebraic Sine",
+        "Angle of tilt",
+        "Atomic-sized particles",
+        "Average Cosine Zero",
+        "Average Kinetic Energy",
+        "Axis of Rotation",
+        "Beta Decay",
+        "Boltzmann Constant",
+        "Center of Mass",
+        "Center-of-Mass Motion"
+      ],
+      "size": 240
+    },
+    {
+      "sample_members": [
+        "200-inch telescope",
+        "3C295",
+        "Experimental observation",
+        "F. Strong",
+        "Fifth",
+        "G. Neugebauer",
+        "Gibbon",
+        "H. P. Stabler",
+        "Music of the spheres",
+        "Octave",
+        "Pappus's theorem",
+        "Prof. R. P. Feynman",
+        "Pythagoras",
+        "Pythagorean tuning",
+        "R. M. Sutton"
+      ],
+      "size": 202
+    },
+    {
+      "sample_members": [
+        "Aberration cancellation",
+        "Aberrations",
+        "Acceleration at right angles to velocity",
+        "Accommodation",
+        "Acoustics",
+        "Advanced analytical mechanics",
+        "Air composition",
+        "Alekhine",
+        "Amalgamation",
+        "Ampère's law",
+        "Analogous phenomena",
+        "Angle subtended at the eye",
+        "Angular momentum of electron orbit",
+        "Angular resolution",
+        "Apparent size"
+      ],
+      "size": 171
+    }
+  ]
+}

@@ -1,0 +1,581 @@
+{
+  "deferred": {
+    "retrieval_ablation": "NOT RUN — PPR vs the current fixed-hop ranking on the v2 gold set requires query->concept resolution (768d query embedding against Concept.embedding via the cluster embedder, §I12) and the lab cluster is unreachable while the tunnel is down. §G1's verifier 4 ('no claim without this') is therefore UNMET, and §G1 must not be reported as done until it runs."
+  },
+  "distribution": {
+    "mass_conserved": false,
+    "max": 0.11941253,
+    "median_nonzero": 0.0003691579,
+    "n_nonzero": 7503,
+    "note": "W = D^-1 A is row-stochastic. Total mass is conserved only where W is also doubly stochastic (a regular graph); on this graph it is not, and that is the specified iteration, not a defect.",
+    "sum": 8.229619
+  },
+  "graph": {
+    "components": 89,
+    "nodes": 7808,
+    "undirected_edges": 37296
+  },
+  "hop_decay": {
+    "mass_fraction": {
+      "hop0_seed": 0.0661,
+      "hop1": 0.4719,
+      "hop2": 0.4208,
+      "hop3_plus": 0.0412,
+      "unreached": 0.0
+    },
+    "node_counts": {
+      "hop0_seed": 5,
+      "hop1": 542,
+      "hop2": 4426,
+      "hop3_plus": 2496,
+      "unreached": 339
+    },
+    "within_two_hops_mass_fraction": 0.9588
+  },
+  "hub_suppression": {
+    "max_degree": 324,
+    "n_overlap": 2,
+    "overlap": [
+      "Newton's Second Law",
+      "kinetic energy"
+    ],
+    "top_by_degree": [
+      {
+        "degree": 324,
+        "name": "Force"
+      },
+      {
+        "degree": 319,
+        "name": "velocity"
+      },
+      {
+        "degree": 306,
+        "name": "Newton's Second Law"
+      },
+      {
+        "degree": 297,
+        "name": "kinetic energy"
+      },
+      {
+        "degree": 284,
+        "name": "Electric field"
+      },
+      {
+        "degree": 279,
+        "name": "Temperature"
+      },
+      {
+        "degree": 255,
+        "name": "force"
+      },
+      {
+        "degree": 254,
+        "name": "Frequency"
+      },
+      {
+        "degree": 237,
+        "name": "Work"
+      },
+      {
+        "degree": 225,
+        "name": "speed of light"
+      },
+      {
+        "degree": 221,
+        "name": "Energy"
+      },
+      {
+        "degree": 220,
+        "name": "Wavelength"
+      },
+      {
+        "degree": 208,
+        "name": "Velocity"
+      },
+      {
+        "degree": 208,
+        "name": "mass"
+      },
+      {
+        "degree": 208,
+        "name": "distance"
+      },
+      {
+        "degree": 207,
+        "name": "Speed of light"
+      },
+      {
+        "degree": 198,
+        "name": "temperature"
+      },
+      {
+        "degree": 195,
+        "name": "energy"
+      },
+      {
+        "degree": 194,
+        "name": "Quantum mechanics"
+      },
+      {
+        "degree": 193,
+        "name": "electric field"
+      }
+    ],
+    "top_ppr": [
+      {
+        "degree": 4,
+        "name": "total energy of a particle",
+        "score": 0.11941253
+      },
+      {
+        "degree": 129,
+        "name": "Kinetic Energy",
+        "score": 0.10760908
+      },
+      {
+        "degree": 5,
+        "name": "total energy equals kinetic energy for monatomic gas",
+        "score": 0.10690378
+      },
+      {
+        "degree": 297,
+        "name": "kinetic energy",
+        "score": 0.10664834
+      },
+      {
+        "degree": 162,
+        "name": "Kinetic energy",
+        "score": 0.10312191
+      },
+      {
+        "degree": 2,
+        "name": "internal molecular motions",
+        "score": 0.03026773
+      },
+      {
+        "degree": 2,
+        "name": "other forms of energy",
+        "score": 0.02952556
+      },
+      {
+        "degree": 2,
+        "name": "rate of change of kinetic energy",
+        "score": 0.02928328
+      },
+      {
+        "degree": 6,
+        "name": "Center-of-Mass Motion",
+        "score": 0.02869624
+      },
+      {
+        "degree": 2,
+        "name": "Derivative of the dot product of two time-dependent vectors",
+        "score": 0.02629222
+      },
+      {
+        "degree": 306,
+        "name": "Newton's Second Law",
+        "score": 0.02568347
+      },
+      {
+        "degree": 3,
+        "name": "modified kinetic energy law",
+        "score": 0.02280284
+      },
+      {
+        "degree": 4,
+        "name": "Internal Motions of a Diatomic Molecule",
+        "score": 0.02212778
+      },
+      {
+        "degree": 4,
+        "name": "Average Kinetic Energy",
+        "score": 0.02212778
+      },
+      {
+        "degree": 3,
+        "name": "relative position vector",
+        "score": 0.02151113
+      },
+      {
+        "degree": 7,
+        "name": "Conservation of Mechanical Energy",
+        "score": 0.02126322
+      },
+      {
+        "degree": 4,
+        "name": "Lorentz Force",
+        "score": 0.02089733
+      },
+      {
+        "degree": 4,
+        "name": "Radius of curvature formula",
+        "score": 0.02089733
+      },
+      {
+        "degree": 9,
+        "name": "chemical energy",
+        "score": 0.02085754
+      },
+      {
+        "degree": 6,
+        "name": "mass energy",
+        "score": 0.02046212
+      }
+    ]
+  },
+  "lambda_sweep": {
+    "0.1": [
+      [
+        "total energy of a particle",
+        0.03437045
+      ],
+      [
+        "total energy equals kinetic energy for monatomic gas",
+        0.03297564
+      ],
+      [
+        "Kinetic Energy",
+        0.02957723
+      ],
+      [
+        "kinetic energy",
+        0.0288706
+      ],
+      [
+        "Kinetic energy",
+        0.02519308
+      ],
+      [
+        "Center-of-Mass Motion",
+        0.01893896
+      ],
+      [
+        "Internal Motions of a Diatomic Molecule",
+        0.01867999
+      ],
+      [
+        "Average Kinetic Energy",
+        0.01867999
+      ],
+      [
+        "internal molecular motions",
+        0.0179576
+      ],
+      [
+        "other forms of energy",
+        0.01773361
+      ]
+    ],
+    "0.3": [
+      [
+        "total energy of a particle",
+        0.08090817
+      ],
+      [
+        "total energy equals kinetic energy for monatomic gas",
+        0.07140933
+      ],
+      [
+        "Kinetic Energy",
+        0.07080356
+      ],
+      [
+        "kinetic energy",
+        0.0695065
+      ],
+      [
+        "Kinetic energy",
+        0.0647881
+      ],
+      [
+        "internal molecular motions",
+        0.02959753
+      ],
+      [
+        "Center-of-Mass Motion",
+        0.02937501
+      ],
+      [
+        "other forms of energy",
+        0.02885559
+      ],
+      [
+        "rate of change of kinetic energy",
+        0.02831845
+      ],
+      [
+        "Internal Motions of a Diatomic Molecule",
+        0.02561001
+      ]
+    ],
+    "0.5": [
+      [
+        "total energy of a particle",
+        0.11941253
+      ],
+      [
+        "Kinetic Energy",
+        0.10760908
+      ],
+      [
+        "total energy equals kinetic energy for monatomic gas",
+        0.10690378
+      ],
+      [
+        "kinetic energy",
+        0.10664834
+      ],
+      [
+        "Kinetic energy",
+        0.10312191
+      ],
+      [
+        "internal molecular motions",
+        0.03026773
+      ],
+      [
+        "other forms of energy",
+        0.02952556
+      ],
+      [
+        "rate of change of kinetic energy",
+        0.02928328
+      ],
+      [
+        "Center-of-Mass Motion",
+        0.02869624
+      ],
+      [
+        "Derivative of the dot product of two time-dependent vectors",
+        0.02629222
+      ]
+    ],
+    "0.7": [
+      [
+        "total energy of a particle",
+        0.1534302
+      ],
+      [
+        "Kinetic Energy",
+        0.14343475
+      ],
+      [
+        "kinetic energy",
+        0.1430221
+      ],
+      [
+        "total energy equals kinetic energy for monatomic gas",
+        0.14276468
+      ],
+      [
+        "Kinetic energy",
+        0.14133905
+      ],
+      [
+        "internal molecular motions",
+        0.02304256
+      ],
+      [
+        "other forms of energy",
+        0.02262981
+      ],
+      [
+        "rate of change of kinetic energy",
+        0.02258366
+      ],
+      [
+        "Derivative of the dot product of two time-dependent vectors",
+        0.0213677
+      ],
+      [
+        "Center-of-Mass Motion",
+        0.02124313
+      ]
+    ],
+    "0.9": [
+      [
+        "total energy of a particle",
+        0.18486554
+      ],
+      [
+        "Kinetic Energy",
+        0.18045922
+      ],
+      [
+        "kinetic energy",
+        0.18042386
+      ],
+      [
+        "total energy equals kinetic energy for monatomic gas",
+        0.18033301
+      ],
+      [
+        "Kinetic energy",
+        0.18017115
+      ],
+      [
+        "internal molecular motions",
+        0.00922888
+      ],
+      [
+        "rate of change of kinetic energy",
+        0.00916714
+      ],
+      [
+        "other forms of energy",
+        0.00916514
+      ],
+      [
+        "Derivative of the dot product of two time-dependent vectors",
+        0.00902458
+      ],
+      [
+        "Center-of-Mass Motion",
+        0.00840123
+      ]
+    ]
+  },
+  "meta": {
+    "generated_by": "logs/p1/step10/g1_ppr_probe.py",
+    "graph_document_ids": [
+      "7ba61432-c5e0-416d-aecf-25a232523481"
+    ],
+    "graph_source": "memgraph localhost:7687 RELATES_TO",
+    "iteration": "v(k+1) = (1-lam) W v(k) + lam v(0)",
+    "iterations": 10,
+    "lam": 0.5,
+    "no_llm_calls": true,
+    "no_reingest": true,
+    "source": "Week_Plan/week-5-summer-lesson-plan.pdf — 'The Honey and the Springs'",
+    "transition": "W = D^-1 A, row-normalised (the syllabus's 'split, don't dump')",
+    "weight": "weight (RELATES_TO co-occurrence count)",
+    "what": "§G1 personalized PageRank over the RELATES_TO adjacency (behaviour probe)"
+  },
+  "seeds": {
+    "matched": [
+      "total energy equals kinetic energy for monatomic gas",
+      "total energy of a particle",
+      "Kinetic energy",
+      "kinetic energy",
+      "Kinetic Energy"
+    ],
+    "missing": [
+      "Kinetic energy of gas particles",
+      "Total energy of a particle",
+      "kinetic theory of gases"
+    ],
+    "requested": [
+      "Kinetic energy of gas particles",
+      "total energy equals kinetic energy for monatomic gas",
+      "total energy of a particle",
+      "Total energy of a particle",
+      "Kinetic energy",
+      "kinetic energy",
+      "Kinetic Energy",
+      "kinetic theory of gases"
+    ]
+  },
+  "top_20_by_ppr": [
+    {
+      "degree": 4,
+      "name": "total energy of a particle",
+      "score": 0.11941253
+    },
+    {
+      "degree": 129,
+      "name": "Kinetic Energy",
+      "score": 0.10760908
+    },
+    {
+      "degree": 5,
+      "name": "total energy equals kinetic energy for monatomic gas",
+      "score": 0.10690378
+    },
+    {
+      "degree": 297,
+      "name": "kinetic energy",
+      "score": 0.10664834
+    },
+    {
+      "degree": 162,
+      "name": "Kinetic energy",
+      "score": 0.10312191
+    },
+    {
+      "degree": 2,
+      "name": "internal molecular motions",
+      "score": 0.03026773
+    },
+    {
+      "degree": 2,
+      "name": "other forms of energy",
+      "score": 0.02952556
+    },
+    {
+      "degree": 2,
+      "name": "rate of change of kinetic energy",
+      "score": 0.02928328
+    },
+    {
+      "degree": 6,
+      "name": "Center-of-Mass Motion",
+      "score": 0.02869624
+    },
+    {
+      "degree": 2,
+      "name": "Derivative of the dot product of two time-dependent vectors",
+      "score": 0.02629222
+    },
+    {
+      "degree": 306,
+      "name": "Newton's Second Law",
+      "score": 0.02568347
+    },
+    {
+      "degree": 3,
+      "name": "modified kinetic energy law",
+      "score": 0.02280284
+    },
+    {
+      "degree": 4,
+      "name": "Internal Motions of a Diatomic Molecule",
+      "score": 0.02212778
+    },
+    {
+      "degree": 4,
+      "name": "Average Kinetic Energy",
+      "score": 0.02212778
+    },
+    {
+      "degree": 3,
+      "name": "relative position vector",
+      "score": 0.02151113
+    },
+    {
+      "degree": 7,
+      "name": "Conservation of Mechanical Energy",
+      "score": 0.02126322
+    },
+    {
+      "degree": 4,
+      "name": "Lorentz Force",
+      "score": 0.02089733
+    },
+    {
+      "degree": 4,
+      "name": "Radius of curvature formula",
+      "score": 0.02089733
+    },
+    {
+      "degree": 9,
+      "name": "chemical energy",
+      "score": 0.02085754
+    },
+    {
+      "degree": 6,
+      "name": "mass energy",
+      "score": 0.02046212
+    }
+  ]
+}
