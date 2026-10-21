@@ -66,6 +66,33 @@ _FINGERPRINT_FIELDS = (
 # refactor, which is worse than the discipline of bumping this.
 _CACHE_SCHEMA_VERSION = 1
 
+# The digest scheme for ``_text_sha``, stored IN each entry and checked on read (§I19a).
+#
+# A width change to the identity function is not a content change, but the code could not tell the
+# two apart: `f0098a1` widened the digest from 16 to 32 chars without bumping
+# `_CACHE_SCHEMA_VERSION`, so every pre-existing entry stayed reachable, loaded fine, and then
+# compared unequal — 341 entries reported as content mismatches, a 36.1-minute re-embed, and a
+# summary line reading `341 hits / 0 misses` for a run with zero usable hits. Naming the scheme and
+# checking it turns that into an honest miss. ``put`` writes it; ``_entry_scheme`` reads it.
+_DIGEST_SCHEME = "sha1:32"
+
+
+def _entry_scheme(z) -> str:
+    """The digest scheme an entry was written under, or ``"unknown"``.
+
+    The field is explicit from this version on. Entries written before it exists — including all
+    341 of attempt 5's — are read off the stored array's width, which is the only thing the scheme
+    names, so the inference is exact rather than a guess. That fallback is load-bearing: those
+    entries were verified to hit (``logs/p1/step8-run/probe_cache_hit.py``: 341 hits, 0 embeddings
+    issued, dense lane pointed at a dead port), and calling them stale would discard a working
+    cache to fix a bookkeeping bug.
+    """
+    if "digest_scheme" in z.files:
+        return str(z["digest_scheme"])
+    arr = z["text_sha"]
+    return f"sha1:{arr.dtype.itemsize // 4}" if arr.dtype.kind == "U" else "unknown"
+
+
 
 def fingerprint(pdf_path: str | Path, cfg) -> str:
     """Identity of the (document, chunking config, model) triple a cache entry is valid for.
@@ -149,6 +176,15 @@ class EmbeddingCache:
         self.hits = 0
         self.misses = 0
         self.writes = 0
+        # Why the two extra counters exist (§I19a). `hits` used to be bumped in `get`, i.e. when
+        # an entry LOADED, before `rebuild()` checked it against the live children — so a run that
+        # rejected all 341 entries still reported `341 hits / 0 misses`, and the number a reader
+        # uses to decide whether the cache worked was the number that did not. Now a hit is counted
+        # by `record_hit()` after validation, and the two ways an entry can fail are named
+        # separately: `stale` (written under a different digest scheme — a bookkeeping change, not
+        # a content change) and `rejected` (same scheme, children no longer line up — a real one).
+        self.stale = 0
+        self.rejected = 0
 
     def _bump(self, field: str) -> None:
         """Increment a counter under a lock.
@@ -172,13 +208,35 @@ class EmbeddingCache:
         return self._dir / f"p{parent_id}.npz"
 
     def get(self, parent_id: int) -> CachedParent | None:
-        """Return the cached entry, or ``None`` on a miss OR an unreadable entry."""
+        """Load the entry for this parent, or ``None`` when there is nothing usable.
+
+        ``None`` covers three cases, **all of them misses**: no file, an unreadable file, and an
+        entry written under a different digest scheme. None of the three is evidence that the
+        children changed, and none may be counted as a hit.
+
+        A hit is counted by :meth:`record_hit`, *after* the caller's ``rebuild`` has validated the
+        entry against the live children. Counting on load is what let attempt 5 log
+        ``341 hits / 0 misses`` for a run with zero usable hits (§I19a).
+        """
         path = self._path(parent_id)
         if not path.exists():
             self._bump("misses")
             return None
         try:
             with np.load(path, allow_pickle=False) as z:
+                scheme = _entry_scheme(z)
+                if scheme != _DIGEST_SCHEME:
+                    # The identity function moved. Read as absent rather than as a mismatch: the
+                    # children may be byte-identical, and calling this a content change is what
+                    # produced 341 spurious warnings and a 36.1-minute re-embed in attempt 5.
+                    logger.info(
+                        "Embedding cache: entry {} was written under digest scheme {} "
+                        "(current {}) — treating as a miss",
+                        path.name, scheme, _DIGEST_SCHEME,
+                    )
+                    self._bump("stale")
+                    self._bump("misses")
+                    return None
                 entry = CachedParent(
                     text_sha=z["text_sha"],
                     char_spans=z["char_spans"],
@@ -193,8 +251,23 @@ class EmbeddingCache:
                            path.name, type(exc).__name__)
             self._bump("misses")
             return None
-        self._bump("hits")
         return entry
+
+    def record_hit(self) -> None:
+        """Count an entry that loaded AND lined up with the live children.
+
+        Called by the embedder after ``CachedParent.rebuild`` returns chunks, never by ``get``:
+        the cache cannot know whether a load was usable, so it must not report one as if it did.
+        """
+        self._bump("hits")
+
+    def record_rejected(self) -> None:
+        """Count an entry that loaded under the current scheme but whose children no longer line up.
+
+        A real content change — the case that still deserves a warning, and the reason this counter
+        is separate from ``stale``: only one of the two is a bug.
+        """
+        self._bump("rejected")
 
     def put(self, parent_id: int, chunks: list[EnrichedChunk]) -> None:
         """Persist one parent's vectors atomically. Never raises — a cache must not fail a run."""
@@ -214,6 +287,9 @@ class EmbeddingCache:
             with open(tmp, "wb") as fh:
                 np.savez(
                     fh,
+                    # The scheme this entry's digests were produced under, so a future width change
+                    # is readable as a miss instead of as 341 content mismatches (§I19a).
+                    digest_scheme=np.asarray(_DIGEST_SCHEME, dtype="U"),
                     text_sha=np.asarray([_text_sha(c.chunk.text) for c in chunks], dtype="U"),
                     char_spans=np.asarray(
                         [(c.chunk.char_start, c.chunk.char_end) for c in chunks], dtype=np.int32
@@ -236,8 +312,14 @@ class EmbeddingCache:
                 tmp.unlink(missing_ok=True)
 
     def summary(self) -> str:
-        return (f"{self.hits} hits / {self.misses} misses / {self.writes} written "
-                f"(key {self._key})")
+        """The line a reader uses to decide whether the cache worked — so it reports what did.
+
+        ``hits`` is only ever counted after validation (§I19a), and the two failure modes are named
+        rather than folded into ``misses``: ``stale`` means the entry was written under a different
+        digest scheme (a bookkeeping change), ``rejected`` means the children themselves changed.
+        """
+        return (f"{self.hits} hits / {self.misses} misses / {self.stale} stale / "
+                f"{self.rejected} rejected / {self.writes} written (key {self._key})")
 
     def prune(self, keep_current: bool = True) -> list[str]:
         """Delete cache directories for other fingerprints. Returns what was removed.

@@ -271,8 +271,14 @@ class LateChunkEmbedder:
             if hit is not None:
                 rebuilt = hit.rebuild(kids)
                 if rebuilt is not None:
+                    # Counted HERE, not in `get`: only the caller knows the entry validated. The
+                    # old order let attempt 5 report `341 hits` while rejecting all 341 (§I19a).
+                    cache.record_hit()
                     return rebuilt
-                # A hit whose children no longer line up is a miss — never a silent mis-join.
+                # Loaded under the current digest scheme but the children no longer line up — a real
+                # content change, and never a silent mis-join. A *scheme* change cannot reach this
+                # branch: `get` reports it as a miss, which is precisely what attempt 5 was.
+                cache.record_rejected()
                 logger.warning(
                     "Late-chunk cache: entry for parent {} does not match the current children "
                     "— re-embedding", parent.parent_id,

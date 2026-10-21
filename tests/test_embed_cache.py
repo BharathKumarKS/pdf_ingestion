@@ -114,8 +114,9 @@ def test_counters_are_exact_under_concurrency(tmp_path):
     def hammer(pid: int) -> None:
         try:
             for _ in range(25):
-                cache.get(pid)   # hit
-                cache.get(999)   # miss
+                if cache.get(pid) is not None:
+                    cache.record_hit()   # the caller counts a hit, after rebuild() validates
+                cache.get(999)           # miss
         except BaseException as exc:  # noqa: BLE001
             errors.append(exc)
 
@@ -402,3 +403,88 @@ def test_concurrent_path_also_uses_the_cache(tmp_path):
     assert calls2 == [], "the concurrent path must serve from cache"
     assert len(out) == 5
     assert [e.chunk.parent_id for e in out] == [0, 1, 2, 3, 4]
+
+
+# ── §I19a: the identity SCHEME must be checked, not only the content ───────
+
+def _rewrite_with_legacy_scheme(cache, parent_id, width):
+    """Rewrite an entry the way the pre-``f0098a1`` code wrote it: a ``width``-char digest and no
+    ``digest_scheme`` field.
+
+    This is exactly what attempt 4 left behind in the live directory — a 16-char ``_text_sha``
+    written by a process that had imported the module mid-edit (IMPROVEMENTS.md §I19a). It is the
+    only way to construct the defect from a test, because the current code cannot write one.
+    """
+    path = cache._path(parent_id)
+    with np.load(path, allow_pickle=False) as z:
+        arrays = {k: z[k] for k in z.files}
+    arrays.pop("digest_scheme", None)
+    arrays["text_sha"] = np.asarray([str(s)[:width] for s in arrays["text_sha"]], dtype=f"U{width}")
+    with open(path, "wb") as fh:
+        np.savez(fh, **arrays)
+    return path
+
+
+def test_entry_from_an_older_digest_scheme_is_a_miss_not_a_rejection(tmp_path):
+    """**The §I19a defect, pinned.**
+
+    A digest-width change is a change to the cache's *identity function*, not evidence that the
+    children changed. The old code compared a 32-char digest against a stored 16-char string, so
+    every legacy entry was reported as a content mismatch: the run logged
+    ``Late-chunk cache: 341 hits / 0 misses`` and then 341 ``does not match ... re-embedding``
+    warnings, and re-embedded the whole 36.1-minute phase.
+
+    Correct behaviour: a scheme mismatch is a **miss**. It must not count as a hit, and it must not
+    claim the children changed.
+    """
+    cache = EmbeddingCache(tmp_path, "key")
+    parent = _parent()
+    cache.put(parent.parent_id, _chunks(parent, [(0, 10)]))
+    _rewrite_with_legacy_scheme(cache, parent.parent_id, width=16)
+
+    assert cache.get(parent.parent_id) is None, "a 16-char entry is not usable by 32-char code"
+    assert cache.hits == 0
+    assert cache.stale == 1, "reported as stale — the scheme moved, the content did not"
+    assert cache.misses == 1
+
+
+def test_entry_without_a_scheme_field_is_accepted_when_its_width_matches(tmp_path):
+    """The flip side, and the reason the live cache survives this fix.
+
+    Attempt 5 rewrote all 341 entries with the corrected 32-char digest, but those files predate
+    the ``digest_scheme`` field. Reading the scheme off the stored dtype keeps them valid —
+    confirmed against the real directory by ``logs/p1/step8-run/probe_cache_hit.py``: 341 hits,
+    0 embeddings issued, with the dense lane pointed at a dead port. Without this fallback the fix
+    would discard a cache that demonstrably works.
+    """
+    cache = EmbeddingCache(tmp_path, "key")
+    parent = _parent()
+    cache.put(parent.parent_id, _chunks(parent, [(0, 10)]))
+    _rewrite_with_legacy_scheme(cache, parent.parent_id, width=32)
+
+    assert cache.get(parent.parent_id) is not None, "32 chars IS the current scheme"
+    assert cache.stale == 0
+
+
+def test_a_rejected_entry_is_not_counted_as_a_hit(tmp_path):
+    """**The counter defect.** ``hits`` incremented on *load*, before ``rebuild()`` validated.
+
+    Attempt 5's summary read ``341 hits / 0 misses`` for a run with **zero** usable hits, which is
+    the number a reader uses to decide whether the cache worked. It has to be the number that did.
+    """
+    cfg = _cfg(late_chunk_workers=1)
+    parent = _parent()
+    children = [_child(0, PARENT_TEXT[0:10], 0, 10, parent)]
+    cache = EmbeddingCache(tmp_path, "key")
+
+    # Cached under a DIFFERENT span, so the entry loads but cannot line up with these children.
+    cache.put(parent.parent_id, _chunks(parent, [(20, 30)]))
+
+    embedder, calls = _counting_embedder(cfg)
+    emb = LateChunkEmbedder(settings=cfg, embedder=embedder, tokenizer=FakeTokenizer())
+    emb.embed_children([parent], children, cache=cache)
+
+    assert cache.hits == 0, "a rejected entry is not a hit"
+    assert cache.rejected == 1
+    assert len(calls) == 1, "and the parent was re-embedded"
+    assert "0 hits" in cache.summary()
