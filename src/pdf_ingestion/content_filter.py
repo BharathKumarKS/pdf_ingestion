@@ -33,11 +33,22 @@ Plus a trivial fourth: a chunk with no alphanumeric character at all is pure tab
 (``|---…---|``) and carries nothing, so it is not content. (It keeps numeric tables —
 ``| 11 | 17 |`` — which *are* content.)
 
-The rule is deliberately conservative: it never drops a chunk that carries prose or numbers
-except for chapter bibliographies and the one boundary chunk that also contains the index
-heading. It does **not** yet catch all front-matter prose (publisher's note, preface) or the
-Name-Index / TOC continuation rows — those are recorded as an §E5 follow-up, and the page
-bounds still cover them until the Step 8 run zeroes them.
+And two signals added 2026-10-21 after the re-ingest zeroed the page bounds (measured on doc
+``7ba61432``, 3,796 chunks — see each signal's own comment for the full measurement):
+
+4. **TOC layout** — a dot-leader *run* plus at least one section number (``37-1``). Catches
+   72/77 TOC chunks with zero collateral; a bare dot-leader run is rejected because it fires on
+   real prose ellipses.
+5. **Index density** — ≥⅓ of non-blank lines are ``term, page-ref`` entries, whatever the
+   layout. Catches 186/187 index chunks with zero body false positives. This is what carries
+   this corpus: signals 2 and 3 fire on **zero** chunks of it.
+
+⚠️ **The known gap has narrowed but not closed.** Signals 1–3 alone caught 5 chunks of this
+document. With 4 and 5 added, the TOC (pages 22-34) and the index (pages 937-968) are covered;
+what remains is **front-matter prose** — the preface and publisher's note carry no keyword and no
+structural marker, and the page bounds that used to cover them are gone (the re-ingest zeroed
+them). Recorded as the §E5/§I39 follow-up; do not assume the 242-chunk recall gap measured
+pre-re-ingest is still that number — re-measure it per corpus.
 """
 from __future__ import annotations
 
@@ -85,6 +96,60 @@ _INDEX_PIPE_FRACTION = 0.5    # and it is a pipe table (not prose)
 _ALNUM_RE = re.compile(r"[A-Za-z0-9]")
 
 
+# ── Signal 4: a dot-leader run PLUS a section number = a table of contents ────
+#
+# The keyword list does not catch this book's TOC (no "table of contents" marker survives in the
+# chunks), and neither does an index heading or the index-table shape — its rows are dot-leader
+# prose lines: "37-1 Atomic mechanics . . . . . . . 37-1. 37-2 An experiment with bullets . . .".
+#
+# ⚠️ CORRECTED BOUNDARY (measured 2026-10-21, doc `7ba61432`, 3,796 chunks): the TOC is
+# **pages 22-34 = 77 chunks**, not the 19 chunks on pages 20-26 that §I39's band table records —
+# ~55 TOC chunks were being counted as *body*, which is why the earlier "0 body false positives"
+# claim did not reproduce (a false-positive count over "pages 31-900" includes the TOC itself).
+# This rule catches **72 of the 77**, with **zero** collateral outside the TOC.
+#
+# Two shapes were measured and REJECTED:
+#   * a dot-leader run alone — it fires on real prose: "click . . . . . click-click . . . click . . ."
+#     (p661, the ratchet discussion) and the preface's quoted ellipses (p7-8). Requiring a section
+#     number alongside removes exactly those and keeps all 72 TOC catches.
+#   * a bare `N-N, N =` literal — catches only 15/77 TOC and, worse, 133/187 *index* chunks, so it
+#     is an index signal, not a TOC one.
+_DOT_RUN_RE = re.compile(r"(?:\.\s?){4,}")
+_SECTION_NUM_RE = re.compile(r"\b\d{1,2}-\d{1,2}\b")
+
+
+def is_toc_layout(text: str) -> bool:
+    """True if the chunk is a table of contents: a dot-leader run AND a section number."""
+    if _SECTION_NUM_RE.search(text) is None:
+        return False
+    return any(_DOT_RUN_RE.search(line) for line in text.splitlines())
+
+
+# ── Signal 5: page-reference density = the index, in any layout ──────────────
+#
+# ⚠️ The two index signals above are DEAD on this corpus. Measured 2026-10-21 on doc `7ba61432`:
+# `is_index_heading` fires on **0** chunks (no `## Index -1` line survives the chunker) and
+# `is_index_layout` fires on **0** (the index does not come through as pipe rows here). So the
+# entire index — **pages 937-968, 187 chunks** — passed as content (§I39). They are kept because
+# they are book-agnostic and cost nothing, but they are not what carries this corpus.
+#
+# What does survive is the entry shape itself: a term, a comma, then a page reference. Requiring
+# it on a third of the lines keeps content tables out — `| 60° | 8° |` has no comma before the
+# reference-looking token. Measured: **186/187 index chunks, 0 body false positives**.
+_PAGE_REF_RE = re.compile(r",\s*(?:[IVX]{1,3}-)?\d{1,3}-\d{1,3}")
+_PAGE_REF_MIN_LINES = 1
+_PAGE_REF_MIN_DENSITY = 0.34
+
+
+def is_index_density(text: str) -> bool:
+    """True if the chunk is dominated by "term, page-ref" entries, whatever its layout."""
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    if len(lines) < _PAGE_REF_MIN_LINES:
+        return False
+    hits = sum(1 for ln in lines if _PAGE_REF_RE.search(ln))
+    return hits >= _PAGE_REF_MIN_LINES and hits / len(lines) >= _PAGE_REF_MIN_DENSITY
+
+
 def is_index_heading(text: str) -> bool:
     """True if any line is exactly an index heading (``## Index -1``, ``## Name Index``)."""
     return any(
@@ -122,5 +187,9 @@ def is_content(text: str) -> bool:
     if _ALNUM_RE.search(text) is None:
         return False  # pure table furniture (|---…---|) — carries nothing
     if is_index_layout(text):
+        return False
+    if is_toc_layout(text):
+        return False
+    if is_index_density(text):
         return False
     return True
