@@ -39,18 +39,49 @@ RAPTOR_LANES = {"dense_1024", "dense_64"}
 
 
 def main() -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser(description="Phase B / B5 — RAPTOR verifier")
+    ap.add_argument("--expect-collection", default="knowledge_base_v2",
+                    help="refuse unless the resolved collection is this (default: knowledge_base_v2)")
+    ap.add_argument("--allow-local", action="store_true",
+                    help="allow the LOCAL embedded Qdrant (Phase B never writes there — §I40)")
+    args = ap.parse_args()
+
     from src.core.config import get_settings
 
     cfg = get_settings()
     before = json.loads(BEFORE.read_text()) if BEFORE.exists() else {}
     points_before = before.get("qdrant_points")
 
+    # ── target guard (§I40) ───────────────────────────────────────────────
+    # This verifier has no business scanning a store Phase B did not write to, and on 2026-10-21
+    # it did exactly that: with QDRANT_HOST unset it fell back to `./data/qdrant`, compared a stale
+    # local dataset against a cluster before-snapshot, and printed a confident `B5 VERDICT: FAIL`
+    # with 86 fabricated "missing lane" findings. A check that reports on the wrong object is worse
+    # than no check, because its output looks like evidence. Refuse instead of guessing.
+    kind = ("url" if cfg.qdrant_url else "host" if cfg.qdrant_host else "local")
+    target = cfg.qdrant_url or (f"{cfg.qdrant_host}:{cfg.qdrant_port}" if cfg.qdrant_host
+                                else cfg.qdrant_local_path)
+
     failures: list[str] = []
     print("=" * 92)
     print("Phase B / B5 — RAPTOR + collection invariant verifier")
     print("=" * 92)
-    print(f"  collection: {cfg.qdrant_collection} @ "
-          f"{cfg.qdrant_host or cfg.qdrant_url or cfg.qdrant_local_path}")
+    print(f"  collection: {cfg.qdrant_collection} @ {target}   [{kind}]")
+
+    if kind == "local" and not args.allow_local:
+        print(f"\nREFUSING: resolved to the LOCAL embedded Qdrant ({target}).\n"
+              f"  Phase B writes to the CLUSTER, never to the embedded local store, so every\n"
+              f"  number below would describe a different dataset.\n"
+              f"  Set QDRANT_HOST (e.g. 10.0.10.65) and QDRANT_COLLECTION, or pass --allow-local\n"
+              f"  if you really mean to inspect the local store.\n")
+        return 2
+    if args.expect_collection and cfg.qdrant_collection != args.expect_collection:
+        print(f"\nREFUSING: collection is {cfg.qdrant_collection!r} but "
+              f"--expect-collection is {args.expect_collection!r}.\n"
+              f"  Pass the collection the run actually wrote to.\n")
+        return 2
 
     # ── 1. SQLite nodes ───────────────────────────────────────────────────
     con = sqlite3.connect(DB)

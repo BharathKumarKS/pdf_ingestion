@@ -833,12 +833,23 @@ class DocumentStore:
             return [], np.array([])
 
         try:
+            # Fetch ONLY the dense lane this caller reads (§I28). `with_vectors=True` returns
+            # EVERY named vector on every point — including the ColBERT token matrices nothing
+            # here uses. Measured on the 3,796-point collection: 3 min 06 s and RSS
+            # 36 MB -> 1,992 MB, for vectors that are then thrown away.
+            #
+            # The wanted name is already known here: `_dense_name_from` reads it off the
+            # collection schema, exactly as `_dense_vector_name()` does below. Resolve it
+            # BEFORE the retrieve and ask for that one lane. A legacy single-vector collection
+            # has no named dense slot, so fall back to `True` (fetch all) — the same
+            # `_extract_dense` fallback that already handles the old "dense" schema.
+            named_dense = _dense_name_from(self._collection_vectors())
             results = self._qdrant.retrieve(
                 collection_name=self._cfg.qdrant_collection,
                 ids=[c.qdrant_point_id for c in chunks],
-                with_vectors=True,
+                with_vectors=[named_dense] if named_dense else True,
             )
-            dense_name = self._dense_vector_name()
+            dense_name = named_dense or "dense_1024"
 
             def _extract_dense(vec) -> np.ndarray:
                 # 4-vector schema: the collection's full-dim dense lane (dense_1024 after
@@ -873,6 +884,13 @@ class DocumentStore:
         return len(existing)
 
     def _deactivate_raptor_nodes(self, document_id: str, session: Session) -> int:
+        """⚠️ SUPERSEDED by §I43 — no longer called by `save_raptor_tree`.
+
+        Deactivate-then-insert left the previous generation's rows behind, and (the actual
+        defect) it never removed the previous generation's *Qdrant* points. Kept for the
+        audit-trail semantics in case a reader wants them back; `save_raptor_tree` now
+        deletes both sides.
+        """
         existing = session.exec(
             select(RaptorNode)
             .where(RaptorNode.document_id == document_id)
@@ -882,16 +900,51 @@ class DocumentStore:
             node.is_active = False
         return len(existing)
 
+    def _delete_raptor_points(self, document_id: str) -> int:
+        """Delete this document's RAPTOR points from the collection; returns how many.
+
+        §I43 — the RAPTOR write is replace-semantics. The filter is scoped by BOTH
+        `document_id` and `source_type=raptor_summary`, so no chunk point can be caught by it
+        (chunk points carry no `source_type` at all).
+        """
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
+
+        flt = Filter(must=[
+            FieldCondition(key="document_id", match=MatchValue(value=document_id)),
+            FieldCondition(key="source_type", match=MatchValue(value="raptor_summary")),
+        ])
+        before = int(self._qdrant.count(
+            self._cfg.qdrant_collection, count_filter=flt,
+        ).count or 0)
+        if before:
+            self._qdrant.delete(
+                collection_name=self._cfg.qdrant_collection,
+                points_selector=flt,
+            )
+        return before
+
     def save_cards(self, cards: list[GeneratedCard]) -> int:
         if not cards:
             return 0
         document_id = cards[0].document_id
         with Session(self._engine) as session:
-            deactivated = self._deactivate_cards(document_id, session)
-            if deactivated:
+            # A full-set write REPLACES this document's cards, so the old rows must go — and
+            # deactivate-then-insert cannot work here. The card checkpoint (§I27) stores the
+            # ORIGINAL `card_id`s and replays them on resume, so the INSERT collides with the
+            # very rows it is replacing:
+            #     sqlite3.IntegrityError: UNIQUE constraint failed: cards.id
+            # measured 2026-10-21 retrying two chunks with a failed card type (§I42). The
+            # generator returns the COMPLETE card set for the document, so every existing row
+            # is superseded, and nothing in the codebase reads `is_active = 0` cards.
+            from sqlmodel import delete as sql_delete
+
+            removed = len(session.exec(
+                select(Card.id).where(Card.document_id == document_id)
+            ).all())
+            session.exec(sql_delete(Card).where(Card.document_id == document_id))
+            if removed:
                 logger.info(
-                    "Deactivated {} existing cards for doc {} before re-generating",
-                    deactivated, document_id,
+                    "Removed {} existing cards for doc {} before re-generating", removed, document_id,
                 )
             for gc in cards:
                 session.add(Card(
@@ -1018,12 +1071,42 @@ class DocumentStore:
             return 0
 
         document_id = nodes[0].document_id
+
+        # ── §I43 — REPLACE, never append ──────────────────────────────────────
+        # The upsert below adds points under FRESH ids, so without this the previous
+        # generation's points survive in the collection and RAPTOR retrieval sees every
+        # summary twice. Measured 2026-10-21 after a Phase 2 re-run: 146 `raptor_summary`
+        # points against 73 SQLite nodes — no error raised, no log line, the run reported
+        # "RAPTOR nodes 73" and looked entirely clean.
+        #
+        # This runs FIRST and its failure is RAISED, not logged. The SQLite write is
+        # committed below, so a delete that failed quietly would leave the duplicate in
+        # place while the run reported success — exactly the silent failure §I43 records.
+        # That is a deliberate departure from `_delete_colpali_pages`, whose read path
+        # dedupes by page so a failed delete merely degrades to the old behaviour; nothing
+        # downstream dedupes RAPTOR points.
+        removed_points = self._delete_raptor_points(document_id)
+        if removed_points:
+            logger.info(
+                "Removed {} existing RAPTOR points for doc {} from {} before re-upserting",
+                removed_points, document_id, self._cfg.qdrant_collection,
+            )
+
         with Session(self._engine) as session:
-            deactivated = self._deactivate_raptor_nodes(document_id, session)
-            if deactivated:
+            # §I42's sibling, on the SQLite side: delete the document's rows rather than
+            # deactivate them. `build_tree` returns the COMPLETE tree for the document
+            # (it does not read existing rows), so every existing row is superseded, and
+            # nothing reads `is_active = 0` raptor rows — `get_raptor_tree` filters on it.
+            from sqlmodel import delete as sql_delete
+
+            stale_rows = len(session.exec(
+                select(RaptorNode.id).where(RaptorNode.document_id == document_id)
+            ).all())
+            session.exec(sql_delete(RaptorNode).where(RaptorNode.document_id == document_id))
+            if stale_rows:
                 logger.info(
-                    "Deactivated {} existing RAPTOR nodes for doc {} before re-generating",
-                    deactivated, document_id,
+                    "Removed {} existing RAPTOR nodes for doc {} before re-generating",
+                    stale_rows, document_id,
                 )
             for nd in nodes:
                 session.add(RaptorNode(
@@ -1064,13 +1147,49 @@ class DocumentStore:
                     "embedding_version":  self._cfg.dense_model,
                 },
             ))
-        for i in range(0, len(points), 64):
-            self._qdrant.upsert(
-                collection_name=self._cfg.qdrant_collection,
-                points=points[i : i + 64],
+        # A failure here is the one state this path cannot repair for itself: the previous
+        # generation's points were deleted above, so if the upsert dies part-way the document
+        # is left with SQLite nodes and NO (or partial) summary vectors.
+        #
+        # ⚠️ That ordering is deliberate, and an independent review of this change flagged it as
+        # a defect (2026-10-21). The adjudication: the two-store write was never atomic, so every
+        # ordering has a failure window, and this one fails into the state a verifier CATCHES —
+        # "active SQLite nodes with no point in Qdrant" is exactly what B5 and
+        # `i43_raptor_dup_probe.py` count. The alternative (upsert, then delete the superseded
+        # points) fails into *duplicates*, which is the failure that went unnoticed for a whole
+        # run and that §I43 exists to remove. Absence is recoverable and visible; duplication is
+        # neither. So: keep the order, and make the failure loud and actionable rather than
+        # leaving an operator to infer it.
+        upserted = 0
+        try:
+            for i in range(0, len(points), 64):
+                batch = points[i : i + 64]
+                self._qdrant.upsert(
+                    collection_name=self._cfg.qdrant_collection,
+                    points=batch,
+                )
+                upserted += len(batch)
+        except Exception as exc:
+            logger.error(
+                "RAPTOR upsert FAILED for doc {} after {}/{} points ({} SQLite nodes were "
+                "already committed): {}. The previous generation's points are gone, so this "
+                "document now has {} nodes and {} summary vectors — RAPTOR retrieval returns "
+                "nothing until it is rebuilt. Recover with `--raptor-only` (rebuilds the tree and "
+                "re-upserts; it deletes first, so it is safe to re-run), then re-run B5.",
+                document_id, upserted, len(points), len(nodes), exc,
+                len(nodes), upserted,
             )
+            raise
         if points:
             logger.info("Upserted {} RAPTOR vectors to Qdrant", len(points))
+        if len(points) < len(nodes):
+            # Pre-existing behaviour, reported not judged: nodes whose embedding is None are
+            # skipped, so SQLite and Qdrant legitimately differ. B5 reports the same gap.
+            logger.warning(
+                "{} of {} RAPTOR nodes had no embedding and were NOT upserted — SQLite and "
+                "Qdrant now differ by that many (B5 reports this gap)",
+                len(nodes) - len(points), len(nodes),
+            )
 
         logger.success("Saved {} RAPTOR nodes", len(nodes))
         return len(nodes)

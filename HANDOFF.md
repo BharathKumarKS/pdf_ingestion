@@ -4,9 +4,79 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-20 evening (CARD RUN IN FLIGHT under tmux, launched 19:05 — see the top
-> block for how to monitor and resume; B4/B5/B6 next).** Step 10
-> §0 pre-registration is written; §1's preflight gate failed and was registered as **§D14**. Owner
+> **Last updated: 2026-10-21, session 2. §I43 is FIXED and B5 NOW PASSES — the open FAIL from the
+> previous session is closed (block below). B4 PASS / B6 (§I39) and the non-LLM A1–A4 work are
+> unchanged from the previous session's record. Register now runs to §I44.**
+>
+> ## ▶ NEXT SESSION — START HERE (written 2026-10-21, session 2)
+>
+> **1. ✅ DONE (2026-10-21 session 2) — §I43 fixed and B5 PASSES.** `save_raptor_tree` now deletes the
+> document's RAPTOR points (and rows) before the upsert, and the 73 orphaned points were removed by
+> `scripts/dedupe_raptor_points.py` (dry-run → `--yes`). `knowledge_base_v2` = **3,869 points** =
+> 3,796 chunks + **73** RAPTOR, **0 orphans**; B5 exit 0
+> (`logs/p1/step10/b5_raptor_verify_2026-10-21_post_dedupe.log`). New regression test proven to
+> discriminate (14 vs 7 with the fix disabled).
+> **Independent review ran** (`openai/gpt-oss-20b`, a different model; pin confirmed live): 5 SOUND /
+> 1 DEFECT → verdict FAIL on the write ordering. **Adjudicated and recorded in §I43 — the ordering is
+> kept deliberately** (it fails into *absence*, which B5 counts, not into *duplicates*, which is the
+> silent failure §I43 removes), and the reviewer's proposed corrections are a no-op and a regression.
+> What the review did land: the upsert failure is now **loud** (ERROR naming the state + the
+> `--raptor-only` recovery) — pinned by a second new test.
+> **Suite: 439 pass / 4 fail / 6 skip** (`uv run pytest tests/ -q -m "not slow"`, 194 s) — the 4 are
+> the pre-existing documented failures, **no new failure**. ⚠️ Two earlier attempts at this number
+> were lost to session interruptions, and one stalled at ~64 % because my own killed runs were still
+> competing — **that was not a hanging test**: `tests/test_phase2.py` alone completes in 57 s.
+> **Still uncommitted** — see the "Uncommitted" line below. Detail: §I43, §I44 in `IMPROVEMENTS.md`.
+>
+> **2. NEXT — build §G1 (PPR) + §G2 (community detection) — OWNER DECISION TAKEN 2026-10-21: use
+> LEIDEN, not Louvain, "as that's the improvement over louvain", with PPR and community detection
+> "and all resolution as per the syllabus".** This closes §I33 (Louvain vs a Leiden dependency) —
+> **take the dependency.** The syllabus spec, read from the course materials:
+> - **Deps:** `uv add python-igraph leidenalg`. Both are required: `leidenalg` operates on `igraph`
+>   objects, and networkx's own `leiden_communities` is a backend-dispatch stub that raises
+>   `NotImplementedError` (§I33). Write the `nx_to_igraph()` translation the course's Lab 2 uses.
+> - **Resolutions: 0.5, 1.0, 2.0** — the loop in `Labs/Week_5/ms_graphrag_tutorial/docs/
+>   graph_analysis.md` §1 ("Loop over Resolutions 0.5, 1.0, 2.0") and its finite-zoom section
+>   (0.5 = few broad communities, 2.0 = many tight ones).
+> - **Hierarchy: 2–4 levels** (`Week_Plan/week-5-summer-lesson-plan.pdf`: *"Microsoft GraphRAG's
+>   hierarchy is typically 2–4 levels deep precisely because that is how many levels of genuine
+>   structure a real entity graph holds. Ask for more and you are summarizing noise."*).
+> - **The modularity gate, per Lab 2:** *"Measure modularity at each level and compare against a
+>   degree-preserving random rewiring of the same graph — structure is a surplus over chance, so
+>   compute the chance."* Report **both** numbers at every resolution.
+> - **Assert every community is connected** — Leiden's guarantee over Louvain, and the reason the
+>   owner chose it.
+> - **PPR (G1):** seed at the query's concepts and iterate `v(k+1) = (1−λ)·W·v(k) + λ·v(0)` with
+>   **λ = 1/2 for 10 iterations** (HippoRAG / MemGraphRAG, `Week_Plan/week-5-…` §"The Honey and the
+>   Springs"; `W = D⁻¹A` over the `RELATES_TO` adjacency). The syllabus also says to sweep λ
+>   (*"at λ = 0.1 the honey wanders; at λ = 0.9 it never leaves home"*) — report the sweep, use 1/2.
+> - **Syllabus sources:** `Week_Plan/week-5-summer-lesson-plan.pdf` (Labs 1–5),
+>   `Labs/Week_5/ms_graphrag_tutorial/docs/graph_analysis.md`,
+>   `Labs/Week_11/text2sql_firstprinciples/src/labs/lab2_network_theory/README.md`.
+> - ⚠️ **§I21/§I39 are prerequisites for good communities** — TOC concepts are exactly the noise
+>   that fragments them. Decide D1 before spending summary budget.
+> - ⚠️ The existing §G2 before-arm measurement (§I33) is on **Louvain** and must be **re-run on
+>   Leiden** before it is quoted again.
+>
+> **3. §I39 / §E5 — extend the content filter.** Signals are already measured: a page-reference
+> density test (`[IVX]{1,3}-\d{1,2}-\d{1,2}` or `,\s*\d{1,2}-\d{1,2}`) catches **187/193 index chunks
+> with 0 body false positives**; the TOC's `1-1, 1 =` pattern catches **13/19 TOC chunks**, also 0 in
+> the body. Do **not** use dot-leaders — they fire on ordinary prose ellipses 48 times in the body.
+> The filter's existing "index pipe-table" signal fires on **0** chunks in this corpus (dead).
+>
+> **4. Still open — owner decisions, unchanged:** **D1/§I21** (rebuild the graph with the content
+> filter before G3, or run G3 on the current graph — it decides whether B1 is worth doing);
+> **§I34** (a re-ingest transition reports the graph lane as SKIP — non-blocking as built, or a hard
+> blocker?); **§A3** (card volume vs quality); **D3** (commit the untracked graph-analytics plan).
+> **B1 (the §G3 merge) is still NOT authorised.**
+>
+> **Uncommitted when this was written:** `scripts/preflight.py`, `src/pdf_ingestion/store.py`,
+> `logs/p1/step10/verify_phaseb_{cards,raptor}.py`, `IMPROVEMENTS.md`, `HANDOFF.md`.
+>
+> ---
+>
+> **Step 10
+> §0 pre-registration is written**; §1's preflight gate failed and was registered as **§D14**. Owner
 > chose fix (c) — rebuild the graph (Step 9's *graph half*; cards / DA / ColPali still deferred).
 > **Phase A is complete:** A3 built doc `7ba61432`'s graph (16 h 25 m, verifier PASS), **A4 applied**
 > (old document's graph retired — `graph.matches-qdrant` 100 % → **0.0 %**), **A5 `preflight.py` exit
@@ -16,14 +86,24 @@
 > Phase B — planned at `.hermes/plans/2026-10-19-p1-step9-phaseB-plan.md`.** Branch
 > `feat/p0-9-gold-dataset-v2`. **Read `RETROSPECTIVE.md`** for the project-wide lessons.
 >
-> **🟢 NON-LLM PARALLEL WORK — PLANNED, AWAITING SIGNOFF (2026-10-20 evening).**
-> `.hermes/plans/2026-10-20-p1-nonllm-parallel-work-plan.md`. Four stages that issue **no LLM call**,
-> so they are safe beside the in-flight card run (§I23 measured what a second LLM-hungry job costs on
-> this cluster). Each stage carries a *measurable* verifier plus an independent reviewer. **A1** is the
-> query-side `matched_concepts` baseline that §I29 says is missing and that G3 must not be designed
-> without. The plan marks its own **STOP point**: the §G3 merge is a **separate gate** and is *not*
-> authorised by it. It also carries the owner decisions it is blocked on (D1 §I21 rebuild-or-not,
-> D2 scope, D3 the untracked graph-analytics plan).
+> **🟢 NON-LLM PARALLEL WORK — EXECUTED 2026-10-20 (A1–A4), STOPPED AT THE PLAN'S STOP LINE.**
+> Plan: `.hermes/plans/2026-10-20-p1-nonllm-parallel-work-plan.md`. Register: **§I32–§I38**.
+> Ran beside the in-flight card run without disturbing it (1,007/3,791 at the time of writing).
+>
+> | stage | state | artifact |
+> |---|---|---|
+> | **A1** | query-side `matched_concepts` measured: **97.86 %** tie at 1 (mean 1.0219) — §I29's missing number, now §I32. 2 runs byte-identical. Reviewer 1 **voided** (protocol error); re-review **VERIFIED 9/9** (re-ran, recomputed the aggregate, checked degeneracy, the anchor and parity) | `logs/p1/step10/g3_query_side_baseline.{py,json,log}` |
+> | **A2** | §D14 fix (b) landed (§I34): PASS/SKIP/FAIL verdict + scope gate. Reviewer **VERIFIED** 4/4 | `logs/p1/step10/a2_preflight_{before,after,negative,negative_before}.log` |
+> | **A3** | §I28 over-fetch fixed (§I35): 195.1 s / +5,010 MB → 12.9 s / +616 MB, contract byte-identical. Reviewer 1 REFUTED on field misattribution **and left `store.py` reverted** (restored); reviewer 2 interrupted by the approval gate; reviewer 3 **VERIFIED** 6/6 and re-ran the head-to-head itself | `logs/p1/step10/a3_fetch_probe.{py,json,log}` |
+> | **A4** | §G2 gate, before arm: Q 0.589597 vs rewired null 0.280330 → PASS (one-sided). **Leiden is NOT runnable** in networkx 3.6.1 (§I33) — ran on Louvain | `logs/p1/step10/g2_modularity_gate.{py,json,log}` |
+>
+> **⚠️ TWO PLAN PREMISES WERE WRONG, both now registered.** (1) A2's "today: exit 1, 1 BLOCKER" was
+> stale — preflight has exited 0 since A5 (§I36). (2) A4's "Leiden … no new dependency" is false —
+> `leiden_communities` is a backend-dispatch stub that raises `NotImplementedError`, and the Louvain
+> substitute produced **1 disconnected community**, so the gate's connectedness verifier is **unmet**
+> (§I33). **Open owner decisions:** the §I34 SKIP-vs-blocker question, and whether to add a Leiden
+> backend dependency. **B1 (the §G3 merge) was NOT started** — separate gate, not authorised.
+> Uncommitted: `scripts/preflight.py`, `src/pdf_ingestion/store.py`.
 >
 > **PHASE B — where it actually stands (2026-10-20).** It was **run on 2026-10-19 and ABORTED** at
 > B2/B3: cards for 74 of 3,791 chunks in 60 minutes (~97 s/chunk, 16 timeouts, ETA ~51 h), killed by
@@ -31,38 +111,41 @@
 > old doc's 82,164 active cards untouched). Three findings came out of it, all now registered:
 > **§I24** (`src/core/llm.py` had no total-request deadline and no retry — a 41-minute silent hang),
 > **§I25** (the per-card-type swallow made a *total* card loss invisible: zero `Failed:` rows,
-> exit 0), **§I26** (the concurrency knee). **§I24, §I25 and §I27 are now FIXED in code; the card run
-> has NOT been relaunched.**
+> exit 0), **§I26** (the concurrency knee). **§I24, §I25 and §I27 are FIXED in code, and the card run
+> HAS since been relaunched and completed** (2026-10-21 03:59:39 — see the block below).
 >
-> **🟢 THE CARD RUN IS IN FLIGHT (launched 2026-10-20 19:05:10).** `run_phaseb.sh 4` → B0 gate PASSED
-> (card_gen_workers 4 = **32 effective**, qdrant `10.0.10.65`, no stubs) → B3 running.
+> **✅ THE CARD RUN FINISHED — 2026-10-21 03:59:39, wall 534 min 29 s (~8.9 h). B4/B5/B6 HAVE RUN.**
+> `run_phaseb.sh 4` (card_gen_workers 4 = **32 effective**, qdrant `10.0.10.65`, no stubs).
 >
 > | | |
 > |---|---|
-> | harness | **tmux session `phaseb`** on the Mac (durable — survives the Hermes CLI exiting) |
-> | log | `logs/p1/step10/phaseb_run.log` |
-> | checkpoint | `data/card_cache/<doc8>__<key>.jsonl` — **one line per completed chunk** |
-> | ETA | **~6.7 h** at the measured 9.39 chunks/min (§I26) → ~01:45 |
+> | cards | **75,645** for **3,791 / 3,791** chunks (19.95 cards per content chunk — top of the ~16-20 family) |
+> | failure counters | **2 chunks with a failed card type, 2 failed card-type calls, 2 LLM failures of 30,328 calls** — `formula`×1, `question`×1 |
+> | log | `logs/p1/step10/phaseb_run.log`, **preserved as `phaseb_run_2026-10-21.txt`** (`*.log` is gitignored) |
 >
-> **Monitor** (no need to attach to tmux):
-> ```bash
-> tmux ls                                              # is the session alive?
-> wc -l data/card_cache/*.jsonl                        # chunks done, out of 3,791 — the exact signal
-> tail -30 logs/p1/step10/phaseb_run.log
-> ```
-> **If it dies, just relaunch the same command** — the checkpoint resumes and only the chunks since
-> the last checkpoint are redone:
+> | stage | verdict | evidence |
+> |---|---|---|
+> | **B4** cards | **PASS** (exit 0) after the §I42 retry — closing line `0 / 0 / 0`, **75,662** active cards, 3,791/3,791 chunks used, 0 orphan, 0 foreign-doc, all 8 types, `question` 29,321 / `factoid` 30,635, old document untouched at 82,164. *(The original run was FAIL on 2 failed card types — see the §I42 note below.)* | `logs/p1/step10/b4_cards_verify_2026-10-21.log` |
+> | **B5** RAPTOR | **PASS** (exit 0) after the §I43 fix + de-dup — `knowledge_base_v2` = **3,869 points** = 3,796 chunks + **73** `raptor_summary`, 0 orphans, 0 zero vectors, chunk lanes intact. *(Was **FAIL**: the Phase 2 re-run duplicated the points — 3,942 / 146 — §I43. ⚠️ The FAIL's own log is **not on disk**: the file previously cited for it holds a PASS from the pre-retry run — §I44.)* | `logs/p1/step10/b5_raptor_verify_2026-10-21_post_dedupe.log` |
+> | **B6** card read | **22 cards read** — body cards are good (a p545 `formula` card is exemplary); the junk is all from non-body bands: **5,100 cards (6.7 %) come from TOC/index chunks the E5 filter passes as content** → **§I39** | `logs/p1/step10/b6_card_samples_2026-10-21.txt` |
+>
+> **⚠️ The 2026-10-21 retry (to clear B4's 2 failed card types) found and fixed a blocker — §I42.**
+> `save_cards` could not write for a document that already had cards (`UNIQUE constraint failed:
+> cards.id`: the checkpoint replays the original card ids and the old rows were only *deactivated*).
+> Fixed by deleting the document's rows before insert. **This had made §I27's own retry path unusable
+> and it blocked every Phase 2 re-run** — including §A1 and §A3. **Its sibling path is now fixed
+> too: §I43, the RAPTOR upsert appended** (the 146-vs-73 duplication above) — `save_raptor_tree` now
+> deletes the document's points and rows before the upsert, and the 73 orphans were removed
+> 2026-10-21 (session 2).
+>
+> **⚠️ B5 must be run with `QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2`** — it now
+> **refuses** (exit 2) rather than silently scanning the local embedded store (**§I40**, fixed).
+>
+> **If it ever needs relaunching, the checkpoint resumes** (only chunks since the last checkpoint are
+> redone), but note `>` overwrites the log:
 > ```bash
 > tmux new-session -d -s phaseb "cd '$PWD' && bash logs/p1/step10/run_phaseb.sh 4 > logs/p1/step10/phaseb_run.log 2>&1"
 > ```
-> **⚠️ Relaunch with `>` overwrites the log, and `*.log` is GITIGNORED (`.gitignore:68`)** — so the
-> run log is never committed. Before relaunching, copy the current log to a non-`.log` name if it
-> holds evidence you still need. After the run, **preserve the B4/B5 evidence explicitly**
-> (`cp phaseb_run.log phaseb_run_2026-10-20.txt`, or `git add -f`).
->
-> **⚠️ When it finishes, the exit code is NOT the verdict.** Run, in order:
-> `verify_phaseb_cards.py` (**B4** — its check [1] reads the generator's closing line and must show
-> 0/0/0; see §I25), then `verify_phaseb_raptor.py` (**B5**), then read ~10 sample cards (**B6**).
 >
 > **⚠️ The card phase takes several minutes to log its first line.** `generate_phase2_artifacts`
 > calls `get_chunks_with_embeddings` first, which does `qdrant.retrieve(ids=[3,796 ids],
@@ -112,6 +195,13 @@
 > `tests/test_embed_cache.py`, `data/eval_results/p1-step10-retrieval-only_2026-10-20_0411.md`,
 > `logs/p1/step8-run/probe_cache_hit*`, and the older `.hermes/plans/2026-10-18-*` plans that
 > HANDOFF and the backlog reference.
+>
+> **This session (2026-10-21, session 2) added:** `scripts/dedupe_raptor_points.py` and
+> `logs/p1/step10/i43_raptor_{dup_probe.py,dup_probe.json,rows_probe.py,dedupe.json}`; modified
+> `src/pdf_ingestion/store.py` (the §I43 fix), `tests/test_phase2.py` (the new regression test) and
+> `logs/p1/step10/probe_phaseb_scope.py` (a comment §I42/§I43 made false). The B5 run log
+> `logs/p1/step10/b5_raptor_verify_2026-10-21_post_dedupe.log` is a **`.log` — gitignored**, so
+> `git add` skips it silently; `git add -f` if it should be committed.
 >
 > **THE CARD RUN IS THE ONLY THING LEFT BEFORE B4 — AND THE WORKER COUNT IS NOW MEASURED.**
 > The 2026-10-20 sweep (two sweeps, six cells, control-verified) **refutes §I26's original

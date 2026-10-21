@@ -246,6 +246,80 @@ class TestRaptorTree:
         raptor_points = raptor_results[0]
         assert len(raptor_points) == result["raptor_nodes"]
 
+    def test_raptor_rerun_replaces_points_instead_of_appending(self, ingested_doc, p2_settings):
+        """§I43 — a second Phase 2 run must not leave the first run's RAPTOR points behind.
+
+        The defect this pins: `save_raptor_tree` upserts under FRESH point ids, so without an
+        explicit replace-delete the collection accumulates one generation per run. Measured on
+        the cluster 2026-10-21 — 146 `raptor_summary` points against 73 SQLite nodes, no error
+        and no log line. The discriminating assertion is the COUNT (== nodes, not 2× nodes);
+        an exit code or a "Saved N nodes" line proves nothing here.
+        """
+        from src.pdf_ingestion.store import generate_phase2_artifacts, DocumentStore
+        from src.core.database import get_qdrant
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+        doc_id = ingested_doc["document_id"]
+        first = generate_phase2_artifacts(doc_id, p2_settings)
+        second = generate_phase2_artifacts(doc_id, p2_settings)
+
+        client = get_qdrant(p2_settings)
+        flt = Filter(must=[FieldCondition(
+            key="source_type", match=MatchValue(value="raptor_summary"))])
+        count, _ = client.scroll(
+            collection_name=p2_settings.qdrant_collection, scroll_filter=flt,
+            limit=1000, with_payload=False,
+        )
+
+        assert len(count) == second["raptor_nodes"], (
+            f"{len(count)} RAPTOR points for {second['raptor_nodes']} nodes after two runs — "
+            f"the write appended (first run: {first['raptor_nodes']} nodes)"
+        )
+        # SQLite must not accumulate rows either (§I42's sibling change on this path).
+        nodes = DocumentStore(p2_settings).get_raptor_tree(doc_id)
+        assert len(nodes) == second["raptor_nodes"]
+
+    def test_raptor_upsert_failure_is_loud_and_leaves_no_points(
+        self, ingested_doc, p2_settings, monkeypatch
+    ):
+        """§I43 — a dying upsert must RAISE, and the documented state is "no points", not "dupes".
+
+        The previous generation's points are deleted before the upsert, so a failure mid-write
+        leaves SQLite nodes with no vectors. An independent review of this change flagged that
+        ordering (2026-10-21). It is kept deliberately: the two-store write is not atomic, so
+        every ordering has a failure window, and this one fails into the state a verifier CATCHES
+        (`active nodes with no point in Qdrant` — what B5 counts). The alternative fails into
+        duplicates, which is the silent failure §I43 exists to remove. What this test pins is the
+        part that is not a judgement call: the failure must be LOUD.
+        """
+        from qdrant_client import QdrantClient
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+        from src.core.database import get_qdrant
+        from src.pdf_ingestion.store import generate_phase2_artifacts
+
+        doc_id = ingested_doc["document_id"]
+        generate_phase2_artifacts(doc_id, p2_settings)  # a first generation, so points exist
+
+        def _boom(self, **kwargs):
+            raise RuntimeError("simulated upsert failure")
+
+        monkeypatch.setattr(QdrantClient, "upsert", _boom)
+        with pytest.raises(RuntimeError, match="simulated upsert failure"):
+            generate_phase2_artifacts(doc_id, p2_settings)
+
+        client = get_qdrant(p2_settings)
+        left, _ = client.scroll(
+            collection_name=p2_settings.qdrant_collection,
+            scroll_filter=Filter(must=[FieldCondition(
+                key="source_type", match=MatchValue(value="raptor_summary"))]),
+            limit=1000, with_payload=False,
+        )
+        assert len(left) == 0, (
+            f"{len(left)} RAPTOR points survived a failed upsert — the previous generation must "
+            "be gone (the failure is meant to be visible as ABSENCE, which B5 counts)"
+        )
+
     def test_raptor_payload_fields(self, ingested_doc, p2_settings):
         from src.pdf_ingestion.store import generate_phase2_artifacts
         from src.core.database import get_qdrant

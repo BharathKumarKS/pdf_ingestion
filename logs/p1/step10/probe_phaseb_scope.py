@@ -67,9 +67,12 @@ def main() -> int:
         "SELECT chunk_index, text, token_count, page_number FROM chunks "
         "WHERE document_id = ? ORDER BY chunk_index", (DOC_NEW,)
     ).fetchall()
-    # ``save_cards`` / ``save_raptor_tree`` DEACTIVATE the previous generation rather than
-    # deleting it, so the table grows monotonically — count only ACTIVE rows or the "before"
-    # baseline is inflated by history (the old doc shows 82,164 card rows, ~2 generations).
+    # ⚠️ HISTORY-DEPENDENT, and the reason is no longer the live behaviour: `save_cards` and
+    # `save_raptor_tree` used to DEACTIVATE the previous generation rather than delete it, so a
+    # re-run grew the table monotonically (§I42, §I43 — both now delete before insert). Rows
+    # written before those fixes are still on disk, so count only ACTIVE rows or the "before"
+    # baseline is inflated by history (the old doc carries 82,164 card rows and 84 raptor rows
+    # from generations it no longer serves).
     cards_by_doc = dict(con.execute(
         "SELECT document_id, count(*) FROM cards WHERE is_active = 1 "
         "GROUP BY document_id").fetchall())

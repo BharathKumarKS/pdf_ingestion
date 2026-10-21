@@ -1096,10 +1096,12 @@ ColPali stayed deferred). Phase A built doc `7ba61432`'s graph (A3, 16 h 25 m �
   until cutover. The Qdrant collection itself is untouched (plan R1). This was the accepted price of
   fix (c) and it was accepted explicitly, with the reasoning that G3 (the additive build) had already
   degraded that lane — `graph_search` filters on tenant, not `document_id` — so G4 is the repair.
-- **Fix (b) is still the durable fix and is still NOT done.** A future re-ingest recreates this exact
-  situation: the graph will again hold only the previous document, `graph.matches-qdrant` will again
-  report ~100 % dangling, and the gate will again fail. Fix (c) treats this instance; (b) treats the
-  class.
+- **Fix (b) — DONE 2026-10-20, see §I34.** It was the durable fix and it was missing; the check is now
+  scoped to the graph's own collection (the verdict gained a PASS/**SKIP**/FAIL state). A future
+  re-ingest no longer produces a false "retired content" blocker telling the operator to run
+  `clean_stale_graph.py`: it reports **SKIP** and names both collections. The *class* is treated.
+  ⚠️ Residual: the graph lane is then genuinely **not measured** for that run, and whether that should
+  be non-blocking (as implemented) or a hard blocker is an **owner decision** (§I34).
 - **Correction to the note above:** the earlier advice "Do **not** run `clean_stale_graph.py` against
   `knowledge_base_v2`" applied while the graph held *only* the old document — at that point every
   graph document was genuinely the deployed one's and deleting would have destroyed live data. After
@@ -2648,8 +2650,11 @@ confounded, and the fix is to measure the first cell again at the end.
   noise) and a real regression would look like a success. **Do not use it.** Measure the query-side
   distribution — needs a 768d query embedding against `Concept.embedding`, so it is a cluster-embed
   probe, not a pure-Cypher one (§I12 keeps the graph lane on the 768d legacy model).
-- **Not yet measured:** the query-side `matched_concepts` distribution. Registered as the next G3
-  measurement, not as a result.
+- **MEASURED 2026-10-20 — see §I32.** The query-side `matched_concepts` distribution is now
+  measured over all 200 v2 gold queries: **97.86 %** of matching chunks tie at exactly 1
+  (mean 1.0219, share ≥2 = 0.0214, 200/200 parity with the production `graph_search` call).
+  So the quantity §I29 rejected has **3.1 points** of headroom and the quantity it should have
+  named has **97.86 %** of its mass at the floor. **Design G3's verifier against §I32's number.**
 - **No re-ingest** (measurement only).
 - **Evidence:** `logs/p1/step10/probe_g3_baseline.py`, `probe_g3_baseline.json`;
   `src/pdf_ingestion/graph_builder.py:449-459`.
@@ -2783,6 +2788,488 @@ confounded, and the fix is to measure the first cell again at the end.
   they need to be designed out, not caught in review.
 - **No re-ingest** (graph-side analysis only).
 - **Evidence:** `logs/p1/step10/probe_g3_lever.py`; `logs/p1/step10/probe_g3_baseline.py`.
+
+### I32. MEASURED 2026-10-20 — the §I29 query-side number, and it is the opposite of the chunk-side one: **97.86 % of matching chunks tie at exactly 1 concept**
+
+- **What:** §I29 registered the query-side `matched_concepts` distribution as "the next G3
+  measurement, not a result". Measured now — read-only, no LLM, deterministic.
+  `logs/p1/step10/g3_query_side_baseline.py`. For each of the **200** v2 gold queries: embed the
+  raw query with **nomic 768d** via `:8123` (the model `Concept.embedding` uses, §I12), take the
+  top-8 concepts exactly as `GraphBuilder._find_concepts_scored(vec, top_k=8)` does, then run the
+  **same ranking Cypher** `graph_search` runs (`graph_builder.py:449-459`) but with **no LIMIT**,
+  so the whole distribution is visible rather than the top 5.
+- **Measured (collection `knowledge_base_v2`, graph doc `7ba61432`):**
+
+  | quantity | value |
+  |---|---|
+  | queries | 200 (166 answerable, 34 negative) |
+  | chunks matching ≥1 of the query's 8 concepts | **3,512** |
+  | `matched_concepts` = 1 | **3,437 = 97.86 %** |
+  | `matched_concepts` = 2 | 73 |
+  | `matched_concepts` = 3 | 2 |
+  | mean | **1.0219** |
+  | share ≥2 | **0.0214** |
+  | top-5 median of medians | **1.0** (hist: 1 → 196 queries, 1.5 → 1, 2 → 3) |
+  | parity with the production `graph_search` call | **200/200** |
+
+- **Why it matters — this is the number §I29 said was missing, and it vindicates §I29's
+  objection quantitatively.** The quantity §I29 rejected (a chunk's TOTAL concept count) is
+  already 0.9687 with **3.1 points** of headroom. The quantity `graph_search` actually ranks by
+  has **97.86 %** of its mass at exactly 1. So G3's effect is readable here and was
+  unreadable there — a ~30× difference in discriminating room. **Design G3's verifier against
+  this number, not against 0.9687.**
+- **The mechanism is visible in the anchor.** For `gold-062` the top-8 concepts are
+  `Kinetic energy of gas particles`, `total energy equals kinetic energy for monatomic gas`,
+  `total energy of a particle`, `Total energy of a particle`, `Kinetic energy`,
+  `kinetic energy`, `Kinetic Energy`, `kinetic theory of gases` — i.e. **one concept in three
+  spellings** plus near-synonyms. A chunk mentioning "kinetic energy" therefore matches at most
+  1 of the 8, which is exactly §I2's "ties at 1" and exactly what §I30's merges would repair.
+- **Reproducible:** two runs are **byte-identical** (sha256
+  `8f8526857ea49273f2430484ad203a189f81ee486102470e287ae63911f8e0c7`); the JSON carries **no
+  wall-clock field** for that reason. Non-degenerate (values {1,2,3}); 0 embed errors; 0 queries
+  resolving no concepts.
+- **No re-ingest** (measurement only). **No LLM calls.**
+- **Verification note (2026-10-20).** An independent reviewer (`openai/gpt-oss-20b`) re-ran the script
+  to its own scratch path, obtained the **identical sha256**, and recomputed the aggregate from the
+  `queries` array itself. **VERIFIED on all nine checks** — the five aggregate numbers, the degeneracy
+  verdict, byte-identity, the `gold-062` anchor (on-topic), and parity 200/200 — with no objections.
+  (Its own `claims_checked` field says 5 while its `findings` array lists 9; the findings are what
+  carry the evidence, and they cover all nine.) One earlier reviewer of the same artifact returned
+  `REFUTED` *after its own bad re-run had zeroed the artifact* — a void verdict, not a disagreement
+  (§I38).
+- **Evidence:** `logs/p1/step10/g3_query_side_baseline.py`, `..._baseline.json`, `..._baseline.log`;
+  `src/pdf_ingestion/graph_builder.py:449-459`.
+
+### I33. NEW 2026-10-20 — the §G plan's Leiden premise is FALSE: `leiden_communities` exists in networkx 3.6.1 but **cannot run** — it is a backend-dispatch stub
+
+- **What:** the §G plan §2 records, as **verified**, that *"Leiden and `modularity` are both
+  present in the installed networkx 3.6.1 … no new dependency"*. `modularity` is native.
+  `nx.community.leiden_communities` is **not**:
+  ```
+  NotImplementedError: 'leiden_communities' is not implemented by 'networkx' backend.
+  This function is included in NetworkX as an API to dispatch to other backends.
+  ```
+  Measured 2026-10-20: the only registered backend is `nx_loopback`; **igraph, leidenalg,
+  nx_parallel and graphblas are all absent** from the venv. So the *symbol* exists and the
+  *algorithm* does not — the plan verified the name, not the behaviour.
+- **Consequence, measured:** the §G2 modularity gate was run on **Louvain** instead (native), and
+  Louvain returned **1 disconnected community of 75 members** (community index 35, "air
+  density / air pressure / carrier frequency / beat / …"). **Leiden's entire selling point over
+  Louvain is that every community it returns is connected.** So the gate's verifier 3 ("every
+  community asserted connected") is **unmet on the substitute**, and the script measures
+  connectivity rather than assuming it.
+- **Result of the gate (before arm, report-only, one-sided):**
+
+  | | |
+  |---|---|
+  | graph | 7,808 nodes, 37,296 undirected edges (from 37,300 directed `RELATES_TO`, 4 self-loops dropped), 89 components, density 0.001224 |
+  | partitioner | **louvain** (leiden unavailable), resolution 1, unweighted, seed 20261020 |
+  | `Q(observed)` | **0.589597** (199 communities) |
+  | `Q(rewired null)` | **0.280330** (22 communities) |
+  | `Q(observed partition)` on the rewired graph | −0.001994 |
+  | gap / ratio | **+0.309267 / 2.1032** → **PASS (one-sided)** |
+
+  The null is a degree-preserving rewiring (`double_edge_swap`, 372,960 swaps, degree sequence
+  confirmed preserved). Two runs byte-identical
+  (sha256 `13a4e364043f82f6924c75a651467c4d84a39683f01cd4fa3d9415ffd5e9fb86`).
+- **Why it matters:** (a) a *"verified in the plan"* claim was verified only at the level of
+  symbol existence — the same failure class as §I29; (b) the one-sided caveat still holds (a PASS
+  is trustworthy, a FAIL would be confounded by §I21's TOC concepts), so the gate's **PASS** stands;
+  (c) the **connectedness verifier cannot be satisfied** without either adding a backend dependency
+  or accepting Louvain + measuring connectivity. **Owner decision needed.**
+- **No re-ingest. No LLM calls.** Local CPU, ~6 s.
+- **Evidence:** `logs/p1/step10/g2_modularity_gate.py`, `..._gate.json`, `..._gate.log`.
+
+### I34. FIXED 2026-10-20 — §D14 fix (b): the preflight graph↔Qdrant check is now SCOPED, so it can no longer cry "retired content" at a healthy graph
+
+- **What:** `scripts/preflight.py` check [4] compared every chunk id in the graph against the
+  collection **under test**. Chunk ids are `uuid4()` per ingest, so when the collection under test
+  is a different ingest from the graph's, the check reported ~100 % dangling and printed
+  *"Graph has retired content. Fix: `clean_stale_graph.py …`"* — an instruction that, run against a
+  live collection, would delete a correct graph (§D14 fix (c) was chosen, so the graph is right and
+  the check was wrong).
+- **Fix (b), implemented:** the verdict gained a third state — **PASS / FAIL / SKIP** — and the graph
+  check now resolves the graph's own `Document` ids and counts how many points in the collection
+  under test carry them. None present → the check is reported as **SKIP** with an explicit
+  *"MISMATCH: the graph was built from a different ingest … the graph lane is NOT MEASURED for this
+  collection … This is not retired content — do NOT run `clean_stale_graph.py`"*, and it is **not**
+  a blocker. Present → the original dangling check runs unchanged, with the scope count appended as
+  evidence.
+- **Measured (all three arms, real runs):**
+
+  | arm | collection under test | before the fix | after the fix |
+  |---|---|---|---|
+  | positive | `knowledge_base_v2` (the graph's) | PASS, 0/3,796 absent (0.0 %), exit **0** | PASS, 0/3,796 absent (0.0 %) + *graph doc(s) present: 3,796 points*, exit **0** |
+  | negative | `knowledge_base` (NOT the graph's) | FAIL, 3,796/3,796 absent (100.0 %) + the `clean_stale_graph.py` instruction, exit **1** | **SKIP** + the MISMATCH message, no `clean_stale_graph.py` instruction, exit **0** |
+
+  Every **non-graph** check is identical before vs after (18 of them; the only other difference in
+  the negative arm is the collection-under-test row being renamed `qdrant.knowledge_base_v2` →
+  `qdrant.knowledge_base`, showing 3,796 vs 5,135 points — config, not code).
+- **⚠️ Residual, and it needs a decision:** a re-ingest transition now reports **SKIP** rather than
+  a false blocker, so it passes the gate — but the **graph lane is genuinely not measured** for that
+  run. Whether that should be non-blocking (as implemented, matching the plan's "skip it with an
+  explicit note") or a hard blocker (the multihop lane silently contributes nothing — the §D11
+  class of failure the preflight exists to catch) is an **owner decision**, not a code question.
+- **⚠️ Also note:** `preflight.py` is **not** LLM-free — `check_completions` issues one real
+  completion per distinct pipeline (model, url); the four sections dedupe to **one** call. So a
+  preflight run is ~1 LLM call on the shared cluster, not zero.
+- **No re-ingest.**
+- **Evidence:** `logs/p1/step10/a2_preflight_before.log`, `..._after.log`, `..._negative.log`,
+  `..._negative_before.log`; `scripts/preflight.py`.
+
+### I35. FIXED 2026-10-20 — §I28's over-fetch is gone: `get_chunks_with_embeddings` now asks for the one lane it reads
+
+- **What:** §I28 found that `DocumentStore.get_chunks_with_embeddings` issued
+  `retrieve(..., with_vectors=True)`, returning **every named vector on every point** — including
+  the `colbert` token matrices nothing there uses. It now resolves the dense lane name off the
+  collection schema (`_dense_name_from(self._collection_vectors())`) **before** the retrieve and
+  passes `with_vectors=[named_dense] if named_dense else True`; the `True` fallback preserves the
+  legacy single-vector-collection path that `_extract_dense` already handled.
+- **Measured (3,796 ids, fresh process per arm):**
+
+  | | before | after |
+  |---|---|---|
+  | retrieve wall | 195.1 s | **12.9 s** |
+  | RSS | 309.8 → 5,320.2 MB (growth **5,010.3**) | 306.6 → 922.5 MB (growth **615.9**) |
+  | vector names returned | `colbert, dense_1024, dense_64, sparse` | **`dense_1024` only** |
+  | in-process head-to-head | 107.6 s | **9.8 s** (10.95×) |
+
+  **Contract holds:** `arrays_equal` true, `max_abs_diff` **0.0**, shape preserved, chunk order
+  matches the id list, and the dense matrix sha256 is **identical** across every arm
+  (`3fcbc5ab…`). The call change is asserted at the client boundary (spy prints the kwargs).
+  §I28's own anchor was 3 min 06 s / 36 → 1,992 MB; re-measured larger here because the card run is
+  sharing the tunnel — **the before-arm wall time varied 107.6–195.1 s across runs, so quote the
+  ratio, not the absolute.**
+- **Not verified by re-running the card phase** (the plan forbids it: hours, and the run is in
+  flight). The fix benefits the *next* Phase 2/3 run; the running one has already paid the cost.
+- **Tests:** `uv run pytest tests/ -q -m "not slow" -k "store or chunk or embed"` → 177 passed,
+  1 failed (`tests/test_phase1.py::TestStore::test_hybrid_search_includes_global`, `assert 0 > 0`).
+  **That failure is pre-existing** — confirmed by reverting only `store.py` and re-running the one
+  test, which fails identically.
+- **No re-ingest.**
+- **Verification note (2026-10-20).** Reviewer 3 returned **VERIFIED** (6 findings, no objections,
+  27 API calls / 492 s) after checking the exact field paths: `call_changed.with_vectors_issued ==
+  "['dense_1024']"`, `is_bool_true == false`, `contract` all true, the dense-matrix sha256 equal
+  across both fresh-process sections, and the only consumer reading the dense lane. It also **re-ran
+  the head-to-head itself** (`uv run python logs/p1/step10/a3_fetch_probe.py --arm both`, twice),
+  which reproduced `CONTRACT OK: True` and rewrote `both_one_process` — the artifact was re-validated
+  afterwards (parses, contract all true, fresh-process sections untouched). Reviewer 1 had returned
+  `REFUTED` on a **field misattribution** — it compared the fresh-process claim against
+  `both_one_process`'s RSS, which the artifact's own `same_process_note` flags as allocator-affected —
+  and separately **left `store.py` reverted** (§I38); that verdict is overturned on evidence, not
+  withdrawn by argument. One weakness in reviewer 3's pass: its "legacy fallback" finding is
+  **reasoned, not executed** (no collection without a named dense slot was available to test against).
+- **Evidence:** `logs/p1/step10/a3_fetch_probe.py`, `..._probe.json`, `..._probe.log`;
+  `src/pdf_ingestion/store.py`.
+
+### I36. NEW 2026-10-20 — a plan premise was carried from the register without re-running it: A2's "today: exit 1, 1 BLOCKER" was already stale
+
+- **What:** the non-LLM work plan's A2 says `preflight.py` "exits 0 for
+  `QDRANT_COLLECTION=knowledge_base_v2` (**today: exit 1, 1 BLOCKER**)". Measured 2026-10-20 before
+  touching anything: **exit 0, 0 blockers**, `graph.matches-qdrant` **PASS** 0/3,796 (0.0 %). The
+  "exit 1" figure was §D14's **2026-10-18** record, taken *before* the owner chose fix (c) and the
+  graph was rebuilt (2026-10-19, A3/A4/A5) — after which the premise no longer held.
+- **Why it matters:** it is §I31 trap 4 one level up. Trap 4 is *"a number registered from a probe
+  dies when the probe changes"*; this is *"a premise registered from a state dies when the state
+  changes"*. A plan that inherits a blocker from the register and does not re-run it will build its
+  verifier around a symptom that is already gone — here, verifier arm 1 ("exits 0") was satisfied
+  **before** the fix and therefore proved nothing. The load-bearing arms were the negative arm and
+  "nothing else changed". **Rule: a plan that quotes a measured blocker must re-run that
+  measurement, and record the date it was taken.**
+- **No re-ingest.**
+- **Evidence:** `logs/p1/step10/a2_preflight_before.log` (exit 0, pre-fix);
+  `logs/p1/step10/a5_preflight.log` (exit 0, 2026-10-19); §D14's own 2026-10-18 record.
+
+### I37. NEW 2026-10-20 — `rich` silently DROPS `[...]` inside a table cell, so a check's own detail string can vanish with no error
+
+- **What:** a `preflight.py` detail string was extended with
+  `"  [graph doc(s) present in collection: 3,796 point(s)]"`. The row printed
+  `0/3,796 graph chunk ids absent from Qdrant (0.0%)` — **the appended evidence was gone, no
+  exception, exit 0.** `rich` parses `[...]` in a cell as **markup**; an unrecognised tag is
+  swallowed. Minimal reproduction: a table cell containing
+  `"0/3,796 absent (0.0%)  [graph doc(s) present in collection: 3,796 point(s)]"` renders as
+  `0/3,796 absent (0.0%)` alone.
+- **Why it matters:** it is a **measurement-integrity** trap, not a cosmetic one. The scoped
+  preflight check was working correctly the whole time — the *evidence that it was working* was
+  being deleted on the way to the screen, which makes a working guard look like a no-op and invites
+  exactly the "is this guard vacuous?" review question that was raised. **Rule: no square brackets
+  in any string that goes into a `rich` table cell; use parentheses.** Caught by reading the log
+  back rather than trusting the code, which is why "raw output captured to a file and read back" is
+  a verifier step.
+- **No re-ingest.**
+- **Evidence:** `scripts/preflight.py` (the `# NOTE: no square brackets…` comment);
+  `logs/p1/step10/a2_preflight_after.log` (before/after of the fix).
+
+### I38. NEW 2026-10-20 — an independent reviewer can DESTROY the thing it is reviewing: two real incidents in one session
+
+- **What:** two independent reviewers (`openai/gpt-oss-20b`, a different model from the author's)
+  mutated the artifacts under review. Neither self-reported it.
+  - **A3's reviewer reverted `src/pdf_ingestion/store.py` to run a "is this test failure
+    pre-existing?" check, and did not restore it.** The change under review was gone from the
+    working tree; it was only caught by re-running `git diff` after the review returned. The child's
+    own completion notice said `completed`.
+  - **A1's reviewer re-ran the measurement script without `--out`**, so it wrote to the script's
+    **default artifact path**, under a **bare `python`** with no project dependencies — the concept
+    search returned nothing and it wrote an **all-zeros JSON over the good artifact**, then reviewed
+    that and returned `REFUTED` on it. Its own finding says so: *"All queries have an empty
+    `matched_concepts_histogram` in the source JSON"*.
+- **Why it matters — two lessons, one per side.**
+  1. **Reviewer-side:** a brief that says "verify the artifact" is not enough; it must say **do not
+     modify anything under the repo**, must give scratch paths explicitly, and must name the exact
+     interpreter (`uv run python`). "Restore it afterwards" is not a control — a child that has
+     finished cannot be made to. And **a child's self-report is not evidence**: both said they had
+     completed; one had deleted the change. Verify the tree after every review.
+  2. **Author-side, and this is the more general defect:** the measurement script's `--out`
+     **defaulted to the registered artifact path**, so any re-run silently replaced the record, and
+     an unreachable dependency produced a **clean-looking all-zeros artifact** rather than an error.
+     Fixed in the same session: `--out` refuses to overwrite without `--force` (exit 4), the concept
+     collection is probed up front (abort, exit 3), queries resolving no concepts are counted, and a
+     zero-total run **aborts without writing**. **Rule: a measurement script must not be able to
+     overwrite its own registered artifact by accident, and "no data" must never be
+     indistinguishable from "all-zero data".**
+- **No re-ingest.**
+- **Evidence:** `logs/p1/step10/g3_query_side_baseline.py` (the guards + their comments);
+  `git diff src/pdf_ingestion/store.py`; the A1/A3 review transcripts under
+  `~/.hermes/cache/delegation/live/`.
+
+### I39. NEW 2026-10-21 (found reading Phase B's cards) — the E5 content filter's *documented* gap is now LIVE: TOC and index chunks pass as content, and **6.7 % of the card corpus is built from them**
+
+- **What:** `src/pdf_ingestion/content_filter.py` (`is_content`, §E5) is a text rule — keyword
+  markers, an exact index-heading line, an index pipe-table shape, and an all-punctuation rule. Its
+  own docstring states the limit: *"It does **not** yet catch all front-matter prose (publisher's
+  note, preface) or the Name-Index / TOC continuation rows — those are recorded as an §E5 follow-up,
+  **and the page bounds still cover them until the Step 8 run zeroes them**."*
+  **The re-ingest is that Step 8 run.** Measured 2026-10-21 on doc `7ba61432`: the flag now catches
+  **5 chunks in the whole document**, and all five are copyright/legal boilerplate (copyright page,
+  "all rights reserved", acknowledgements, author affiliations, the print statement).
+- **Measured — chunks by page band, and the cards built from them:**
+
+  | band | pages | chunks | cards | % of cards |
+  |---|---|---|---|---|
+  | front matter | 1-30 | 120 | 2,256 | 3.0 % |
+  | — of which TOC / editorial | 20-26 | 19 | 390 | 0.5 % |
+  | body | 31-900 | 3,349 | 65,906 | 87.1 % |
+  | back matter | 901-970 | 327 | 7,483 | 9.9 % |
+  | — of which **index** | 936-970 | 193 | **4,710** | **6.2 %** |
+  | | | | **75,645** | |
+
+  So **4,710 + 390 = 5,100 cards (6.7 %)** are built from pure index/TOC chunks, and the filter flags
+  **none** of them. `is_content` by band: front matter 115/120 "content", body **3,349/3,349**, back
+  matter **327/327**.
+- **Observed card quality (B6, 22 cards read — 8 by type, then a seeded document-wide sample):** on
+  genuine body chunks the cards are good, and one is exemplary — a `formula` card from p545 carries
+  the full plasma-frequency relation in LaTeX with every symbol defined and its validity conditions.
+  The junk is all from the non-body bands, and it is unmistakable:
+  - `factoid` p23 → *"The section 5-5, 2 references section 5-9."* (from the **TOC**)
+  - `question` p941 → *"What do the codes 25-3, 39-19, and 40-1 refer to?"* (from the **index**)
+  - `formula` p20 → invents `f = 1/N` from an editorial passage about **how many staff members wrote
+    the course** — a fabricated formula from administrative prose
+  - `factoid` p20 → *"The considered plans were mostly rather similar."* (verbatim filler)
+- **Why it matters:** this is §I21's noise, and it is not confined to the graph. The graph build
+  omits the filter entirely (§I21); the **card** lane applies it, and the filter lets TOC and index
+  through — so the same non-content regions that fragment communities also contribute ~6.7 % of the
+  card corpus, where they are retrievable and citable. **Fixing §I21's filter fixes both lanes**, and
+  the fix has a precise target: the two signals the docstring already names as missing (TOC
+  continuation rows, front-matter prose) plus a page-band backstop.
+- **No re-ingest to measure** (read-only). A fix **does** require a re-ingest to take effect.
+- **Evidence:** `logs/p1/step10/b6_card_samples_2026-10-21.txt` (the 22 cards + the band counts);
+  `src/pdf_ingestion/content_filter.py` (docstring and rule); `src/pdf_ingestion/chunker.py:158`.
+
+### I40. NEW 2026-10-21 — the B5 RAPTOR verifier silently falls back to the LOCAL embedded Qdrant and returns a confident FAIL against the wrong store
+
+- **What:** `logs/p1/step10/verify_phaseb_raptor.py` builds its client from `cfg.qdrant_host`, and
+  falls back to `path=cfg.qdrant_local_path` (`./data/qdrant`) when that is unset. Run without
+  `QDRANT_HOST` exported it printed `collection: knowledge_base @ ./data/qdrant`, scanned a **stale
+  local dataset** (5,132 points, 84 `raptor_summary` points), compared it against
+  `phaseb_before.json` — which had snapshotted the **cluster** (3,796) — and returned
+  **`B5 VERDICT: FAIL`** with 86 "missing lane" lines and *"collection grew by 1336 but SQLite has 73
+  nodes"*. Every one of those findings was an artifact of pointing at the wrong store.
+- **Re-run correctly** (`QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2`):
+  **`B5 VERDICT: PASS`**, exit 0 — `knowledge_base_v2` 3,796 → **3,869 points, grew by exactly 73 =
+  the SQLite RAPTOR node count**; `source_type=raptor_summary` 73; chunk points 3,796 unchanged;
+  **0** chunk points missing a lane; **0** RAPTOR points with a zero `dense_1024` vector; levels
+  {1: 62, 2: 8, 3: 3} within `raptor_max_levels=3`.
+- **Why it matters:** the verifier has no guard against the store it is pointed at, and it **prints a
+  verdict rather than refusing**. The `B5` header names `knowledge_base_v2` in its docstring while the
+  code will happily scan a different collection — so the one line that would have exposed the mistake
+  (`collection: … @ ./data/qdrant`) sits above 90 lines of plausible failure detail. This is the same
+  class as §D14's false-positive blocker and §I36's stale premise: **a check that reports on the
+  wrong object is worse than no check**, because its output looks like evidence. A guard belongs at
+  the top: if the resolved target is not the collection the run wrote to, abort.
+- **No re-ingest.**
+- **Evidence:** `logs/p1/step10/b5_raptor_verify_2026-10-21.log` (both runs, the FAIL first and the
+  PASS after the correct env), `logs/p1/step10/phaseb_raptor_verify.json`.
+
+### I41. NEW 2026-10-21 — B4's secondary `Failed:`-row check is contaminated by §I25's own warning text
+
+- **What:** `verify_phaseb_cards.py` keeps a secondary signal, *"`Failed:` rows in the run table"*,
+  implemented as a substring test (`if "Failed:" in ln`). §I25's fix emits a warning whose text
+  **contains that literal** — *"…must read this count, not the absence of a 'Failed:' row
+  (IMPROVEMENTS.md §I25)"*. So on any run where the warning fires, the warning itself is counted as a
+  `Failed:` row. Observed: `secondary: 'Failed:' rows in the run table = 1`, and the row printed is
+  the warning at `03:53:15.246`.
+- **Why it matters:** it cannot flip a PASS to a FAIL (the warning is only emitted when the primary
+  counters are already non-zero, which fails the run on their own), so the verdict is unaffected — but
+  it inflates a diagnostic and points the reader at the run table when the real signal is the
+  counter. **A check whose trigger text contains the string it searches for will always
+  self-match.** Either anchor the search on the run table's row shape, or drop the secondary check now
+  that the primary counters exist.
+- **No re-ingest.**
+- **Evidence:** `logs/p1/step10/b4_cards_verify_2026-10-21.log`;
+  `src/pdf_ingestion/card_generator.py:540` (the warning), `verify_phaseb_cards.py:86`.
+
+### I42. FIXED 2026-10-21 — `save_cards` could not write for a document that already had cards, so §I27's retry path was unusable (and so is any Phase 2 re-run)
+
+- **What:** retrying the 2 chunks B4 flagged (`formula`×1, `question`×1 — §I25's counters) the
+  generator resumed correctly, regenerated the 2 chunks, and then died at the SQLite write:
+  ```
+  sqlite3.IntegrityError: UNIQUE constraint failed: cards.id
+  ```
+  **Mechanism, and it is specific.** `card_id` is a fresh `str(uuid.uuid4())`
+  (`card_generator.py:220` and 7 more sites), so a *fresh* run can never collide. But the card
+  checkpoint (§I27) **stores the `card_id`s it wrote and replays them on resume** — so a resumed run
+  re-inserts the ORIGINAL ids. `save_cards` called `_deactivate_cards()` first, which sets
+  `is_active = 0` and **leaves the rows in place**, and `cards.id` is the PRIMARY KEY. Deactivate-then-
+  insert therefore collides with the very rows it is replacing.
+- **Measured:** first attempt — resume line *"3789 of 3791 chunks already done (75628 cards) — 2 with a
+  failed card type to retry"*, cards generated, then `IntegrityError` and the run table showed `—`.
+  **No data loss:** the write is a single `session.commit()`, so the rollback left **75,645 active
+  cards, unchanged** (verified immediately after).
+- **Fix:** `save_cards` now **deletes the document's card rows** before inserting. A full-set write
+  replaces the set — the generator returns the complete card set for the document, so every existing
+  row is superseded — and **nothing in the codebase reads `is_active = 0` cards** (checked: no reader
+  filters on it; `get_cards` and both verifiers filter `is_active = 1`).
+  ⚠️ This is a **behaviour change** (deactivate → delete) on a shared write path: the deactivated rows
+  were a soft-delete audit trail, and they are gone. `_deactivate_cards` is now unused; it is left in
+  place rather than deleted.
+- **Verified end-to-end:** re-run → *"Removed 75645 existing cards for doc 7ba61432… before
+  re-generating"* → *"Saved 75662 cards to SQLite"*, exit 0, and the generator's closing line reads
+  **`Generated 75662 cards for 3791 chunks (0 chunks with a failed card type, 0 failed card-type calls,
+  0 LLM failures of 0 calls)`** — so B4's 2 failures are closed and the corpus grew by 17 cards (the 2
+  chunks had contributed 17 partial cards; regenerating them produced 34).
+- **Why it matters — this was a blocker, not a nuisance.** It made §I27's *retry* path (a chunk with a
+  failed card type is re-attempted) unusable, and it blocks **every Phase 2 re-run for a document that
+  already has cards**: §A1 (regenerate the `question` cards, ~5,048 LLM calls) and §A3 (the
+  reduced-volume ablation) both require one. The deployed document `6d55c52b` (82,164 cards) would hit
+  the same wall. It also means the failure was **latent since §I27 landed**: the checkpoint feature was
+  added and its own recovery path could never have succeeded on a second run.
+- **No re-ingest.** The retry itself costs ~16 card calls + the RAPTOR rebuild.
+- **Evidence:** `logs/p1/step10/phaseb_retry_2026-10-21.log` (the `IntegrityError`),
+  `logs/p1/step10/phaseb_retry2_2026-10-21.log` (the clean re-run),
+  `src/pdf_ingestion/store.py` (`save_cards`), `src/pdf_ingestion/card_checkpoint.py:178`.
+
+### I43. FIXED 2026-10-21 (session 2) — the RAPTOR write path APPENDED on a re-run: one Phase 2 re-run duplicated all 73 RAPTOR points in Qdrant
+
+- **What:** `save_raptor_tree` deactivates the document's existing **SQLite** rows and then upserts
+  **Qdrant** points with fresh ids, without removing the previous run's points — so re-running Phase 2
+  for a document that already has RAPTOR nodes **duplicates them in the vector store** while SQLite
+  stays clean. Measured 2026-10-21 after the §I42 retry: `knowledge_base_v2` = **3,942 points**, of
+  which **146 carry `source_type=raptor_summary`** against **73** active `raptor_nodes` rows in
+  SQLite. 3,796 chunk points (correct) + **146** = 3,942. Before the retry the collection was
+  3,869 = 3,796 + 73, i.e. exactly one set. The retry's own log shows the asymmetry precisely:
+  ```
+  store:save_raptor_tree:1047 - Deactivated 73 existing RAPTOR nodes for doc 7ba61432… before re-generating
+  store:save_raptor_tree:1098 - Saved 73 RAPTOR nodes
+  ```
+  SQLite: 73 deactivated, 73 saved → correct. Qdrant: 73 left behind, 73 added → **146**.
+- **Same class as §I42, sibling path — but this half fails SILENTLY.** §I42 was the *cards* write
+  (`save_cards` deactivated instead of deleting, so the checkpoint's replayed ids collided —
+  `UNIQUE constraint failed`, loud). The RAPTOR path makes the *opposite* mistake on the vector side:
+  it never deletes the old points, so there is no collision, no error, and no log line — just
+  accumulation. The run reported `RAPTOR nodes 73` and looked entirely clean.
+- **Why it matters:** RAPTOR retrieval would see each summary **twice**, so duplicate summaries
+  compete for the same slots in the `overview` lane and the map–reduce input is doubled with
+  near-identical text. Any Phase 2 re-run — which §A1 and §A3 both require — silently degrades the
+  overview lane, and nothing in the run log says so (the run reported `RAPTOR nodes 73`).
+- **Fix (DONE 2026-10-21, session 2):** `save_raptor_tree` now **deletes the document's existing
+  RAPTOR points** (`_delete_raptor_points()`, a new helper: `Filter(must=[document_id,
+  source_type=raptor_summary])`) **before** the SQLite write and the upsert, and **deletes** the
+  document's SQLite rows instead of deactivating them — §I42's change, on this path. Both halves are
+  now replace-semantics, so a re-run leaves one generation.
+  - **Why the Qdrant delete runs first and RAISES rather than logging:** the SQLite write is
+    committed below it, so a delete that failed quietly would leave the duplicate in place while the
+    run reported success — the exact silent failure this entry records. That is a **deliberate
+    departure** from `_delete_colpali_pages` (best-effort, logs a warning), whose read path dedupes
+    by page so a failed delete merely degrades to the old behaviour; **nothing downstream dedupes
+    RAPTOR points.**
+  - **Why deleting the rows is safe:** `build_tree()` takes the chunk texts/ids/embeddings as
+    arguments and does **not** read existing rows, so it returns the complete tree either way; and
+    nothing reads `is_active = 0` raptor rows (`get_raptor_tree` filters on `is_active`).
+    `_deactivate_raptor_nodes` is left in place but is now **uncalled**, marked as superseded.
+  - **The 73 already-orphaned points were removed** by `scripts/dedupe_raptor_points.py` (dry-run
+    first: it prints every point it would delete with its level and a text preview, and names the
+    survivors; `--yes` applies). Survivor rule: a point survives iff its id is the
+    `qdrant_point_id` of an **active** `raptor_nodes` row for that document. Dry run said
+    **146 → 73 survivors / 73 orphans (levels 62/8/3, i.e. the superseded generation) / 0 active
+    nodes missing a point**; applied, and the post-delete count read back **73**.
+- **Verified end-to-end.** After the cleanup, **B5 PASSES** (exit 0) — `logs/p1/step10/
+  b5_raptor_verify_2026-10-21_post_dedupe.log`: `points now 3869 (before 3796)` /
+  `source_type=raptor_summary 73` / `grew by 73 (SQLite nodes: 73)` / `chunk points missing a lane 0`
+  / `RAPTOR points with a ZERO dense_1024 vector 0`. An independent re-probe
+  (`logs/p1/step10/i43_raptor_dup_probe.py`) reads 3,869 = 3,796 chunks + 73 RAPTOR, **0 orphans**.
+  New regression test `tests/test_phase2.py::TestRaptorTree::
+  test_raptor_rerun_replaces_points_instead_of_appending` runs Phase 2 twice and asserts the point
+  count equals the node count. **It was proven to discriminate** — with the `_delete_raptor_points`
+  call replaced by `removed_points = 0` it fails with *"14 RAPTOR points for 7 nodes after two runs
+  — the write appended"*. Suite: **439 passed / 4 failed / 6 skipped** (`uv run pytest tests/ -q -m
+  "not slow"`, 194 s); the 4 are the pre-existing documented failures (2 × `test_splade.py` missing
+  PDF fixture, `test_phase1.py::test_hybrid_search_includes_global`, `test_phase2.py::
+  TestPhase1Regression::test_search_still_works_after_phase2`) — **no new failure.**
+- **Independent review 2026-10-21** (verifier `openai/gpt-oss-20b` — a different model from the
+  author's; pin confirmed live with `hermes config get delegation`). Six questions asked; **5 SOUND,
+  1 DEFECT**, final verdict **FAIL**. The defect: *the Qdrant delete happens before the SQLite
+  transaction commits, so an upsert that raises leaves the old points gone and the new rows
+  unpersisted — an inconsistent store.* **Adjudicated: real, but the ordering is kept — and the
+  reviewer's proposed correction is wrong.**
+  - The two-store write was **never atomic**; the window existed before this change too, in the
+    other direction. So the question is not "is there a failure window" but "what state does it
+    leave", and the two candidates are **absence** and **duplication**. This change fails into
+    **absence** — which is exactly what B5 and `i43_raptor_dup_probe.py` **count** (`active nodes
+    with no point in Qdrant`). The alternative ordering fails into **duplicates**, which is the
+    failure that went **unnoticed for a whole run** and is the reason §I43 exists. Absence is
+    visible and recoverable; duplication is neither. **Order kept.**
+  - The reviewer's corrections do not hold: *"wrap the upsert in try/except that re-throws"* is a
+    **no-op** (the exception already propagates), and its own alternative — *"delete after the
+    successful upsert"* — re-introduces duplication on failure, which the reviewer itself noted.
+  - **What the review did land:** the failure was not **loud**. The upsert is now wrapped so a
+    failure logs an ERROR naming the state (`N SQLite nodes, M summary vectors`), the reason, and
+    the recovery (`--raptor-only`, then re-run B5) **before re-raising**. Pinned by
+    `tests/test_phase2.py::TestRaptorTree::test_raptor_upsert_failure_is_loud_and_leaves_no_points`
+    (patches `QdrantClient.upsert` to raise; asserts the raise **and** that **0** RAPTOR points
+    survive — i.e. the failure is visible as absence, which is the property the ordering choice
+    rests on).
+  - Also added, **reported not judged**: a WARNING when `len(points) < len(nodes)` — nodes whose
+    embedding is `None` are skipped, so SQLite and Qdrant legitimately differ by that much (B5
+    already reports the same gap).
+- **No re-ingest** (the points are derived; the orphans were deleted, not rebuilt — the surviving set
+  is the one SQLite says is current).
+- **⚠️ Non-finding, recorded so it is not chased:** the read-only probe reports the old document
+  `6d55c52b` as having **84 active `raptor_nodes` rows with no point in `knowledge_base_v2`**. That
+  is **correct, not residue** — the old document is still deployed in the *other* collection
+  (`knowledge_base` = 5,135 points = 5,051 chunks + **84** RAPTOR nodes, per the handoff's verified
+  facts). The probe only ever counted one collection.
+- **Evidence:** `logs/p1/step10/phaseb_retry2_2026-10-21.log`; `logs/p1/step10/i43_raptor_dup_probe
+  .{py,json}`; `logs/p1/step10/i43_raptor_rows_probe.py`; `scripts/dedupe_raptor_points.py`;
+  `logs/p1/step10/i43_raptor_dedupe.json`; `logs/p1/step10/b5_raptor_verify_2026-10-21_post_dedupe
+  .log`; `src/pdf_ingestion/store.py` (`_delete_raptor_points`, `save_raptor_tree`).
+
+### I44. NEW 2026-10-21 — the handoff cited a B5 log as FAIL evidence, but that file contains a PASS from an *earlier* run
+
+- **What:** the handoff's "B5 FAIL" row cited `logs/p1/step10/b5_raptor_verify_2026-10-21.log` as its
+  evidence. That file holds a **PASS** — `points now 3869 (before 3796)`, `raptor_summary 73`,
+  `grew by 73` — i.e. the run **before** the §I42 retry duplicated the points. The FAIL itself is real
+  and was confirmed by direct measurement (3,942 / 146), but **its log is not on disk**: the verifier
+  was re-run to a file that already existed, or its output only ever went to the session.
+- **Why it matters:** a cited artifact that contradicts the claim it is cited for is worse than no
+  citation — a future session that opens it reads PASS and concludes §I43 was never real. It is the
+  same class as the lost 2026-10-19 aborted-run log (`.gitignore:68` is `*.log`, so **no `.log` file
+  is ever in git**; `>` silently destroys the previous run's log).
+- **Rule, already in the traps and now with a second instance:** a verifier's output goes to a
+  **new, dated** filename, never to the name an earlier run used; and a handoff cites an artifact
+  **only after** reading it back.
+- **Evidence:** `logs/p1/step10/b5_raptor_verify_2026-10-21.log` (contains PASS, 3,869) versus the
+  measured live state 3,942 / 146; the post-fix run is
+  `logs/p1/step10/b5_raptor_verify_2026-10-21_post_dedupe.log`.
 
 ### Visual-index cleanup rides along with the re-ingest (§B4b)
 

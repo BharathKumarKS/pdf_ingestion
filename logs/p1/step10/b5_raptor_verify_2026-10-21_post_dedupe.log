@@ -1,0 +1,26 @@
+============================================================================================
+Phase B / B5 — RAPTOR + collection invariant verifier
+============================================================================================
+  collection: knowledge_base_v2 @ 10.0.10.65:6333   [host]
+
+[1] RAPTOR nodes (SQLite, active)
+      nodes  : 73
+      levels : {1: 62, 2: 8, 3: 3}   (raptor_max_levels=3)
+
+[2] the invariant Phase B breaks
+      points now            : 3869   (before: 3796)
+      source_type=raptor_summary : 73
+      chunk points          : 3796
+      grew by               : 73   (SQLite nodes: 73)
+
+[3] lane composition per point kind
+      points scanned        : 3869  (raptor: 73)
+      chunk points missing a lane : 0
+      RAPTOR points with a ZERO dense_1024 vector : 0
+
+[5] SQLite nodes vs Qdrant points: 73 vs (see above)
+  wrote logs/p1/step10/phaseb_raptor_verify.json
+
+============================================================================================
+B5 VERDICT: PASS — RAPTOR persisted, vectors non-zero, chunk lanes intact
+============================================================================================
