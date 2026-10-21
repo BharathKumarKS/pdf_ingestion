@@ -109,12 +109,18 @@ vectors on all 3,796 points**, including the ColBERT token matrices the caller n
 the card run: a 3 min 06 s stall before the first card line, RSS 36 MB → 1,992 MB.
 
 **Fix — smaller than §I28's write-up implies, and that was verified 2026-10-20 before relying on it.**
-Line **841** already computes `dense_name = self._dense_vector_name()` and the very next lines extract
-just that lane from the fully-fetched result. So the wanted vector name is **already known at the call
+`_dense_vector_name()` is **defined at `store.py:191`** and is already an established helper — called
+at `store.py:216` (the *write* path) and at `store.py:841` (immediately after the over-fetching
+retrieve), and used at `store.py:1053`. So the wanted vector name is **already known at the call
 site**; the change is to pass it into the retrieve (an explicit vector selector) instead of fetching
-everything and discarding it. `with_vectors=False` is already used elsewhere in the same file
+everything and then discarding it. `with_vectors=False` is already used elsewhere in the same file
 (`store.py:974`, `store.py:1372`), so the pattern is established rather than novel. **Do not
 restructure the function** — the smallest change that stops the over-fetch is the one to make.
+
+> ⚠️ **Corrected 2026-10-20 by an independent review of this plan.** It first read *"`_dense_vector_name()`
+> already exists at 841"* — **841 is a call site, not the definition**; the definition is at 191. The
+> error was mine and the review caught it; the conclusion (an argument change, not a restructure) is
+> unchanged and is in fact better supported, since the helper is already used on the write path.
 
 **Verifier — measure the *call*, do not re-run the pipeline.** A full card-phase re-run is not an
 acceptable verifier: it costs hours and the card run is already in flight. Instead:
