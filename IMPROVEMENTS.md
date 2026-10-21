@@ -2583,6 +2583,28 @@ confounded, and the fix is to measure the first cell again at the end.
   (**~5 ms/chunk, fsync'd** — negligible against ~10 s/chunk).
 - **No re-ingest.**
 
+### I28. NEW 2026-10-20 (found waiting on the card run's first log line) — `get_chunks_with_embeddings` retrieves **every named vector** for the whole document, over-fetching ~6× and costing minutes at the start of every Phase 2/3 run
+
+- **What:** `DocumentStore.get_chunks_with_embeddings` (`store.py:820`) does
+  `self._qdrant.retrieve(collection_name=…, ids=[c.qdrant_point_id for c in chunks], with_vectors=True)`
+  — i.e. **all named vectors on all 3,796 points**, including the **ColBERT token matrices**, and the
+  caller uses only the dense vector (for RAPTOR clustering).
+- **Why it matters — it is a startup stall on a network path, and it scales with the corpus.** Measured
+  2026-10-20 on the Phase B run: `Processing 7ba61432…` sat for **minutes** before
+  `Generating cards for 3791 chunks …` appeared, with RSS still ~36 MB (i.e. the vectors had not
+  arrived). Sizing from the stored dims: ColBERT is `(128, n_tokens)` per chunk — at the corpus's
+  ~103-token median that is ~53 KB/chunk, so **~200 MB for the document** against ~33 MB of dense
+  vectors actually wanted. Over a WireGuard tunnel that is the dominant cost of the startup, and it is
+  **~6× the payload needed**. It is paid by *every* Phase 2 and Phase 3 run.
+- **Not a hang, and not a regression:** it is pre-existing behaviour. The trap is diagnostic — a
+  watcher who sees no log line for minutes will read it as a stalled run and may kill it.
+- **Fix (not applied):** pass an explicit `using=`/vector-name selector so only the dense slot is
+  returned, or store the RAPTOR input vectors separately. One-line-ish change at the call site; **the
+  contract to preserve is that the returned dense order matches `chunks` order** (the caller zips them).
+- **No re-ingest** (read path only). **Does not block Phase B** — it only costs time at startup.
+- **Evidence:** `src/pdf_ingestion/store.py:836-841`; the Phase B run log's gap between
+  `Processing …` and `Generating cards for …`; `logs/p1/step10/phaseb_run.log`.
+
 ### Visual-index cleanup rides along with the re-ingest (§B4b)
 
 The 2,835-point / 945-page / 3× visual index is **not** cleaned by a one-off script — the

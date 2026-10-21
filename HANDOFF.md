@@ -4,8 +4,8 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-20 mid-day (code fixes COMMITTED + PUSHED; card run BLOCKED on lab network
-> access — see the outage block below for the diagnosis and the 10-second test).** Step 10
+> **Last updated: 2026-10-20 evening (CARD RUN IN FLIGHT under tmux, launched 19:05 — see the top
+> block for how to monitor and resume; B4/B5/B6 next).** Step 10
 > §0 pre-registration is written; §1's preflight gate failed and was registered as **§D14**. Owner
 > chose fix (c) — rebuild the graph (Step 9's *graph half*; cards / DA / ColPali still deferred).
 > **Phase A is complete:** A3 built doc `7ba61432`'s graph (16 h 25 m, verifier PASS), **A4 applied**
@@ -25,52 +25,56 @@
 > exit 0), **§I26** (the concurrency knee). **§I24, §I25 and §I27 are now FIXED in code; the card run
 > has NOT been relaunched.**
 >
-> **⚠️ THE LAUNCH IS BLOCKED — NETWORK ACCESS TO THE LAB (diagnosed 2026-10-20, mid-day).**
-> `B0b`'s live-precondition probe **FAILED**: P2 Qdrant / P3 LLM / P4 embed all `Connection refused`.
-> The hosts are unreachable at the network layer, not merely slow — **every port on `10.0.10.65` and
-> `10.0.10.70` is closed** (6333, 7687, 8000, 8123, 22) and `traceroute` to either returns
-> **`!X` (administratively prohibited)** from `10.128.128.128` on the first hop. The same endpoints
-> answered 200 in 0.21 s and ran a 40-minute probe sweep until ~08:50.
+> **🟢 THE CARD RUN IS IN FLIGHT (launched 2026-10-20 19:05:10).** `run_phaseb.sh 4` → B0 gate PASSED
+> (card_gen_workers 4 = **32 effective**, qdrant `10.0.10.65`, no stubs) → B3 running.
 >
-> **Root cause, from the WireGuard config (`sar-gpu-vm` = `10.0.50.99`; screenshot 2026-10-20):**
-> there are **two** tunnels. The **lab** tunnel is `2026-Summer-Bharath-Kumar-KS` — Address
-> `192.168.12.25/32`, Endpoint `75.53.10.74:51820`, DNS `10.0.10.96`, and
-> **`AllowedIPs = 75.53.10.0/24, 10.0.0.0/16, 192.168.0.0/16`**. That `10.0.0.0/16` covers **both the
-> cluster (`10.0.10.x`) and the GPU VM (`10.0.50.x`)** — so no config edit is needed. But it was
-> **Inactive**; the tunnel that *was* up (`utun4` = `192.168.20.24`) is the **other** one ("Fall"),
-> which does not claim `10.0.0.0/16`, so lab traffic fell through to `en0`.
+> | | |
+> |---|---|
+> | harness | **tmux session `phaseb`** on the Mac (durable — survives the Hermes CLI exiting) |
+> | log | `logs/p1/step10/phaseb_run.log` |
+> | checkpoint | `data/card_cache/<doc8>__<key>.jsonl` — **one line per completed chunk** |
+> | ETA | **~6.7 h** at the measured 9.39 chunks/min (§I26) → ~01:45 |
 >
-> **The `/8` trap (real, but not the blocker):** `en0` is `10.68.239.118 netmask 0xff000000`, so macOS
-> treats all of `10.0.0.0/8` as on-link via `en0`. Longest-prefix match means the tunnel's
-> `10.0.0.0/16` **wins** over it — *when the route is installed*. **Do not "fix" the netmask** (DHCP-
-> assigned) and **do not use `route add`** (lost on reboot / wifi change / every reconnect).
->
-> **OPEN QUESTION (10 seconds of tunnel time settles it):** does the Summer tunnel install its route,
-> and does the peer forward `10.0.0.0/16`?
->
+> **Monitor** (no need to attach to tmux):
 > ```bash
-> route -n get 10.0.10.70 | grep interface   # utunN = good · en0 = its route is not installing
-> nc -z -G 4 10.0.10.70 8000 && echo "LLM OK" || echo "LLM shut"
+> tmux ls                                              # is the session alive?
+> wc -l data/card_cache/*.jsonl                        # chunks done, out of 3,791 — the exact signal
+> tail -30 logs/p1/step10/phaseb_run.log
 > ```
+> **If it dies, just relaunch the same command** — the checkpoint resumes and only the chunks since
+> the last checkpoint are redone:
+> ```bash
+> tmux new-session -d -s phaseb "cd '$PWD' && bash logs/p1/step10/run_phaseb.sh 4 > logs/p1/step10/phaseb_run.log 2>&1"
+> ```
+> **⚠️ Relaunch with `>` overwrites the log, and `*.log` is GITIGNORED (`.gitignore:68`)** — so the
+> run log is never committed. Before relaunching, copy the current log to a non-`.log` name if it
+> holds evidence you still need. After the run, **preserve the B4/B5 evidence explicitly**
+> (`cp phaseb_run.log phaseb_run_2026-10-20.txt`, or `git add -f`).
 >
-> **Known side effect — "the internet is slow with the tunnel on".** Prime suspect: the tunnel's
-> **DNS servers** (`10.0.10.96, 192.168.12.1`) are only reachable *through* the tunnel, so activating
-> it makes macOS resolve **everything** via the lab DNS. AllowedIPs has no `0.0.0.0/0`, so ordinary
-> traffic never enters the tunnel — only DNS does, which is why it is "slow" and not "broken".
-> **Fix: clear the DNS field** in the tunnel's Edit screen (this project reaches everything by IP, so
-> lab-name resolution is worth nothing here). Second candidate: `192.168.0.0/16` in AllowedIPs pulls
-> a `192.168.x` home LAN into the tunnel. Distinguish with the tunnel on:
-> `scutil --dns | grep 'nameserver\[0\]'` (→ `10.0.10.96` = DNS cause) vs
-> `route -n get 192.168.1.1 | grep interface` (→ `utunN` = LAN-hijack cause).
+> **⚠️ When it finishes, the exit code is NOT the verdict.** Run, in order:
+> `verify_phaseb_cards.py` (**B4** — its check [1] reads the generator's closing line and must show
+> 0/0/0; see §I25), then `verify_phaseb_raptor.py` (**B5**), then read ~10 sample cards (**B6**).
 >
-> **The decision this feeds:** if clearing the DNS field fixes browsing, **stay on the Mac** — that is
-> the zero-overhead answer, and the tunnel also makes `sar-gpu-vm` reachable from any network. If it
-> does not, the card run would sit on the user's browsing for ~6.7 h, and *that* becomes the reason to
-> move the run to the VM (bootstrap **not yet written**: rsync `.env` + `data/synapse.db`, dep check,
-> B0b probe, tmux launch, row-level card export). Public wifi may also block **UDP 51820** outright —
-> a policy limit no client change fixes.
+> **⚠️ The card phase takes several minutes to log its first line.** `generate_phase2_artifacts`
+> calls `get_chunks_with_embeddings` first, which does `qdrant.retrieve(ids=[3,796 ids],
+> with_vectors=True)` — **all named vectors, including the ColBERT token matrices nothing here
+> needs (~200 MB over the tunnel)**. Expect "Processing …" to sit for a few minutes before
+> `Generating cards for 3791 chunks …` appears. That is pre-existing behaviour, not a hang. **New
+> finding, worth its own register entry: the retrieve is unfiltered and over-fetches by ~6×.**
+
+> **✅ THE NETWORK BLOCKER IS RESOLVED — and my first diagnosis of it was wrong.** The lab is
+> reachable over the **Fall** tunnel (`utun4` = `192.168.20.24`), **not** the Summer one I named
+> earlier: with Fall active, `route -n get 10.0.10.70` → `interface: utun4` and the port answers.
+> The earlier claim that Fall "does not claim `10.0.0.0/16`" is **withdrawn** — it was inferred from
+> a routing table sampled while the tunnel was dying (utun4 vanished minutes later), which is exactly
+> the kind of inference the "verify against the live system" rule exists to catch. **B0b now passes
+> end to end** (`logs/p1/step10/b0b_preconditions_w4.log`, exit 0): Qdrant 3,796 points, LLM 200,
+> embed 200, doc clean-start 3,796/3,791/0/0.
 >
-> **Nothing is launched. B4/B5/B6 and the independent review are blocked by the same thing.**
+> Still true and still useful: `en0` is `/8`, so macOS treats all of `10.0.0.0/8` as on-link — a
+> tunnel route is more specific and wins, so **do not "fix" the netmask and do not use `route add`**.
+> The "internet is slow with a tunnel on" cause (the tunnel pushing DNS `10.0.10.96`) is unchanged;
+> note `DNS[0]` is `10.0.10.96` right now and browsing is fine, so the lab DNS is not always slow.
 >
 > **⚠️ COMMITTED AND PUSHED, BUT NOT REVIEWED.** The 2026-10-20 source changes are in **`151cb1f`**
 > plus **`597e7b9`** (the `run_phaseb.sh` VM-portability fix), branch `feat/p0-9-gold-dataset-v2`,
@@ -80,6 +84,18 @@
 > `config.yaml`**, so a `delegate_task` child would now inherit the parent's own model, i.e.
 > self-review. **The commits deliberately do not carry the `[verified]` prefix.** Do not treat any
 > child's `passed: true` as verification until the pin is restored.
+>
+> **⚠️ CORRECTION — `151cb1f`'s message overstates what it folded in, and an evidence artifact was
+> lost.** The message says it folds in `logs/p1/step10/`. It folded in the **32 non-log files**
+> (harness, probes, verifiers, JSON); **zero `.log` files**, because **`.gitignore:68` is `*.log`**.
+> Consequence: the **2026-10-19 aborted run log** — the artifact §I25 cites ("16 `LLM CALL FAILED`,
+> 16 card-type failures, 0 `Failed:` rows") — was **never in git**, and the 2026-10-20 launch
+> overwrote it on disk with `>`. **No APFS local snapshots exist** (`tmutil listlocalsnapshots /` is
+> empty), so it is **unrecoverable**. §I25's *numbers* are recorded in the register and were derived
+> from the log while it existed; the raw artifact is gone. Two lessons, both now in the traps:
+> (1) `git add <dir>` silently drops `.log` files under this `.gitignore` — use `git add -f` or a
+> non-`.log` name for anything that is evidence; (2) never let a run's `>` redirect destroy the
+> previous run's log without checking whether a verifier cites it.
 >
 > **Still uncommitted in the working tree** (another session's in-flight work — deliberately left
 > alone): `ARCHITECTURE.md`, `data/eval_queries_v2.json`, `scripts/build_gold_v2.py`,
