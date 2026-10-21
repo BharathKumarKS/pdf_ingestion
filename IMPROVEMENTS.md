@@ -4,7 +4,7 @@ Everything known-but-not-yet-done, in one place so it can be taken in a single p
 Each entry says **what**, **why it matters**, and **the evidence** — so nothing has to be
 re-derived later. Add to this file rather than leaving a note in a commit message.
 
-Last updated: 2026-10-17
+Last updated: 2026-10-20
 
 ---
 
@@ -1650,7 +1650,7 @@ but none of the analytics built on top of it.
 |---|---|---|
 | G1 | **PPR (personalized PageRank)** over the concept adjacency matrix | The course's answer to "which concepts actually matter for this query". Replaces the current fixed-hop walk. Already on the P2 list |
 | G2 | **Community detection + community summaries** | Gives *overview* questions graph support, which they currently have none of (they fall back to RAPTOR, the weakest lane) |
-| G3 | **Entity resolution** (merge duplicate concept nodes) | **This is the known bug**: `'orbit'` / `'Orbit'` / `'planetary orbit'` / `'Planetary Orbit'` are separate nodes, so most chunks tie at 1 matched concept. The course has a dedicated lab for exactly this step |
+| G3 | **Entity resolution** (merge duplicate concept nodes) | **This is the known bug**: `'orbit'` / `'Orbit'` / `'planetary orbit'` / `'Planetary Orbit'` are separate nodes, so a query resolving to one spelling reaches only that spelling's chunks. **Sized 2026-10-20 (§I30): 1,186 merge groups covering 2,692 concepts = 34.4 % of the vocabulary; no group gains nothing; `force` 95 → 175 chunks, `kinetic energy` 51 → 102.** ⚠️ *"most chunks tie at 1 matched concept"* is a **query-side** statement — a chunk mentions 4.25 concepts on average (§I29). The course has a dedicated lab for exactly this step |
 | G4 | **global / local / drift query modes** | To brainstorm — the project has one traversal mode. Drift is the interesting one for multihop |
 | G5 | **Genuine multi-hop traversal** | `hop_distance` is currently a constant 0, so "multihop" is nominal |
 
@@ -1701,6 +1701,15 @@ remains the constant 0. **Root cause of poor relevance:** the concept vocabulary
 near-duplicates as *separate nodes* ('orbit' / 'Orbit' / 'planetary orbit' / "Earth's orbit"),
 so nearly every chunk ties at 1 distinct concept. **Deduplicating concept names is the bigger
 lever than ranking.**
+
+> ⚠️ **CORRECTED 2026-10-20 — "nearly every chunk ties at 1" is only true on the QUERY side, and the
+> plan's G3 verifier quotes it as if it were a property of chunks.** Measured: a chunk mentions a mean
+> of **4.25** distinct concepts, and **96.9 %** of concept-bearing chunks mention ≥2 — so that reading
+> has 3.1 points of headroom and cannot discriminate. The "ties at 1" claim is about
+> `matched_concepts` in `graph_search` — how many of the **query's** 8 concepts a chunk matches
+> (`graph_builder.py:449-459`). The **lever** half of this entry is confirmed and sized: see **§I30**
+> (1,186 merge groups, 34.4 % of the vocabulary, no group gains nothing). The **query-side** number
+> remains unmeasured — see **§I29**.
 
 ### I3. Admin Status should report the STORES, not SQLite ✅ DONE 2026-10-16
 
@@ -2341,8 +2350,15 @@ re-record it, rather than comparing across the two.
   `count(DISTINCT k)` in Memgraph rather than reading `graph_stats`.**
 - **Fix (not done — no code changes in Step 10):** count distinct names in a set and report that, or
   rename the field to `mentions` and add a real `concept_nodes`. Report-side + counter only.
+- **✅ CONFIRMED FROM THE GRAPH SIDE 2026-10-20.** An independent read-only Cypher count on doc
+  `7ba61432` returns **`MENTIONS` = 15,619** — the exact figure the run log reported as
+  *"concept nodes"*. That closes the loop: the mislabelled counter is the MENTIONS edge count, and it
+  is now verified from both sides (the log and the graph). Edge inventory for the document:
+  `PREREQUISITE_OF` 11,892 + `MENTIONS` 15,619 + `RELATES_TO` 37,300 + `PART_OF` 4,729 +
+  `ON_PAGE` 3,796 = **73,336**, matching HANDOFF's recorded total.
 - **No re-ingest** (no graph rebuild needed to fix the label).
-- **Evidence:** `src/pdf_ingestion/graph_builder.py:349–396`; `logs/p1/step10/verify_graph.py`.
+- **Evidence:** `src/pdf_ingestion/graph_builder.py:349–396`; `logs/p1/step10/verify_graph.py`;
+  `logs/p1/step10/probe_g3_baseline.json` (the graph-side count).
 
 ### I23. NEW 2026-10-18 (found watching the Step 10 Phase A graph build) — the Phase 3 graph build has no checkpoint and no retry, and burns a reasoning model on a JSON extraction task
 
@@ -2605,6 +2621,168 @@ confounded, and the fix is to measure the first cell again at the end.
 - **No re-ingest** (read path only). **Does not block Phase B** — it only costs time at startup.
 - **Evidence:** `src/pdf_ingestion/store.py:836-841`; the Phase B run log's gap between
   `Processing …` and `Generating cards for …`; `logs/p1/step10/phaseb_run.log`.
+
+### I29. NEW 2026-10-20 (found running the §G3 baseline probe) — the §G3 verifier measures the WRONG quantity, and read as written it has 3.1 points of headroom
+
+- **What:** the §G plan's G3 verifier 3 says *"the §I2 symptom improves: the share of chunks matching
+  ≥2 distinct concepts rises. That is the measured quantity §I2 says is the real problem (currently
+  most chunks tie at 1)"*. That sentence fuses **two different quantities**, and the one it names is
+  not the one §I2 describes.
+- **Measured 2026-10-20 (read-only, doc `7ba61432`, `logs/p1/step10/probe_g3_baseline.py`):** read as
+  "distinct concepts a chunk mentions", the quantity is **already 0.9687** — and **0.9172** at ≥3:
+
+  | concepts mentioned per chunk | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+  |---|---|---|---|---|---|---|---|---|
+  | chunks | 115 | 189 | 686 | 1,015 | 1,131 | 400 | 135 | 1 |
+  | | | | | | | | | |
+
+  3,672 of 3,796 chunks carry ≥1 concept; mean **4.25** concepts/chunk. So a verifier phrased this way
+  can move **at most 3.1 points** (115/3,672 = 3.1 % of concept-bearing chunks sit at exactly 1) —
+  it cannot discriminate a good merge from a bad one.
+- **The quantity §I2 actually means is QUERY-SIDE.** `GraphBuilder.graph_search`
+  (`src/pdf_ingestion/graph_builder.py:449-459`) scores a chunk by
+  `size(collect(DISTINCT k.name))` over the **query's** `top_k=8` concepts, then
+  `ORDER BY matched_concepts DESC`. *That* is what ties at 1. A chunk's total concept count is
+  irrelevant to the ranking.
+- **Why it matters:** as written, G3's headline verifier would pass trivially (96.9 % → 97 %, i.e.
+  noise) and a real regression would look like a success. **Do not use it.** Measure the query-side
+  distribution — needs a 768d query embedding against `Concept.embedding`, so it is a cluster-embed
+  probe, not a pure-Cypher one (§I12 keeps the graph lane on the 768d legacy model).
+- **Not yet measured:** the query-side `matched_concepts` distribution. Registered as the next G3
+  measurement, not as a result.
+- **No re-ingest** (measurement only).
+- **Evidence:** `logs/p1/step10/probe_g3_baseline.py`, `probe_g3_baseline.json`;
+  `src/pdf_ingestion/graph_builder.py:449-459`.
+
+### I30. NEW 2026-10-20 — the §G3 lever, MEASURED: 1,186 merge groups over 34.4 % of the concept vocabulary, and no group gains nothing
+
+- **What:** §I2 asserts *"deduplicating concept names is the bigger lever than ranking"* but the size
+  of the lever was never measured. Measured now, read-only and LLM-free
+  (`logs/p1/step10/probe_g3_lever.py`), by the mechanism G3 actually uses: a query resolving to one
+  spelling reaches only that spelling's chunks, so merging a group unions the chunk sets — the delta
+  is what G3 recovers.
+- **Measured (doc `7ba61432`):**
+
+  | quantity | value |
+  |---|---|
+  | distinct concept names | 7,834 |
+  | normalised merge keys | **6,327** (see the correction below) |
+  | merge groups (>1 member) | **1,186** |
+  | concepts inside a merge group | **2,692 = 34.4 %** of the vocabulary |
+  | groups that gain **nothing** | **0** — the lever is real in every group |
+
+  > ⚠️ **CORRECTED 2026-10-20 (same session, caught by re-running after a guard change).** This row
+  > first read **6,328**, and that number was **wrong**: it counted a bogus `""` merge key. Exactly one
+  > concept name normalises to the empty string — **`'s'`**, the single letter, destroyed by the
+  > plural rule (`'s'` ends in `s`, is not `ss`, so `n[:-1]` → `""`). The `""` key was therefore
+  > treated as a real concept key. A guard now skips empty keys and reports the count
+  > (`names_skipped_empty_key`), which is **1** here — so the guard is *not* a no-op, and the true
+  > count is **6,327**. Cross-check: 1,186 groups hold 2,692 names, leaving 5,141 singleton keys;
+  > 1,186 + 5,141 = 6,327 ✓, and 2,692 + 5,141 = 7,833 = 7,834 − 1 (the skipped `'s'`) ✓. **The lever
+  > numbers above are unaffected** — every other field re-ran identical.
+
+  > **Verification note (2026-10-20) — the independent reviewer VERIFIED the wrong number, and that
+  > is the useful part.** An adversarial reviewer (`openai/gpt-oss-20b`, a different model from the
+  > author's, 14 API calls, 371 s — a substantive pass, not a cheap one) checked eight claims and
+  > returned **ALL_VERIFIED**, explicitly confirming `normalised_keys = 6328` and reproducing its
+  > arithmetic (7,834 − 2,692 = 5,142 singletons; 5,142 + 1,186 = 6,328). **It was wrong, and it could
+  > not have been right**: the artifact it was given genuinely contained the bogus `""` key, so the
+  > number was *internally consistent*. A reviewer checks the claim against the artifact; it cannot see
+  > that the artifact's key construction is wrong unless it re-derives the metric itself.
+  > **What settled it was re-running the probe after the guard change** — mechanical evidence, not the
+  > reviewer's agreement. Two further limits in that same pass: it cited `probe_g3_lever.json` for
+  > `distinct_concepts_mentioned` and `normalised_keys`, which are **baseline** fields the lever artifact
+  > does not contain (wrong attribution, right values), and its claim-F arithmetic as written
+  > (`3740-3672=124`) does not compute — its conclusion was right, its stated working was not.
+  > **So: a passing verifier is evidence of consistency, not of correctness. Weight it accordingly.**
+  > **Round 2 (after the guard fix) confirmed the corrected values:** a second independent pass
+  > (same reviewer model, 20 API calls, 158 s) returned `ALL_FIXES_CONFIRMED` and `VERIFIED` on all
+  > eight numbers — **6,327** and `names_skipped_empty_key = 1` included — and confirmed the two
+  > `norm()` functions are now identical. One caveat on that pass's own wording: it reported the two
+  > **rejected** findings (F2, F4) as `CORRECTLY_CLOSED` rather than `WRONGLY_REJECTED`, which is the
+  > schema's word for a sound rejection — but it never explicitly re-argued either rejection, so read
+  > it as *no objection raised*, not as independent endorsement. The rejection evidence for those two
+  > is the author's own probe (0 null names + the live `unique` constraint; all 20 after-merge hubs
+  > with `members ≥ 2`).
+
+  Largest groups by chunks newly reachable (union − best single spelling):
+
+  | group | union | best single | gained |
+  |---|---|---|---|
+  | `Force` / `force` / `forces` | 175 | 95 | **+80 (45 % of "force" chunks invisible to a wrong-spelling query)** |
+  | `kinetic energy` / `Kinetic Energy` / `Kinetic energy` | 102 | 51 | **+51 (exactly half)** |
+  | `Temperature` / `temperature` | 113 | 62 | +51 |
+  | `velocity` / `Velocity` / `Velocity = √(g h)` | 172 | 121 | +51 |
+  | `speed of light` / `Speed of light` / `Speed of Light` | 98 | 51 | +47 |
+
+  The hub list **reorders**: `velocity` 121 → 172, `force` 95 → **175 (becomes the top hub)**,
+  `electric field` 70 → 115. That reordering is the course's own Lab 1 exercise (*"measure how merging
+  them changes the hub list"*).
+- **Caveat, stated:** the summed "newly reachable" figure is a **sum over groups**, so a chunk reached
+  by two groups is counted twice — it is not a distinct-chunk count. The per-group ratios (half, 45 %)
+  are the trustworthy reading.
+- **Why it matters:** it converts §I2 from an assertion into a sized claim, and it justifies doing G3
+  **before** G1/G2 — a 34.4 % share of the vocabulary being near-duplicate is large enough that any
+  PPR or community structure computed on the unmerged graph is computed on a fractured node set.
+- **No re-ingest** (graph-side analysis only). **No LLM calls** — so it is safe to run alongside the
+  in-flight card run, unlike anything that hits the cluster's model endpoints (§I23).
+- **Evidence:** `logs/p1/step10/probe_g3_lever.py`, `probe_g3_lever.json`.
+
+### I31. NEW 2026-10-20 — three §G3 design traps, all measured: non-synonym groups, substring matching, and the Greek-symbol normaliser
+
+- **What:** the G3 probe surfaced three ways a naive entity-resolution implementation damages the graph.
+  Each was hit for real while writing the probe, not hypothesised.
+- **Trap 1 — a normalisation group is not a synonym set.** Measured example:
+  `['velocity', 'Velocity', 'Velocity = √(g h)']`. The third member is a *formula*, not a spelling
+  variant, and merging it into `velocity` is exactly the failure the §G plan warns about (*"merging two
+  genuinely distinct concepts is worse than leaving a duplicate"*). With **1,186 groups**,
+  eyeballing every one is not affordable; the top ~50 carry most of the measured gain (§I30), so
+  review should be budgeted there.
+- **Trap 2 — substring matching must NOT be used.** There are **809** normalised substring pairs and
+  most are genuinely distinct concepts, not duplicates: `air` ⊂ {air acceleration, air density, air
+  displacement, air molecule, air movement, air pressure, air temperature, air trough, air velocity, …}
+  (12+); `absorption` ⊂ {absorption coefficient, absorption probability, absorption spectrum, …}. A
+  substring-based merge would collapse the vocabulary catastrophically. The §G plan's *"candidate
+  signal: name normalisation"* must be read as normalisation **only**.
+- **Trap 3 — the normaliser silently destroys physics notation, in TWO separate ways.** Measured, not
+  hypothesised; the two need different fixes and only the first is obvious.
+  - **(a) punctuation stripping.** `re.sub(r"[^a-z0-9 ]+", " ", n)` maps every Greek symbol to the
+    **empty string**, collapsing `χ (x, t)`, `γ`, `ħ ω`, `π`, `ε`, `γ (ratio of specific heats)`, `τ`,
+    `η`, `α` into **one** bogus merge group. Observed on the first probe run. Fix: a Unicode-aware
+    class — `re.sub(r"[^\w ]+", " ", n, flags=re.UNICODE)`. Verified after the fix: `χ (x, t)` → `χ`,
+    `γ` → `γ`, both kept.
+  - **(b) the plural rule, which survives fix (a).** A trailing-`s` strip (`if n.endswith("s") and not
+    n.endswith("ss"): n = n[:-1]`) turns the single-letter concept **`'s'` into `""`** — and the `""`
+    key is then a *valid merge key*, so it merges whatever else normalises there and **inflates the
+    normalised-key count by one** (§I30's correction). Fix: skip empty keys explicitly and **report the
+    count** (`names_skipped_empty_key`, measured = **1**). A bare skip would hide the case; the reported
+    counter is what makes it visible.
+  - **Design rule from both:** a normaliser must never return a key that no name could legitimately
+    produce, and any name it *cannot* key must be counted, not dropped. Silence here is the failure
+    mode — the merge counts improve while the graph degrades.
+
+- **Trap 4 — a number registered from a probe is invalidated the moment the probe changes.** §I30's
+  `normalised_keys` was registered as 6,328 from a run of the *pre-guard* script; adding the empty-key
+  guard moved it to 6,327. The value was in the register before the script that produced it was final.
+  **Rule: whenever a probe script changes, re-run it and re-check every number already registered from
+  it** — and prefer registering numbers only after the script is frozen. The re-run is cheap; the
+  register is what the next session trusts.
+- **Trap 5 (scope limit on verification) — a verifier cannot detect a wrong metric, only an
+  inconsistent claim.** Both probes were reviewed by a different model, which returned ALL_VERIFIED
+  *including* the wrong 6,328 (§I30's verification note). It also misattributed fields to the wrong
+  artifact and wrote arithmetic that does not compute while reaching the right answer. **Verification
+  buys consistency-checking; it does not buy metric critique.** The two findings that mattered most in
+  this whole exercise — that the §G plan's G3 verifier measures the wrong quantity (§I29) and that
+  `normalised_keys` was inflated by a bogus key — came from *reading the code and re-running it*, not
+  from any reviewer. Do not let a green verifier stand in for re-deriving the metric.
+- **Also measured while probing:** **124 of 3,796 chunks (3.3 %) carry zero concepts** (3,672 have ≥1;
+  see §I29's histogram). §I23 reported **44** LLM failures (1.2 %) on the same build, so **~80 further
+  chunks got a valid LLM response that yielded no concepts** — and neither figure is visible in the run
+  log, which reported *"0 failed"*. Refines §I23's number; does not change its conclusion.
+- **Why it matters:** the first two traps are silent (the counts improve while the graph degrades), so
+  they need to be designed out, not caught in review.
+- **No re-ingest** (graph-side analysis only).
+- **Evidence:** `logs/p1/step10/probe_g3_lever.py`; `logs/p1/step10/probe_g3_baseline.py`.
 
 ### Visual-index cleanup rides along with the re-ingest (§B4b)
 

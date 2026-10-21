@@ -1,0 +1,202 @@
+{
+  "inventory": {
+    "labels": {
+      "Document": 1,
+      "Chunk": 3796,
+      "Concept": 7834,
+      "Page": 933,
+      "_other_label_sets": []
+    },
+    "relationships": {
+      "PREREQUISITE_OF": 11892,
+      "MENTIONS": 15619,
+      "RELATES_TO": 37300,
+      "PART_OF": 4729,
+      "ON_PAGE": 3796
+    },
+    "documents": [
+      {
+        "document_id": "7ba61432-c5e0-416d-aecf-25a232523481",
+        "title": "The Feynman Lectures on Physics, Volume I",
+        "subject": "Physics",
+        "tenant_id": "global"
+      }
+    ]
+  },
+  "document_under_test": "7ba61432-c5e0-416d-aecf-25a232523481",
+  "i2_concepts_per_chunk": {
+    "chunks_with_any_concept": 3672,
+    "histogram": {
+      "1": 115,
+      "2": 189,
+      "3": 686,
+      "4": 1015,
+      "5": 1131,
+      "6": 400,
+      "7": 135,
+      "8": 1
+    },
+    "chunks_ge_2_distinct_concepts": 3557,
+    "share_ge_2": 0.9687,
+    "chunks_ge_3_distinct_concepts": 3368,
+    "share_ge_3": 0.9172,
+    "mean_concepts_per_chunk": 4.2535
+  },
+  "distinct_concepts_mentioned": 7834,
+  "g3_candidates": {
+    "distinct_names": 7834,
+    "names_skipped_empty_key": 1,
+    "normalised_keys": 6327,
+    "collision_groups": 1186,
+    "names_in_collision_groups": 2692,
+    "examples_collisions": {
+      "aberration": [
+        "Aberrations",
+        "aberration",
+        "aberrations"
+      ],
+      "absolute rotation": [
+        "absolute rotation",
+        "Absolute rotation"
+      ],
+      "absolute square": [
+        "Absolute square",
+        "absolute square"
+      ],
+      "absolute value": [
+        "absolute value",
+        "Absolute value"
+      ],
+      "absolute velocity": [
+        "Absolute velocity",
+        "Absolute Velocity"
+      ],
+      "absolute zero": [
+        "absolute zero",
+        "Absolute zero"
+      ],
+      "absorption": [
+        "Absorption",
+        "absorption"
+      ],
+      "absorption of light": [
+        "absorption of light",
+        "Absorption of light"
+      ],
+      "absorption spectrum": [
+        "absorption spectrum",
+        "Absorption spectrum"
+      ],
+      "accelerating charge": [
+        "accelerating charges",
+        "accelerating charge"
+      ],
+      "acceleration": [
+        "acceleration",
+        "Acceleration"
+      ],
+      "acceleration due to gravity": [
+        "Acceleration due to gravity",
+        "acceleration due to gravity"
+      ],
+      "accuracy": [
+        "Accuracy",
+        "accuracy"
+      ],
+      "activation energy": [
+        "Activation energy",
+        "activation energy",
+        "Activation Energy"
+      ],
+      "addition": [
+        "Addition",
+        "addition"
+      ]
+    },
+    "substring_pairs": 809,
+    "examples_substring": {
+      "1": [
+        "1 2 kt per degree of freedom",
+        "1 2 mv 2",
+        "1 r dependence",
+        "1 r variation of electric field strength"
+      ],
+      "2\u03c0": [
+        "2\u03c0 divided by \u03b3"
+      ],
+      "3 2 kt": [
+        "3 2 kt of energy"
+      ],
+      "aberration": [
+        "aberration cancellation"
+      ],
+      "absolute square": [
+        "absolute square of amplitude"
+      ],
+      "absorption": [
+        "absorption characteristics of pigment",
+        "absorption coefficient",
+        "absorption of light",
+        "absorption of radiation",
+        "absorption probability",
+        "absorption rate",
+        "absorption spectrum"
+      ],
+      "acceleration": [
+        "acceleration at right angles to velocity",
+        "acceleration due to gravity",
+        "acceleration of a charge",
+        "acceleration of center of mass",
+        "acceleration of gravity",
+        "acceleration proportional to electric field",
+        "acceleration vector"
+      ],
+      "accommodation": [
+        "accommodation of the len"
+      ],
+      "accuracy": [
+        "accuracy of one part in 10 9"
+      ],
+      "acoustic": [
+        "acoustic experiment with loudspeaker",
+        "acoustic intensity",
+        "acoustic pressure level formula",
+        "acoustic wave"
+      ],
+      "addition": [
+        "addition and multiplication law",
+        "addition of complex number",
+        "addition of integer"
+      ],
+      "additive color mixing": [
+        "additive color mixing law"
+      ],
+      "adiabatic": [
+        "adiabatic compression",
+        "adiabatic expansion",
+        "adiabatic index",
+        "adiabatic law for ideal ga",
+        "adiabatic line",
+        "adiabatic process",
+        "adiabatic relation tv const"
+      ],
+      "air": [
+        "air acceleration",
+        "air composition",
+        "air current",
+        "air density",
+        "air displacement",
+        "air molecule",
+        "air movement",
+        "air pressure",
+        "air temperature",
+        "air trough",
+        "air trough apparatu",
+        "air velocity"
+      ],
+      "air trough": [
+        "air trough apparatu"
+      ]
+    }
+  }
+}

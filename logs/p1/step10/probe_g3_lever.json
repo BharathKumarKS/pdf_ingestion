@@ -1,0 +1,409 @@
+{
+  "document": "7ba61432-c5e0-416d-aecf-25a232523481",
+  "chunks_total": 3796,
+  "concepts_with_chunks": 7834,
+  "names_skipped_empty_key": 1,
+  "merge_groups": 1186,
+  "concepts_in_merge_groups": 2692,
+  "lever": {
+    "chunks_newly_reachable_total": 3855,
+    "groups_that_gain_nothing": 0,
+    "top_groups_by_gain": [
+      {
+        "key": "force",
+        "members": [
+          "Force",
+          "force",
+          "forces"
+        ],
+        "chunks_union": 175,
+        "chunks_best_single": 95,
+        "chunks_newly_reachable": 80
+      },
+      {
+        "key": "temperature",
+        "members": [
+          "Temperature",
+          "temperature"
+        ],
+        "chunks_union": 113,
+        "chunks_best_single": 62,
+        "chunks_newly_reachable": 51
+      },
+      {
+        "key": "kinetic energy",
+        "members": [
+          "kinetic energy",
+          "Kinetic Energy",
+          "Kinetic energy"
+        ],
+        "chunks_union": 102,
+        "chunks_best_single": 51,
+        "chunks_newly_reachable": 51
+      },
+      {
+        "key": "velocity",
+        "members": [
+          "velocity",
+          "Velocity",
+          "Velocity = √(g h)"
+        ],
+        "chunks_union": 172,
+        "chunks_best_single": 121,
+        "chunks_newly_reachable": 51
+      },
+      {
+        "key": "speed of light",
+        "members": [
+          "speed of light",
+          "Speed of light",
+          "Speed of Light"
+        ],
+        "chunks_union": 98,
+        "chunks_best_single": 51,
+        "chunks_newly_reachable": 47
+      },
+      {
+        "key": "electric field",
+        "members": [
+          "electric field",
+          "Electric Field",
+          "Electric field"
+        ],
+        "chunks_union": 115,
+        "chunks_best_single": 70,
+        "chunks_newly_reachable": 45
+      },
+      {
+        "key": "frequency",
+        "members": [
+          "frequency",
+          "Frequency"
+        ],
+        "chunks_union": 93,
+        "chunks_best_single": 49,
+        "chunks_newly_reachable": 44
+      },
+      {
+        "key": "work",
+        "members": [
+          "Work",
+          "work"
+        ],
+        "chunks_union": 107,
+        "chunks_best_single": 64,
+        "chunks_newly_reachable": 43
+      },
+      {
+        "key": "wavelength",
+        "members": [
+          "wavelength",
+          "Wavelength"
+        ],
+        "chunks_union": 85,
+        "chunks_best_single": 44,
+        "chunks_newly_reachable": 41
+      },
+      {
+        "key": "momentum",
+        "members": [
+          "momentum",
+          "Momentum"
+        ],
+        "chunks_union": 83,
+        "chunks_best_single": 43,
+        "chunks_newly_reachable": 40
+      },
+      {
+        "key": "energy",
+        "members": [
+          "energy",
+          "Energy"
+        ],
+        "chunks_union": 87,
+        "chunks_best_single": 51,
+        "chunks_newly_reachable": 36
+      },
+      {
+        "key": "conservation of energy",
+        "members": [
+          "Conservation of energy",
+          "Conservation of Energy",
+          "conservation of energy"
+        ],
+        "chunks_union": 57,
+        "chunks_best_single": 22,
+        "chunks_newly_reachable": 35
+      },
+      {
+        "key": "potential energy",
+        "members": [
+          "potential energy",
+          "Potential Energy",
+          "Potential energy"
+        ],
+        "chunks_union": 62,
+        "chunks_best_single": 27,
+        "chunks_newly_reachable": 35
+      },
+      {
+        "key": "mass",
+        "members": [
+          "mass (inertia)",
+          "Mass",
+          "mass"
+        ],
+        "chunks_union": 83,
+        "chunks_best_single": 50,
+        "chunks_newly_reachable": 33
+      },
+      {
+        "key": "acceleration",
+        "members": [
+          "Acceleration",
+          "acceleration"
+        ],
+        "chunks_union": 74,
+        "chunks_best_single": 43,
+        "chunks_newly_reachable": 31
+      },
+      {
+        "key": "light",
+        "members": [
+          "light",
+          "Light"
+        ],
+        "chunks_union": 60,
+        "chunks_best_single": 31,
+        "chunks_newly_reachable": 29
+      },
+      {
+        "key": "heat",
+        "members": [
+          "heat",
+          "Heat"
+        ],
+        "chunks_union": 67,
+        "chunks_best_single": 39,
+        "chunks_newly_reachable": 28
+      },
+      {
+        "key": "pressure",
+        "members": [
+          "pressure",
+          "Pressure"
+        ],
+        "chunks_union": 56,
+        "chunks_best_single": 29,
+        "chunks_newly_reachable": 27
+      },
+      {
+        "key": "center of mass",
+        "members": [
+          "Center of Mass",
+          "center of mass",
+          "Center of mass"
+        ],
+        "chunks_union": 43,
+        "chunks_best_single": 17,
+        "chunks_newly_reachable": 26
+      },
+      {
+        "key": "collision",
+        "members": [
+          "Collision",
+          "collision",
+          "collisions",
+          "Collisions"
+        ],
+        "chunks_union": 53,
+        "chunks_best_single": 28,
+        "chunks_newly_reachable": 25
+      }
+    ]
+  },
+  "hubs_before": [
+    {
+      "concept": "velocity",
+      "chunks": 121
+    },
+    {
+      "concept": "force",
+      "chunks": 95
+    },
+    {
+      "concept": "Force",
+      "chunks": 78
+    },
+    {
+      "concept": "Electric field",
+      "chunks": 70
+    },
+    {
+      "concept": "Work",
+      "chunks": 64
+    },
+    {
+      "concept": "time",
+      "chunks": 63
+    },
+    {
+      "concept": "Temperature",
+      "chunks": 62
+    },
+    {
+      "concept": "distance",
+      "chunks": 59
+    },
+    {
+      "concept": "Newton's Second Law",
+      "chunks": 59
+    },
+    {
+      "concept": "kinetic energy",
+      "chunks": 51
+    },
+    {
+      "concept": "speed of light",
+      "chunks": 51
+    },
+    {
+      "concept": "temperature",
+      "chunks": 51
+    },
+    {
+      "concept": "energy",
+      "chunks": 51
+    },
+    {
+      "concept": "mass",
+      "chunks": 50
+    },
+    {
+      "concept": "Velocity",
+      "chunks": 50
+    },
+    {
+      "concept": "Frequency",
+      "chunks": 49
+    },
+    {
+      "concept": "Torque",
+      "chunks": 44
+    },
+    {
+      "concept": "frequency",
+      "chunks": 44
+    },
+    {
+      "concept": "Speed of light",
+      "chunks": 44
+    },
+    {
+      "concept": "experiment",
+      "chunks": 44
+    }
+  ],
+  "hubs_after_merge": [
+    {
+      "key": "force",
+      "chunks": 175,
+      "members": 3
+    },
+    {
+      "key": "velocity",
+      "chunks": 172,
+      "members": 3
+    },
+    {
+      "key": "electric field",
+      "chunks": 115,
+      "members": 3
+    },
+    {
+      "key": "temperature",
+      "chunks": 113,
+      "members": 2
+    },
+    {
+      "key": "work",
+      "chunks": 107,
+      "members": 2
+    },
+    {
+      "key": "kinetic energy",
+      "chunks": 102,
+      "members": 3
+    },
+    {
+      "key": "speed of light",
+      "chunks": 98,
+      "members": 3
+    },
+    {
+      "key": "frequency",
+      "chunks": 93,
+      "members": 2
+    },
+    {
+      "key": "energy",
+      "chunks": 87,
+      "members": 2
+    },
+    {
+      "key": "wavelength",
+      "chunks": 85,
+      "members": 2
+    },
+    {
+      "key": "mass",
+      "chunks": 83,
+      "members": 3
+    },
+    {
+      "key": "momentum",
+      "chunks": 83,
+      "members": 2
+    },
+    {
+      "key": "time",
+      "chunks": 80,
+      "members": 2
+    },
+    {
+      "key": "acceleration",
+      "chunks": 74,
+      "members": 2
+    },
+    {
+      "key": "distance",
+      "chunks": 74,
+      "members": 2
+    },
+    {
+      "key": "experiment",
+      "chunks": 68,
+      "members": 4
+    },
+    {
+      "key": "heat",
+      "chunks": 67,
+      "members": 2
+    },
+    {
+      "key": "quantum mechanic",
+      "chunks": 63,
+      "members": 3
+    },
+    {
+      "key": "torque",
+      "chunks": 62,
+      "members": 2
+    },
+    {
+      "key": "potential energy",
+      "chunks": 62,
+      "members": 3
+    }
+  ]
+}
