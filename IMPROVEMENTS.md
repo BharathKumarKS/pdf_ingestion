@@ -2589,13 +2589,14 @@ confounded, and the fix is to measure the first cell again at the end.
   `self._qdrant.retrieve(collection_name=…, ids=[c.qdrant_point_id for c in chunks], with_vectors=True)`
   — i.e. **all named vectors on all 3,796 points**, including the **ColBERT token matrices**, and the
   caller uses only the dense vector (for RAPTOR clustering).
-- **Why it matters — it is a startup stall on a network path, and it scales with the corpus.** Measured
-  2026-10-20 on the Phase B run: `Processing 7ba61432…` sat for **minutes** before
-  `Generating cards for 3791 chunks …` appeared, with RSS still ~36 MB (i.e. the vectors had not
-  arrived). Sizing from the stored dims: ColBERT is `(128, n_tokens)` per chunk — at the corpus's
-  ~103-token median that is ~53 KB/chunk, so **~200 MB for the document** against ~33 MB of dense
-  vectors actually wanted. Over a WireGuard tunnel that is the dominant cost of the startup, and it is
-  **~6× the payload needed**. It is paid by *every* Phase 2 and Phase 3 run.
+- **Why it matters — it is a startup stall on a network path, and it costs ~2 GB of RAM.** Measured
+  2026-10-20 on the Phase B run: `Processing 7ba61432…` sat for **3 minutes 6 seconds**
+  (19:05:10 → 19:08:16) before `Generating cards for 3791 chunks …` appeared, and **RSS climbed
+  36 MB → 1,992 MB** as the response was deserialized — the ColBERT token matrices held in memory
+  for the rest of the run. Sizing from the stored dims: ColBERT is `(128, n_tokens)` per chunk — at
+  the corpus's ~103-token median that is ~53 KB/chunk, so **~200 MB of vectors against ~33 MB
+  actually wanted** (and the JSON/base64 envelope inflates that several-fold on the wire). It is
+  **~6× the payload and ~60× the memory** the caller needs, paid by *every* Phase 2 and Phase 3 run.
 - **Not a hang, and not a regression:** it is pre-existing behaviour. The trap is diagnostic — a
   watcher who sees no log line for minutes will read it as a stalled run and may kill it.
 - **Fix (not applied):** pass an explicit `using=`/vector-name selector so only the dense slot is
