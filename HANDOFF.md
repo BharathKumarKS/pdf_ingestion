@@ -16,6 +16,15 @@
 > Phase B — planned at `.hermes/plans/2026-10-19-p1-step9-phaseB-plan.md`.** Branch
 > `feat/p0-9-gold-dataset-v2`. **Read `RETROSPECTIVE.md`** for the project-wide lessons.
 >
+> **🟢 NON-LLM PARALLEL WORK — PLANNED, AWAITING SIGNOFF (2026-10-20 evening).**
+> `.hermes/plans/2026-10-20-p1-nonllm-parallel-work-plan.md`. Four stages that issue **no LLM call**,
+> so they are safe beside the in-flight card run (§I23 measured what a second LLM-hungry job costs on
+> this cluster). Each stage carries a *measurable* verifier plus an independent reviewer. **A1** is the
+> query-side `matched_concepts` baseline that §I29 says is missing and that G3 must not be designed
+> without. The plan marks its own **STOP point**: the §G3 merge is a **separate gate** and is *not*
+> authorised by it. It also carries the owner decisions it is blocked on (D1 §I21 rebuild-or-not,
+> D2 scope, D3 the untracked graph-analytics plan).
+>
 > **PHASE B — where it actually stands (2026-10-20).** It was **run on 2026-10-19 and ABORTED** at
 > B2/B3: cards for 74 of 3,791 chunks in 60 minutes (~97 s/chunk, 16 timeouts, ETA ~51 h), killed by
 > hand. The abort was **clean** (0 cards, 0 RAPTOR nodes, `knowledge_base_v2` still 3,796 points, the
