@@ -4,9 +4,10 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-21, session 2. §I43 is FIXED and B5 NOW PASSES — the open FAIL from the
-> previous session is closed (block below). B4 PASS / B6 (§I39) and the non-LLM A1–A4 work are
-> unchanged from the previous session's record. Register now runs to §I44.**
+> **Last updated: 2026-10-21, session 2. §I43 is FIXED and B5 PASSES (committed `844898c`); §I39/§E5 is
+> FIXED (two filter signals, zero body loss) and **D1 is SETTLED** — the filter fix comes first, §G3
+> does not run on the current graph. B4 PASS / B6 and the non-LLM A1–A4 work are unchanged. Register
+> now runs to §I44.**
 >
 > ## ▶ NEXT SESSION — START HERE (written 2026-10-21, session 2)
 >
@@ -58,17 +59,31 @@
 > - ⚠️ The existing §G2 before-arm measurement (§I33) is on **Louvain** and must be **re-run on
 >   Leiden** before it is quoted again.
 >
-> **3. §I39 / §E5 — extend the content filter.** Signals are already measured: a page-reference
-> density test (`[IVX]{1,3}-\d{1,2}-\d{1,2}` or `,\s*\d{1,2}-\d{1,2}`) catches **187/193 index chunks
-> with 0 body false positives**; the TOC's `1-1, 1 =` pattern catches **13/19 TOC chunks**, also 0 in
-> the body. Do **not** use dot-leaders — they fire on ordinary prose ellipses 48 times in the body.
-> The filter's existing "index pipe-table" signal fires on **0** chunks in this corpus (dead).
+> **3. ✅ DONE (2026-10-21 session 2) — §I39 / §E5 filter extended, and the register's band table was
+> CORRECTED.** Two signals added to `content_filter.py`, both measured with **zero body collateral**:
+> `is_toc_layout` (a dot-leader **run** + a section number → **72/77** TOC chunks) and
+> `is_index_density` (≥34 % of lines are "term, page-ref" → **186/187** index chunks). End-to-end on
+> doc `7ba61432`: TOC 72/77, index 186/187, front 5/65, **body 0/3,467**. ⚠️ **The previous session's
+> numbers did not reproduce and are superseded:** the TOC is **pages 22-34 = 77 chunks**, not 19
+> chunks on pages 20-26 — ~55 TOC chunks were being counted as *body*, which is why "0 body false
+> positives" looked true (the FP count included the TOC). Also measured: **signals 2 and 3 fire on
+> ZERO chunks of this corpus** — the index passed as content because both are dead here. Rejected:
+> a bare dot-leader run (fires on p661's ratchet prose and the preface) and a bare `N-N, N =`
+> literal (15/77 TOC, 133/187 index — an index signal, not a TOC one). **Still not caught:
+> front-matter prose** (60 of 65 front-matter chunks) — the remaining §E5 gap. Tests 4 added
+> (`tests/test_content_filter.py`, verbatim corpus rows); filter suite **27 passed**, full suite
+> **443 pass / 4 fail / 6 skip** (the same 4 pre-existing). **Takes effect
+> on a re-ingest** — `is_content` is written at ingest, so the 5,100 junk cards are not removed by
+> this change. Detail + evidence: §I39 outcome.
 >
-> **4. Still open — owner decisions, unchanged:** **D1/§I21** (rebuild the graph with the content
-> filter before G3, or run G3 on the current graph — it decides whether B1 is worth doing);
-> **§I34** (a re-ingest transition reports the graph lane as SKIP — non-blocking as built, or a hard
-> blocker?); **§A3** (card volume vs quality); **D3** (commit the untracked graph-analytics plan).
-> **B1 (the §G3 merge) is still NOT authorised.**
+> **4. Owner decisions.** **✅ D1/§I21 SETTLED 2026-10-21 (owner): the filter fix comes first, §G3 does
+> NOT run on the current graph.** Order: extend the filter (**done**, item 3) → apply `is_content` in
+> the Phase 3 path → harden the graph build (§I23) → rebuild → *then* §G3, then §G2. The gate that
+> releases §G3 is the rebuild landing. **§G1 (PPR) is the one graph item not gated** — it is a
+> traversal change and does not care which concepts are in the graph. Full reasoning: §I21's
+> "D1 SETTLED" block. **Still open:** **§I34** (a re-ingest transition reports the graph lane as SKIP
+> — non-blocking as built, or a hard blocker?); **§A3** (card volume vs quality); **D3** (commit the
+> untracked graph-analytics plan). **B1 (the §G3 merge) is still NOT authorised.**
 >
 > **Uncommitted when this was written:** `scripts/preflight.py`, `src/pdf_ingestion/store.py`,
 > `logs/p1/step10/verify_phaseb_{cards,raptor}.py`, `IMPROVEMENTS.md`, `HANDOFF.md`.

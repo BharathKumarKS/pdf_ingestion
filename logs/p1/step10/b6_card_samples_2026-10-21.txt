@@ -1,0 +1,218 @@
+cards columns: ['id', 'chunk_id', 'document_id', 'tenant_id', 'card_type', 'title', 'content', 'answer', 'metadata_json', 'version', 'is_active', 'created_at', 'updated_at']
+
+one card per type (8 types)
+
+============================================================================================
+[definition]   page 4   chunk bcda50e2
+  SOURCE : Beyond these achievements, Dr. Feynman introduced basic new computational techniques and notations into physics-above all, the ubiquitous Feynman diagrams that, perhaps more than any other formalism i…
+  CARD   : Feynman diagrams are a pictorial representation of the mathematical terms in the perturbative expansion of quantum field theory amplitudes. Each diagram encodes the interactions between particles as lines (propagators) and vertices (interaction points), providing a visual and calculational tool for determining transition probabilities and cross sections in processes such as quantum electrodynamics.
+
+============================================================================================
+[example]   page 4   chunk 995c9b9d
+  SOURCE : His work on the Challenger commission is well known, especially his famous demonstration of the susceptibility of the O-rings to cold, an elegant experiment which required nothing more than a glass of…
+  CARD   : A demonstration of how O-rings become brittle in cold temperatures was performed using only a glass of ice water and a C-clamp. The O-ring was placed in the ice water, cooled, and then clamped with the C-clamp to show its reduced flexibility and increased susceptibility to cracking.
+
+============================================================================================
+[factoid]   page 4   chunk 1696fc3d
+  SOURCE : Born in 1918 in New York City, Richard P. Feynman received his Ph.D. from Princeton in 1942. Despite his youth, he played an important part in the Manhattan Project at Los Alamos during World War II. …
+  CARD   : Richard P. Feynman was born in 1918.
+
+============================================================================================
+[formula]   page 20   chunk 71ce8daa
+  SOURCE : Concerning the mechanism by which the course would finally be brought to life, several plans were considered. These plans were mostly rather similar, involving a cooperative effort by N staff members …
+  CARD   : f = 1/N where N is the total number of staff members (dimensionless) and f is the fraction of the total material each staff member is responsible for (dimensionless). Valid when responsibilities are shared symmetrically and equally.
+
+============================================================================================
+[misconception]   page 4   chunk bcda50e2
+  SOURCE : Beyond these achievements, Dr. Feynman introduced basic new computational techniques and notations into physics-above all, the ubiquitous Feynman diagrams that, perhaps more than any other formalism i…
+  CARD   : Students often think Feynman diagrams depict the actual paths that particles take in space‑time. In reality, they are a pictorial shorthand for terms in the perturbation expansion of quantum field theory; the lines represent propagators and interaction vertices, not literal trajectories of particles.
+
+============================================================================================
+[objective]   page 4   chunk 1696fc3d
+  SOURCE : Born in 1918 in New York City, Richard P. Feynman received his Ph.D. from Princeton in 1942. Despite his youth, he played an important part in the Manhattan Project at Los Alamos during World War II. …
+  CARD   : Recall the major milestones in Richard P. Feynman's academic and professional career, including his birth year, Ph.D. institution and year, involvement in the Manhattan Project, and teaching positions at Cornell and Caltech.
+
+============================================================================================
+[question]   page 4   chunk 1696fc3d
+  SOURCE : Born in 1918 in New York City, Richard P. Feynman received his Ph.D. from Princeton in 1942. Despite his youth, he played an important part in the Manhattan Project at Los Alamos during World War II. …
+  CARD   : When and where was Richard P. Feynman born?
+
+============================================================================================
+[summary]   page 4   chunk 1696fc3d
+  SOURCE : Born in 1918 in New York City, Richard P. Feynman received his Ph.D. from Princeton in 1942. Despite his youth, he played an important part in the Manhattan Project at Los Alamos during World War II. …
+  CARD   : Richard P. Feynman, born in 1918 in New York City, earned a Ph.D. from Princeton in 1942. Although still a young physicist, he contributed significantly to the Manhattan Project at Los Alamos during World War II. After the war, he held teaching positions at Cornell University and later at the California Institute of Technology, where he continued his academic career.
+
+============================================================================================
+[question]   #500 by rowid   page 22   chunk 95124ff6
+  CARD   : What is the title of subchapter 1-4?
+
+============================================================================================
+[factoid]   #500 by rowid   page 20   chunk 71ce8daa
+  CARD   : The considered plans were mostly rather similar.
+
+total active cards sampled from: 75645
+page spread of ALL cards (deciles of page_number):
+   p  0: page 3
+   p 10: page 91
+   p 20: page 196
+   p 30: page 295
+   p 40: page 397
+   p 50: page 501
+   p 60: page 603
+   p 70: page 701
+   p 80: page 800
+   p 90: page 899
+   p100: page 968
+cards per type: {'objective': 3782, 'summary': 3791, 'factoid': 30635, 'question': 29305, 'definition': 2609, 'misconception': 3412, 'example': 892, 'formula': 1219}
+
+=== 12 random cards (seed 20261021), sorted by page ===
+
+============================================================================================
+[question]   page 4   chunk 1696fc3d
+  SOURCE : Born in 1918 in New York City, Richard P. Feynman received his Ph.D. from Princeton in 1942. Despite his youth, he played an important part in the Manhattan Project at Los Alamos during World War II. Subsequently, he taught at Cor…
+  CARD   : During which war did the Manhattan Project take place?
+
+============================================================================================
+[factoid]   page 23   chunk a65bb2be
+  SOURCE : 5-1, 1 = Motion . . . . . . . . . . .. 5-1, 2 = 5-1. 5-2, 1 = Time . . . . . . . . . . . .. 5-2, 2 = 5-2. 5-3, 1 = Short times . . . . . . . .. 5-3, 2 = 5-3. 5-4, 1 = Long times . . . . . . . .. 5-4, 2 = 5-6. 5-5, 1 = Units and st…
+  CARD   : The section 5-5, 2 references section 5-9.
+
+============================================================================================
+[question]   page 380   chunk e88c3285
+  SOURCE : 28 'sec.' This was found numerically, before we knew much calculus. We assume that in the meantime the Mathematics Department has brought forth a function which, when differentiated twice, is equal to itself with a minus sign. (Th…
+  CARD   : Why might the function have been found numerically?
+
+============================================================================================
+[factoid]   page 399   chunk be6d945e
+  SOURCE : That is about all we are going to say about it; of course, there is more than one root of the equation x 2 = -1. Someone could write i , but another could say, 'No, I prefer -i . My i is minus your i . ' It is just as good a solut…
+  CARD   : The symbol i is called the unit imaginary number.
+
+============================================================================================
+[formula]   page 545   chunk 18aa57d7
+  SOURCE : In the upper atmosphere electrons are liberated from their atoms by ultraviolet light from the sun and they sit up there as free electrons. For free electrons ω 0 = 0 (there is no elastic restoring force). Setting ω 0 = 0 in our d…
+  CARD   : n² = 1 - \frac{\omega_p^2}{\omega^2}  \quad\text{with}\quad \omega_p^2 = \frac{N e^2}{\varepsilon_0 m_e}.  
+
+- n: refractive index (dimensionless). 
+- ω: angular frequency of the electromagnetic wave (rad s⁻¹). 
+- ω_p: plasma frequency (rad s⁻¹). 
+- N: free‑electron density (m⁻³). 
+- e: elementary charge (1.602×10⁻¹⁹ C). 
+- ε₀: vacuum permittivity (8.854×10⁻¹² F m⁻¹). 
+- m_e: electron mass (9.109×10⁻³¹ kg). 
+
+Conditions: applies to a cold, collisionless plasma of free electrons (ω₀=0), neglecting collisions and magnetic fields; valid for ω > ω_p so that n is real and n<1, indicating phase velocity > c.
+
+============================================================================================
+[question]   page 662   chunk 4abb21d8
+  SOURCE : How can such an interference come about? Perhaps we should say: 'Well, that means, presumably, that it is not true that the lumps go either through hole 1 or hole 2, because if they did, the probabilities should add. Perhaps they …
+  CARD   : How can interference arise if lumps do not follow a single path?
+
+============================================================================================
+[question]   page 667   chunk 058046e9
+  SOURCE : In our experiment we find that it is impossible to arrange the light in such a way that one can tell which hole the electron went through, and at the same time not disturb the pattern.…
+  CARD   : Does the experiment allow simultaneous observation of the electron's path and the interference pattern?
+
+============================================================================================
+[factoid]   page 693   chunk 48b703f1
+  SOURCE : Why do we deal with the subject now at all? Why not wait half a year, or a year, until we know the mathematics of probability better, and we learn a little quantum mechanics, and then we can do it in a more fundamental way? The an…
+  CARD   : A correct understanding of the subject cannot be attained until the learner understands quantum mechanics.
+
+============================================================================================
+[question]   page 701   chunk aca3f807
+  SOURCE : So far we have not dealt with temperature ; we have purposely been avoiding the temperature. As we compress a gas, we know that the energy of the molecules increases, and we are used to saying that the gas gets hotter; we would li…
+  CARD   : Why does compressing a gas increase its temperature?
+
+============================================================================================
+[question]   page 704   chunk 9a5e4226
+  SOURCE : Let us suppose that we have two molecules, of different mass, colliding, and that the collision is viewed in the center-of-mass (CM) system. In order to remove a complication, we look at the collision in the CM. As we know from th…
+  CARD   : What does it mean that the center‑of‑mass is at rest during the collision?
+
+============================================================================================
+[question]   page 833   chunk 9299a619
+  SOURCE : Everyone knows that if we started with white and with black, separated, we would get a mixture within a few minutes. If we sat and looked at it for several more minutes, it would not separate again but would stay mixed. So we have…
+  CARD   : What does the term "irreversibility" mean in this context?
+
+============================================================================================
+[question]   page 941   chunk 141e3013
+  SOURCE : Cubic ∼ , II-30-17, 1 = Debye length, II-7-15. Hexagonal ∼ , II-30-16, 1 = Definite energy, states of, III-13-5 ff. Imperfections in a ∼ , III-13-16 ff, 1 = Degrees of freedom, 25-3, 39-19, 40-1.…
+  CARD   : What do the codes 25-3, 39-19, and 40-1 refer to?
+
+chunks has is_content column: True
+
+chunks of this document by is_content:
+   is_content=0: 5
+   is_content=1: 3791
+
+active cards by their chunk's is_content:
+   is_content=1: 75645
+   -> non-content cards: 0 of 75645  (0.0%)
+
+card_type breakdown of the NON-content cards:
+
+card_type breakdown of the content cards (for comparison):
+   factoid          30635
+   question         29305
+   summary           3791
+   objective         3782
+   misconception     3412
+   definition        2609
+   formula           1219
+   example            892
+
+sample of NON-content cards (5):
+
+--- the 5 chunks flagged is_content=0
+   idx     0 p   2 is_content=0 len=  133  FEYNMAN·LEIGHTON·SANDS Copyright © 1963, 2006, 2010 by California Institute of Technology, Michael A. Gottlieb
+   idx     1 p   3 is_content=0 len=  330  All rights reserved. Printed in the United States of America. No part of this book may be reproduced in any ma
+   idx    25 p   9 is_content=0 len=  918  On behalf of Caltech I thank the 50 readers who have contributed since 2005 and the many more who may contribu
+   idx    36 p  13 is_content=0 len=  142  Professor of Physics California Institute of Technology MATTHEW SANDS Professor of Physics California Institut
+   idx    37 p  14 is_content=0 len=  314  --------- Printed in the United States of America ALL RIGHTS RESERVED. THIS BOOK, OR PARTS THEREOF MAY NOT BE 
+
+--- chunks on the TOC pages (20-26)
+   idx    59 p  20 is_content=1 len=  423  The realization that we actually possessed the means to create not just a new and different physics course, bu
+   idx    60 p  20 is_content=1 len=  859  Concerning the mechanism by which the course would finally be brought to life, several plans were considered. 
+   idx    61 p  20 is_content=1 len= 2284  It was, in fact, a major editorial operation to transform the verbatim transcript into readable form, even wit
+   idx    62 p  21 is_content=1 len=  395  Officially participating in the program were Professors R. P. Feynman, G. Neugebauer, R. M. Sutton, H. P. Stab
+   idx    63 p  21 is_content=1 len=  224  We are particularly indebted to the Ford Foundation, without whose financial assistance this program could not
+   idx    64 p  21 is_content=1 len=  571  Among these are several which utilize the extremely low friction exhibited by a gas bearing: a novel linear ai
+   idx    65 p  22 is_content=1 len=  493  Chapter 1., 1 = Chapter 1.. Chapter 1., 2 = Atoms in Motion. 1-1, 1 = Introduction . . . . . . . . .. 1-1, 2 =
+   idx    66 p  22 is_content=1 len=  393  Basic Physics, 1 = Chapter 2. Basic Physics. Chapter 2. Basic Physics, 2 = . 2-1, 1 = Introduction . . . . . .
+   idx    67 p  22 is_content=1 len=  116  2-4, 1 = Nuclei and particles . . . .. 2-4, 2 = . . . . . . . . . . . . . . . . . . . . . . . . . . 2-12. Chap
+   idx    68 p  22 is_content=1 len=  797  The Relation of Physics to Other Sciences, 1 = Chapter 3. The Relation of Physics to Other Sciences. Chapter 3
+   idx    69 p  22 is_content=1 len=  322  3-7, 1 = How did it get that way? .. 3-7, 2 = . . . . . . . . . . . . . . . . . . . . . . . . . . 3-14. Chapte
+   idx    70 p  22 is_content=1 len=  312  4-2, 1 = Gravitational potential energy. 4-2, 2 = . . . . . . . . . . . . . . . . . . . . . . . . 4-3. 4-3, 1 
+
+--- chunks on the index pages (938-945)
+   idx  3610 p 938 is_content=1 len=  165  Transformation of ∼ , III-6-1 ff, 1 = and parity conservation, III-18-5. Analog computer, 25-15, 1 = Attenuati
+   idx  3611 p 938 is_content=1 len=  238  Brewster's ∼ , 33-10, 1 = Axial vector, 20-6, 52-10 ff, 52-17. of incidence, 26-6, II-33-1 of precession, II-3
+   idx  3612 p 938 is_content=1 len=  398  Angular acceleration, 18-5, 1 = Baryons, III-11-23. Angular frequency, 21-5, 29-4, 29-6, 49-4 Angular momentum
+   idx  3613 p 938 is_content=1 len=  239  of a rigid body, 20-14, 1 = Bessel function, II-23-11, II-23-14,. of circularly polarized light, 33-18 Orbital
+   idx  3614 p 938 is_content=1 len=  334  Anomalous dispersion, 31-14, 1 = Biology and physics, 3-3 ff. Anomalous refraction, 33-15 ff, 1 = Biot-Savart 
+   idx  3615 p 938 is_content=1 len=  113  Antiproton, III-11-23, 1 = Blackbody radiation, 41-5 ff. Argon, III-19-30 f, 1 = Blackbody spectrum, III-4-15 
+   idx  3616 p 938 is_content=1 len=  240  Associated Legendre functions, III-19-16, 1 = Bohr magneton, II-34-19, II-35-18, II-37-2,. Astronomy and physi
+   idx  3617 p 938 is_content=1 len=  182  , 42-17 Rutherford-Bohr model, II-5-4, 1 = Boltzmann energy, II-36-24. Stability of ∼ s, II-5-4 f, 1 = Boltzma
+   idx  3618 p 938 is_content=1 len=  180  Thomson model, II-5-4 Atomic clock, 5-10, III-9-22, 1 = III-14-7. Atomic currents, II-13-9 ff, II-32-6 f,, 1 =
+   idx  3619 p 938 is_content=1 len=  242  , 1 = Boron, III-19-30. Atomic hypothesis, 1-3 ff, 1 = Bose particles, III-4-1 ff,. Atomic orbits, II-1-15, 1 
+   idx  3620 p 940 is_content=1 len=  748  'Boys' camera, II-9-21 Bragg-Nye crystal model, II-30-22 ff Breaking-drop theory, II-9-18 f Bremsstrahlung, 34
+   idx  3621 p 940 is_content=1 len=  160  Coaxial line, II-24-2, 1 = of charge, 4-14, II-13-2 ff. Coefficient, 1 = of energy, 3-3, 4-1 ff, II-27-1 ff, I
+
+--- chunks on the biography page (4)
+   idx     4 p   4 is_content=1 len=  281  Born in 1918 in New York City, Richard P. Feynman received his Ph.D. from Princeton in 1942. Despite his youth
+   idx     5 p   4 is_content=1 len=  140  In 1965 he received the Nobel Prize in Physics, along with Sin-Itiro Tomonaga and Julian Schwinger, for his wo
+   idx     6 p   4 is_content=1 len=  536  Beyond these achievements, Dr. Feynman introduced basic new computational techniques and notations into physic
+   idx     7 p   4 is_content=1 len=  311  Thereafter, with Murray Gell-Mann, he did fundamental work in the area of weak interactions such as beta decay
+   idx     8 p   4 is_content=1 len=  703  Of all his numerous awards, he was especially proud of the Oersted Medal for Teaching, which he won in 1972. T
+   idx     9 p   4 is_content=1 len=  225  His work on the Challenger commission is well known, especially his famous demonstration of the susceptibility
+   idx    10 p   4 is_content=1 len=  415  Less well known were Dr. Feynman's efforts on the California State Curriculum Committee in the 1960s, where he
+
+--- is_content flag by page band
+   front matter   p1-30: is_content=1 115/120
+   body           p31-900: is_content=1 3349/3349
+   index/back     p901-970: is_content=1 327/327
+band                                  pages   chunks     cards  % of cards
+front matter                           1-30      120      2256        3.0%
+  of which TOC/editorial              20-26       19       390        0.5%
+body                                 31-900     3349     65906       87.1%
+back matter / index                 901-970      327      7483        9.9%
+  of which index                    936-970      193      4710        6.2%
+TOTAL                                                    75645

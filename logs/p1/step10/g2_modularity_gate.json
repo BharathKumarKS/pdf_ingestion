@@ -1,0 +1,299 @@
+{
+  "comparison": {
+    "gap": 0.309267,
+    "q_null": 0.28033,
+    "q_observed": 0.589597,
+    "ratio": 2.1032,
+    "verdict": "PASS (one-sided)"
+  },
+  "connectivity": {
+    "all_connected": false,
+    "disconnected": [
+      {
+        "index": 35,
+        "members": [
+          "Pythagorean theorem of musical intervals",
+          "air acceleration",
+          "air density",
+          "air displacement",
+          "air pressure",
+          "air velocity",
+          "audio tone frequency",
+          "bandwidth",
+          "beat",
+          "carrier frequency"
+        ],
+        "size": 75
+      }
+    ],
+    "largest_community_size": 1825,
+    "n_communities": 199,
+    "n_multi_member": 199,
+    "n_singleton_communities": 0
+  },
+  "graph": {
+    "components": 89,
+    "density": 0.001224,
+    "directed_edges": 37300,
+    "duplicate_directed_edges_collapsed": 0,
+    "isolates": 0,
+    "max_degree": 324,
+    "nodes": 7808,
+    "self_loops_dropped": 4,
+    "undirected_edges": 37296
+  },
+  "meta": {
+    "algorithm": "networkx.community.louvain_communities",
+    "algorithm_requested": "leiden",
+    "connectivity_guarantee": "Leiden guarantees every returned community is connected; Louvain does NOT. Connectivity is therefore MEASURED (see `connectivity`), not assumed.",
+    "generated_by": "logs/p1/step10/g2_modularity_gate.py",
+    "graph_source": "memgraph localhost:7687 RELATES_TO",
+    "leiden_available": false,
+    "leiden_unavailable_reason": "leiden_communities is not implemented by the installed networkx backend ('leiden_communities' is not implemented by 'networkx' backend. This function is included in NetworkX as an API to dispatch to other backends.); no backend package (igraph/leidenalg/nx_parallel/graphblas) is installed and this plan forbids adding a dependency",
+    "networkx": "3.6.1",
+    "no_llm_calls": true,
+    "nswap_factor": 10,
+    "resolution": 1.0,
+    "seed": 20261020,
+    "weight": null,
+    "what": "§G2 modularity gate, BEFORE arm (report-only)"
+  },
+  "null_rewired": {
+    "communities_sha256": "52bc2307ec402e54cbbfd7afdd1c34a5877dbe46e2bede1af6762746ccff0a5c",
+    "degree_sequence_preserved": true,
+    "n_communities": 22,
+    "nswap": 372960,
+    "q": 0.28033,
+    "q_observed_partition_on_null_graph": -0.001994
+  },
+  "observed": {
+    "communities_sha256": "8512568967ef9bbb3de3dd360a589bdf274d42e8bbe97496a398add6aa0e779f",
+    "community_sizes": [
+      1825,
+      1517,
+      726,
+      648,
+      300,
+      281,
+      267,
+      265,
+      142,
+      140,
+      130,
+      111,
+      110,
+      104,
+      94,
+      79,
+      75,
+      60,
+      58,
+      31
+    ],
+    "n_communities": 199,
+    "q": 0.589597
+  },
+  "one_sided_caveat": "ONE-SIDED RESULT — do not read a FAIL as evidence of no community structure. The graph carries TOC concepts because the Phase 3 build does not apply the E5 content filter (§I21), and the §G plan states §I21 'is a prerequisite for good communities, since TOC concepts are exactly the noise that fragments them'. So a PASS (Q beats the rewired null) is trustworthy even under that noise, while a FAIL is CONFOUNDED: it cannot distinguish 'no structure' from 'structure fragmented by TOC noise'. Do not let a FAIL kill G2.",
+  "top_communities": [
+    {
+      "sample_members": [
+        "1/2 kT per degree of freedom",
+        "1/r dependence",
+        "10^-12 second",
+        "28",
+        "3/2 kT",
+        "4πϵ0",
+        "Achilles",
+        "Anderson",
+        "Angular momentum conservation formula",
+        "Bernoulli probability",
+        "Bonner and Evans",
+        "Brewster",
+        "Brewster angle",
+        "Brewster's law",
+        "Brownian movement"
+      ],
+      "size": 1825
+    },
+    {
+      "sample_members": [
+        "1/2 mv^2",
+        "1/r variation of electric field strength",
+        "200-inch Palomar telescope",
+        "3/2 kT of energy",
+        "Absolute Velocity",
+        "Absolute rotation",
+        "Absorption",
+        "Absorption coefficient",
+        "Absorption of light",
+        "Accelerating coordinate system",
+        "Acceleration",
+        "Acceleration at right angles to velocity",
+        "Acceleration due to gravity",
+        "Acceleration of center of mass",
+        "Accuracy"
+      ],
+      "size": 1517
+    },
+    {
+      "sample_members": [
+        "10 to an imaginary power",
+        "2π",
+        "AC Electric Oscillation",
+        "Absolute length",
+        "Absolute square",
+        "Absolute square of amplitude",
+        "Additional phase",
+        "Additional time",
+        "Additive color mixing",
+        "Air temperature",
+        "Algebraic equation",
+        "Algebraic manipulation",
+        "Algebraic quantity",
+        "Amplitude",
+        "Amplitude Modulation"
+      ],
+      "size": 726
+    },
+    {
+      "sample_members": [
+        "-irone",
+        "Absolute thermodynamic temperature",
+        "Absolute value",
+        "Absolute zero",
+        "Acoustic intensity",
+        "Acoustic pressure level formula",
+        "Activation Energy",
+        "Activation energy",
+        "Adiabatic",
+        "Adiabatic compression",
+        "Adiabatic expansion",
+        "Adiabatic index",
+        "Adiabatic index (ratio of specific heats)",
+        "Adiabatic law for ideal gas",
+        "Adiabatic line"
+      ],
+      "size": 648
+    },
+    {
+      "sample_members": [
+        "Acceleration vector",
+        "Adams",
+        "Adding two waves",
+        "Additivity of moment of inertia",
+        "Analytic geometry",
+        "Angular Momentum",
+        "Angular acceleration",
+        "Angular momentum",
+        "Angular momentum formula",
+        "Angular momentum of a solid body",
+        "Angular velocity",
+        "Anti-commutativity of cross product",
+        "Arc length",
+        "Argument about the two halves",
+        "Atomic vibrations"
+      ],
+      "size": 300
+    },
+    {
+      "sample_members": [
+        "Absorption characteristics of pigments",
+        "Absorption spectrum",
+        "Abstraction and generalization",
+        "Accommodation of the lens",
+        "Addition and multiplication laws",
+        "Additive integration",
+        "After-image",
+        "Albert A. Michelson",
+        "Anatomy",
+        "Angle between axes",
+        "Angular resolution",
+        "Animal vision",
+        "Apparent size",
+        "Apparent visual effect",
+        "Atomic oscillator"
+      ],
+      "size": 281
+    },
+    {
+      "sample_members": [
+        "200-inch telescope",
+        "3C295",
+        "Bessel function",
+        "Betatron",
+        "Cartesian components",
+        "David Pines",
+        "F. Strong",
+        "Five colors",
+        "G. Neugebauer",
+        "Gibbon",
+        "H. P. Stabler",
+        "H. V. Neher",
+        "John von Neumann",
+        "Kepler",
+        "Leonardo da Vinci"
+      ],
+      "size": 267
+    },
+    {
+      "sample_members": [
+        "10^-8 cm",
+        "Atomic diameter",
+        "Atomic spacing",
+        "Chilean earthquake of May 1960",
+        "Fraunhofer diffraction",
+        "Hero of Alexandria",
+        "International Prototype Meter",
+        "Lamb-Retherford measurement",
+        "Landé g-factor",
+        "Laplace equation",
+        "Light scattering from a crystal",
+        "N^2 scaling",
+        "PV-gamma curve",
+        "Rayleigh scattering",
+        "X-ray diffraction"
+      ],
+      "size": 265
+    },
+    {
+      "sample_members": [
+        "Aberration cancellation",
+        "Aberrations",
+        "Accommodation",
+        "Acoustics",
+        "Advanced analytical mechanics",
+        "Air density",
+        "Ampère's law",
+        "Angle subtended at the eye",
+        "Angular momentum of electron orbit",
+        "Apparent elevation of the sun",
+        "Approximation of sum of distances",
+        "Atmospheric refraction",
+        "Bacterium",
+        "Basic chemistry",
+        "Bessel function of the first kind"
+      ],
+      "size": 142
+    },
+    {
+      "sample_members": [
+        "Absorption rate",
+        "Alfred-Marie Liénard",
+        "Algebra",
+        "Approximations",
+        "Astronomy",
+        "Atomic transition",
+        "Beta decay",
+        "Beta-decay interaction",
+        "Biology",
+        "Carver Mead",
+        "Charge distribution in conductors",
+        "Chemistry",
+        "Collision of billiard balls",
+        "Convection",
+        "Corpuscular theory of light"
+      ],
+      "size": 140
+    }
+  ]
+}

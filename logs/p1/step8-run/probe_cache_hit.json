@@ -1,0 +1,20 @@
+{
+  "pdf": "data/base_textbooks/feynman-lectures-on-physics-volume1.pdf",
+  "dense_lane": "http://127.0.0.1:9/dead",
+  "cache_root": "./data/embed_cache",
+  "key": "2ec020b785942cf2",
+  "key_expected": "2ec020b785942cf2",
+  "key_match": true,
+  "parents": 341,
+  "children": 3796,
+  "enriched": 3796,
+  "cache_hits": 341,
+  "cache_misses": 0,
+  "cache_writes": 0,
+  "embed_parent_calls": 0,
+  "rejected_mismatch": 0,
+  "other_warnings": [],
+  "parse_seconds": 254.6,
+  "embed_seconds": 0.9,
+  "verdict": "HIT"
+}

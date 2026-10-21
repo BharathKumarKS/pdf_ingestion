@@ -2326,8 +2326,29 @@ re-record it, rather than comparing across the two.
 - **Fix (not done — no code changes in Step 10):** apply `content_filter.is_content` in the Phase 3
   graph path, mirroring `generate_phase2_artifacts`. Would change the concept set → requires a graph
   rebuild, not a re-ingest.
+- **✅ D1 SETTLED 2026-10-21 (owner) — the filter fix comes first; §G3 does NOT run on the current
+  graph.** The order is: extend the filter (§I39, **DONE** — signals 4 and 5, TOC 72/77 and index
+  186/187, zero body loss) → apply `is_content` in the Phase 3 path → harden the graph build (§I23:
+  checkpoint, bounded retry, a real failure count, a deliberate extraction model) → **rebuild the
+  graph** → *then* §G3, then §G2. **The gate that releases §G3 is the rebuild landing.**
+  - **Why not G3 now:** §G3's merge target list *is* the concept set, and this fix **changes the
+    concept set**, so a merge computed today is discarded by the rebuild — paid for twice. §I30's
+    lever (1,186 merge groups over 34.4 % of the vocabulary) was also measured **on the current
+    graph**, so it re-measures after the rebuild. §I21's own effect size is **unmeasured**: *"do not
+    assume it is large; do not assume it is zero."*
+  - **Why §G2 waits too:** community detection + LLM community summaries are where the noise
+    actually costs money — TOC concepts fragment communities and the summaries are LLM calls on a
+    shared cluster. The previous session's note stands: *decide D1 before spending summary budget.*
+  - **Not gated, and therefore the one graph item that can start now:** **§G1 (PPR)** is a traversal
+    change over the adjacency matrix and does not depend on which concepts are in the graph.
+  - **Cost of the rebuild, for the record:** the last one measured **16 h 25 m** for 3,796 chunks
+    (§I23), against a 2 h estimate, with 44 LLM failures reported as "0 failed". That is why the
+    §I23 hardening is in the chain ahead of it rather than after.
 - **Evidence:** `logs/p1/step10/probe_graph_before.py` (the probe), `logs/p1/step10/graph_before.json`.
-- **No re-ingest** (graph rebuild only).
+- **No re-ingest** (graph rebuild only). ⚠️ **But the same filter fix has two prices** — the graph
+  lane needs only the rebuild, while the **card + retrieval** lanes need a **full re-ingest** because
+  `is_content` is written into the payload at ingest. Fixing both in one pass is why this rides with
+  the E1/E2/E3 re-ingest rather than being a standalone job.
 
 ### I22. NEW 2026-10-18 (found reading `build_graph` for the Step 10 graph plan) — `graph_stats["concept_nodes"]` reports MENTIONS edges, not distinct concepts
 
@@ -3032,7 +3053,7 @@ confounded, and the fix is to measure the first cell again at the end.
   `git diff src/pdf_ingestion/store.py`; the A1/A3 review transcripts under
   `~/.hermes/cache/delegation/live/`.
 
-### I39. NEW 2026-10-21 (found reading Phase B's cards) — the E5 content filter's *documented* gap is now LIVE: TOC and index chunks pass as content, and **6.7 % of the card corpus is built from them**
+### I39. FIXED 2026-10-21 (session 2) — the E5 content filter's *documented* gap went LIVE at the re-ingest: TOC and index chunks passed as content, **6.7 % of the card corpus is built from them**
 
 - **What:** `src/pdf_ingestion/content_filter.py` (`is_content`, §E5) is a text rule — keyword
   markers, an exact index-heading line, an index pipe-table shape, and an all-punctuation rule. Its
@@ -3074,6 +3095,58 @@ confounded, and the fix is to measure the first cell again at the end.
 - **No re-ingest to measure** (read-only). A fix **does** require a re-ingest to take effect.
 - **Evidence:** `logs/p1/step10/b6_card_samples_2026-10-21.txt` (the 22 cards + the band counts);
   `src/pdf_ingestion/content_filter.py` (docstring and rule); `src/pdf_ingestion/chunker.py:158`.
+
+#### I39 outcome — FIXED 2026-10-21 (session 2): two signals added, and the band table above CORRECTED
+
+**⚠️ The band table above is wrong, and it is wrong in the direction that hid the problem.**
+Re-measured from the text (`logs/p1/step10/i39_boundary_probe.py`):
+
+| | §I39's table | measured |
+|---|---|---|
+| TOC | 19 chunks, pages 20-26 | **77 chunks, pages 22-34** |
+| index | 193 chunks, pages 936-970 | 187 chunks, pages **937-968** (p936 is chapter prose) |
+| body | 3,349 chunks, pages 31-900 | 3,467 chunks, pages 35-936 |
+
+So ~55 TOC chunks were being counted as **body**, which is exactly why the handoff's "a page-reference
+density test catches 187/193 index chunks **with 0 body false positives**" did not reproduce: a
+false-positive count taken over "pages 31-900" **includes the TOC itself**. Re-measured with the TOC
+and index pages excluded, the un-anchored half of that pattern gives **558** body hits and the
+comma-anchored half gives **0**. The claim conflated the two.
+
+**The fix — two signals, both measured, both with zero body collateral:**
+
+| # | signal | catches | body loss |
+|---|---|---|---|
+| 4 | `is_toc_layout` — a dot-leader **run** (`(?:\.\s?){4,}`) **plus a section number** (`\b\d{1,2}-\d{1,2}\b`) | **72 / 77** TOC chunks | **0** |
+| 5 | `is_index_density` — ≥34 % of non-blank lines match `,\s*(?:[IVX]{1,3}-)?\d{1,3}-\d{1,3}` | **186 / 187** index chunks | **0** |
+
+**End-to-end on doc `7ba61432` (3,796 chunks, `logs/p1/step10/i39_verify_filter.py`):** TOC 72/77
+dropped, index 186/187, front matter 5/65, **body 0/3,467 — no content chunk is lost.**
+
+**Rejected, both measured** (`logs/p1/step10/i39_signal_design.py`, `i39_fp_inspect.py`):
+- **A bare dot-leader run.** Fires on real prose: p661's ratchet discussion
+  (`"click . . . . . click-click . . . click . . ."`) and the preface's quoted ellipses (p7-8).
+  Adding the section-number requirement removes exactly those three and keeps all 72 TOC catches.
+- **A bare `N-N, N =` literal.** Catches only 15/77 TOC and, worse, **133/187 index** chunks — it is
+  an index signal, not a TOC one.
+
+**Also measured: signals 2 and 3 are DEAD on this corpus.** `is_index_heading` fires on **0** chunks
+(no `## Index -1` line survives the chunker) and `is_index_layout` fires on **0** (the index does not
+come through as pipe rows). Kept — they are book-agnostic and free — but signal 5 is what carries
+this corpus. **That is why the whole index passed as content.**
+
+**What is still NOT caught, and is the remaining §E5 gap:** **front-matter prose** — the preface and
+publisher's note (60 of 65 front-matter chunks). No keyword, no structural marker, and the page
+bounds that used to cover them were zeroed by the re-ingest. A page-band backstop or a preface
+signal is the next step; the effect is 2,256 cards (3.0 %) on the old bands.
+- **Takes effect on a re-ingest** — `is_content` is written into the payload at ingest, so the
+  5,100 existing junk cards are **not** removed by this code change. That is the same re-ingest the
+  E1/E2/E3 pass needs, so it rides along.
+- **No cluster, no re-ingest to land.** Tests: 4 added to `tests/test_content_filter.py`, all built
+  from verbatim corpus rows. `tests/test_content_filter.py` + `tests/test_backmatter_gate.py`:
+  **27 passed**.
+- **Evidence:** `logs/p1/step10/i39_{filter_signal_probe,boundary_probe,signal_design,fp_inspect,
+  verify_filter}.py`; `src/pdf_ingestion/content_filter.py` (`is_toc_layout`, `is_index_density`).
 
 ### I40. NEW 2026-10-21 — the B5 RAPTOR verifier silently falls back to the LOCAL embedded Qdrant and returns a confident FAIL against the wrong store
 

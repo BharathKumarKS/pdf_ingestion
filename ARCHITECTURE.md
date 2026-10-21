@@ -475,7 +475,16 @@ Tests: 141 test functions across 10 files. `test_phase1/2/3` map to the phases;
   multivector-embeddings` (ColBERT, always 128-d, `embedding_type: "colbert"` whatever model you
   name), `/embed-text/v1/sparse-embeddings`. A `dimensions` parameter is **ignored** (MRL slicing is
   client-side). The GPU VM shell is **not** available to us — `ssh` is refused; the cluster is
-  API-only. See `IMPROVEMENTS.md` §E3a.
+  API-only. See `IMPROVEMENTS.md` §E3a. **Re-tested 2026-10-18** (owner believed ssh worked): the
+  entry is `Host sar-gpu-vm` → `10.0.50.99`, user `bks`; connecting returns
+  `Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password,keyboard-interactive)` after a
+  banner from the host itself:
+  *"SupportVectors GPU Cluster — lab.supportvectors.ai. If your student VM login works but this one
+  doesn't, your account is fine — direct GPU access is gated by the Fine-Tuning or MLOps/LLMOps group.
+  … In the meantime, the Ray cluster API (Chat Completion and Embeddings) is open for everyone."*
+  So the refusal is **account entitlement, not a network problem** — and the sanctioned path is the
+  API. Do not plan work that needs a shell on that box. (Note the GPU VM is on **10.0.50.x**, a
+  different subnet from the `.70`/`.65` API hosts.)
 
 ---
 
