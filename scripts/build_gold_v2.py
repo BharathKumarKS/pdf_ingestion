@@ -64,6 +64,37 @@ def _drop_unretrievable(entries: list[dict], lo: int, hi: int) -> tuple[list[dic
     return kept, dropped
 
 
+def _clamp_unretrievable(entries: list[dict], lo: int, hi: int) -> tuple[list[dict], list[dict]]:
+    """Remove individual label pages outside [lo, hi] from entries that survive the drop.
+
+    Why this exists (IMPROVEMENTS.md §D6): a label page outside the window can never be retrieved,
+    so it lowers the query's achievable maximum by 1/n for nothing — it measures the window, not
+    the retriever. ``_drop_unretrievable`` only removes a query when ALL its labels are outside, so
+    a query with one stray page survives with a structurally reduced maximum. Measured 2026-10-19:
+    4 multihop queries (gold-081/087/088/094) carried a page in 22–24 against min_content_page 30,
+    every one of them a multi-page *generator* page in old-DB numbering (§D4) that the scan never
+    expanded — i.e. §D4's defect surfacing as a §D6 one. Text-lane achievable max 0.9910 → 1.0000.
+    """
+    clamped: list[dict] = []
+    removed: list[dict] = []
+    for q in entries:
+        pages = q.get("relevant_pages") or []
+        if not q.get("answerable", True) or not pages:
+            clamped.append(q)
+            continue
+        kept_pages = [p for p in pages if lo <= p <= hi]
+        if len(kept_pages) == len(pages):
+            clamped.append(q)
+            continue
+        removed.append({
+            "id": q["id"], "lane": q.get("query_type"),
+            "removed": sorted(set(pages) - set(kept_pages)),
+            "n_before": len(pages), "n_after": len(kept_pages),
+        })
+        clamped.append({**q, "relevant_pages": kept_pages})
+    return clamped, removed
+
+
 def main() -> int:
     p = argparse.ArgumentParser(
         description="Assemble data/eval_queries_v2.json from the scanned gold pieces "
@@ -87,6 +118,11 @@ def main() -> int:
     overview, drop_o = _drop_unretrievable(_load(args.overview), lo, hi)
     visual, drop_v = _drop_unretrievable(
         [q for q in visual_all if q.get("calibrated")], lo, hi)
+    # ...then clamp stray pages out of the survivors (IMPROVEMENTS.md §D6).
+    gold, clamp_g = _clamp_unretrievable(gold, lo, hi)
+    overview, clamp_o = _clamp_unretrievable(overview, lo, hi)
+    visual, clamp_v = _clamp_unretrievable(visual, lo, hi)
+    clamped = clamp_g + clamp_o + clamp_v
 
     note = {
         "id": "_note",
@@ -112,6 +148,13 @@ def main() -> int:
     if unretrievable:
         print(f"  dropped (labels outside [{lo}, {hi}]): {unretrievable}  "
               f"— IMPROVEMENTS.md §D6")
+    if clamped:
+        print(f"  clamped (stray pages removed from [{lo}, {hi}]-surviving queries):")
+        for c in clamped:
+            print(f"    {c['id']:14} {c['lane']:9} removed {c['removed']}  "
+                  f"n {c['n_before']} -> {c['n_after']}")
+    else:
+        print(f"  clamped: none (no surviving query carries a page outside [{lo}, {hi}])")
     print(f"  => {ans} answerable + {len(negs)} negatives = {total}  ({pct:.1f}% negatives)")
 
     if total and pct < 15.0:

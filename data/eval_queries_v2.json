@@ -1372,7 +1372,6 @@
     "query_type": "multihop",
     "expected_route": "vector",
     "relevant_pages": [
-      23,
       167,
       170,
       172,
@@ -1458,7 +1457,6 @@
     "query_type": "multihop",
     "expected_route": "vector",
     "relevant_pages": [
-      24,
       169,
       274
     ],
@@ -1472,7 +1470,6 @@
     "query_type": "multihop",
     "expected_route": "vector",
     "relevant_pages": [
-      24,
       169,
       274
     ],
@@ -1566,7 +1563,6 @@
     "query_type": "multihop",
     "expected_route": "vector",
     "relevant_pages": [
-      22,
       108,
       474
     ],

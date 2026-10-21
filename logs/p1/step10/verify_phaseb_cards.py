@@ -83,7 +83,13 @@ def main() -> int:
     else:
         text = LOG.read_text()
         match = _CLOSING_RE.search(text)
-        failed_rows = [ln.strip() for ln in text.splitlines() if "Failed:" in ln]
+        # §I25's own warning text contains the literal "'Failed:'" — so a bare substring test counts
+        # the warning that tells you NOT to rely on `Failed:` rows as a `Failed:` row (§I41). Exclude
+        # that warning explicitly. The primary counters above are the real signal; this is secondary.
+        failed_rows = [
+            ln.strip() for ln in text.splitlines()
+            if "Failed:" in ln and "must read this count" not in ln
+        ]
         type_warnings = [ln.strip() for ln in text.splitlines()
                          if "Card types that failed at least once" in ln]
 
