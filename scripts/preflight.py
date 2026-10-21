@@ -14,7 +14,10 @@ Checks:
     1. Resolved config   — which Qdrant, which Memgraph, which lanes are actually live
     2. Qdrant            — reachable; the 4 collections and their point counts
     3. Memgraph          — reachable; node counts
-    4. Graph ↔ Qdrant    — % of graph chunk ids that exist in the vector store
+    4. Graph ↔ Qdrant    — % of graph chunk ids that exist in the vector store, SCOPED:
+                           if the collection under test does not hold the graph's own
+                           document(s), the check reports SKIP (not measured), not a false
+                           "retired content" blocker (§D14 fix (b))
     5. Intent classifier — loads, and its input width matches the embedder
     6. LLM endpoints     — /v1/models, rerank, sparse, multivector
 
@@ -40,12 +43,18 @@ from rich.table import Table
 console = Console()
 TIMEOUT = 8.0
 
-RESULTS: list[tuple[str, bool, str]] = []
+RESULTS: list[tuple[str, bool | None, str]] = []
 
 
-def record(name: str, ok: bool, detail: str) -> bool:
+def record(name: str, ok: bool | None, detail: str) -> bool:
+    """Record one check. ``ok`` is True (PASS), False (FAIL, a blocker) or **None (SKIP)**.
+
+    SKIP exists for one case: a check that is *not applicable* to the configuration under
+    test. Rendering it as PASS would be a lie and rendering it as FAIL would block a run
+    for a reason that is not a defect. It is printed in yellow and is never a blocker.
+    """
     RESULTS.append((name, ok, detail))
-    return ok
+    return bool(ok)
 
 
 # ── 1. config ────────────────────────────────────────────────────────────────
@@ -165,6 +174,10 @@ def check_memgraph(cfg, client) -> None:
             graph_ids = {
                 str(r["id"]) for r in s.run("MATCH (c:Chunk) RETURN c.id AS id").data()
             }
+            # The graph's own Document ids — the scope key for the check below (§D14 fix (b)).
+            graph_docs = {
+                str(r["id"]) for r in s.run("MATCH (d:Document) RETURN d.id AS id").data()
+            }
     except Exception as exc:  # noqa: BLE001
         record("memgraph", False, f"unreachable: {type(exc).__name__}: {exc}")
         record("graph.matches-qdrant", False, "cannot evaluate — Memgraph unreachable")
@@ -200,8 +213,63 @@ def check_memgraph(cfg, client) -> None:
         return
 
     dangling = graph_ids - qd_ids
+
+    # ── Scope gate (§D14 fix (b)) ────────────────────────────────────────────────
+    # The graph is built from ONE ingest, and chunk ids are `str(uuid.uuid4())` per ingest
+    # (chunker.py:147). So a graph built from a different ingest shares no ids with the
+    # collection under test and the dangling count above is *meaningless*: it reports 100 %
+    # for a graph that is perfectly healthy for its own collection, and then tells the
+    # operator to run clean_stale_graph.py — which, against a live collection, would delete
+    # a correct graph. Ask the graph itself which documents it holds, and whether this
+    # collection holds any of them. If it does not, the graph lane is simply not measured
+    # for this collection: report that, name both sides, and do not blame retired content.
+    if not graph_docs:
+        record("graph.matches-qdrant", None,
+               "graph holds no Document nodes — graph lane NOT MEASURED for this collection")
+        return
+
+    scoped = None
+    scope_err = None
+    try:
+        from qdrant_client.models import FieldCondition, Filter, MatchAny
+
+        scoped = client.count(
+            cfg.qdrant_collection,
+            count_filter=Filter(must=[FieldCondition(
+                key="document_id", match=MatchAny(any=sorted(graph_docs))
+            )]),
+            exact=True,
+        ).count
+    except Exception as exc:  # noqa: BLE001
+        scope_err = f"{type(exc).__name__}: {exc}"
+
+    if scoped == 0:
+        pct = (100 * len(dangling) / len(graph_ids)) if graph_ids else 0.0
+        record("graph.matches-qdrant", None,
+               f"MISMATCH: the graph was built from a different ingest — none of its "
+               f"{len(graph_docs)} document id(s) is in '{cfg.qdrant_collection}'; the graph "
+               f"lane is NOT MEASURED for this collection ({len(dangling):,}/{len(graph_ids):,} "
+               f"ids differ, {pct:.1f}%). This is not retired content — do NOT run "
+               f"clean_stale_graph.py.")
+        console.print(
+            f"  [yellow]Graph lane not measured.[/yellow] The graph's document(s) "
+            f"{sorted(graph_docs)} are not in '{cfg.qdrant_collection}'. The graph is correct "
+            f"for the collection it was built from; the multihop lane will return nothing for "
+            f"this run. Rebuild the graph against this collection (Phase 3 / Step 9) to measure it."
+        )
+        return
+
     pct = (100 * len(dangling) / len(graph_ids)) if graph_ids else 0.0
+    # NOTE: no square brackets in these details. rich parses `[...]` in a table cell as
+    # MARKUP and silently DROPS an unrecognised tag — a detail like "[graph doc(s) present]"
+    # disappears from the verdict table with no error at all. Parentheses only.
     detail = f"{len(dangling):,}/{len(graph_ids):,} graph chunk ids absent from Qdrant ({pct:.1f}%)"
+    if scoped is not None:
+        detail += f"  (graph doc(s) present in collection: {scoped:,} point(s))"
+    if scope_err is not None:
+        # Could not resolve the scope — fall back to the unscoped check and SAY SO, so a
+        # silent fallback cannot masquerade as a scoped pass.
+        detail += f"  (scope gate unavailable: {scope_err})"
     # <1% is tolerable noise; anything more means a retired ingest is still in the graph.
     record("graph.matches-qdrant", pct < 1.0, detail)
     if pct >= 1.0:
@@ -347,14 +415,25 @@ def main() -> None:
     t.add_column("detail")
     blockers = 0
     for name, ok, detail in RESULTS:
-        if not ok:
+        if ok is False:
             blockers += 1
-        t.add_row(name, "[green]PASS[/green]" if ok else "[red]FAIL[/red]", detail)
+        if ok is None:
+            mark = "[yellow]SKIP[/yellow]"
+        else:
+            mark = "[green]PASS[/green]" if ok else "[red]FAIL[/red]"
+        t.add_row(name, mark, detail)
     console.print(t)
 
     if blockers:
         console.print(f"\n[bold red]{blockers} BLOCKER(S)[/bold red] — a baseline run would be misleading.\n")
         sys.exit(1)
+    skipped = [n for n, ok, _ in RESULTS if ok is None]
+    if skipped:
+        console.print(
+            f"\n[bold yellow]No blockers[/bold yellow], but {len(skipped)} check(s) were SKIPPED "
+            f"({', '.join(skipped)}) — read the SKIP rows above before trusting a graph-lane number.\n"
+        )
+        return
     console.print("\n[bold green]All checks passed — safe to run the baseline.[/bold green]\n")
 
 
