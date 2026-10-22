@@ -11,7 +11,13 @@
 > OUTPUT: the 263 non-content chunks are gone), log `logs/p1/step10/graph_rebuild_2026-10-21.txt`. Read
 > item 3 for the full outcome. Also this session: the derived collections moved onto the dense lane
 > (`6773022`, §I12/§I13), which found and fixed **§I47 — the graph lane was dead on every multihop query
-> in `evaluate_rag.py`**. The next graph steps are **§G3, then §G2**.
+> in `evaluate_rag.py`**. The next graph steps are **§G3, then §G2** — and as of **2026-10-22 they are
+> planned with per-step verifiers and an explicit parallelization order**:
+> `.hermes/plans/2026-10-22-p1-graph-lanes-execution-index.md` (the index), plus
+> `…-i12-derived-collections-dense-lane-plan.md`, `…-g3-entity-resolution-plan.md`,
+> `…-g2-community-summaries-plan.md`. **§I12/§I47 EXECUTED AND CLOSED 2026-10-22 (both lanes on the
+> dense lane, verified — §I49); §G3's lever and §G2's gate both re-measured on the rebuilt graph.**
+> ⚠️ These four plan files are **untracked** — commit them or the pointer breaks on a fresh clone.
 > Session 5 landed: §I23's checkpoint + the `resume` plumbing that makes `resume=False` reachable
 > from the CLI, §I23(d)'s device selection, **§I23(c) — the extraction-model comparison (the
 > single-chunk "10 vs 5 concepts" did NOT reproduce; the real difference is 3.2-3.6× latency)**,
@@ -239,6 +245,19 @@
 > the confound §G1's ablation recorded). Clearing it is cheap and the rebuild re-populates it, but it
 > was **not** authorised by item 3, so it was NOT done. **It must be decided before the next graph
 > rebuild, not after.**
+> **✅ ANSWERED AND DONE 2026-10-22 — the drop is REQUIRED, not optional, and BOTH LANES ARE MOVED.**
+> Qdrant cannot resize a collection in place; both `concept_embeddings` and `derivative_artifacts` were
+> 768d while the query side is 1024d, so the §I12/§I47 fix (which moved them to the dense lane in code,
+> `6773022`) was only half-landed until the **data** was dropped and recreated. **Both lanes are now on
+> the dense lane and VERIFIED** — see `IMPROVEMENTS.md` §I49. `derivative_artifacts` 81,837@768d →
+> **73,406@1024d** (`search_da` returns 20 hits, was 0); `concept_embeddings` 19,719@768d →
+> **7,427@1024d** (`_find_concepts_scored` returns 8, was 0). `preflight.py`: **2 BLOCKER(S) →
+> All checks passed**. ⚠️ **The store trap:** `.env` leaves `QDRANT_HOST` blank, so the default is the
+> LOCAL Qdrant — every §I12 command needs `QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2`
+> or it silently targets the wrong store (§I49 Finding 1).
+> **▶ Next: §G3** — its gate (the rebuild) is discharged and its lever is re-measured (§I49 Finding 2:
+> 1,059 groups / 33.0 %, superseding §I30's before-arm). §G2's gate has also been re-run and PASSES
+> (§I49 Finding 3), so §G2 is un-gated behind §G3.
 >
 > **1. ✅ DONE (2026-10-21 session 2) — §I43 fixed and B5 PASSES.** `save_raptor_tree` now deletes the
 > document's RAPTOR points (and rows) before the upsert, and the 73 orphaned points were removed by

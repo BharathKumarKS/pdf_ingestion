@@ -1,0 +1,30 @@
+A1/A5 collection state: {
+  "derivative_artifacts": {
+    "points": 73406,
+    "dim": 1024
+  },
+  "concept_embeddings": {
+    "points": 19719,
+    "dim": 768
+  },
+  "knowledge_base_v2": {
+    "points": 3869,
+    "dim": null
+  },
+  "visual_knowledge_base": {
+    "points": 1033,
+    "dim": null
+  }
+}
+A4 card types present: ['definition', 'example', 'factoid', 'formula', 'misconception', 'objective', 'question', 'summary']
+A3 query vector dim: (1024,)
+A3 search_da hits: 20
+   score 0.8328 | type question | What is the general relationship between force and acceleration for this particl
+   score 0.8216 | type question | What is a simple scenario used to illustrate the relationship between forces?
+   score 0.8198 | type question | What is the key difference between the forces in this problem and those in earli
+VERDICT A3: PASS (>0 hits)
+
+---STDERR---
+2026-10-22 12:22:43.767 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-22 12:22:50.042 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:324 - Dense embedder: SV cluster 'Qwen/Qwen3-Embedding-0.6B' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-22 12:22:50.198 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db

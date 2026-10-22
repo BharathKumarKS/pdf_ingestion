@@ -3,6 +3,35 @@
 > **Written 2026-10-18. FOR SIGNOFF — nothing here is implemented, and no graph code has changed.**
 > Read `IMPROVEMENTS.md` §G (the register this executes), §I2 (the measured defect it starts with),
 > §I21/§I22 (found while planning this) and `HANDOFF.md` (P2 list). This file is the *procedure*.
+
+---
+
+## ⛔ SETTLED 2026-10-22 — this file's §2 and §3 are superseded. THE BLOCK BELOW WINS ON CONFLICT.
+
+Three decisions have moved since this plan was written. Do not act on the older text.
+
+1. **§2's "No new dependency is needed … `leiden_communities` present in networkx 3.6.1" is FALSE**
+   (§I33). networkx's `leiden_communities` is a backend-dispatch stub that raises
+   `NotImplementedError`. **Owner decision 2026-10-21: take the dependency** —
+   `uv add python-igraph leidenalg` (*"as that's the improvement over louvain"*).
+2. **The graph §G3 and §G2 run on has been REBUILT** (2026-10-21): 3,533 chunks / **7,427 concepts**
+   (not 3,796 / 7,834), `failed_chunks = 0`, §I21's filter live. Every count in §1 and §3 of this file
+   is a **before-arm** and must be re-measured, not inherited.
+3. **§G3 now runs AFTER the §I12 Lane B rebuild**, and its scope **includes syncing
+   `concept_embeddings`** to the merged node set (a merge that leaves the ANN index holding deleted
+   names re-creates §G1's measured confound).
+
+**The current procedure for each phase lives in the dated plans, which supersede the matching phase
+section below:**
+
+| Phase | Current plan (use this) |
+|---|---|
+| §I12 Lane B — the rebuild §G3 runs on | `.hermes/plans/2026-10-22-p1-i12-derived-collections-dense-lane-plan.md` |
+| §G3 — entity resolution | `.hermes/plans/2026-10-22-p1-g3-entity-resolution-plan.md` |
+| §G2 — community detection + summaries | `.hermes/plans/2026-10-22-p1-g2-community-summaries-plan.md` |
+| §G1 — PPR | **CLOSED 2026-10-21, measured-and-negative.** Not in this file's §"Phase G1" any more |
+
+This file remains the record of *why* the order is G3 → G1 → G2 → G5 → G4 and the syllabus citations.
 >
 > **Why now:** the owner asked whether Step 10's graph rebuild follows the course's Memgraph approach
 > by community detection. It does not, and never did (§G is separate work). This is that work, planned

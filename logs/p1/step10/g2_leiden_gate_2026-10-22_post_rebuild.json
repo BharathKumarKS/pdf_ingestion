@@ -1,0 +1,667 @@
+{
+  "comparison_primary": {
+    "leiden": {
+      "n_communities": 338,
+      "null_q": 0.394314,
+      "q": 0.783332,
+      "ratio": 1.9866,
+      "surplus": 0.389018
+    },
+    "louvain": {
+      "n_communities": 341,
+      "null_q": 0.384616,
+      "q": 0.781841,
+      "ratio": 2.0328,
+      "surplus": 0.397225
+    },
+    "resolution": 1.0,
+    "verdict": "PASS (one-sided)"
+  },
+  "connectedness": {
+    "leiden_all_connected_at_every_resolution": true,
+    "louvain_all_connected_at_every_resolution": false,
+    "louvain_disconnected_communities": {
+      "0.5": [
+        {
+          "index": 146,
+          "members": [
+            "Euler's number",
+            "algebraic equation",
+            "approximation of exponential function",
+            "base 10 exponential function",
+            "base 10 logarithm",
+            "base e",
+            "cut and try method",
+            "decimal approximation",
+            "exponentiation",
+            "irrational powers"
+          ],
+          "size": 26
+        },
+        {
+          "index": 152,
+          "members": [
+            "Pauli exclusion principle",
+            "Saha ionization equation",
+            "atomic density",
+            "atomic forces",
+            "atomic level surface irregularity",
+            "atomic volume",
+            "bound electron concentration",
+            "coefficient of friction",
+            "dry friction",
+            "dry metals"
+          ],
+          "size": 32
+        },
+        {
+          "index": 191,
+          "members": [
+            "Absolute Velocity",
+            "Abstraction in algebra",
+            "Action at a distance",
+            "Algebraic equation",
+            "Amplitude Modulation",
+            "Amplitude of electromagnetic field",
+            "Amplitude of wave",
+            "Amplitude reduction in oscillations",
+            "Angular frequency",
+            "Approximate Theory"
+          ],
+          "size": 248
+        }
+      ]
+    }
+  },
+  "graph": {
+    "components": 291,
+    "density": 0.000833,
+    "directed_edges": 22799,
+    "isolates": 0,
+    "max_degree": 189,
+    "nodes": 7398,
+    "self_loops_dropped": 0,
+    "undirected_edges": 22799
+  },
+  "hierarchy_nesting": {
+    "0.5->1.0": {
+      "fraction_nested": 0.9349,
+      "n_coarse": 326,
+      "n_fine": 338,
+      "n_fine_wholly_inside_one_coarse": 316
+    },
+    "1.0->2.0": {
+      "fraction_nested": 0.8779,
+      "n_coarse": 338,
+      "n_fine": 344,
+      "n_fine_wholly_inside_one_coarse": 302
+    }
+  },
+  "ladder": {
+    "0.5": {
+      "leiden": {
+        "communities_sha256": "5a259cf2aed997773215b5477f10a40088955aac24b3dfc0f0c9c09eb5db313e",
+        "community_sizes": [
+          1699,
+          1331,
+          1184,
+          412,
+          347,
+          280,
+          174,
+          145,
+          116,
+          69,
+          68,
+          39,
+          33,
+          31,
+          30,
+          28,
+          24,
+          22,
+          21,
+          21
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 1699,
+          "n_communities": 326,
+          "n_multi_member": 326,
+          "n_singletons": 0
+        },
+        "n_communities": 326,
+        "null_q": 0.507923,
+        "null_q_observed_partition_on_null_graph": 0.080433,
+        "q": 0.83437,
+        "ratio": 1.6427,
+        "surplus": 0.326446
+      },
+      "leiden_weighted": {
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 1574,
+          "n_communities": 319,
+          "n_multi_member": 319,
+          "n_singletons": 0
+        },
+        "n_communities": 319,
+        "q": 0.835258
+      },
+      "louvain": {
+        "communities_sha256": "f1f94dcc60dc022cd46e7b0720b6354d7049e6bc9842871e82e6b70185d82097",
+        "community_sizes": [
+          1678,
+          1606,
+          1166,
+          310,
+          248,
+          217,
+          119,
+          107,
+          69,
+          65,
+          61,
+          46,
+          43,
+          39,
+          33,
+          32,
+          31,
+          31,
+          30,
+          28
+        ],
+        "connectivity": {
+          "all_connected": false,
+          "disconnected": [
+            {
+              "index": 146,
+              "members": [
+                "Euler's number",
+                "algebraic equation",
+                "approximation of exponential function",
+                "base 10 exponential function",
+                "base 10 logarithm",
+                "base e",
+                "cut and try method",
+                "decimal approximation",
+                "exponentiation",
+                "irrational powers"
+              ],
+              "size": 26
+            },
+            {
+              "index": 152,
+              "members": [
+                "Pauli exclusion principle",
+                "Saha ionization equation",
+                "atomic density",
+                "atomic forces",
+                "atomic level surface irregularity",
+                "atomic volume",
+                "bound electron concentration",
+                "coefficient of friction",
+                "dry friction",
+                "dry metals"
+              ],
+              "size": 32
+            },
+            {
+              "index": 191,
+              "members": [
+                "Absolute Velocity",
+                "Abstraction in algebra",
+                "Action at a distance",
+                "Algebraic equation",
+                "Amplitude Modulation",
+                "Amplitude of electromagnetic field",
+                "Amplitude of wave",
+                "Amplitude reduction in oscillations",
+                "Angular frequency",
+                "Approximate Theory"
+              ],
+              "size": 248
+            }
+          ],
+          "largest": 1678,
+          "n_communities": 331,
+          "n_multi_member": 331,
+          "n_singletons": 0
+        },
+        "n_communities": 331,
+        "null_q": 0.515284,
+        "null_q_observed_partition_on_null_graph": 0.089592,
+        "q": 0.8323,
+        "ratio": 1.6152,
+        "surplus": 0.317016
+      }
+    },
+    "1.0": {
+      "leiden": {
+        "communities_sha256": "c5559d483aa6f347066e9b4c7124fc63988a4ee403428fc713a750cf0fc6a72b",
+        "community_sizes": [
+          987,
+          791,
+          577,
+          484,
+          428,
+          414,
+          335,
+          238,
+          234,
+          209,
+          147,
+          144,
+          114,
+          106,
+          100,
+          96,
+          72,
+          70,
+          69,
+          68
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 987,
+          "n_communities": 338,
+          "n_multi_member": 338,
+          "n_singletons": 0
+        },
+        "n_communities": 338,
+        "null_q": 0.394314,
+        "null_q_observed_partition_on_null_graph": 0.000579,
+        "q": 0.783332,
+        "ratio": 1.9866,
+        "surplus": 0.389018
+      },
+      "leiden_weighted": {
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 820,
+          "n_communities": 326,
+          "n_multi_member": 326,
+          "n_singletons": 0
+        },
+        "n_communities": 326,
+        "q": 0.783862
+      },
+      "louvain": {
+        "communities_sha256": "b699aa2fc6cd93a222feda42f4ae62330410929e9002ded3f0881c1635f99d28",
+        "community_sizes": [
+          885,
+          881,
+          773,
+          418,
+          383,
+          283,
+          275,
+          244,
+          231,
+          218,
+          203,
+          160,
+          117,
+          108,
+          101,
+          95,
+          79,
+          70,
+          69,
+          62
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 885,
+          "n_communities": 341,
+          "n_multi_member": 341,
+          "n_singletons": 0
+        },
+        "n_communities": 341,
+        "null_q": 0.384616,
+        "null_q_observed_partition_on_null_graph": 0.00071,
+        "q": 0.781841,
+        "ratio": 2.0328,
+        "surplus": 0.397225
+      }
+    },
+    "2.0": {
+      "leiden": {
+        "communities_sha256": "0f11fc58337bedae6f77528ca3e201708cfa6158aed43247c390f89cd471d5f4",
+        "community_sizes": [
+          378,
+          369,
+          269,
+          252,
+          247,
+          241,
+          229,
+          223,
+          197,
+          186,
+          184,
+          181,
+          173,
+          170,
+          161,
+          155,
+          147,
+          134,
+          128,
+          127
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 378,
+          "n_communities": 344,
+          "n_multi_member": 344,
+          "n_singletons": 0
+        },
+        "n_communities": 344,
+        "null_q": 0.359781,
+        "null_q_observed_partition_on_null_graph": -0.028601,
+        "q": 0.741213,
+        "ratio": 2.0602,
+        "surplus": 0.381432
+      },
+      "leiden_weighted": {
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 338,
+          "n_communities": 344,
+          "n_multi_member": 344,
+          "n_singletons": 0
+        },
+        "n_communities": 344,
+        "q": 0.740567
+      },
+      "louvain": {
+        "communities_sha256": "51d926c922b58748fac456642b8b87801ae86f5754214104f63b2738284f7277",
+        "community_sizes": [
+          383,
+          344,
+          343,
+          253,
+          245,
+          244,
+          209,
+          205,
+          186,
+          181,
+          173,
+          173,
+          167,
+          163,
+          160,
+          159,
+          154,
+          151,
+          143,
+          140
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 383,
+          "n_communities": 350,
+          "n_multi_member": 350,
+          "n_singletons": 0
+        },
+        "n_communities": 350,
+        "null_q": 0.349244,
+        "null_q_observed_partition_on_null_graph": -0.028693,
+        "q": 0.730989,
+        "ratio": 2.0931,
+        "surplus": 0.381745
+      }
+    }
+  },
+  "meta": {
+    "before_arm_reference": {
+      "artifact": "logs/p1/step10/g2_modularity_gate.json",
+      "note": "superseded — quote THIS artifact from now on",
+      "partitioner": "louvain (leiden unavailable then, §I33)",
+      "q_observed": 0.589597,
+      "q_rewired_null": 0.28033
+    },
+    "generated_by": "logs/p1/step10/g2_leiden_gate.py",
+    "graph_document_ids": [
+      "7ba61432-c5e0-416d-aecf-25a232523481"
+    ],
+    "graph_source": "memgraph localhost:7687 RELATES_TO",
+    "leiden_backend": "leidenalg + python-igraph (added 2026-10-21)",
+    "modularity_scorer": "networkx.community.modularity (same as the §I33 before arm)",
+    "no_llm_calls": true,
+    "no_reingest": true,
+    "nswap_factor": 10,
+    "partitioners": [
+      "leiden (leidenalg on igraph)",
+      "louvain (networkx, comparison arm)"
+    ],
+    "resolution": 1.0,
+    "resolutions_run": [
+      0.5,
+      1.0,
+      2.0
+    ],
+    "seed": 20261020,
+    "weight_primary": null,
+    "weight_secondary": "weight",
+    "what": "§G2 modularity gate on LEIDEN (owner decision 2026-10-21), re-running §I33"
+  },
+  "null_rewired": {
+    "degree_sequence_preserved": true,
+    "nswap_factor": 10
+  },
+  "one_sided_caveat": "ONE-SIDED RESULT — do not read a FAIL as evidence of no community structure. The graph carries TOC concepts because the Phase 3 build does not apply the E5 content filter (§I21), and the §G plan states §I21 'is a prerequisite for good communities, since TOC concepts are exactly the noise that fragments them'. So a PASS (Q beats the rewired null) is trustworthy even under that noise, while a FAIL is CONFOUNDED. Do not let a FAIL kill G2.",
+  "top_communities_leiden_res_1": [
+    {
+      "sample_members": [
+        "Albert Einstein",
+        "Arrhenius equation",
+        "Average current",
+        "Avogadro number",
+        "Avogadro's number",
+        "Bohr's atomic energy levels",
+        "Boltzmann constant",
+        "Boltzmann distribution",
+        "Boltzmann factor",
+        "Boltzmann's constant",
+        "Boltzmann's law",
+        "Brownian motion",
+        "Carnot's analysis of heat engines",
+        "Carnot's argument",
+        "Carnot's principle"
+      ],
+      "size": 987
+    },
+    {
+      "sample_members": [
+        "90-degree phase shift",
+        "A = -B",
+        "A = B",
+        "Amplitude of a wave",
+        "Atomic bomb",
+        "Average value of a cosine function over a period",
+        "Average value of a periodic function",
+        "Bragg's law",
+        "Brillouin zone",
+        "Coefficient Extraction",
+        "Cornu's spiral",
+        "Cosine multiplication in Fourier analysis",
+        "Doppler effect",
+        "Doppler effect (shock wave context)",
+        "Doppler shift formula"
+      ],
+      "size": 791
+    },
+    {
+      "sample_members": [
+        "Accelerating Coordinate System",
+        "Acceleration",
+        "Acceleration Components",
+        "Acceleration due to Gravity",
+        "Achilles and the Tortoise",
+        "Acoustics",
+        "Additivity of Moment of Inertia",
+        "Additivity of torques",
+        "Air Resistance",
+        "Air Track Experiment",
+        "Analogy in Physics",
+        "Angle",
+        "Angle between Force and Axis",
+        "Angle between vectors",
+        "Angular Displacement"
+      ],
+      "size": 577
+    },
+    {
+      "sample_members": [
+        "1/2 kT Theorem",
+        "Absolute Entropy",
+        "Absolute Temperature",
+        "Absolute Zero",
+        "Acoustic Pressure Level",
+        "Activation Energy",
+        "Adiabatic Compression",
+        "Adiabatic Equation for Ideal Gas",
+        "Adiabatic Equation of State",
+        "Adiabatic Expansion",
+        "Adiabatic Index",
+        "Adiabatic Process",
+        "Air Trough Experiment",
+        "Amalgamation in Physics",
+        "Analytical Differentiation"
+      ],
+      "size": 484
+    },
+    {
+      "sample_members": [
+        "Absorbed Intensity",
+        "Agglomeration",
+        "Air",
+        "Air pressure variation over time",
+        "Amplitude",
+        "Amplitude Addition Formula",
+        "Amplitude Modulation",
+        "Amplitude of Electromagnetic Wave",
+        "Amplitude of Scattering",
+        "Angle of Diffraction",
+        "Angle of First Minimum",
+        "Angle of Incidence",
+        "Angle of Polarization",
+        "Angle of Reflection",
+        "Angle of Refraction"
+      ],
+      "size": 428
+    },
+    {
+      "sample_members": [
+        "Absorption index",
+        "Accelerating Charge",
+        "Acceleration of Electrons",
+        "Acceleration of a Charge",
+        "Action and Reaction",
+        "Algebraic Equations",
+        "Alternating Current",
+        "Ampere",
+        "Amplitude of Oscillation",
+        "Analogous Substitution in Physics",
+        "Angle between Vectors",
+        "Angular Frequency",
+        "Antenna",
+        "Apparent Direction of Charge",
+        "Applied Frequency"
+      ],
+      "size": 414
+    },
+    {
+      "sample_members": [
+        "Absolute Velocity",
+        "Absolute square of a complex number",
+        "Abstract Mathematical Principle",
+        "Abstraction in algebra",
+        "Action at a distance",
+        "Addition of probabilities",
+        "Age of the Universe",
+        "Algebraic equation",
+        "Amplitude modulation",
+        "Amplitude of electromagnetic field",
+        "Amplitude of wave",
+        "Amplitude reduction in oscillations",
+        "Angular frequency",
+        "Approximate analysis",
+        "Atmospheric density gradient"
+      ],
+      "size": 335
+    },
+    {
+      "sample_members": [
+        "Classical mechanics",
+        "Compton effect",
+        "Coordinate systems",
+        "Coulomb field",
+        "Electromagnetic radiation",
+        "Energy dissipation in radiation",
+        "Energy flux",
+        "Four-vector",
+        "Frame of reference",
+        "Galilean invariance",
+        "Galilean relativity",
+        "Galilean transformation",
+        "Galilean velocity transformation",
+        "Henri Poincaré",
+        "Inverse-square law of energy flux"
+      ],
+      "size": 238
+    },
+    {
+      "sample_members": [
+        "Amino acid configuration",
+        "Anderson's experiment",
+        "Biological Homogeneity",
+        "Biological homochirality",
+        "Bohr radius",
+        "Born rule",
+        "CPT symmetry",
+        "Chirality",
+        "Clock",
+        "Compton scattering",
+        "Dirac equation",
+        "Enantiomers",
+        "Evolution of Molecular Asymmetry",
+        "Geiger counter",
+        "Heisenberg uncertainty principle"
+      ],
+      "size": 234
+    },
+    {
+      "sample_members": [
+        "Absolute Rotation",
+        "Absorption",
+        "Acceleration as a Function of Time",
+        "Action at a Distance",
+        "Affective Future",
+        "Annihilation",
+        "Annihilation Process",
+        "Annihilation of Electron and Positron",
+        "Antenna Radiation",
+        "Antimatter",
+        "Antiproton",
+        "Atomic Scattering",
+        "Atomic Size",
+        "Binomial Coefficients",
+        "Binomial Theorem"
+      ],
+      "size": 209
+    }
+  ]
+}

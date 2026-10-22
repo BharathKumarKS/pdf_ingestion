@@ -1,0 +1,74 @@
+
+Synapse — baseline preflight
+
+                             Resolved configuration                             
+┌─────────────────────────────┬────────────────────────────────────────────────┐
+│ Qdrant                      │ 10.0.10.65                                     │
+│ Memgraph                    │ localhost:7687                                 │
+│ embedding (query+index)     │ Qwen/Qwen3-Embedding-0.6B (1024d + 64d MRL)    │
+│ embedding (derived indexes) │ Qwen/Qwen3-Embedding-0.6B (1024d) — DA/concept │
+│                             │ collections (§I12; was                         │
+│                             │ nomic-ai/nomic-embed-text-v1.5 768d)           │
+│ reranker                    │ BAAI/bge-reranker-v2-m3  enabled=True          │
+│ colbert                     │ enabled=True                                   │
+│                             │ url=http://10.0.10.70:8123/embed-text/v1/mult… │
+│ splade                      │ enabled=True                                   │
+│                             │ url=http://10.0.10.70:8123/embed-text/v1/spar… │
+│ graph                       │ enabled=True  tenant=global                    │
+│ hyde                        │ True                                           │
+│ DA lane                     │ True                                           │
+│ MMR                         │ lambda=0.7 candidates=100                      │
+└─────────────────────────────┴────────────────────────────────────────────────┘
+                       Qdrant collections                        
+┏━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ points                ┃ vectors ┃ status                      ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ knowledge_base_v2     │ 3,869   │ colbert,dense_1024,dense_64 │
+│ derivative_artifacts  │ 73,406  │ (unnamed)                   │
+│ visual_knowledge_base │ 1,033   │ colpali                     │
+│ concept_embeddings    │ 7,427   │ (unnamed)                   │
+└───────────────────────┴─────────┴─────────────────────────────┘
+  Memgraph: Documents=1 Pages=907 Chunks=3533 Concepts=7427
+                                    Verdict                                     
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ check                           ┃ result ┃ detail                            ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ colbert-lane                    │ PASS   │ colbert will run (server)         │
+│ pipeline.card_generation        │ PASS   │ openai/gpt-oss-20b @              │
+│                                 │        │ http://10.0.10.70:8000/v1         │
+│ pipeline.raptor_summarization   │ PASS   │ openai/gpt-oss-20b @              │
+│                                 │        │ http://10.0.10.70:8000/v1         │
+│ pipeline.intent_classifier      │ PASS   │ openai/gpt-oss-20b @              │
+│                                 │        │ http://10.0.10.70:8000/v1         │
+│ pipeline.evaluation             │ PASS   │ openai/gpt-oss-20b @              │
+│                                 │        │ http://10.0.10.70:8000/v1         │
+│ qdrant                          │ PASS   │ 34 collections                    │
+│ qdrant.knowledge_base_v2        │ PASS   │ 3,869 points                      │
+│ qdrant.derivative_artifacts     │ PASS   │ 73,406 points                     │
+│ qdrant.visual_knowledge_base    │ PASS   │ 1,033 points                      │
+│ qdrant.concept_embeddings       │ PASS   │ 7,427 points                      │
+│ qdrant.derivative_artifacts.dim │ PASS   │ 1024d == dense_dim — lane is      │
+│                                 │        │ callable                          │
+│ qdrant.concept_embeddings.dim   │ PASS   │ 1024d == dense_dim — lane is      │
+│                                 │        │ callable                          │
+│ memgraph                        │ PASS   │ docs=1 chunks=3533 concepts=7427  │
+│ graph.matches-qdrant            │ PASS   │ 0/3,533 graph chunk ids absent    │
+│                                 │        │ from Qdrant (0.0%)  (graph doc(s) │
+│                                 │        │ present in collection: 3,869      │
+│                                 │        │ point(s))                         │
+│ intent-classifier               │ PASS   │ loaded LogisticRegression,        │
+│                                 │        │ n_features_in_=1024 (dense        │
+│                                 │        │ lane=1024)                        │
+│ llm.models                      │ PASS   │ HTTP 200                          │
+│                                 │        │ http://10.0.10.70:8000/v1/models  │
+│ llm.rerank                      │ PASS   │ HTTP 200                          │
+│                                 │        │ http://10.0.10.70:8123/rerank/v1… │
+│ llm.sparse                      │ PASS   │ HTTP 200                          │
+│                                 │        │ http://10.0.10.70:8123/embed-tex… │
+│ llm.multivector                 │ PASS   │ HTTP 200                          │
+│                                 │        │ http://10.0.10.70:8123/embed-tex… │
+│ llm.completion                  │ PASS   │ openai/gpt-oss-20b -> 'OK'        │
+└─────────────────────────────────┴────────┴───────────────────────────────────┘
+
+All checks passed — safe to run the baseline.
+

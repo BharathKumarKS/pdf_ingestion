@@ -1,0 +1,28 @@
+Synapse — clear a document's graph
+  Memgraph: localhost:7687
+                               Documents to clear                               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━┳━━━━━━━┓
+┃ document_id              ┃ title                   ┃ tenant ┃ chunks ┃ pages ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━┩
+│ 7ba61432-c5e0-416d-aecf… │ The Feynman Lectures on │ global │   3533 │   907 │
+│                          │ Physics, Volume I       │        │        │       │
+└──────────────────────────┴─────────────────────────┴────────┴────────┴───────┘
+
+Will delete: 1 document(s), 3533 chunks, 907 pages, and 7427 of 7427 concept(s) 
+they mention (the other 0 are still mentioned by a surviving chunk).
+NOTE: this is EVERY document in the graph — it will be left empty.
+        Graph before → after        
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┓
+┃                 ┃ before ┃ after ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━┩
+│ Document        │      1 │     0 │
+│ Chunk           │   3533 │     0 │
+│ Page            │    907 │     0 │
+│ Concept         │   7427 │     0 │
+│ PART_OF         │   4440 │     0 │
+│ ON_PAGE         │   3533 │     0 │
+│ MENTIONS        │  14407 │     0 │
+│ RELATES_TO      │  22799 │     0 │
+│ PREREQUISITE_OF │   3295 │     0 │
+└─────────────────┴────────┴───────┘
+Done. Removed 1 document(s), 3533 chunks, 907 pages, 7427 orphaned concept(s).

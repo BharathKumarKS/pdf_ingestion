@@ -1,0 +1,25 @@
+2026-10-22 12:27:32.789 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-22 12:27:33.379 | INFO     | src.core.database:_ensure_concept_collection:382 - Created Qdrant concept collection 'concept_embeddings'
+2026-10-22 12:27:33.825 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-10-22 12:27:33.841 | INFO     | src.pdf_ingestion.store:generate_phase3_artifacts:1744 - ColPali: skipped via --graph-only (0 existing vectors)
+2026-10-22 12:27:34.059 | INFO     | src.core.database:get_memgraph:417 - Memgraph: connected at bolt://localhost:7687
+2026-10-22 12:27:34.264 | INFO     | src.pdf_ingestion.graph_builder:ensure_schema:212 - Memgraph: schema ready
+2026-10-22 12:27:45.738 | INFO     | src.pdf_ingestion.store:generate_phase3_artifacts:1823 - Memgraph: skipped 263 non-content chunk(s) (front/back matter) — §I21
+2026-10-22 12:27:45.738 | INFO     | src.pdf_ingestion.store:generate_phase3_artifacts:1827 - Memgraph: building graph for doc 'feynman-lectures-on-physics-volume1.pdf' (3533 chunks, 263 non-content skipped)
+2026-10-22 12:27:45.768 | INFO     | src.core.pipeline_config:load_config:29 - Loaded config.yaml from /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/config.yaml
+2026-10-22 12:27:45.783 | INFO     | src.pdf_ingestion.graph_checkpoint:_load:209 - Graph checkpoint 7ba61432__9e758046e4a15115.jsonl: 3533 of 3533 chunks already extracted — 0 to retry after a failed extraction, 0 for chunks not in this build's chunk set (dropped)
+2026-10-22 12:27:45.784 | INFO     | src.pdf_ingestion.graph_builder:build_graph:285 - Extracting concepts for 0 of 3533 chunks with 4 parallel workers — 3533 already checkpointed [7ba61432__9e758046e4a15115.jsonl]
+2026-10-22 12:27:45.784 | SUCCESS  | src.pdf_ingestion.graph_builder:build_graph:319 - Concept extraction done: 3533 chunks, 0 FAILED (contributed no concepts)
+2026-10-22 12:27:45.785 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:324 - Dense embedder: SV cluster 'Qwen/Qwen3-Embedding-0.6B' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-22 12:27:45.785 | INFO     | src.pdf_ingestion.graph_builder:build_graph:357 - Embedding 7427 unique concept names for graph search…
+2026-10-22 13:08:13.406 | DEBUG    | src.pdf_ingestion.graph_builder:build_graph:365 - Concept embeddings ready: 7427/7427
+2026-10-22 13:08:30.271 | INFO     | src.pdf_ingestion.graph_builder:_upsert_concepts_to_qdrant:650 - Upserted 7427 concept embeddings to Qdrant collection 'concept_embeddings'
+2026-10-22 13:12:23.175 | INFO     | src.pdf_ingestion.graph_builder:build_graph:476 - Memgraph: 3533 chunk nodes, 14407 concept nodes, 50870 edges for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-10-22 13:12:23.238 | SUCCESS  | src.pdf_ingestion.store:generate_phase3_artifacts:1850 - Phase 3 complete for 'feynman-lectures-on-physics-volume1.pdf': 0 visual vectors, 14407 concept nodes
+                                Phase 3 Results                                 
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━┓
+┃             ┃      Visual ┃     Concept ┃      Failed ┃             ┃        ┃
+┃ Filename    ┃     Vectors ┃       Nodes ┃      chunks ┃ Graph Edges ┃ Status ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━┩
+│ feynman-le… │           0 │       14407 │           0 │       50870 │ ready  │
+└─────────────┴─────────────┴─────────────┴─────────────┴─────────────┴────────┘

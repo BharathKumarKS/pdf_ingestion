@@ -1,0 +1,35 @@
+2026-10-22 11:43:30.526 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-10-22 11:43:30.572 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-22 11:43:31.378 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:324 - Dense embedder: SV cluster 'Qwen/Qwen3-Embedding-0.6B' at http://10.0.10.70:8123/embed-text/v1/embeddings
+
+Phase A — Derivative Artifact Indexing
+  Collection : derivative_artifacts
+  Card types : ['summary', 'definition', 'example', 'misconception', 'question',
+'objective', 'formula', 'factoid']
+  Tenant     : all
+2026-10-22 11:43:31.579 | INFO     | src.core.database:_ensure_da_collection:356 - Created Qdrant DA collection 'derivative_artifacts'
+  Cleared existing DA vectors.
+  Cards found: 75662 (before chapter filter)
+  After filter: 73406 kept, 2256 skipped (non-chapter / front matter)
+  Embedding cards... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+  Upserting to Qdrant... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+   DA Indexing Summary   
+┏━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Card Type     ┃ Count ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ definition    │  2589 │
+│ example       │   890 │
+│ factoid       │ 29625 │
+│ formula       │  1219 │
+│ misconception │  3366 │
+│ objective     │  3667 │
+│ question      │ 28374 │
+│ summary       │  3676 │
+│ Total         │ 73406 │
+└───────────────┴───────┘
+
+Done! 73406 vectors in 'derivative_artifacts'.
+
+Next: run the evaluation to measure Phase A lift:
+  uv run python scripts/evaluate_rag.py --retrieval-only --skip-visual 
+--run-name phase_a

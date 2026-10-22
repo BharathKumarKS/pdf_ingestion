@@ -3710,3 +3710,82 @@ from src.core.config import get_settings; print(DocumentStore(get_settings()).co
 - **Ordering trap, unchanged:** still run `clean_stale_visual.py` after every Phase-3 re-ingest per
   `ARCHITECTURE.md` §8 — the above is about the *duplicate-pages* defect, not the *stale-document*
   one.
+
+### I48. NEW 2026-10-22 (found drafting the §I12 dense-lane plan) — two comments outlived their migration, and one of them is load-bearing
+
+- **What:** the §I12 dense-lane move landed in code (`6773022`) but two comments still assert the
+  pre-move behaviour. Both are the §I13-adjacent class — a note left beside the code reads as
+  authoritative precisely because it is beside the code.
+  1. **`src/core/config.py:45`** — `embedding_dim: int = 768  # legacy Nomic dense dim (DA + concept
+     collections)`. **False since `6773022`:** `_ensure_da_collection` (`database.py:354`) and
+     `_ensure_concept_collection` (`database.py:380`) both create at `cfg.dense_dim`. The parenthetical
+     names a lane they no longer use, so the next reader either re-does landed work or designs around
+     a constraint that is gone. **Fix:** correct the comment (the field is still the *legacy* Nomic
+     dim, but no longer for those two collections).
+  2. **`logs/p1/step10/run_graph.sh:14`** — *"`GraphBuilder.build_graph` MERGEs by id, so re-running is
+     **idempotent** for this document."* **False for `RELATES_TO`:** the edge write is
+     `MERGE … ON MATCH SET r.weight = r.weight + 1`, so a rebuild over an existing graph **doubles
+     every edge weight** — the §I43 duplication class, in the graph. This is the **load-bearing** one:
+     `run_graph.sh` is the file a future session copies to re-run the build, so the wrong claim is
+     exactly what would be acted on. `HANDOFF.md` already records the correct behaviour (item 3's
+     `force_graph` note); the script comment was not swept.
+- **Why it matters:** both are cheap to fix and both mislead in the direction of doing work twice
+  (a redundant re-ingest) or corrupting the graph (a re-run without a clear). The second is worse
+  because the file is a run harness, not prose.
+- **Cost:** comment edits only. No re-ingest, no LLM calls.
+- **Evidence:** `src/core/config.py:45`; `logs/p1/step10/run_graph.sh:14`; the correct behaviour in
+  `HANDOFF.md` item 3 and `graph_builder.py`'s edge writes.
+
+### I49. 2026-10-22 — §I12/§I47 EXECUTED and closed, plus three findings the run produced
+
+- **What was done (both lanes, on the cluster, verified):**
+  - **Lane A — `derivative_artifacts`.** `index_derivative_artifacts.py --clear --doc-id
+    7ba61432-…` → **73,406** vectors at **1024d** (was 81,837 at 768d, a retired card generation
+    with 0 id overlap). Verifiers: dim 1024 ✓; `search_da(dense_vec_1024, 'global')` returns **20
+    hits** (was **0** — the §I12 discriminator); **8/8** card types (was 5);
+    `knowledge_base_v2` 3,869 and `visual_knowledge_base` 1,033 **unchanged**. Log
+    `logs/p1/step10/i12_laneA_da_reindex_2026-10-22.log`, verify
+    `logs/p1/step10/i12_laneA_verify_2026-10-22.txt`.
+  - **Lane B — `concept_embeddings`.** Dropped (19,719 pts @ 768d — it had GROWN from §I12's
+    15,276, confirming the "the rebuild only ADDS to it" prediction), graph cleared (verified
+    independently 0/0/0/0), then `run_phase3.py --graph-only` rebuilt. Result: **7,427** points at
+    **1024d**; `_find_concepts_scored(np.zeros(1024))` returns **8** concepts (was **0** — the §I47
+    discriminator). Graph shape **identical to the verified 2026-10-21 rebuild**: 3,533 Chunk /
+    907 Page / 7,427 Concept / 14,407 MENTIONS / **22,799 RELATES_TO** / 3,295 PREREQUISITE_OF —
+    the `RELATES_TO` count matching pre-clear **proves the graph clear prevented the §I43-class
+    weight doubling**. Log `…/i12_laneB_rebuild_2026-10-22.log`, verify `…/i12_laneB_verify_2026-10-22.txt`.
+  - **Preflight before → after:** `derivative_artifacts.dim` and `concept_embeddings.dim` both
+    **FAIL → PASS**; **2 BLOCKER(S) → All checks passed**. Evidence
+    `logs/p1/step10/i12_preflight_{before,after}_2026-10-22.txt`.
+- **Finding 1 — THE STORE TRAP, and it would have silently done nothing.** `.env` leaves
+  `QDRANT_HOST` **blank**, so `get_settings()` resolves to the **local embedded** Qdrant
+  (`./data/qdrant`), NOT the cluster. The two stores hold different (and differently stale)
+  generations: locally `concept_embeddings` had **0** points and `derivative_artifacts` 81,818; on
+  the cluster they were **19,719** and **81,837**. Every command in the §I12 plan therefore needs
+  `QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2`, and the **dry-run must be read**
+  before applying. Registering this because a §I12 run without the override would have dropped the
+  local collections, recreated them, and reported success while the cluster lanes stayed dead.
+- **Finding 2 — the §G3 lever RE-MEASURED on the rebuilt graph, and it MOVED (§I30 is a before-arm).**
+  `probe_g3_lever.py` on doc `7ba61432`: **1,059** merge groups (was 1,186) covering **2,451**
+  concepts = **33.0 %** of the 7,427-name vocabulary (was 34.4 % of 7,834); **3** groups gain
+  nothing (was 0); `names_skipped_empty_key = 0` (the single-letter `'s'` concept is gone — §I31
+  trap 3b no longer fires here). The top group is now **`temperature`** (union 100 / best 52 /
+  **+48**), not `force`. **§I30's numbers must not be quoted again**; G3's review budget and its
+  verifier 4 anchor follow the re-measured values.
+- **Finding 3 — the §G2 gate RE-RUN on the rebuilt graph, and it PASSES (the before-arm is
+  superseded).** `g2_leiden_gate.py`: res 1.0 **leiden Q=0.783332** vs rewired null **0.394314** →
+  surplus **+0.389018** (ratio 1.9866), n=338, **all communities connected**; Louvain
+  **disconnected** at res 0.5 (reproducing §I33). Hierarchy nesting 0.9349 (0.5→1.0) / 0.8779
+  (1.0→2.0). Artifact `logs/p1/step10/g2_leiden_gate_2026-10-22_post_rebuild.json`. **§G2 is
+  un-gated and may proceed.**
+- **Also noted:** `g2_leiden_gate.py`'s `ONE_SIDED_CAVEAT` string still says the graph "carries TOC
+  concepts because the Phase 3 build does not apply the E5 content filter (§I21)" — **false since
+  the rebuild**; the caveat should be updated or dropped. And `index_derivative_artifacts.py`'s
+  default `--batch 32` runs at ~39 texts/s against ~50 texts/s at batch 512 (measured), so the DA
+  re-index is ~25 % slower than it needs to be.
+- **Cost:** no Phase-1 re-ingest, no LLM extraction (checkpoint reused all 3,533). Wall: Lane A
+  ~40 min (73,406 embeddings), Lane B ~45 min (7,427 concept-name embeddings, sequential at
+  ~0.33 s/call — the embed loop is one call per name, a known inefficiency).
+- **New code:** `scripts/reset_derived_collections.py` (dry-run default, allowlist refuses
+  `knowledge_base`/`visual_knowledge_base`, `--yes` to apply) + `tests/test_reset_derived_collections.py`
+  (10 tests; proven to discriminate — breaking the allowlist fails 4).

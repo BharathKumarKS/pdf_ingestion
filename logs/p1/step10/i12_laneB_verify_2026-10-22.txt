@@ -1,0 +1,17 @@
+== B2c/B2d ==
+concept_embeddings points: 7427 dim: 1024
+== graph (counted in Memgraph, §I22) ==
+  Document 1
+  Chunk 3533
+  Page 907
+  Concept 7427
+  MENTIONS 14407
+  RELATES_TO 22799
+  PREREQUISITE_OF 3295
+== B2e THE DISCRIMINATOR: _find_concepts_scored(np.zeros(1024)) ==
+concepts returned: 8 ['Molecular Rearrangement', 'QED: The Strange Theory of Light and Matter', 'Caltech undergraduate physics course', 'collision of atoms with a piston', 'hydrogen bonding', 'quantum electrodynamics', "Newton's Second Law", 'law formulation']
+VERDICT B2e: PASS (>0)
+
+---STDERR---
+2026-10-22 13:15:33.562 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-22 13:15:34.676 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Molecular Rearrangement', 'QED: The Strange Theory of Light and Matter', 'Caltech undergraduate physics course', 'collision of atoms with a piston', 'hydrogen bonding', 'quantum electrodynamics', "Newton's Second Law", 'law formulation']
