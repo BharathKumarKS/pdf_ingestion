@@ -306,6 +306,130 @@ class TestPhase3Orchestration:
         assert doc.colpali_status == "processing"
 
 
+# ── Phase 3 content filter (§I21) ─────────────────────────────────────────────
+
+class TestPhase3ContentFilter:
+    """The Phase 3 graph build must apply the same E5 gate Phase 2 and retrieval do (§I21).
+
+    Phase 3 used to pass EVERY chunk to `build_graph`, so TOC/index lines were extracted as
+    physics content and their concepts entered the graph — matched by `graph_search` at query
+    time. These tests drive the real `generate_phase3_artifacts` path with a capturing graph
+    builder, so they fail if the filter is removed rather than merely asserting it exists.
+    """
+
+    # A TOC fragment: a dot-leader run plus section numbers -> `is_toc_layout` -> not content.
+    TOC = ("37-1 Atomic mechanics . . . . . . . . . . . . . . . . 37-1. "
+           "37-2 An experiment with bullets . . . . . . . . . . . 37-2.")
+    PROSE = ("The kinetic energy of a particle is one half its mass times the square of its "
+             "velocity. This relation holds at ordinary speeds.")
+
+    def _ingest_and_rewrite(self, settings, sample_pdf):
+        """Ingest, then rewrite the document's chunks so chunk 0 is a TOC fragment."""
+        from sqlmodel import Session, select
+        from src.core.database import Chunk, get_engine
+        from src.pdf_ingestion.store import DocumentStore, ingest_pdf
+
+        result = ingest_pdf(
+            pdf_path=str(sample_pdf),
+            tenant_id="global",
+            source_type="base_textbook",
+            is_global_baseline=True,
+            settings=settings,
+        )
+        doc_id = result["document_id"]
+        rows, _ = DocumentStore(settings=settings).get_chunks_with_embeddings(doc_id)
+        assert len(rows) >= 2, "the sample PDF must yield >= 2 chunks for this test to mean anything"
+        with Session(get_engine(settings)) as session:
+            for i, row in enumerate(rows):
+                db_row = session.get(Chunk, row.id)
+                db_row.text = self.TOC if i == 0 else self.PROSE
+                session.add(db_row)
+            session.commit()
+        return doc_id
+
+    def _capture_graph_chunks(self, monkeypatch):
+        """Replace the graph builder factory with one that records what it was handed."""
+        from src.pdf_ingestion import graph_builder as gb
+
+        captured: dict = {}
+
+        class Capturing(StubGraphBuilder):
+            def build_graph(self, document_id, tenant_id, chunks,
+                            doc_title="", doc_subject=""):
+                captured["chunks"] = list(chunks)
+                return super().build_graph(
+                    document_id, tenant_id, chunks, doc_title, doc_subject
+                )
+
+        monkeypatch.setattr(gb, "get_graph_builder", lambda settings=None: Capturing())
+        return captured
+
+    def test_toc_chunk_does_not_reach_the_graph_builder(self, p3_settings, sample_pdf, monkeypatch):
+        from src.pdf_ingestion.store import generate_phase3_artifacts
+
+        doc_id = self._ingest_and_rewrite(p3_settings, sample_pdf)
+        captured = self._capture_graph_chunks(monkeypatch)
+
+        result = generate_phase3_artifacts(
+            document_id=doc_id,
+            pdf_path=str(sample_pdf),
+            settings=p3_settings,
+            skip_colpali=True,
+            force_graph=True,
+        )
+
+        seen = captured["chunks"]
+        assert seen, "the graph builder received no chunks at all"
+        texts = [c.text for c in seen]
+        assert self.TOC not in texts, "the TOC fragment reached the graph builder (§I21)"
+        assert self.PROSE in texts, "the prose chunk was dropped — the filter is too broad"
+        assert result["graph_stats"]["non_content_skipped"] == 1
+
+    def test_every_chunk_handed_to_the_graph_is_content(self, p3_settings, sample_pdf, monkeypatch):
+        """The invariant, not just the one row: everything passed must satisfy is_content."""
+        from src.pdf_ingestion import content_filter
+        from src.pdf_ingestion.store import generate_phase3_artifacts
+
+        doc_id = self._ingest_and_rewrite(p3_settings, sample_pdf)
+        captured = self._capture_graph_chunks(monkeypatch)
+
+        generate_phase3_artifacts(
+            document_id=doc_id,
+            pdf_path=str(sample_pdf),
+            settings=p3_settings,
+            skip_colpali=True,
+            force_graph=True,
+        )
+        assert all(content_filter.is_content(c.text) for c in captured["chunks"])
+
+    def test_refuses_to_build_an_empty_graph(self, p3_settings, sample_pdf, monkeypatch):
+        """A document that is entirely front/back matter must fail loudly, not 'succeed'."""
+        from sqlmodel import Session
+        from src.core.database import Chunk, get_engine
+        from src.pdf_ingestion.store import DocumentStore, generate_phase3_artifacts
+
+        doc_id = self._ingest_and_rewrite(p3_settings, sample_pdf)
+        # Make EVERY chunk non-content.
+        rows, _ = DocumentStore(settings=p3_settings).get_chunks_with_embeddings(doc_id)
+        with Session(get_engine(p3_settings)) as session:
+            for row in rows:
+                db_row = session.get(Chunk, row.id)
+                db_row.text = self.TOC
+                session.add(db_row)
+            session.commit()
+
+        result = generate_phase3_artifacts(
+            document_id=doc_id,
+            pdf_path=str(sample_pdf),
+            settings=p3_settings,
+            skip_colpali=True,
+            force_graph=True,
+        )
+        # The refusal surfaces as a graph error, and no graph is reported as built.
+        assert "non-content" in (result.get("graph_error") or "")
+        assert result["graph_stats"] == {}
+
+
 # ── Phase 3 regression ────────────────────────────────────────────────────────
 
 class TestPhase3Regression:

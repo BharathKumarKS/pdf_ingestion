@@ -359,7 +359,32 @@ uv run pytest tests/test_phase1.py tests/test_phase2.py tests/test_phase3.py tes
 uv run pytest tests/test_integration_real.py -v -s
 ```
 
-**135 tests pass** (stubs only — no model downloads, no Ollama, no Qdrant server needed).
+**464 tests pass / 4 fail / 6 skip** (`uv run pytest tests/ -q -m "not slow"`, ~3 min). The 4 are
+**pre-existing and documented** in `HANDOFF.md` — not regressions. Do not quote a test count in
+this file without re-running the suite: an earlier revision of this line said "135 tests pass"
+and had been wrong for many sessions.
+
+### Verifier at every step — a standing rule
+
+**Every logical step or diff gets an independent verifier before it is committed.** Not "the
+project gets reviewed at the end" — *each* step. In scope: source changes, measurement probes
+**and the numbers they produce**, and any doc or plan that asserts a measured number.
+
+- The reviewer must be a **different model** from the author. Resolve it — `hermes config get
+  delegation`, or the run's `~/.hermes/cache/delegation/live/<id>/manifest.json` — never from a
+  note in a document, and never from a raw-file read of `config.yaml`.
+- A step with no verifier is **not done**, and is **not committed**.
+- An unreachable reviewer, an empty response, or `finish_reason=length` is **no verdict —
+  never a pass**. A step whose verifier cannot run **waits**; it is not merged on the author's
+  own evidence.
+- Mechanical evidence (tests passing, byte-identical re-runs, a probe's own output) is
+  **required but is not a second opinion**. Keep the two apart in the record.
+- Record the outcome where the next reader looks: which findings were fixed, which were
+  rejected and why, and which conclusion rests on mechanical evidence rather than on the
+  reviewer's agreement.
+
+Skills: `requesting-code-review` (Step 5) for source diffs; `independent-verification` for the
+independence mechanics, the evidence pack, and adjudicating findings.
 
 ---
 

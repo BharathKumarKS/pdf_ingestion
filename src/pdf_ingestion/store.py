@@ -1798,17 +1798,38 @@ def generate_phase3_artifacts(
             graph_stats = {"skipped": True}
         else:
             chunks_db, _ = store.get_chunks_with_embeddings(document_id)
+            # E5 — the same front/back-matter gate Phase 2 (cards) and retrieval already apply.
+            # Phase 3 used to pass EVERY chunk, so TOC/index lines were extracted as physics
+            # content and their concepts entered the graph: measured on doc `7ba61432`, a TOC
+            # fragment yielded 4 concepts ("Linear differential equations" among them) and those
+            # nodes are matched by `graph_search` at query time (§I21). This closes the
+            # inconsistency, and it is why the settled D1 order rebuilds the graph.
+            chunks_for_graph = [c for c in chunks_db if content_filter.is_content(c.text)]
+            non_content_skipped = len(chunks_db) - len(chunks_for_graph)
+            if not chunks_for_graph:
+                # A document that is entirely front/back matter (a TOC-only PDF) would otherwise
+                # build an empty graph and report success. Fail loudly instead.
+                raise ValueError(
+                    f"all {len(chunks_db)} chunk(s) of doc {document_id} were classified as "
+                    f"non-content — refusing to build an empty graph"
+                )
+            if non_content_skipped:
+                logger.info(
+                    "Memgraph: skipped {} non-content chunk(s) (front/back matter) — §I21",
+                    non_content_skipped,
+                )
             logger.info(
-                "Memgraph: building graph for doc '{}' ({} chunks)",
-                doc.filename, len(chunks_db),
+                "Memgraph: building graph for doc '{}' ({} chunks, {} non-content skipped)",
+                doc.filename, len(chunks_for_graph), non_content_skipped,
             )
             graph_stats = graph.build_graph(
                 document_id=document_id,
                 tenant_id=doc.tenant_id,
-                chunks=chunks_db,
+                chunks=chunks_for_graph,
                 doc_title=doc.title or "",
                 doc_subject=doc.subject or "",
             )
+            graph_stats["non_content_skipped"] = non_content_skipped
     except Exception as exc:
         graph_error = str(exc)
         logger.error("Memgraph failed for doc {}: {}", document_id, exc)

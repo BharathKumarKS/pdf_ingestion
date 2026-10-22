@@ -4,12 +4,55 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-21, session 2. §I43 is FIXED and B5 PASSES (committed `844898c`); §I39/§E5 is
-> FIXED (two filter signals, zero body loss) and **D1 is SETTLED** — the filter fix comes first, §G3
-> does not run on the current graph. B4 PASS / B6 and the non-LLM A1–A4 work are unchanged. Register
-> now runs to §I44.**
+> **Last updated: 2026-10-21, session 3. §G1 (PPR) and §G2 (Leiden) are BUILT and INDEPENDENTLY
+> VERIFIED; §I21 (the Phase 3 path now applies the E5 filter) is implemented and awaiting its
+> verifier. §I43/§I39 stand as session 2 left them. NEW STANDING RULE: **verifier at every step** —
+> see `README.md` → "Verifier at every step" and the Session hygiene section below.**
 >
-> ## ▶ NEXT SESSION — START HERE (written 2026-10-21, session 2)
+> ## ▶ NEXT SESSION — START HERE (written 2026-10-21, session 3)
+>
+> **0. ✅ DONE — §G1 + §G2 built, measured, and INDEPENDENTLY VERIFIED** (commit `e78a7ef`; module
+> `src/pdf_ingestion/graph_analytics.py`, 18 unit tests, two probes). Deps taken per the owner
+> decision: `python-igraph` + `leidenalg`.
+> - **§G2 — the gate re-run on LEIDEN, and it PASSES.** `logs/p1/step10/g2_leiden_gate.py`:
+>   res 1.0 **leiden Q=0.601572** vs rewired null 0.286665 → surplus **+0.314907** (ratio 2.0985),
+>   n=149, **connected at every resolution**. The Louvain comparison arm reproduces the §I33
+>   before-arm number **exactly (0.589597)**, so Louvain→Leiden is a single-variable change — and
+>   Louvain is disconnected at 1.0 (the same 75-member community §I33 caught) and at 2.0.
+>   Hierarchy nesting 0.87 (0.5→1.0) / 0.74 (1.0→2.0). Two runs byte-identical.
+> - **§G1 — PPR behaviour measured** (`logs/p1/step10/g1_ppr_probe.py`): seeded at the §I32
+>   gold-062 top-8, of which **only 5/8 resolve — three are spelling variants of "kinetic energy"**,
+>   i.e. the §G3 defect showing up live. Top-20 PPR vs top-20 degree overlap = **2** (the
+>   personalization is not degenerating into global centrality); 95.9 % of the mass within two hops.
+>   `sum(v) = 8.229619` and the output is **deliberately not normalised** — `W = D⁻¹A` is
+>   row-stochastic, not doubly stochastic, so mass is conserved only on a regular graph. Pinned by
+>   a test; do not "fix" it.
+> - **Verifier: `openai/gpt-oss-20b`, deleg `deleg_c16ecc8d`, model confirmed from the run's
+>   `manifest.json` (not from a note).** §G2: **7/7 confirmed**, and the reviewer re-ran the probe
+>   itself and compared byte-for-byte. §G1: **6/7 confirmed**; C6 (byte-identity) returned
+>   **unverified** because the child invoked the probe through `browser_exec` under Hermes's own
+>   python 3.14 instead of the project venv — a tool-selection failure, not a disagreement. C6 was
+>   then closed by my own re-run (three-way byte identity, sha256 `7ec42e40…`) — **mechanical
+>   evidence, not a second opinion**; the record keeps those apart.
+>   ⚠️ **Adjudicated 2026-10-21:** a later docs review REFUTED this record, on the grounds that the
+>   raw transcript showed only 3 claims for §G1. **The refutation is void** — the transcript
+>   truncates (`…(+1044 chars)`) and exposes only C1–C3; the delivered result carried all seven.
+>   The record above is correct, and the reviewer's *concern* (that the record be checkable) is now
+>   met by the Session-hygiene rule on transcripts.
+> - ⚠️ **§G1 is NOT finished.** Its verifier 4 — the **retrieval ablation** (PPR vs the current
+>   fixed-hop ranking on the v2 gold set) — is **DEFERRED** and recorded as such in the artifact.
+>   It needs the query→concept path (768d query embedding against `Concept.embedding`, §I12) and
+>   **can run now that the cluster is reachable**. `e78a7ef` carries **no `[verified]` prefix**
+>   for exactly this reason.
+>
+> **0b. IN FLIGHT — §I21, next in the settled D1 order: the Phase 3 graph build now applies the E5
+> filter.** `generate_phase3_artifacts` filtered nothing, so TOC/index lines were extracted as
+> physics content and their concepts entered the graph (measured: a TOC fragment yielded 4
+> concepts) and were matched by `graph_search` at query time. The fix mirrors
+> `generate_phase2_artifacts`, and additionally **refuses to build an empty graph** when every
+> chunk is non-content. 3 new tests in `tests/test_phase3.py`, all three proven to discriminate
+> (removing the filter fails 2, removing the guard fails 1). **Awaiting its verifier — do NOT
+> commit it before that lands.** Takes effect on a **graph rebuild**, which is the step after it.
 >
 > **1. ✅ DONE (2026-10-21 session 2) — §I43 fixed and B5 PASSES.** `save_raptor_tree` now deletes the
 > document's RAPTOR points (and rows) before the upsert, and the 73 orphaned points were removed by
@@ -783,6 +826,25 @@ Start each P0-9 stage in a **fresh** session (`/new`) and read only that stage's
 plan. The previous long session reached ~271k tokens/call with 2 lossy compactions behind it —
 **do not continue P0-9 inside a compacted session.** See `p0-9-SESSIONS.md` for the split and the
 handoff steps.
+
+**⚑ VERIFIER AT EVERY STEP — standing rule (owner, 2026-10-21).** Every logical step or diff
+gets an independent verifier **before it is committed** — not one review at the end of a
+project or a phase. Source changes, measurement probes *and the numbers they produce*, and any
+doc or plan that asserts a measured number are all in scope. A step with no verifier is **not
+done**, and is **not committed**. If the reviewer cannot run — it is pinned on the lab cluster,
+and it is unreachable whenever this Mac is not on the home wifi — the step **waits**; it is
+not merged on the author's own evidence. An unreachable reviewer, an empty response, or
+`finish_reason=length` is **no verdict — never a pass**. Mechanical evidence (tests passing,
+byte-identical re-runs, a probe's own output) is required but is **not** a second opinion, and
+the record must keep the two apart. Full rule: `README.md` → "Verifier at every step".
+
+**Read a verdict from the DELIVERED RESULT, never from the child's live transcript.** The
+transcript truncates a long message (`…(+N chars)`), and nothing else on disk carries the full
+verdict — the delegation directory holds only `manifest.json` (model, provider, status) and the
+truncated `.log`. Measured 2026-10-21: the §G1 review's transcript exposed only **C1–C3 of seven**
+claims before cutting off at `…(+1044 chars)`, and a later reviewer that trusted the transcript
+reported a false mismatch against this file. Wait for the consolidated result before judging what
+a reviewer did or did not check.
 
 **Independent verification is a step, not a nicety.** Run `requesting-code-review`'s Step 5 on
 every commit that changes source. `delegate_task` already runs on a different model
