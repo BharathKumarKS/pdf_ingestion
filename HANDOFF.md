@@ -4,6 +4,59 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
+> **Last updated: 2026-10-22, session 7. ✅ §G3 IS EXECUTED — the merge is LIVE and structurally
+> verified. §G2 IS BUILT, VERIFIED, AND REPRODUCES THE GATE EXACTLY. Read `IMPROVEMENTS.md` §I50 and
+> §I51 first — they carry the whole session.**
+>
+> ## ▶ NEXT SESSION — START HERE (written 2026-10-22, session 7)
+>
+> **WHERE THE GRAPH IS NOW (counted from Bolt, 2026-10-22):** 1 Document / 3,533 Chunk / 907 Page /
+> **6,065 Concept** / 14,405 MENTIONS / 21,670 RELATES_TO / 3,161 PREREQUISITE_OF. The §G3 merge is
+> **applied** (7,427 → 6,065 concepts; 1,362 aliases folded in) and **V1/V2/V4/V6 all PASS**.
+> Journal `logs/p1/step10/g3_merge_journal_2026-10-22.jsonl`; revert with
+> `entity_resolution.revert_merges(session, journal_path)`. `concept_embeddings` is **6,065 @ 1024d**
+> and in sync with the graph (V6: 0 orphans, 0 missing canonicals). Before-state:
+> `logs/p1/step10/g3_state_before.json`.
+>
+> **1. §G2 — BUILD THE SUMMARIES. This is the next action.** The code is written, verified and
+> committed, and the gate reproduces **exactly** (Q 0.7412 / 0.7833 / 0.8344; nesting 0.8779 / 0.9349
+> — §I50 Finding 4). The dry run is clean: **0 LLM calls**, 2,761,845 prompt chars at the leaf level,
+> 664 communities skipped for having no source material.
+> ```
+> QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2 uv run python \
+>   scripts/build_community_summaries.py --doc-id 7ba61432-c5e0-416d-aecf-25a232523481 \
+>   --yes --out logs/p1/step10/g2_summaries_2026-10-22.json
+> ```
+> ⚠️ **Summarization spends cluster LLM budget and must be SERIAL against other LLM-heavy work** —
+> §I23 measured shared-GPU contention collapsing a build's throughput ~8×. Then **V5, the ablation**
+> (community summaries vs the RAPTOR-only lane on overview queries) is §G2's endpoint; a null is a
+> recorded result, not a failure.
+>
+> **2. §G3's endpoint is NULL and the endpoint is INERT — an open OWNER decision.** The
+> pre-registered median of the retrieved top-5 did NOT move (1.0 → 1.0) — but it **cannot** move:
+> >100 of 200 queries would need a median ≥ 2 and **14** do. What did move: chunks matching ≥2
+> concepts **138 → 158** (share 0.0634 → 0.0641); queries at top-5 median 2: **11 → 14**; the
+> candidate pool 2,176 → 2,464. **Do not read this as "entity resolution does not help retrieval" —
+> it is a null about a metric with no headroom.** Re-pre-registering a sensitive endpoint is an owner
+> decision, NOT taken. Owner disposition 2026-10-22: keep the merge, record as measured-and-null.
+>
+> **3. Everything on the cluster needs the tunnel UP** (`10.0.10.65` Qdrant, `10.0.10.70`
+> embed/LLM) — it was up this session (`utun4`).
+>
+> ⚠️ **Every §G3/§G2 command needs `QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2`.**
+> `.env` leaves `QDRANT_HOST` blank, so the default is the **LOCAL embedded** store — a run without
+> the override silently targets the wrong store (§I49 Finding 1).
+>
+> ⚠️ **Session 7 also fixed four defects that only running things exposed** (§I50): the T1 formula
+> detector counted the hyphen as a formula (40 of 46 flagged groups were typography; 349 hyphen-only
+> names, none a formula); the §G2 CLI dry run reported 0 prompt chars; the V3 probe was still on the
+> retired **768d** lane and would have written an all-zeros artifact; and §G2 was partitioning a
+> **different graph** than the gate — 29 isolated concepts, then node INSERTION ORDER (igraph indexes
+> vertices by insertion order, so the same graph read two ways gives different partitions).
+>
+> **Earlier in the file:** the session-6 rebuild block, and session 3's "START HERE" list below it —
+> all superseded by the above. `IMPROVEMENTS.md` §I49–§I51 are the authoritative record.
+>
 > **Last updated: 2026-10-21, session 6. ✅ THE GRAPH REBUILD IS DONE AND VERIFIED — item 3 is closed.**
 > The document-keyed graph clear it needed is built, verified and **applied** (`f007f85`; the graph read
 > back **0/0/0/0** from Bolt, independently of the script's own table), and the rebuild finished

@@ -3890,3 +3890,57 @@ own docstring promises. It now reads full text (a local SQLite read, no LLM) and
 **2,761,845** prompt chars for the leaf level with **0** LLM calls.
 
 **Suite:** 572 pass / 4 fail / 6 skip — the same 4 pre-existing failures.
+
+---
+
+### I51. 2026-10-22 — §G3 EXECUTED: the merge is applied and structurally verified; its endpoint is null, and the endpoint is inert
+
+**Owner disposition (2026-10-22):** keep the merge; record §G3 as **measured-and-null on its
+pre-registered median**; proceed to §G2.
+
+**Applied.** `scripts/resolve_concepts.py --doc-id 7ba61432-… --yes` on the live graph — 1,053 merge
+groups, 1,362 aliases. The before-state was captured to `g3_state_before.json` FIRST, so the
+verifiers could be asserted **against** it rather than eyeballed. Journal
+`g3_merge_journal_2026-10-22.jsonl` (revert with `entity_resolution.revert_merges`).
+
+| | before | after |
+|---|---|---|
+| Concept | 7,427 | **6,065** |
+| MENTIONS | 14,407 | 14,405 |
+| RELATES_TO | 22,799 | 21,670 |
+| PREREQUISITE_OF | 3,295 | 3,161 |
+| `concept_embeddings` | 7,427 | **6,065** |
+
+**V1 PASS** — 1,362 names merged away, 1,362 survive as aliases, **0 lost**.
+**V2 PASS** — the after-state **exactly equals** the remapped before-state for all three edge types
+(`g3_verify_merge.py`); the deltas are precisely the collapsed duplicates (MENTIONS 2, RELATES_TO
+1,129, PREREQUISITE_OF 134). ⚠️ The first version of this check only printed the deltas and asserted
+they were non-negative — the plan explicitly forbids that ("a bare '> 0' passes a merge that destroyed
+90 % of the graph"). The strengthened form remaps every before-state edge through the alias map, drops
+the self-loops a merge creates, and demands **set equality**.
+**V4 PASS** — all 1,053 survivors' chunk counts equal the union of their merged members.
+**V6 PASS** (`g3_verify_v6.py`) — 0 of 1,362 alias points remain; 0 of 1,053 canonical points missing;
+`_find_concepts_scored` still returns 8 (the §I47 discriminator); **0** ANN points name a concept
+absent from the graph.
+
+**V3 — the endpoint, and it did not move:**
+
+| | before | after |
+|---|---|---|
+| chunks matching ≥2 concepts | 138 (share 0.0634) | **158 (0.0641)** |
+| mean matched_concepts | 1.0653 | 1.0662 |
+| queries whose top-5 median is 2 | 11 | **14** |
+| **median of the retrieved top-5** | **1.0** | **1.0** |
+
+V3 has two clauses and only the first moved. The candidate pool also grew 2,176 → 2,464.
+
+⚠️ **THE ENDPOINT IS INERT, WHICH MAKES THE NULL UNINFORMATIVE RATHER THAN NEGATIVE.** For the median
+to leave 1.0, **more than half** of the 200 queries need a top-5 median ≥ 2; **14** do. The
+pre-registered endpoint cannot move at this granularity — the §G1 ablation's defect class again,
+where a cut larger than the candidate pool made both arms identical by construction. **Do not read
+this null as "entity resolution does not help retrieval"; it is a null about a metric that could not
+have moved.** Re-pre-registering a sensitive endpoint (the ≥2-chunk count, or share≥2) is an OWNER
+decision and was explicitly NOT taken.
+
+**Cost:** ~2 min (≈9,500 Cypher statements + 1,362 Qdrant point deletes). No LLM.
+
