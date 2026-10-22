@@ -1,0 +1,1984 @@
+{
+  "arms": {
+    "Qwen/Qwen3-VL-8B-Instruct": {
+      "concepts": {
+        "above_prompt_max": 0,
+        "below_prompt_min": 1,
+        "max": 7,
+        "mean": 4.54,
+        "median": 4.5,
+        "min": 2,
+        "per_chunk": [
+          2,
+          3,
+          3,
+          3,
+          3,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          6,
+          6,
+          6,
+          6,
+          6,
+          7
+        ],
+        "within_prompt_band_3_7": 23
+      },
+      "errors": [],
+      "latency_s": {
+        "max": 5.25,
+        "mean": 3.1,
+        "p50": 2.97,
+        "total": 74.5
+      },
+      "n_calls": 24,
+      "n_ok": 24,
+      "names": {
+        "distinct_lowercased": 104,
+        "distinct_pct": 95.41,
+        "in_graph_vocabulary": 67,
+        "in_graph_vocabulary_pct": 64.42,
+        "mean_words": 2.39,
+        "not_in_graph_vocabulary": 37,
+        "not_in_graph_vocabulary_examples": [
+          "angular resolution of antenna array",
+          "blackbody radiation curve",
+          "boundary conditions",
+          "bra-ket notation",
+          "capacitor plates",
+          "classical theory of blackbody radiation",
+          "distance as a function of time",
+          "experimental measurement of refraction angles",
+          "final conditions",
+          "freezing out of high-frequency oscillations",
+          "function dependence",
+          "huygens-fresnel principle",
+          "independent variables",
+          "interference condition for constructive interference",
+          "local order in a system",
+          "mathematical form of physical laws",
+          "order of interference maximum",
+          "parabolic reflectors",
+          "particle detection",
+          "particle multiplet",
+          "poincaré recurrence theorem",
+          "proton-neutron doublet",
+          "quantum indeterminacy",
+          "quantum measurement",
+          "reciprocity principle in antenna arrays",
+          "resonance condition",
+          "simplicity and beauty of mathematical relationships",
+          "temperature dependence of blackbody radiation",
+          "transition amplitude",
+          "understanding nature"
+        ],
+        "symbol_like_count": 1,
+        "total": 109
+      },
+      "prereq_edges": {
+        "per_chunk_mean": 1.04,
+        "total": 25
+      },
+      "tokens": {
+        "completion_mean": 162.1,
+        "completion_total": 3890,
+        "prompt_mean": 377.5,
+        "reasoning_chars_total": 0
+      },
+      "types": {
+        "distinct_types": [
+          "definition",
+          "experiment",
+          "force",
+          "formula",
+          "goal",
+          "law",
+          "object",
+          "particle",
+          "person",
+          "phenomenon",
+          "process",
+          "quantity",
+          "theorem",
+          "theory"
+        ],
+        "invalid_type_count": 11
+      },
+      "valid_json_pct": 100.0
+    },
+    "openai/gpt-oss-20b": {
+      "concepts": {
+        "above_prompt_max": 0,
+        "below_prompt_min": 1,
+        "max": 7,
+        "mean": 4.29,
+        "median": 4.0,
+        "min": 0,
+        "per_chunk": [
+          0,
+          3,
+          3,
+          3,
+          3,
+          3,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          5,
+          5,
+          5,
+          5,
+          5,
+          6,
+          6,
+          6,
+          6,
+          7
+        ],
+        "within_prompt_band_3_7": 23
+      },
+      "errors": [],
+      "latency_s": {
+        "max": 17.65,
+        "mean": 10.36,
+        "p50": 10.11,
+        "total": 248.5
+      },
+      "n_calls": 24,
+      "n_ok": 24,
+      "names": {
+        "distinct_lowercased": 97,
+        "distinct_pct": 94.17,
+        "in_graph_vocabulary": 71,
+        "in_graph_vocabulary_pct": 73.2,
+        "mean_words": 2.06,
+        "not_in_graph_vocabulary": 26,
+        "not_in_graph_vocabulary_examples": [
+          "angle θ",
+          "arrival in lumps",
+          "d sin θ = mλ",
+          "edge effect",
+          "experimental results",
+          "low firing rate",
+          "mathematical representation",
+          "multiplets",
+          "n^2 intensity scaling",
+          "nd sin θ = λ",
+          "parabolic focusing",
+          "philosophers",
+          "poincaré, j. henri",
+          "reciprocity principle (antenna reciprocity)",
+          "sigma particles",
+          "single bullet arrival",
+          "static equilibrium",
+          "uniform electric field between parallel plates",
+          "wapstra, aaldert hendrik",
+          "weber, wilhelm e.",
+          "weyl, hermann",
+          "wheeler, john a.",
+          "wilson, charles t. r.",
+          "work done by electric force",
+          "yukawa, hideki",
+          "zero electric field outside plates"
+        ],
+        "symbol_like_count": 5,
+        "total": 103
+      },
+      "prereq_edges": {
+        "per_chunk_mean": 2,
+        "total": 48
+      },
+      "tokens": {
+        "completion_mean": 1117.9,
+        "completion_total": 26829,
+        "prompt_mean": 433.2,
+        "reasoning_chars_total": 99878
+      },
+      "types": {
+        "distinct_types": [
+          "definition",
+          "experiment",
+          "formula",
+          "law",
+          "person",
+          "phenomenon",
+          "process",
+          "quantity"
+        ],
+        "invalid_type_count": 0
+      },
+      "valid_json_pct": 100.0
+    }
+  },
+  "meta": {
+    "document_id": "7ba61432-c5e0-416d-aecf-25a232523481",
+    "endpoint": "http://10.0.10.70:8000",
+    "graph_vocabulary_size": 7834,
+    "models": [
+      "openai/gpt-oss-20b",
+      "Qwen/Qwen3-VL-8B-Instruct"
+    ],
+    "n_chunks": 24,
+    "no_llm_judge": "the cluster serves exactly two text models and both are arms here, so a judge would score its own output; read `samples` instead",
+    "payload_knobs": {
+      "response_format": "json_object",
+      "temperature": 0.3,
+      "text_truncation": "text[:2000]",
+      "top_p": 0.9
+    },
+    "power_caveat": "n is small and drawn from one book, unstratified — quote the per-chunk distributions, and treat any difference inside the spread as unresolved",
+    "prompt_rule_band": [
+      3,
+      7
+    ],
+    "prompt_source": "src/pdf_ingestion/graph_builder._CONCEPT_PROMPT (imported, not retyped)",
+    "question": "which model should extract the graph's concepts, before the rebuild",
+    "ran_at": "2026-10-21T20:39:41",
+    "register_item": "§I23(c)",
+    "vocabulary_overlap_caveat": "CIRCULAR BY CONSTRUCTION: the graph's vocabulary was itself produced by openai/gpt-oss-20b's extraction (commit-era build of this same document), so the overlap metric favours that arm — it partly measures a model agreeing with itself. Use it to compare how much NEW vocabulary an arm introduces, not as a quality score.",
+    "workers": 4
+  },
+  "per_call": {
+    "Qwen/Qwen3-VL-8B-Instruct": [
+      {
+        "chunk_id": "00107164-32a1-4c46-bd8f-4ad0fae6d6f2",
+        "content_chars": 621,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 2,
+        "n_concepts": 5,
+        "n_prereq_edges": 1,
+        "names": [
+          "Heisenberg's Uncertainty Principle",
+          "Momentum",
+          "Recoil",
+          "Electron",
+          "Screen"
+        ],
+        "ok": true,
+        "page": 672,
+        "reasoning_chars": 0,
+        "types": [
+          "law",
+          "quantity",
+          "phenomenon",
+          "particle",
+          "object"
+        ],
+        "usage": {
+          "completion_tokens": 178,
+          "prompt_tokens": 340,
+          "prompt_tokens_details": null,
+          "total_tokens": 518
+        },
+        "wall_s": 3.4
+      },
+      {
+        "chunk_id": "0a8c3eca-a32f-4c10-a7bf-c77932cc0ecf",
+        "content_chars": 608,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 1,
+        "names": [
+          "ideal experiment",
+          "event",
+          "initial conditions",
+          "final conditions"
+        ],
+        "ok": true,
+        "page": 669,
+        "reasoning_chars": 0,
+        "types": [
+          "definition",
+          "definition",
+          "quantity",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 151,
+          "prompt_tokens": 417,
+          "prompt_tokens_details": null,
+          "total_tokens": 568
+        },
+        "wall_s": 2.97
+      },
+      {
+        "chunk_id": "16551ef8-584c-4b62-89a9-d5424baa0968",
+        "content_chars": 752,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 6,
+        "n_prereq_edges": 2,
+        "names": [
+          "Conservation of Mechanical Energy",
+          "Gravitational Potential Energy",
+          "Kinetic Energy",
+          "Escape Velocity",
+          "Radius of the Earth",
+          "Mass of the Earth"
+        ],
+        "ok": true,
+        "page": 273,
+        "reasoning_chars": 0,
+        "types": [
+          "law",
+          "quantity",
+          "quantity",
+          "quantity",
+          "quantity",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 199,
+          "prompt_tokens": 320,
+          "prompt_tokens_details": null,
+          "total_tokens": 519
+        },
+        "wall_s": 3.89
+      },
+      {
+        "chunk_id": "1ee03861-b3ef-4d34-9cdd-e6c4ebab6a83",
+        "content_chars": 777,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 6,
+        "n_prereq_edges": 2,
+        "names": [
+          "Constructive Interference",
+          "Destructive Interference",
+          "Intensity of Light",
+          "Phase Difference",
+          "Resonance Condition",
+          "Sine Function"
+        ],
+        "ok": true,
+        "page": 513,
+        "reasoning_chars": 0,
+        "types": [
+          "phenomenon",
+          "phenomenon",
+          "quantity",
+          "quantity",
+          "phenomenon",
+          "formula"
+        ],
+        "usage": {
+          "completion_tokens": 211,
+          "prompt_tokens": 477,
+          "prompt_tokens_details": null,
+          "total_tokens": 688
+        },
+        "wall_s": 4.01
+      },
+      {
+        "chunk_id": "2a392697-9441-4550-b869-cdc61a24bbf8",
+        "content_chars": 642,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 1,
+        "n_concepts": 5,
+        "n_prereq_edges": 1,
+        "names": [
+          "Electric Field",
+          "Electric Potential",
+          "Work Done by Electric Force",
+          "Capacitor Plates",
+          "Electrostatic Force"
+        ],
+        "ok": true,
+        "page": 282,
+        "reasoning_chars": 0,
+        "types": [
+          "quantity",
+          "quantity",
+          "process",
+          "phenomenon",
+          "force"
+        ],
+        "usage": {
+          "completion_tokens": 181,
+          "prompt_tokens": 361,
+          "prompt_tokens_details": null,
+          "total_tokens": 542
+        },
+        "wall_s": 3.41
+      },
+      {
+        "chunk_id": "35c32dcd-f2da-4412-b0b8-87af43cc68b8",
+        "content_chars": 493,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 2,
+        "names": [
+          "internal energy",
+          "temperature",
+          "perfect gas",
+          "work done by the gas"
+        ],
+        "ok": true,
+        "page": 796,
+        "reasoning_chars": 0,
+        "types": [
+          "quantity",
+          "quantity",
+          "definition",
+          "process"
+        ],
+        "usage": {
+          "completion_tokens": 134,
+          "prompt_tokens": 323,
+          "prompt_tokens_details": null,
+          "total_tokens": 457
+        },
+        "wall_s": 2.61
+      },
+      {
+        "chunk_id": "3eb8f432-9eb0-468c-91f2-0ab7f66b47d5",
+        "content_chars": 913,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 6,
+        "n_prereq_edges": 2,
+        "names": [
+          "diffraction grating equation",
+          "interference condition for constructive interference",
+          "path difference",
+          "wavelength",
+          "angle of diffraction",
+          "order of interference maximum"
+        ],
+        "ok": true,
+        "page": 516,
+        "reasoning_chars": 0,
+        "types": [
+          "formula",
+          "definition",
+          "quantity",
+          "quantity",
+          "quantity",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 249,
+          "prompt_tokens": 320,
+          "prompt_tokens_details": null,
+          "total_tokens": 569
+        },
+        "wall_s": 4.67
+      },
+      {
+        "chunk_id": "4960918c-7e87-4f16-9746-a652991fbfdc",
+        "content_chars": 391,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 3,
+        "n_prereq_edges": 1,
+        "names": [
+          "electric field",
+          "dielectric material",
+          "speed of light in medium"
+        ],
+        "ok": true,
+        "page": 536,
+        "reasoning_chars": 0,
+        "types": [
+          "quantity",
+          "phenomenon",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 109,
+          "prompt_tokens": 305,
+          "prompt_tokens_details": null,
+          "total_tokens": 414
+        },
+        "wall_s": 2.11
+      },
+      {
+        "chunk_id": "534c6c5d-71b5-4ef0-a50d-663928d3cc1c",
+        "content_chars": 789,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 6,
+        "n_prereq_edges": 1,
+        "names": [
+          "Expectation Value",
+          "Laplacian Operator",
+          "Nabla Operator",
+          "Bra-Ket Notation",
+          "Transition Amplitude",
+          "Approximation"
+        ],
+        "ok": true,
+        "page": 964,
+        "reasoning_chars": 0,
+        "types": [
+          "quantity",
+          "formula",
+          "formula",
+          "definition",
+          "quantity",
+          "process"
+        ],
+        "usage": {
+          "completion_tokens": 280,
+          "prompt_tokens": 517,
+          "prompt_tokens_details": null,
+          "total_tokens": 797
+        },
+        "wall_s": 5.25
+      },
+      {
+        "chunk_id": "5e53ddf2-086c-4357-a632-875f2693c5cf",
+        "content_chars": 990,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 6,
+        "n_prereq_edges": 1,
+        "names": [
+          "Reciprocity Principle in Antenna Arrays",
+          "Phase Shift",
+          "Angular Resolution of Antenna Array",
+          "Wave Interference",
+          "Parabolic Reflectors",
+          "Resolving Power"
+        ],
+        "ok": true,
+        "page": 523,
+        "reasoning_chars": 0,
+        "types": [
+          "law",
+          "phenomenon",
+          "formula",
+          "phenomenon",
+          "phenomenon",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 261,
+          "prompt_tokens": 509,
+          "prompt_tokens_details": null,
+          "total_tokens": 770
+        },
+        "wall_s": 4.94
+      },
+      {
+        "chunk_id": "6945dd21-3899-4695-a468-384da6d35c0b",
+        "content_chars": 433,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 0,
+        "names": [
+          "quantum indeterminacy",
+          "particle detection",
+          "idealized experiment",
+          "quantum measurement"
+        ],
+        "ok": true,
+        "page": 657,
+        "reasoning_chars": 0,
+        "types": [
+          "phenomenon",
+          "process",
+          "experiment",
+          "process"
+        ],
+        "usage": {
+          "completion_tokens": 120,
+          "prompt_tokens": 359,
+          "prompt_tokens_details": null,
+          "total_tokens": 479
+        },
+        "wall_s": 2.31
+      },
+      {
+        "chunk_id": "74330072-0c0f-4c23-9987-c5c488436738",
+        "content_chars": 750,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 3,
+        "n_concepts": 7,
+        "n_prereq_edges": 1,
+        "names": [
+          "Baryon",
+          "Strangeness",
+          "Particle Multiplet",
+          "Proton-Neutron Doublet",
+          "Lambda Particle",
+          "Sigma Particle",
+          "Xi Particle"
+        ],
+        "ok": true,
+        "page": 64,
+        "reasoning_chars": 0,
+        "types": [
+          "definition",
+          "quantity",
+          "phenomenon",
+          "phenomenon",
+          "particle",
+          "particle",
+          "particle"
+        ],
+        "usage": {
+          "completion_tokens": 215,
+          "prompt_tokens": 446,
+          "prompt_tokens_details": null,
+          "total_tokens": 661
+        },
+        "wall_s": 4.13
+      },
+      {
+        "chunk_id": "7fb7fc2a-6308-4928-a073-0773a1b99ff6",
+        "content_chars": 699,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 1,
+        "n_concepts": 5,
+        "n_prereq_edges": 1,
+        "names": [
+          "blackbody radiation curve",
+          "classical theory of blackbody radiation",
+          "temperature dependence of blackbody radiation",
+          "freezing out of high-frequency oscillations",
+          "Sir James Jeans"
+        ],
+        "ok": true,
+        "page": 740,
+        "reasoning_chars": 0,
+        "types": [
+          "phenomenon",
+          "theory",
+          "phenomenon",
+          "phenomenon",
+          "person"
+        ],
+        "usage": {
+          "completion_tokens": 184,
+          "prompt_tokens": 384,
+          "prompt_tokens_details": null,
+          "total_tokens": 568
+        },
+        "wall_s": 3.6
+      },
+      {
+        "chunk_id": "8ba8ee11-048d-49a7-a033-2c84f62db5e6",
+        "content_chars": 371,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 3,
+        "n_prereq_edges": 1,
+        "names": [
+          "distance as a function of time",
+          "motion",
+          "function"
+        ],
+        "ok": true,
+        "page": 162,
+        "reasoning_chars": 0,
+        "types": [
+          "formula",
+          "phenomenon",
+          "definition"
+        ],
+        "usage": {
+          "completion_tokens": 107,
+          "prompt_tokens": 379,
+          "prompt_tokens_details": null,
+          "total_tokens": 486
+        },
+        "wall_s": 2.07
+      },
+      {
+        "chunk_id": "94de939f-461d-4466-8d2d-acd8ee0118f9",
+        "content_chars": 255,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 2,
+        "n_prereq_edges": 0,
+        "names": [
+          "Principle of Relativity",
+          "Newton"
+        ],
+        "ok": true,
+        "page": 304,
+        "reasoning_chars": 0,
+        "types": [
+          "law",
+          "person"
+        ],
+        "usage": {
+          "completion_tokens": 74,
+          "prompt_tokens": 304,
+          "prompt_tokens_details": null,
+          "total_tokens": 378
+        },
+        "wall_s": 1.45
+      },
+      {
+        "chunk_id": "9e25c7ba-21f6-4c4e-b956-e57f88e14481",
+        "content_chars": 565,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 5,
+        "n_prereq_edges": 2,
+        "names": [
+          "pseudo force",
+          "inertial force",
+          "torque",
+          "acceleration",
+          "gravitation"
+        ],
+        "ok": true,
+        "page": 350,
+        "reasoning_chars": 0,
+        "types": [
+          "phenomenon",
+          "phenomenon",
+          "quantity",
+          "quantity",
+          "phenomenon"
+        ],
+        "usage": {
+          "completion_tokens": 167,
+          "prompt_tokens": 300,
+          "prompt_tokens_details": null,
+          "total_tokens": 467
+        },
+        "wall_s": 3.16
+      },
+      {
+        "chunk_id": "a7bf32ad-e820-4a1a-b2d7-ec522515b7e5",
+        "content_chars": 479,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 2,
+        "names": [
+          "centrifugal force",
+          "rotational energy",
+          "work",
+          "kinetic energy"
+        ],
+        "ok": true,
+        "page": 358,
+        "reasoning_chars": 0,
+        "types": [
+          "phenomenon",
+          "quantity",
+          "quantity",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 139,
+          "prompt_tokens": 339,
+          "prompt_tokens_details": null,
+          "total_tokens": 478
+        },
+        "wall_s": 2.66
+      },
+      {
+        "chunk_id": "b2d087fd-18ec-40ef-8562-45c99562ab38",
+        "content_chars": 436,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 3,
+        "n_prereq_edges": 1,
+        "names": [
+          "partial derivative",
+          "independent variables",
+          "function dependence"
+        ],
+        "ok": true,
+        "page": 808,
+        "reasoning_chars": 0,
+        "types": [
+          "formula",
+          "quantity",
+          "definition"
+        ],
+        "usage": {
+          "completion_tokens": 119,
+          "prompt_tokens": 327,
+          "prompt_tokens_details": null,
+          "total_tokens": 446
+        },
+        "wall_s": 2.36
+      },
+      {
+        "chunk_id": "bd06be4f-b744-47d2-b177-9134cd10c75c",
+        "content_chars": 476,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 1,
+        "n_concepts": 4,
+        "n_prereq_edges": 0,
+        "names": [
+          "theoretical physics",
+          "mathematical form of physical laws",
+          "simplicity and beauty of mathematical relationships",
+          "understanding nature"
+        ],
+        "ok": true,
+        "page": 389,
+        "reasoning_chars": 0,
+        "types": [
+          "process",
+          "definition",
+          "phenomenon",
+          "goal"
+        ],
+        "usage": {
+          "completion_tokens": 127,
+          "prompt_tokens": 420,
+          "prompt_tokens_details": null,
+          "total_tokens": 547
+        },
+        "wall_s": 2.43
+      },
+      {
+        "chunk_id": "c6f28e90-1acf-4f04-8fc5-2657f79720ac",
+        "content_chars": 438,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 0,
+        "names": [
+          "electromagnetic field",
+          "wave interference",
+          "boundary conditions",
+          "Huygens-Fresnel principle"
+        ],
+        "ok": true,
+        "page": 553,
+        "reasoning_chars": 0,
+        "types": [
+          "quantity",
+          "phenomenon",
+          "definition",
+          "theorem"
+        ],
+        "usage": {
+          "completion_tokens": 122,
+          "prompt_tokens": 343,
+          "prompt_tokens_details": null,
+          "total_tokens": 465
+        },
+        "wall_s": 2.34
+      },
+      {
+        "chunk_id": "d2e45332-80d1-4982-95b8-90f0a6c30439",
+        "content_chars": 563,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 5,
+        "n_prereq_edges": 2,
+        "names": [
+          "Reversible Engine",
+          "Work",
+          "Heat Absorbed",
+          "Temperature",
+          "Proportionality"
+        ],
+        "ok": true,
+        "page": 795,
+        "reasoning_chars": 0,
+        "types": [
+          "process",
+          "quantity",
+          "quantity",
+          "quantity",
+          "law"
+        ],
+        "usage": {
+          "completion_tokens": 170,
+          "prompt_tokens": 352,
+          "prompt_tokens_details": null,
+          "total_tokens": 522
+        },
+        "wall_s": 3.28
+      },
+      {
+        "chunk_id": "dddd1ce9-b9f3-444f-b6c0-4ec26d5419f9",
+        "content_chars": 487,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 1,
+        "names": [
+          "Snell's Law",
+          "Refraction of Light",
+          "Experimental Measurement of Refraction Angles",
+          "Claudius Ptolemy"
+        ],
+        "ok": true,
+        "page": 455,
+        "reasoning_chars": 0,
+        "types": [
+          "law",
+          "phenomenon",
+          "experiment",
+          "person"
+        ],
+        "usage": {
+          "completion_tokens": 144,
+          "prompt_tokens": 343,
+          "prompt_tokens_details": null,
+          "total_tokens": 487
+        },
+        "wall_s": 2.78
+      },
+      {
+        "chunk_id": "e93db838-4ce6-4e6e-9681-3d30491b2060",
+        "content_chars": 327,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 1,
+        "n_concepts": 3,
+        "n_prereq_edges": 0,
+        "names": [
+          "local order in a system",
+          "statistical mechanics",
+          "entropy"
+        ],
+        "ok": true,
+        "page": 835,
+        "reasoning_chars": 0,
+        "types": [
+          "phenomenon",
+          "theory",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 94,
+          "prompt_tokens": 313,
+          "prompt_tokens_details": null,
+          "total_tokens": 407
+        },
+        "wall_s": 1.85
+      },
+      {
+        "chunk_id": "f4a5fa83-7721-40b5-a1ad-d0a5e0a7b8fb",
+        "content_chars": 527,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "Qwen/Qwen3-VL-8B-Instruct",
+        "n_bad_types": 2,
+        "n_concepts": 5,
+        "n_prereq_edges": 0,
+        "names": [
+          "Wheeler-DeWitt equation",
+          "Yukawa potential",
+          "Poincaré recurrence theorem",
+          "Weber electrodynamics",
+          "Weyl gauge theory"
+        ],
+        "ok": true,
+        "page": 961,
+        "reasoning_chars": 0,
+        "types": [
+          "formula",
+          "formula",
+          "theorem",
+          "theory",
+          "theory"
+        ],
+        "usage": {
+          "completion_tokens": 155,
+          "prompt_tokens": 562,
+          "prompt_tokens_details": null,
+          "total_tokens": 717
+        },
+        "wall_s": 2.84
+      }
+    ],
+    "openai/gpt-oss-20b": [
+      {
+        "chunk_id": "00107164-32a1-4c46-bd8f-4ad0fae6d6f2",
+        "content_chars": 429,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 2,
+        "names": [
+          "experiment",
+          "momentum",
+          "uncertainty principle",
+          "position"
+        ],
+        "ok": true,
+        "page": 672,
+        "reasoning_chars": 4151,
+        "types": [
+          "experiment",
+          "quantity",
+          "law",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 1067,
+          "prompt_tokens": 399,
+          "prompt_tokens_details": null,
+          "total_tokens": 1466
+        },
+        "wall_s": 9.79
+      },
+      {
+        "chunk_id": "0a8c3eca-a32f-4c10-a7bf-c77932cc0ecf",
+        "content_chars": 364,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 2,
+        "names": [
+          "Ideal experiment",
+          "Event",
+          "Experiment",
+          "Initial and final conditions"
+        ],
+        "ok": true,
+        "page": 669,
+        "reasoning_chars": 3630,
+        "types": [
+          "definition",
+          "definition",
+          "experiment",
+          "definition"
+        ],
+        "usage": {
+          "completion_tokens": 887,
+          "prompt_tokens": 476,
+          "prompt_tokens_details": null,
+          "total_tokens": 1363
+        },
+        "wall_s": 8.14
+      },
+      {
+        "chunk_id": "16551ef8-584c-4b62-89a9-d5424baa0968",
+        "content_chars": 371,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 2,
+        "names": [
+          "Conservation of mechanical energy",
+          "escape velocity",
+          "radius of the earth",
+          "mass of the earth"
+        ],
+        "ok": true,
+        "page": 273,
+        "reasoning_chars": 5722,
+        "types": [
+          "law",
+          "quantity",
+          "quantity",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 1412,
+          "prompt_tokens": 379,
+          "prompt_tokens_details": null,
+          "total_tokens": 1791
+        },
+        "wall_s": 12.95
+      },
+      {
+        "chunk_id": "1ee03861-b3ef-4d34-9cdd-e6c4ebab6a83",
+        "content_chars": 703,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 6,
+        "n_prereq_edges": 3,
+        "names": [
+          "Constructive interference",
+          "Intensity",
+          "Phase",
+          "Sine function",
+          "Destructive interference",
+          "n^2 intensity scaling"
+        ],
+        "ok": true,
+        "page": 513,
+        "reasoning_chars": 3072,
+        "types": [
+          "phenomenon",
+          "quantity",
+          "quantity",
+          "definition",
+          "phenomenon",
+          "formula"
+        ],
+        "usage": {
+          "completion_tokens": 880,
+          "prompt_tokens": 535,
+          "prompt_tokens_details": null,
+          "total_tokens": 1415
+        },
+        "wall_s": 8.14
+      },
+      {
+        "chunk_id": "2a392697-9441-4550-b869-cdc61a24bbf8",
+        "content_chars": 666,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 5,
+        "n_prereq_edges": 4,
+        "names": [
+          "Electric field",
+          "Electric potential",
+          "Work done by electric force",
+          "Uniform electric field between parallel plates",
+          "Zero electric field outside plates"
+        ],
+        "ok": true,
+        "page": 282,
+        "reasoning_chars": 3360,
+        "types": [
+          "quantity",
+          "quantity",
+          "quantity",
+          "phenomenon",
+          "phenomenon"
+        ],
+        "usage": {
+          "completion_tokens": 890,
+          "prompt_tokens": 420,
+          "prompt_tokens_details": null,
+          "total_tokens": 1310
+        },
+        "wall_s": 8.33
+      },
+      {
+        "chunk_id": "35c32dcd-f2da-4412-b0b8-87af43cc68b8",
+        "content_chars": 402,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 2,
+        "names": [
+          "perfect gas",
+          "temperature",
+          "internal energy",
+          "work"
+        ],
+        "ok": true,
+        "page": 796,
+        "reasoning_chars": 2930,
+        "types": [
+          "definition",
+          "quantity",
+          "quantity",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 808,
+          "prompt_tokens": 382,
+          "prompt_tokens_details": null,
+          "total_tokens": 1190
+        },
+        "wall_s": 7.53
+      },
+      {
+        "chunk_id": "3eb8f432-9eb0-468c-91f2-0ab7f66b47d5",
+        "content_chars": 301,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 3,
+        "n_prereq_edges": 2,
+        "names": [
+          "nd sin θ = λ",
+          "d sin θ = mλ",
+          "angle θ"
+        ],
+        "ok": true,
+        "page": 516,
+        "reasoning_chars": 5119,
+        "types": [
+          "formula",
+          "formula",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 1514,
+          "prompt_tokens": 375,
+          "prompt_tokens_details": null,
+          "total_tokens": 1889
+        },
+        "wall_s": 14.05
+      },
+      {
+        "chunk_id": "4960918c-7e87-4f16-9746-a652991fbfdc",
+        "content_chars": 223,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 3,
+        "n_prereq_edges": 0,
+        "names": [
+          "field",
+          "glass",
+          "speed"
+        ],
+        "ok": true,
+        "page": 536,
+        "reasoning_chars": 4087,
+        "types": [
+          "phenomenon",
+          "definition",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 1085,
+          "prompt_tokens": 364,
+          "prompt_tokens_details": null,
+          "total_tokens": 1449
+        },
+        "wall_s": 10.11
+      },
+      {
+        "chunk_id": "534c6c5d-71b5-4ef0-a50d-663928d3cc1c",
+        "content_chars": 545,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 6,
+        "n_prereq_edges": 2,
+        "names": [
+          "Expectation value",
+          "Laplacian operator",
+          "Nabla operator",
+          "Bra vector",
+          "Ket vector",
+          "Amplitude"
+        ],
+        "ok": true,
+        "page": 964,
+        "reasoning_chars": 3533,
+        "types": [
+          "definition",
+          "definition",
+          "definition",
+          "definition",
+          "definition",
+          "definition"
+        ],
+        "usage": {
+          "completion_tokens": 1179,
+          "prompt_tokens": 577,
+          "prompt_tokens_details": null,
+          "total_tokens": 1756
+        },
+        "wall_s": 11.04
+      },
+      {
+        "chunk_id": "5e53ddf2-086c-4357-a632-875f2693c5cf",
+        "content_chars": 522,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 2,
+        "names": [
+          "Antenna Array Resolution Formula",
+          "Reciprocity Principle (Antenna Reciprocity)",
+          "Parabolic Focusing",
+          "Resolving Power"
+        ],
+        "ok": true,
+        "page": 523,
+        "reasoning_chars": 6489,
+        "types": [
+          "formula",
+          "law",
+          "phenomenon",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 1634,
+          "prompt_tokens": 561,
+          "prompt_tokens_details": null,
+          "total_tokens": 2195
+        },
+        "wall_s": 15.21
+      },
+      {
+        "chunk_id": "6945dd21-3899-4695-a468-384da6d35c0b",
+        "content_chars": 652,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 6,
+        "n_prereq_edges": 1,
+        "names": [
+          "idealized experiment",
+          "indestructible bullet",
+          "arrival in lumps",
+          "detector",
+          "low firing rate",
+          "single bullet arrival"
+        ],
+        "ok": true,
+        "page": 657,
+        "reasoning_chars": 4413,
+        "types": [
+          "experiment",
+          "definition",
+          "phenomenon",
+          "definition",
+          "quantity",
+          "phenomenon"
+        ],
+        "usage": {
+          "completion_tokens": 1154,
+          "prompt_tokens": 418,
+          "prompt_tokens_details": null,
+          "total_tokens": 1572
+        },
+        "wall_s": 10.82
+      },
+      {
+        "chunk_id": "74330072-0c0f-4c23-9987-c5c488436738",
+        "content_chars": 556,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 5,
+        "n_prereq_edges": 4,
+        "names": [
+          "baryons",
+          "lambda particle",
+          "sigma particles",
+          "multiplets",
+          "strangeness"
+        ],
+        "ok": true,
+        "page": 64,
+        "reasoning_chars": 4931,
+        "types": [
+          "definition",
+          "definition",
+          "definition",
+          "definition",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 1447,
+          "prompt_tokens": 502,
+          "prompt_tokens_details": null,
+          "total_tokens": 1949
+        },
+        "wall_s": 13.52
+      },
+      {
+        "chunk_id": "7fb7fc2a-6308-4928-a073-0773a1b99ff6",
+        "content_chars": 681,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 6,
+        "n_prereq_edges": 3,
+        "names": [
+          "x-rays",
+          "temperature",
+          "specific heats of gases",
+          "frozen out",
+          "kT",
+          "Sir James Jeans"
+        ],
+        "ok": true,
+        "page": 740,
+        "reasoning_chars": 4187,
+        "types": [
+          "phenomenon",
+          "quantity",
+          "quantity",
+          "phenomenon",
+          "quantity",
+          "person"
+        ],
+        "usage": {
+          "completion_tokens": 1280,
+          "prompt_tokens": 443,
+          "prompt_tokens_details": null,
+          "total_tokens": 1723
+        },
+        "wall_s": 12.08
+      },
+      {
+        "chunk_id": "8ba8ee11-048d-49a7-a033-2c84f62db5e6",
+        "content_chars": 441,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 5,
+        "n_prereq_edges": 6,
+        "names": [
+          "formula",
+          "distance",
+          "time",
+          "function",
+          "motion"
+        ],
+        "ok": true,
+        "page": 162,
+        "reasoning_chars": 3830,
+        "types": [
+          "formula",
+          "quantity",
+          "quantity",
+          "definition",
+          "phenomenon"
+        ],
+        "usage": {
+          "completion_tokens": 1032,
+          "prompt_tokens": 438,
+          "prompt_tokens_details": null,
+          "total_tokens": 1470
+        },
+        "wall_s": 9.78
+      },
+      {
+        "chunk_id": "94de939f-461d-4466-8d2d-acd8ee0118f9",
+        "content_chars": 247,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 3,
+        "n_prereq_edges": 0,
+        "names": [
+          "Newton",
+          "principle of relativity",
+          "philosophers"
+        ],
+        "ok": true,
+        "page": 304,
+        "reasoning_chars": 4031,
+        "types": [
+          "person",
+          "law",
+          "person"
+        ],
+        "usage": {
+          "completion_tokens": 1055,
+          "prompt_tokens": 363,
+          "prompt_tokens_details": null,
+          "total_tokens": 1418
+        },
+        "wall_s": 9.93
+      },
+      {
+        "chunk_id": "9e25c7ba-21f6-4c4e-b956-e57f88e14481",
+        "content_chars": 453,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 3,
+        "n_prereq_edges": 2,
+        "names": [
+          "Pseudo force",
+          "Torque",
+          "Static equilibrium"
+        ],
+        "ok": true,
+        "page": 350,
+        "reasoning_chars": 6651,
+        "types": [
+          "definition",
+          "quantity",
+          "phenomenon"
+        ],
+        "usage": {
+          "completion_tokens": 1602,
+          "prompt_tokens": 359,
+          "prompt_tokens_details": null,
+          "total_tokens": 1961
+        },
+        "wall_s": 14.89
+      },
+      {
+        "chunk_id": "a7bf32ad-e820-4a1a-b2d7-ec522515b7e5",
+        "content_chars": 311,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 1,
+        "names": [
+          "centrifugal force",
+          "work",
+          "rotational kinetic energy",
+          "kinetic energy"
+        ],
+        "ok": true,
+        "page": 358,
+        "reasoning_chars": 1881,
+        "types": [
+          "quantity",
+          "quantity",
+          "quantity",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 476,
+          "prompt_tokens": 395,
+          "prompt_tokens_details": null,
+          "total_tokens": 871
+        },
+        "wall_s": 4.51
+      },
+      {
+        "chunk_id": "b2d087fd-18ec-40ef-8562-45c99562ab38",
+        "content_chars": 335,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 1,
+        "names": [
+          "thermodynamics",
+          "partial derivative",
+          "ordinary derivative",
+          "independent variable"
+        ],
+        "ok": true,
+        "page": 808,
+        "reasoning_chars": 4038,
+        "types": [
+          "definition",
+          "definition",
+          "definition",
+          "definition"
+        ],
+        "usage": {
+          "completion_tokens": 967,
+          "prompt_tokens": 387,
+          "prompt_tokens_details": null,
+          "total_tokens": 1354
+        },
+        "wall_s": 9.01
+      },
+      {
+        "chunk_id": "bd06be4f-b744-47d2-b177-9134cd10c75c",
+        "content_chars": 585,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 5,
+        "n_prereq_edges": 4,
+        "names": [
+          "Mechanics",
+          "Mathematics",
+          "Theoretical physics",
+          "Physical laws",
+          "Mathematical representation"
+        ],
+        "ok": true,
+        "page": 389,
+        "reasoning_chars": 7255,
+        "types": [
+          "definition",
+          "definition",
+          "definition",
+          "law",
+          "definition"
+        ],
+        "usage": {
+          "completion_tokens": 1903,
+          "prompt_tokens": 479,
+          "prompt_tokens_details": null,
+          "total_tokens": 2382
+        },
+        "wall_s": 17.65
+      },
+      {
+        "chunk_id": "c6f28e90-1acf-4f04-8fc5-2657f79720ac",
+        "content_chars": 332,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 4,
+        "n_prereq_edges": 2,
+        "names": [
+          "Electric field",
+          "Wavelength",
+          "Subtraction of equations",
+          "Edge effect"
+        ],
+        "ok": true,
+        "page": 553,
+        "reasoning_chars": 3709,
+        "types": [
+          "quantity",
+          "quantity",
+          "process",
+          "phenomenon"
+        ],
+        "usage": {
+          "completion_tokens": 974,
+          "prompt_tokens": 402,
+          "prompt_tokens_details": null,
+          "total_tokens": 1376
+        },
+        "wall_s": 9.02
+      },
+      {
+        "chunk_id": "d2e45332-80d1-4982-95b8-90f0a6c30439",
+        "content_chars": 424,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 5,
+        "n_prereq_edges": 3,
+        "names": [
+          "law",
+          "work",
+          "heat",
+          "temperature",
+          "reversible engine"
+        ],
+        "ok": true,
+        "page": 795,
+        "reasoning_chars": 4306,
+        "types": [
+          "law",
+          "quantity",
+          "quantity",
+          "quantity",
+          "definition"
+        ],
+        "usage": {
+          "completion_tokens": 1198,
+          "prompt_tokens": 411,
+          "prompt_tokens_details": null,
+          "total_tokens": 1609
+        },
+        "wall_s": 11.06
+      },
+      {
+        "chunk_id": "dddd1ce9-b9f3-444f-b6c0-4ec26d5419f9",
+        "content_chars": 245,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 3,
+        "n_prereq_edges": 0,
+        "names": [
+          "Claudius Ptolemy",
+          "experimental results",
+          "angle"
+        ],
+        "ok": true,
+        "page": 455,
+        "reasoning_chars": 4714,
+        "types": [
+          "person",
+          "experiment",
+          "quantity"
+        ],
+        "usage": {
+          "completion_tokens": 1169,
+          "prompt_tokens": 401,
+          "prompt_tokens_details": null,
+          "total_tokens": 1570
+        },
+        "wall_s": 10.43
+      },
+      {
+        "chunk_id": "e93db838-4ce6-4e6e-9681-3d30491b2060",
+        "content_chars": 34,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 0,
+        "n_prereq_edges": 0,
+        "names": [],
+        "ok": true,
+        "page": 835,
+        "reasoning_chars": 1949,
+        "types": [],
+        "usage": {
+          "completion_tokens": 465,
+          "prompt_tokens": 372,
+          "prompt_tokens_details": null,
+          "total_tokens": 837
+        },
+        "wall_s": 4.3
+      },
+      {
+        "chunk_id": "f4a5fa83-7721-40b5-a1ad-d0a5e0a7b8fb",
+        "content_chars": 525,
+        "error": null,
+        "finish_reason": "stop",
+        "model": "openai/gpt-oss-20b",
+        "n_bad_types": 0,
+        "n_concepts": 7,
+        "n_prereq_edges": 0,
+        "names": [
+          "Wapstra, Aaldert Hendrik",
+          "Poincaré, J. Henri",
+          "Weber, Wilhelm E.",
+          "Weyl, Hermann",
+          "Wheeler, John A.",
+          "Yukawa, Hideki",
+          "Wilson, Charles T. R."
+        ],
+        "ok": true,
+        "page": 961,
+        "reasoning_chars": 1890,
+        "types": [
+          "person",
+          "person",
+          "person",
+          "person",
+          "person",
+          "person",
+          "person"
+        ],
+        "usage": {
+          "completion_tokens": 751,
+          "prompt_tokens": 560,
+          "prompt_tokens_details": null,
+          "total_tokens": 1311
+        },
+        "wall_s": 6.23
+      }
+    ]
+  },
+  "samples": [
+    {
+      "Qwen/Qwen3-VL-8B-Instruct": {
+        "n_prereq_edges": 1,
+        "names": [
+          "Heisenberg's Uncertainty Principle",
+          "Momentum",
+          "Recoil",
+          "Electron",
+          "Screen"
+        ],
+        "ok": true,
+        "wall_s": 3.4
+      },
+      "chunk_id": "00107164-32a1-4c46-bd8f-4ad0fae6d6f2",
+      "openai/gpt-oss-20b": {
+        "n_prereq_edges": 2,
+        "names": [
+          "experiment",
+          "momentum",
+          "uncertainty principle",
+          "position"
+        ],
+        "ok": true,
+        "wall_s": 9.79
+      },
+      "page": 672,
+      "text_head": "An experiment in which the recoil of the wall is measured.\nNow in order to do this it is necessary to know what the momentum of the screen is, before the electron goes through. So when we measure the momentum after the electron goes by, we can figure out how much the plate's momentum has changed. Bu"
+    },
+    {
+      "Qwen/Qwen3-VL-8B-Instruct": {
+        "n_prereq_edges": 1,
+        "names": [
+          "ideal experiment",
+          "event",
+          "initial conditions",
+          "final conditions"
+        ],
+        "ok": true,
+        "wall_s": 2.97
+      },
+      "chunk_id": "0a8c3eca-a32f-4c10-a7bf-c77932cc0ecf",
+      "openai/gpt-oss-20b": {
+        "n_prereq_edges": 2,
+        "names": [
+          "Ideal experiment",
+          "Event",
+          "Experiment",
+          "Initial and final conditions"
+        ],
+        "ok": true,
+        "wall_s": 8.14
+      },
+      "page": 669,
+      "text_head": "We will now write a summary of the main conclusions of our experiments. We will, however, put the results in a form which makes them true for a general class of such experiments. We can write our summary more simply if we first define an 'ideal experiment' as one in which there are no uncertain exte"
+    },
+    {
+      "Qwen/Qwen3-VL-8B-Instruct": {
+        "n_prereq_edges": 2,
+        "names": [
+          "Conservation of Mechanical Energy",
+          "Gravitational Potential Energy",
+          "Kinetic Energy",
+          "Escape Velocity",
+          "Radius of the Earth",
+          "Mass of the Earth"
+        ],
+        "ok": true,
+        "wall_s": 3.89
+      },
+      "chunk_id": "16551ef8-584c-4b62-89a9-d5424baa0968",
+      "openai/gpt-oss-20b": {
+        "n_prereq_edges": 2,
+        "names": [
+          "Conservation of mechanical energy",
+          "escape velocity",
+          "radius of the earth",
+          "mass of the earth"
+        ],
+        "ok": true,
+        "wall_s": 12.95
+      },
+      "page": 273,
+      "text_head": "Solution : The kinetic plus potential energy must be a constant; when it 'leaves,' it will be millions of miles away, and if it is just barely able to leave, we may suppose that it is moving with zero speed out there, just barely going. Let a be the radius of the earth, and M its mass."
+    },
+    {
+      "Qwen/Qwen3-VL-8B-Instruct": {
+        "n_prereq_edges": 2,
+        "names": [
+          "Constructive Interference",
+          "Destructive Interference",
+          "Intensity of Light",
+          "Phase Difference",
+          "Resonance Condition",
+          "Sine Function"
+        ],
+        "ok": true,
+        "wall_s": 4.01
+      },
+      "chunk_id": "1ee03861-b3ef-4d34-9cdd-e6c4ebab6a83",
+      "openai/gpt-oss-20b": {
+        "n_prereq_edges": 3,
+        "names": [
+          "Constructive interference",
+          "Intensity",
+          "Phase",
+          "Sine function",
+          "Destructive interference",
+          "n^2 intensity scaling"
+        ],
+        "ok": true,
+        "wall_s": 8.14
+      },
+      "page": 513,
+      "text_head": "In order to see this effect, we plot the curve that comes from (30.3), taking n to be enormously large and plotting the region near φ = 0. In the first place, if φ is exactly 0, we have 0 / 0, but if φ is infinitesimal, the ratio of the two sines squared is simply n 2 , since the sine and the angle "
+    },
+    {
+      "Qwen/Qwen3-VL-8B-Instruct": {
+        "n_prereq_edges": 1,
+        "names": [
+          "Electric Field",
+          "Electric Potential",
+          "Work Done by Electric Force",
+          "Capacitor Plates",
+          "Electrostatic Force"
+        ],
+        "ok": true,
+        "wall_s": 3.41
+      },
+      "chunk_id": "2a392697-9441-4550-b869-cdc61a24bbf8",
+      "openai/gpt-oss-20b": {
+        "n_prereq_edges": 4,
+        "names": [
+          "Electric field",
+          "Electric potential",
+          "Work done by electric force",
+          "Uniform electric field between parallel plates",
+          "Zero electric field outside plates"
+        ],
+        "ok": true,
+        "wall_s": 8.33
+      },
+      "page": 282,
+      "text_head": "We found previously that there is zero force outside the plates and that there is a constant electric field between them, directed from + to -and of magnitude σ/ϵ 0 (Fig. 14-5). We would like to know how much work would be done in carrying a charge from one plate to the other. The work would be the "
+    }
+  ]
+}
