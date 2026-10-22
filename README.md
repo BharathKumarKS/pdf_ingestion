@@ -373,6 +373,23 @@ project gets reviewed at the end" — *each* step. In scope: source changes, mea
 - The reviewer must be a **different model** from the author. Resolve it — `hermes config get
   delegation`, or the run's `~/.hermes/cache/delegation/live/<id>/manifest.json` — never from a
   note in a document, and never from a raw-file read of `config.yaml`.
+- **…and from a different model FAMILY, not just a different id.** Independence is from the author
+  *and* from the subject, and it is measured in families: two ids from one lineage are the same
+  reviewer twice. The lab serves two text families — `openai/gpt-oss-20b` (OpenAI) and
+  `Qwen/Qwen3-VL-8B-Instruct` (Alibaba) — while the author runs `deepseek/deepseek-v4.1-flash`
+  (DeepSeek), so today's pin is independent on both counts. Consequences to check before **each**
+  dispatch, not once:
+  - If concept extraction moves to `Qwen/Qwen3-VL-8B-Instruct`, the reviewer stays `gpt-oss-20b` —
+    a different family from both the author and the thing under test.
+  - If extraction ever moves *to* `gpt-oss-20b`, the reviewer must move to Qwen.
+  - ⚠️ **A same-family sibling is not a substitute.** `deepseek-ai/DeepSeek-R1-Distill-Qwen-7B` is
+    listed on the cluster (currently 502 — its backend is down) and would be a **DeepSeek-family**
+    reviewer, i.e. the author reviewing itself, however different the parameter count looks. Do not
+    reach for it when the pinned reviewer is unreachable; an unreachable reviewer means the step
+    waits.
+  - ⚠️ Only two families are available, so the rotation is one step deep. When a step is *about*
+    both of them, there is no independent reviewer on this cluster — say so and leave the verdict to
+    the owner rather than manufacturing one.
 - A step with no verifier is **not done**, and is **not committed**.
 - An unreachable reviewer, an empty response, or `finish_reason=length` is **no verdict —
   never a pass**. A step whose verifier cannot run **waits**; it is not merged on the author's

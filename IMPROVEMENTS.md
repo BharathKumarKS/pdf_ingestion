@@ -2570,6 +2570,13 @@ re-record it, rather than comparing across the two.
     `prompt_digest`), so choosing Qwen now and changing your mind later re-extracts everything.
   - **Verification:** design fidelity `deleg_f35f4a2a` task 1 — **6/6 confirmed**, no confound
     besides the model id. Artifact arithmetic checked mechanically for all six arm-runs (consistent).
+    ⚠️ **Every reviewer of this comparison was `openai/gpt-oss-20b` — one of the two arms** (the lab
+    serves only two text models, so the alternative was the other arm). That is acceptable for what
+    was actually checked, which is *design fidelity* (does the probe mirror production?) and
+    *arithmetic* (do the fields agree with each other?) — neither is a judgement about output
+    quality. It would NOT be acceptable for a quality verdict, and none was taken: the quality
+    reading is left to the owner, and the artifact ships a side-by-side sample for it. Recorded
+    because a reviewer drawn from the compared set is a limitation, not a formality.
     ⚠️ The same round's arithmetic reviewer refuted two of those; **void on wrong-file
     attribution** — every number it cited is a real value from `rep1`, not the registered artifact,
     and its `per_chunk` length of 25 exists in no artifact. A prior attempt (`deleg_2cb7b098`) is
