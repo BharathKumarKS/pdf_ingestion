@@ -54,6 +54,12 @@ print(f"  qdrant_collection : {c.qdrant_collection}")
 print(f"  memgraph          : {c.memgraph_host}:{c.memgraph_port}")
 print(f"  llm_backend       : {c.llm_backend}")
 print(f"  openai_model      : {c.openai_model} @ {c.openai_api_base}")
+# The extractor is chosen PER STAGE in config.yaml (IMPROVEMENTS.md §I23(c)), so c.openai_model is
+# NOT what the graph build calls. Resolve it exactly the way build_graph does, or this gate
+# asserts something other than what is in force — which is the only reason the gate exists.
+from src.pdf_ingestion.graph_builder import GraphBuilder
+_extraction_model = GraphBuilder(settings=c)._extraction_model()
+print(f"  concept_extraction: {_extraction_model}   <- what the graph build actually calls")
 print(f"  concept_gen_workers: {c.concept_gen_workers}")
 print(f"  legacy embedder   : {c.embedding_model} ({c.embedding_dim}d)  <- concept names")
 print(f"  stubs             : embedder={c.use_stub_embedder} graph={c.use_stub_graph} llm={c.use_stub_llm}")
@@ -61,6 +67,7 @@ assert c.memgraph_host and c.memgraph_port, "memgraph not configured"
 assert not c.use_stub_graph, "use_stub_graph is ON — the graph would be a stub"
 assert not c.use_stub_llm, "use_stub_llm is ON — concept extraction would be a stub"
 assert not c.use_stub_embedder, "use_stub_embedder is ON — concept vectors would be random"
+assert _extraction_model, "concept extraction model resolved EMPTY — check config.yaml's concept_extraction section"
 print("  ASSERTIONS OK")
 PY
 
