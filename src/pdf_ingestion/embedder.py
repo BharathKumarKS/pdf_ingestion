@@ -72,6 +72,31 @@ class StubEmbedder:
         return results
 
 
+# -- Device selection ----------------------------------------------------------
+
+def resolve_device(use_gpu: bool) -> str:
+    """Pick the best **available** device — `USE_GPU=true` must not mean "cuda or die".
+
+    Measured on this Mac (§I23(d)): `torch 2.8.0`, arm64, **cuda False / mps True**. The old
+    one-liner (`"cuda" if use_gpu else "cpu"`) had no availability check, so `USE_GPU=true` here
+    loaded the model straight into a `cuda` device that does not exist. `parser.py` checks
+    `torch.cuda.is_available()`; this does the same and adds the Apple-Silicon path.
+    """
+    if not use_gpu:
+        return "cpu"
+    try:
+        import torch
+    except Exception as exc:                     # torch is a hard dep of the real path, not of tests
+        logger.warning("USE_GPU=true but torch is unavailable ({}); using cpu", exc)
+        return "cpu"
+    if torch.cuda.is_available():
+        return "cuda"
+    if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
+        return "mps"
+    logger.warning("USE_GPU=true but neither CUDA nor MPS is available; using cpu")
+    return "cpu"
+
+
 # -- Nomic MRL embedder --------------------------------------------------------
 
 class NomicEmbedder:
@@ -91,7 +116,7 @@ class NomicEmbedder:
     def __init__(self, settings: Settings | None = None) -> None:
         self._cfg = settings or get_settings()
         self._model = None
-        self._device: str = "cuda" if self._cfg.use_gpu else "cpu"
+        self._device: str = resolve_device(self._cfg.use_gpu)
 
     def _load(self) -> None:
         if self._model is not None:
@@ -111,8 +136,8 @@ class NomicEmbedder:
             "trust_remote_code": True,
             "cache_folder": self._cfg.model_cache_dir,
         }
-        if self._device == "cuda":
-            st_kwargs["device"] = "cuda"
+        if self._device != "cpu":
+            st_kwargs["device"] = self._device
 
         self._model = SentenceTransformer(self._cfg.embedding_model, **st_kwargs)
         self._model.eval()
