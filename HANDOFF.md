@@ -4,14 +4,26 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-21, session 3. §G1 (PPR) and §G2 (Leiden) are BUILT and INDEPENDENTLY
-> VERIFIED; §I21 (the Phase 3 path now applies the E5 filter) is implemented and awaiting its
-> verifier. §I43/§I39 stand as session 2 left them. NEW STANDING RULE: **verifier at every step** —
-> see `README.md` → "Verifier at every step" and the Session hygiene section below.**
+> **Last updated: 2026-10-21, session 3 (ENDING — a clean stopping point). Landed and verified:
+> §G1 (PPR) + §G2 (Leiden), §I21 (Phase 3 applies the E5 filter), §I23's checkpoint + honest
+> failure count, and the §G1 ablation — which came back NEGATIVE. The standing rule is now
+> **verifier at every step** (`README.md` → "Verifier at every step"; Session hygiene below).
+> ⚠️ **THREE FILES ARE UNCOMMITTED ON PURPOSE — do them FIRST, see "IN FLIGHT" below.**
 >
 > ## ▶ NEXT SESSION — START HERE (written 2026-10-21, session 3)
 >
-> **0. ✅ DONE — §G1 + §G2 built, measured, and INDEPENDENTLY VERIFIED** (commit `e78a7ef`; module
+> **0. ⚠️ IN FLIGHT — VERIFY AND COMMIT THESE THREE FIRST.** They are the `resume` plumbing that
+> makes §I23's checkpoint reachable, written after `deleg_5fd5575a` had already been dispatched, so
+> they are **unverified and deliberately NOT committed** (`50af715` covers only the four files the
+> 9/9 verdict actually saw — all four were last modified before that review ran):
+> `src/pdf_ingestion/store.py` (`generate_phase3_artifacts(..., resume=True)`, passed through to
+> `build_graph`), `scripts/run_phase3.py` (`--no-resume`, plus a "Failed chunks" column and a loud
+> warning when it is non-zero — parity with `run_phase2.py`), `tests/test_phase3.py` (the
+> `Capturing` stub gains `resume`, plus `test_resume_is_threaded_to_the_graph_builder`).
+> Without them the documented `resume=False` is **unreachable from the CLI**. Dispatch one verifier
+> over this delta, then commit. Suite with them applied: **490 pass / 4 fail / 6 skip**.
+>
+> **0a. ✅ DONE — §G1 + §G2 built, measured, INDEPENDENTLY VERIFIED** (commit `e78a7ef`; module
 > `src/pdf_ingestion/graph_analytics.py`, 18 unit tests, two probes). Deps taken per the owner
 > decision: `python-igraph` + `leidenalg`.
 > - **§G2 — the gate re-run on LEIDEN, and it PASSES.** `logs/p1/step10/g2_leiden_gate.py`:
@@ -69,6 +81,37 @@
 > **Takes effect on a graph REBUILD — which is the next step in the D1 order and is not yet run.**
 > Also in that commit: the "verifier at every step" rule in `README.md` + Session hygiene, and the
 > README test count corrected from a stale "135" to the measured 464 / 4 / 6.
+>
+> **0c. ✅ DONE — §I23: the Phase 3 graph build is checkpointed, and its failures are counted**
+> (commit `50af715`; verifier `deleg_5fd5575a`, **9/9 confirmed**). NEW
+> `src/pdf_ingestion/graph_checkpoint.py` (side-car JSONL, keyed on document + model + **prompt
+> digest**; a FAILED extraction is never resumed as done), `build_graph(..., resume=True)` now
+> returns **`failed_chunks`** — the honest count, where the old local reported 44 failures as
+> "0 failed" — and `_extract_concepts` distinguishes a failed call from a chunk that genuinely has
+> no concepts. 25 new tests, both guards proven to fail against the defect they are for. Memgraph
+> remains the single write point. **NOT done in §I23:** part (c) the extraction-model choice
+> (needs an output-quality comparison — owner call) and part (d) the MPS path for concept-name
+> embedding.
+>
+> **▶ THE NEXT STEPS, in the settled D1 order** (filter → Phase 3 filter → harden → **rebuild** →
+> §G3 → §G2):
+> 1. **Verify and commit the three uncommitted files (item 0 above).**
+> 2. **§I23 (c)+(d)** if you want them before the rebuild — (c) is a quality decision, (d) is
+>    `embedder.py`'s device selection, which has no availability check (`USE_GPU=true` on this Mac
+>    would try `cuda` and fail; measured `mps True / cuda False`).
+> 3. **THE GRAPH REBUILD** — the gate that releases §G3, and the only remaining prerequisite. It
+>    needs `QDRANT_HOST=10.0.10.65`, the cluster up, and **days not hours**: budget from §I23's
+>    measurement, not the plan's 2 h estimate. The new checkpoint makes it restartable; read
+>    `failed_chunks`, not the exit code.
+> 4. Then **§G3** (entity resolution — §I30's lever: 1,186 merge groups, 34.4 % of the vocabulary),
+>    then **§G2** community summaries.
+>
+> **OPEN OWNER DECISIONS:** (i) **§G1** — close it as measured-and-negative and keep the fixed-hop
+> ranking, or authorise the **expansion arm** (the ablation's null leaves that open; do NOT re-run
+> the ablation unchanged); (ii) **§I34** — a re-ingest transition reports the graph lane as SKIP:
+> non-blocking or a hard blocker?; (iii) **§A3** — card volume vs quality; (iv) whether `e78a7ef`
+> should be amended now that §G2 is fully verified (it still carries no `[verified]` prefix, on
+> purpose: §G1's ablation was outstanding at the time and has since returned a null).
 >
 > **1. ✅ DONE (2026-10-21 session 2) — §I43 fixed and B5 PASSES.** `save_raptor_tree` now deletes the
 > document's RAPTOR points (and rows) before the upsert, and the 73 orphaned points were removed by
