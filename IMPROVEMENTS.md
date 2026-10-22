@@ -2507,6 +2507,51 @@ re-record it, rather than comparing across the two.
 
 ### I23. NEW 2026-10-18 (found watching the Step 10 Phase A graph build) — the Phase 3 graph build has no checkpoint and no retry, and burns a reasoning model on a JSON extraction task
 
+> **⚠️ UPDATE 2026-10-21 (session 6) — the collapse is NOT a one-off; it happened again on the REBUILD,
+> and a liveness probe does not detect it.**
+>
+> The rebuild (Qwen extractor, 3,533 chunks) ran at **~94 chunks/min** for its first ~35 min, then
+> **collapsed ~58× mid-run with no error**:
+>
+> | window | chunks | elapsed | rate |
+> |---|---|---|---|
+> | 22:17:34 → 22:25:25 | 2400 → 3025 | 471 s | **1.33/s ≈ 80 chunks/min** |
+> | 22:26:41 → 22:44:57 | 3075 → 3100 | 1096 s | **0.023/s ≈ 1.4 chunks/min** |
+>
+> - **The trap: a single-request liveness probe reads ALL-CLEAR during the collapse.** At the bottom of
+>   the collapse a real completion to `Qwen/Qwen3-VL-8B-Instruct` returned **HTTP 200 in 0.16 s**
+>   (`max_tokens: 8`), and `/v1/models` answered 200 in 2.2 s — while the build's four concurrent
+>   ~2,000-token extraction calls were starving. (Both are **session observations**, not in the run
+>   log; they are one-off readings of a transient condition and cannot be re-created. The *rates* below
+>   are derived from the log and are re-derivable.) This is §11's "listed ≠ serving" trap in a new form:
+>   **a trivial prompt does not measure the queue a batch job sits in.** Do not conclude "the endpoint
+>   is fine, so the build is fine" from either probe.
+> - **What DID show it:** the checkpoint's line count (static across a 45 s sample) and the widening gap
+>   between progress lines. **Read the rate, not a status code.**
+> - **4 `ReadTimeout`s** appeared at the bottom (first at 22:44:50) — §I24's bounded retry working as
+>   designed: 300 s deadline, 3 attempts, then the chunk is marked failed and **counted**, not swallowed.
+> - **The checkpoint is what makes this survivable** (§I23's own fix): 3,100 of 3,533 extractions were
+>   already durable, so the collapse cost wall-clock, not work. A chunk whose extraction FAILED is not
+>   checkpointed as done, so it is re-attempted on resume. **Second time the register has had to say
+>   it: do not budget Phase 3 runs in hours on this shared cluster, and never read a collapse as a
+>   crash.**
+> - ⚠️ **Timing note, stated rather than claimed:** the collapse began ~22:26, ~6 min after this
+>   session's last verifier call finished (~22:20) and ~25 min after the docs review (96 API calls,
+>   21:55-22:01). Both hit the same endpoint. The timing does **not** point at this session — but a
+>   cluster-pinned verifier is **not** free during a measured cluster run, and that should be assumed
+>   next time rather than discovered.
+>
+> **Status at 2026-10-21 22:45: 3,100 / 3,533 extracted, still running (tmux `graphrebuild`), rate
+> unknown and volatile.**
+>
+> - **✅ AND IT RECOVERED — the collapse was TRANSIENT, which is the part that matters.** By 22:45:35
+>   the rate was back to **~79 chunks/min** (3150 → 3175 in 19 s), and extraction **finished at
+>   22:50:25 with `0 FAILED`** — all four timed-out calls succeeded on retry. The whole build was
+>   **DONE at 22:54:37**: extraction ~62 min, concept-name embedding ~1.5 min (7,427 names, local
+>   CPU), Qdrant upsert ~0.5 min, Memgraph writes ~2.7 min. So an 18-minute 58× stall cost wall-clock
+>   and nothing else — but **the probe read all-clear throughout it**, so nothing would have told you
+>   whether to wait or to kill it. The checkpoint and the rate are the only instruments that did.
+
 - **What:** three compounding defects, all measured on the live run of
   `run_phase3.py --graph-only` for doc `7ba61432` (started 17:21:55, 3,796 chunks,
   `concept_gen_workers=4`):

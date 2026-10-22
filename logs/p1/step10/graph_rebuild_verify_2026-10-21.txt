@@ -1,0 +1,21 @@
+Independent verification of the 2026-10-21 graph rebuild (doc 7ba61432).
+Command: uv run python logs/p1/step10/verify_graph_cleared.py
+Read straight from Memgraph over Bolt — NOT the run's own report.
+Expected: 3,533 Chunk (the content chunks, NOT 3,796) and Concept != 14,407
+(the run reports 14,407 'concept nodes', which is the MENTIONS edge count — IMPROVEMENTS.md §I22).
+
+  Document         1
+  Chunk            3533
+  Page             907
+  Concept          7427
+  PART_OF          4440
+  ON_PAGE          3533
+  MENTIONS         14407
+  RELATES_TO       22799
+  PREREQUISITE_OF  3295
+  documents: [{'id': '7ba61432-c5e0-416d-aecf-25a232523481'}]
+
+READING: Chunk == 3,533 == the content chunks, so §I21's filter is confirmed in the OUTPUT.
+Concept == 7,427 (distinct), while the run's summary line printed 14,407 'concept nodes' —
+exactly the MENTIONS count below it, which is §I22's defect reproduced on a fresh build.
+failed_chunks == 0 (see the run log's 'Concept extraction done: 3533 chunks, 0 FAILED').

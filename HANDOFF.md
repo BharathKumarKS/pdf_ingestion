@@ -4,12 +4,14 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-21, session 6. ⚙️ THE GRAPH REBUILD IS RUNNING.** The document-keyed graph
-> clear that item 3 named as "the first thing the next session needs" is built, verified and
-> **applied** (`f007f85` — `scripts/clear_graph_document.py`; the graph read back **0/0/0/0** from Bolt,
-> independently of the script's own table), and the rebuild is **in flight in tmux session
-> `graphrebuild`** under `Qwen/Qwen3-VL-8B-Instruct`, log
-> `logs/p1/step10/graph_rebuild_2026-10-21.txt` — read item 3 for its state and what to check.
+> **Last updated: 2026-10-21, session 6. ✅ THE GRAPH REBUILD IS DONE AND VERIFIED — item 3 is closed.**
+> The document-keyed graph clear it needed is built, verified and **applied** (`f007f85`; the graph read
+> back **0/0/0/0** from Bolt, independently of the script's own table), and the rebuild finished
+> **22:54:37** — **1 h 6 m 21 s**, `failed_chunks = 0`, **3,533 chunk nodes** (§I21 confirmed in the
+> OUTPUT: the 263 non-content chunks are gone), log `logs/p1/step10/graph_rebuild_2026-10-21.txt`. Read
+> item 3 for the full outcome. Also this session: the derived collections moved onto the dense lane
+> (`6773022`, §I12/§I13), which found and fixed **§I47 — the graph lane was dead on every multihop query
+> in `evaluate_rag.py`**. The next graph steps are **§G3, then §G2**.
 > Session 5 landed: §I23's checkpoint + the `resume` plumbing that makes `resume=False` reachable
 > from the CLI, §I23(d)'s device selection, **§I23(c) — the extraction-model comparison (the
 > single-chunk "10 vs 5 concepts" did NOT reproduce; the real difference is 3.2-3.6× latency)**,
@@ -139,8 +141,33 @@
 >    (**10.11-10.31 s / 2.83-3.16 s = 3.2-3.6×**) gives **≈4.5-5.1 h** — and that is an **upper bound
 >    on the saving**, because it scales the whole build although only the extraction half is
 >    model-bound (the concept-name embedding and the Memgraph writes are not).
-> 3. **THE GRAPH REBUILD — ✅ LAUNCHED 2026-10-21 21:48:16 (session 6), running in tmux
->    `graphrebuild`. It WAS preceded by a graph clear, which is now built, verified and applied.**
+> 3. **THE GRAPH REBUILD — ✅ DONE AND VERIFIED 2026-10-21 (session 6).** Launched 21:48:16, finished
+>    **22:54:37** — wall **1 h 6 m 21 s**, against the 4.5-5.1 h projection and the 16 h 25 m the
+>    gpt-oss-20b build took. It WAS preceded by a graph clear, which is now built, verified and applied.
+>    - **Outcome — the run's own report, then INDEPENDENTLY counted from Bolt:** **`failed_chunks = 0`**,
+>      and `MATCH` counts of **1 Document / 3,533 Chunk / 907 Page / 7,427 Concept / 14,407 MENTIONS /
+>      22,799 RELATES_TO / 3,295 PREREQUISITE_OF**. The counts are **persisted** at
+>      `logs/p1/step10/graph_rebuild_verify_2026-10-21.txt` (probe:
+>      `logs/p1/step10/verify_graph_cleared.py`) — they were session-only for one round, and a verifier
+>      was right to mark them UNVERIFIABLE until they were on disk. This is §I44's rule again.
+>    - ✅ **§I21 IS CONFIRMED IN THE OUTPUT, not just the log: 3,533 chunk nodes, NOT 3,796.** The 263
+>      non-content chunks (72 TOC + 186 index + 5 front matter, §I39) are absent from the graph, so the
+>      TOC concepts §I21 measured entering it no longer exist.
+>    - ⚠️ The run reported "14407 concept nodes" — that is **MENTIONS edges, not concepts** (§I22 again:
+>      the label lies). The distinct concept count is **7,427**.
+>    - **What moved, old → new** (both counted from Bolt): Concept 7,834 → **7,427**; RELATES_TO
+>      37,300 → **22,799** (−39 %; per chunk 9.83 → 6.45); PREREQUISITE_OF 11,892 → **3,295** (−72 %;
+>      per chunk 3.13 → 0.93 — §I23(c) measured that gpt-oss-20b emits more of these, and nothing reads
+>      them). Concept density per chunk is essentially unchanged: 2.06 → 2.10.
+>    - ⚠️ **This build embedded its concept names with the LOCAL 768d Nomic**, because the process
+>      imported `graph_builder.py` at 21:48, before `6773022` switched that to the dense lane. So it is
+>      self-consistent (768d into the 768d collection) — and when §I12's move is applied, the
+>      **checkpoint makes the re-run cheap**: all 3,533 extractions are reused and only the
+>      embed + upsert + write phases repeat (minutes, not the 62 min extraction took).
+>    - ⚠️ **An 18-minute, 58× throughput stall hit mid-run (22:26 → 22:44) and recovered** — recorded in
+>      §I23. `0 FAILED` survived it because the bounded retry recovered all four timeouts. The lesson:
+>      **a single-request liveness probe read all-clear throughout the stall** (a real completion: HTTP
+>      200 in 0.16 s), so read the RATE and the checkpoint, not a status code.
 >    - ✅ **THE CLEAR — DONE 2026-10-21 (session 6).** NEW `scripts/clear_graph_document.py` +
 >      `tests/test_graph_clear.py` (13 tests, offline), commit **`f007f85`**, verifier
 >      `openai/gpt-oss-20b` deleg `deleg_9cfbf8dd` — **7/7 SOUND, no defects**. `clean_stale_graph.py`
