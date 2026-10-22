@@ -1,0 +1,5035 @@
+{
+  "meta": {
+    "concept_collection": "concept_embeddings",
+    "content_page_window": [
+      30,
+      936
+    ],
+    "embed_dim": 768,
+    "embed_model": "nomic-ai/nomic-embed-text-v1.5",
+    "generated_by": "logs/p1/step10/g1_ppr_ablation.py",
+    "graph": "localhost:7687",
+    "graph_state": "the graph BEFORE the §I21 content filter is applied and it is rebuilt — a before-arm for that rebuild, and §G3's merges would move it again",
+    "headline_k": 20,
+    "iterations": 10,
+    "ks": [
+      3,
+      5,
+      10,
+      20
+    ],
+    "lam": 0.5,
+    "n_queries": 40,
+    "no_llm_calls": true,
+    "not_tested": "candidate EXPANSION (chunks that mention no seed concept but are graph-near). §G1's verifier 4 specifies a ranking comparison, and that is what this is; a null result here is NOT evidence that PPR cannot help the lane.",
+    "power": {
+      "cut_bites_at_k": {
+        "10": 13,
+        "20": 7,
+        "3": 35,
+        "5": 24
+      },
+      "n_candidate_pages": {
+        "max": 75,
+        "median": 6.5,
+        "min": 2
+      },
+      "n_candidates_chunks": {
+        "max": 101,
+        "median": 7.5,
+        "min": 2
+      },
+      "why_it_matters": "the graph lane's candidate pool is tiny, so a page-level Recall@k is inert at any k larger than the pool: the cut returns the whole set and BOTH ARMS ARE IDENTICAL BY CONSTRUCTION. `cut_bites_at_k[k]` counts the queries where the cut can actually change the retrieved set. A k with a small count cannot discriminate, and a null result there is UNINFORMATIVE, not negative."
+    },
+    "ppr_weight": "weight",
+    "queries_file": "data/eval_queries_v2.json",
+    "query_type": "multihop",
+    "seed_confound": {
+      "note": "concept_embeddings accumulates across ingests and carries no document id, so a top-8 seed can name a concept absent from the current graph. Both arms see the same seeds, so the DELTA is unaffected; the absolute numbers are.",
+      "the_two_seed_sets_agree_exactly": true,
+      "top8_absent_from_graph": {
+        "max": 6,
+        "mean": 3.025,
+        "queries_with_any_absent": 39
+      },
+      "why": "a seed absent from the graph matches no Concept node in the ranking Cypher and is skipped by personalized_pagerank, so restricting the seed set to the graph cannot change either arm. Agreement is the evidence the confound is INERT here."
+    },
+    "what": "§G1 verifier 4 — PPR ranking vs the current fixed-hop ranking (the ablation)"
+  },
+  "queries": [
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 13,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 15,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 13,
+            "recall_at": {
+              "10": 0.0,
+              "20": 1.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.07692307692307693
+          },
+          "seeds": 4,
+          "top20_pages_fixed": [
+            79,
+            82,
+            685,
+            829,
+            49,
+            83,
+            78,
+            70,
+            54,
+            45,
+            36,
+            919,
+            920
+          ],
+          "top20_pages_ppr": [
+            82,
+            685,
+            829,
+            49,
+            83,
+            54,
+            45,
+            36,
+            78,
+            70,
+            920,
+            919,
+            79
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 13,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 15,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 13,
+            "recall_at": {
+              "10": 0.0,
+              "20": 1.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.07692307692307693
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            79,
+            82,
+            685,
+            829,
+            49,
+            83,
+            78,
+            70,
+            54,
+            45,
+            36,
+            919,
+            920
+          ],
+          "top20_pages_ppr": [
+            82,
+            685,
+            829,
+            49,
+            83,
+            54,
+            45,
+            36,
+            78,
+            70,
+            920,
+            919,
+            79
+          ]
+        }
+      },
+      "id": "gold-008",
+      "n_relevant": 1,
+      "query": "How did astronomers discover that stars are made of atoms of the same kind as those on Earth?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Definition of stars as composed of the same atoms as the Earth",
+        "Atomic behavior in stars",
+        "Einstein's discovery",
+        "Chemical properties of atoms"
+      ],
+      "top8_concepts": [
+        "Definition of stars as composed of the same atoms as the Earth",
+        "Atomic behavior in stars",
+        "atoms",
+        "Atoms",
+        "atoms of the same type",
+        "Einstein's discovery",
+        "Chemical properties of atoms",
+        "Atomic nature of matter"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 8,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 9,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 8,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 4,
+          "top20_pages_fixed": [
+            605,
+            482,
+            341,
+            936,
+            148,
+            463,
+            140,
+            464
+          ],
+          "top20_pages_ppr": [
+            482,
+            605,
+            148,
+            463,
+            464,
+            341,
+            936,
+            140
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 8,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 9,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 8,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            605,
+            482,
+            341,
+            936,
+            148,
+            463,
+            140,
+            464
+          ],
+          "top20_pages_ppr": [
+            482,
+            605,
+            148,
+            463,
+            464,
+            341,
+            936,
+            140
+          ]
+        }
+      },
+      "id": "gold-013",
+      "n_relevant": 1,
+      "query": "What happens to the focus of an ellipse when it is viewed at a tilt?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "focus (of an ellipse)",
+        "Focus (of an ellipse)",
+        "angle of tilt",
+        "reflective property of an ellipse"
+      ],
+      "top8_concepts": [
+        "focus (of an ellipse)",
+        "Focus (of an ellipse)",
+        "Angle of tilt",
+        "angle of tilt",
+        "tilt",
+        "ellipse",
+        "Ellipse",
+        "reflective property of an ellipse"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            789,
+            515,
+            311,
+            169
+          ],
+          "top20_pages_ppr": [
+            311,
+            789,
+            515,
+            169
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            789,
+            515,
+            311,
+            169
+          ],
+          "top20_pages_ppr": [
+            311,
+            789,
+            515,
+            169
+          ]
+        }
+      },
+      "id": "gold-027",
+      "n_relevant": 13,
+      "query": "Why does the passage state that we look at the 'blob' from different points of view when moving at different velocities?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Optical path difference",
+        "optical path difference",
+        "Which‑Path Measurement"
+      ],
+      "top8_concepts": [
+        "Optical path difference",
+        "optical path difference",
+        "Direction of motion",
+        "Phase shift due to path difference",
+        "Transformation of velocities",
+        "Trajectories described by a light ray and particle inside a moving clock",
+        "Motion of a point",
+        "Which‑Path Measurement"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 7,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 7,
+          "top20_pages_fixed": [
+            350,
+            370,
+            351,
+            359,
+            362,
+            340
+          ],
+          "top20_pages_ppr": [
+            350,
+            370,
+            351,
+            359,
+            340,
+            362
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 7,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            350,
+            370,
+            351,
+            359,
+            362,
+            340
+          ],
+          "top20_pages_ppr": [
+            350,
+            370,
+            351,
+            359,
+            340,
+            362
+          ]
+        }
+      },
+      "id": "gold-032",
+      "n_relevant": 1,
+      "query": "When a mass moves only along the radius, which quantity stays constant and how is the torque τ related to the Coriolis force F_c?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Torque–angular momentum theorem"
+      ],
+      "top8_concepts": [
+        "Inertial force has no torque about center of mass",
+        "Relation between torque and angular momentum",
+        "torque equals rate of change of angular momentum",
+        "Torque formula (rate of change of angular momentum)",
+        "torque theorem",
+        "Torque–Angular Momentum Relationship",
+        "Torque–angular momentum theorem",
+        "Torque-Angular Momentum Theorem"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            387,
+            419,
+            413,
+            237
+          ],
+          "top20_pages_ppr": [
+            387,
+            419,
+            237,
+            413
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            387,
+            419,
+            413,
+            237
+          ],
+          "top20_pages_ppr": [
+            387,
+            419,
+            237,
+            413
+          ]
+        }
+      },
+      "id": "gold-038",
+      "n_relevant": 1,
+      "query": "Why, according to the passage, does the force only need to fight friction to keep an efficient oscillator steady after it has started oscillating?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "mechanical oscillation",
+        "mechanical oscillator",
+        "Energy of a forced oscillator"
+      ],
+      "top8_concepts": [
+        "Oscillating force",
+        "Mechanical oscillation",
+        "mechanical oscillation",
+        "mechanical oscillator",
+        "Mechanical oscillator",
+        "law of friction",
+        "Forced oscillator with damping",
+        "Energy of a forced oscillator"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 75,
+            "recall_at": {
+              "10": 0.2222222222222222,
+              "20": 0.2222222222222222,
+              "3": 0.2222222222222222,
+              "5": 0.2222222222222222
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 101,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 75,
+            "recall_at": {
+              "10": 0.1111111111111111,
+              "20": 0.1111111111111111,
+              "3": 0.1111111111111111,
+              "5": 0.1111111111111111
+            },
+            "rr": 0.5
+          },
+          "seeds": 7,
+          "top20_pages_fixed": [
+            538,
+            490,
+            535,
+            318,
+            848,
+            147,
+            290,
+            332,
+            859,
+            299,
+            292,
+            600,
+            546,
+            311,
+            499,
+            323,
+            284,
+            864,
+            593,
+            591
+          ],
+          "top20_pages_ppr": [
+            490,
+            538,
+            318,
+            290,
+            332,
+            859,
+            299,
+            292,
+            499,
+            284,
+            593,
+            591,
+            861,
+            465,
+            310,
+            558,
+            498,
+            105,
+            601,
+            839
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 75,
+            "recall_at": {
+              "10": 0.2222222222222222,
+              "20": 0.2222222222222222,
+              "3": 0.2222222222222222,
+              "5": 0.2222222222222222
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 101,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 75,
+            "recall_at": {
+              "10": 0.1111111111111111,
+              "20": 0.1111111111111111,
+              "3": 0.1111111111111111,
+              "5": 0.1111111111111111
+            },
+            "rr": 0.5
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            538,
+            490,
+            535,
+            318,
+            848,
+            147,
+            290,
+            332,
+            859,
+            299,
+            292,
+            600,
+            546,
+            311,
+            499,
+            323,
+            284,
+            864,
+            593,
+            591
+          ],
+          "top20_pages_ppr": [
+            490,
+            538,
+            318,
+            290,
+            332,
+            859,
+            299,
+            292,
+            499,
+            284,
+            593,
+            591,
+            861,
+            465,
+            310,
+            558,
+            498,
+            105,
+            601,
+            839
+          ]
+        }
+      },
+      "id": "gold-048",
+      "n_relevant": 9,
+      "query": "According to the passage, why does light appear to travel slower than the ultimate speed c in a material?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Principle of constancy of the speed of light"
+      ],
+      "top8_concepts": [
+        "Effective speed of light in material",
+        "Speed of light c",
+        "light speed in different media",
+        "speed of light",
+        "Speed of light",
+        "Speed of Light",
+        "Speed faster than light",
+        "Principle of constancy of the speed of light"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.08333333333333333,
+              "20": 0.08333333333333333,
+              "3": 0.08333333333333333,
+              "5": 0.08333333333333333
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 5,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.08333333333333333,
+              "20": 0.08333333333333333,
+              "3": 0.08333333333333333,
+              "5": 0.08333333333333333
+            },
+            "rr": 1.0
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            657,
+            894,
+            471,
+            217
+          ],
+          "top20_pages_ppr": [
+            657,
+            471,
+            217,
+            894
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.08333333333333333,
+              "20": 0.08333333333333333,
+              "3": 0.08333333333333333,
+              "5": 0.08333333333333333
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 5,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.08333333333333333,
+              "20": 0.08333333333333333,
+              "3": 0.08333333333333333,
+              "5": 0.08333333333333333
+            },
+            "rr": 1.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            657,
+            894,
+            471,
+            217
+          ],
+          "top20_pages_ppr": [
+            657,
+            471,
+            217,
+            894
+          ]
+        }
+      },
+      "id": "gold-058",
+      "n_relevant": 12,
+      "query": "How does the result P12 obtained with both holes open differ from the sum of P1 and P2?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Product-to-sum identity",
+        "hole number density",
+        "Product-to-sum identity for cosine"
+      ],
+      "top8_concepts": [
+        "probability P12",
+        "P 12",
+        "Square of a sum formula",
+        "Product-to-sum identity",
+        "Difference of squares formula",
+        "Formula for coordinates of P",
+        "hole number density",
+        "Product-to-sum identity for cosine"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 0.0,
+              "5": 1.0
+            },
+            "rr": 0.2
+          },
+          "n_candidates": 9,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.16666666666666666
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            62,
+            598,
+            517,
+            685,
+            686,
+            156,
+            654,
+            662,
+            920
+          ],
+          "top20_pages_ppr": [
+            62,
+            598,
+            517,
+            685,
+            920,
+            686,
+            156,
+            654,
+            662
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 0.0,
+              "5": 1.0
+            },
+            "rr": 0.2
+          },
+          "n_candidates": 9,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.16666666666666666
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            62,
+            598,
+            517,
+            685,
+            686,
+            156,
+            654,
+            662,
+            920
+          ],
+          "top20_pages_ppr": [
+            62,
+            598,
+            517,
+            685,
+            920,
+            686,
+            156,
+            654,
+            662
+          ]
+        }
+      },
+      "id": "gold-060",
+      "n_relevant": 1,
+      "query": "Why does the inability of all electrons to occupy the same place give matter its strength?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [],
+      "top8_concepts": [
+        "Electrons",
+        "electrons",
+        "charge of the electron",
+        "Relative strengths of electrical and gravitational interactions between two electrons",
+        "Quantum properties of matter",
+        "electron behavior",
+        "mass of the electron",
+        "Atomic nature of matter"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 62,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.16666666666666666,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0625
+          },
+          "n_candidates": 101,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 62,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.16666666666666666
+            },
+            "rr": 0.2
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            318,
+            723,
+            684,
+            386,
+            207,
+            725,
+            357,
+            252,
+            273,
+            726,
+            732,
+            277,
+            315,
+            429,
+            253,
+            709,
+            254,
+            34,
+            94,
+            255
+          ],
+          "top20_pages_ppr": [
+            318,
+            723,
+            684,
+            252,
+            707,
+            710,
+            593,
+            702,
+            272,
+            260,
+            385,
+            277,
+            94,
+            278,
+            262,
+            386,
+            207,
+            357,
+            732,
+            254
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 62,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.16666666666666666,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0625
+          },
+          "n_candidates": 101,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 62,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.16666666666666666
+            },
+            "rr": 0.2
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            318,
+            723,
+            684,
+            386,
+            207,
+            725,
+            357,
+            252,
+            273,
+            726,
+            732,
+            277,
+            315,
+            429,
+            253,
+            709,
+            254,
+            34,
+            94,
+            255
+          ],
+          "top20_pages_ppr": [
+            318,
+            723,
+            684,
+            252,
+            707,
+            710,
+            593,
+            702,
+            272,
+            260,
+            385,
+            277,
+            94,
+            278,
+            262,
+            386,
+            207,
+            357,
+            732,
+            254
+          ]
+        }
+      },
+      "id": "gold-062",
+      "n_relevant": 6,
+      "query": "How many independent directions contribute to the total kinetic energy of a gas particle, and what is the resulting total kinetic energy?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Kinetic energy of gas particles",
+        "Total energy of a particle",
+        "kinetic theory of gases"
+      ],
+      "top8_concepts": [
+        "Kinetic energy of gas particles",
+        "total energy equals kinetic energy for monatomic gas",
+        "total energy of a particle",
+        "Total energy of a particle",
+        "Kinetic energy",
+        "kinetic energy",
+        "Kinetic Energy",
+        "kinetic theory of gases"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 17,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.2222222222222222,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.07142857142857142
+          },
+          "n_candidates": 19,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 17,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.2222222222222222,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.09090909090909091
+          },
+          "seeds": 6,
+          "top20_pages_fixed": [
+            719,
+            700,
+            696,
+            232,
+            698,
+            82,
+            685,
+            829,
+            49,
+            83,
+            78,
+            70,
+            54,
+            45,
+            36,
+            753,
+            421
+          ],
+          "top20_pages_ppr": [
+            719,
+            700,
+            232,
+            698,
+            82,
+            685,
+            829,
+            49,
+            83,
+            54,
+            45,
+            36,
+            78,
+            70,
+            696,
+            753,
+            421
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 17,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.2222222222222222,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.07142857142857142
+          },
+          "n_candidates": 19,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 17,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.2222222222222222,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.09090909090909091
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            719,
+            700,
+            696,
+            232,
+            698,
+            82,
+            685,
+            829,
+            49,
+            83,
+            78,
+            70,
+            54,
+            45,
+            36,
+            753,
+            421
+          ],
+          "top20_pages_ppr": [
+            719,
+            700,
+            232,
+            698,
+            82,
+            685,
+            829,
+            49,
+            83,
+            54,
+            45,
+            36,
+            78,
+            70,
+            696,
+            753,
+            421
+          ]
+        }
+      },
+      "id": "gold-065",
+      "n_relevant": 9,
+      "query": "What is occurring to a certain number of atoms at a given moment with respect to the liquid surface?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Liquid surface",
+        "liquid state"
+      ],
+      "top8_concepts": [
+        "number of atoms",
+        "Number of atoms",
+        "atoms",
+        "Atoms",
+        "Liquid surface",
+        "liquid surface",
+        "Quantum-mechanical experiments with atomic matter",
+        "liquid state"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 28,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 34,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 28,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 6,
+          "top20_pages_fixed": [
+            73,
+            82,
+            718,
+            45,
+            832,
+            750,
+            751,
+            47,
+            48,
+            725,
+            720,
+            639,
+            705,
+            697,
+            42,
+            196,
+            752,
+            46,
+            40,
+            767
+          ],
+          "top20_pages_ppr": [
+            82,
+            718,
+            45,
+            73,
+            750,
+            751,
+            47,
+            48,
+            720,
+            639,
+            752,
+            46,
+            40,
+            833,
+            43,
+            925,
+            573,
+            725,
+            705,
+            697
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 28,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 34,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 28,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            73,
+            82,
+            718,
+            45,
+            832,
+            750,
+            751,
+            47,
+            48,
+            725,
+            720,
+            639,
+            705,
+            697,
+            42,
+            196,
+            752,
+            46,
+            40,
+            767
+          ],
+          "top20_pages_ppr": [
+            82,
+            718,
+            45,
+            73,
+            750,
+            751,
+            47,
+            48,
+            720,
+            639,
+            752,
+            46,
+            40,
+            833,
+            43,
+            925,
+            573,
+            725,
+            705,
+            697
+          ]
+        }
+      },
+      "id": "gold-068",
+      "n_relevant": 5,
+      "query": "Why does the passage refer to molecules that differ from the majority as 'special' or 'S-molecules'?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Special molecules",
+        "Special molecule"
+      ],
+      "top8_concepts": [
+        "Special molecules",
+        "Special molecule",
+        "Molecules",
+        "molecules",
+        "distribution of molecules",
+        "Molecule",
+        "molecule",
+        "Unsymmetrical molecules"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.1111111111111111,
+              "20": 0.1111111111111111,
+              "3": 0.1111111111111111,
+              "5": 0.1111111111111111
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 6,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.1111111111111111,
+              "20": 0.1111111111111111,
+              "3": 0.1111111111111111,
+              "5": 0.1111111111111111
+            },
+            "rr": 1.0
+          },
+          "seeds": 4,
+          "top20_pages_fixed": [
+            797,
+            787,
+            805,
+            801,
+            811,
+            126
+          ],
+          "top20_pages_ppr": [
+            797,
+            126,
+            787,
+            805,
+            801,
+            811
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.1111111111111111,
+              "20": 0.1111111111111111,
+              "3": 0.1111111111111111,
+              "5": 0.1111111111111111
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 6,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.1111111111111111,
+              "20": 0.1111111111111111,
+              "3": 0.1111111111111111,
+              "5": 0.1111111111111111
+            },
+            "rr": 1.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            797,
+            787,
+            805,
+            801,
+            811,
+            126
+          ],
+          "top20_pages_ppr": [
+            797,
+            126,
+            787,
+            805,
+            801,
+            811
+          ]
+        }
+      },
+      "id": "gold-069",
+      "n_relevant": 9,
+      "query": "What is the net result of the two machines in tandem in terms of heat taken from T1 and delivered at T2?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Efficiency (of a heat engine)",
+        "Heat Transfer",
+        "heat transfer",
+        "Energy conservation relation Q2 = Q1 - W"
+      ],
+      "top8_concepts": [
+        "Relationship between efficiencies of engines running between temperatures",
+        "Conversion of work into heat",
+        "Efficiency (of a heat engine)",
+        "Heat Transfer",
+        "heat transfer",
+        "Heat transfer",
+        "Energy conservation relation Q2 = Q1 - W",
+        "Two-outcome experiment"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 56,
+            "recall_at": {
+              "10": 0.23076923076923078,
+              "20": 0.3076923076923077,
+              "3": 0.07692307692307693,
+              "5": 0.15384615384615385
+            },
+            "rr": 0.5
+          },
+          "n_candidates": 75,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 56,
+            "recall_at": {
+              "10": 0.23076923076923078,
+              "20": 0.3076923076923077,
+              "3": 0.15384615384615385,
+              "5": 0.15384615384615385
+            },
+            "rr": 0.5
+          },
+          "seeds": 7,
+          "top20_pages_fixed": [
+            786,
+            787,
+            834,
+            823,
+            788,
+            806,
+            795,
+            812,
+            831,
+            805,
+            811,
+            34,
+            234,
+            829,
+            182,
+            179,
+            230,
+            195,
+            142,
+            252
+          ],
+          "top20_pages_ppr": [
+            786,
+            787,
+            788,
+            806,
+            812,
+            34,
+            823,
+            795,
+            831,
+            805,
+            811,
+            834,
+            234,
+            829,
+            182,
+            179,
+            230,
+            195,
+            142,
+            252
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 56,
+            "recall_at": {
+              "10": 0.23076923076923078,
+              "20": 0.3076923076923077,
+              "3": 0.07692307692307693,
+              "5": 0.15384615384615385
+            },
+            "rr": 0.5
+          },
+          "n_candidates": 75,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 56,
+            "recall_at": {
+              "10": 0.23076923076923078,
+              "20": 0.3076923076923077,
+              "3": 0.15384615384615385,
+              "5": 0.15384615384615385
+            },
+            "rr": 0.5
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            786,
+            787,
+            834,
+            823,
+            788,
+            806,
+            795,
+            812,
+            831,
+            805,
+            811,
+            34,
+            234,
+            829,
+            182,
+            179,
+            230,
+            195,
+            142,
+            252
+          ],
+          "top20_pages_ppr": [
+            786,
+            787,
+            788,
+            806,
+            812,
+            34,
+            823,
+            795,
+            831,
+            805,
+            811,
+            834,
+            234,
+            829,
+            182,
+            179,
+            230,
+            195,
+            142,
+            252
+          ]
+        }
+      },
+      "id": "gold-072",
+      "n_relevant": 13,
+      "query": "Why would the proposed device violate the Second Law of Thermodynamics?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Newton's second law"
+      ],
+      "top8_concepts": [
+        "second law of thermodynamics",
+        "Second Law of Thermodynamics",
+        "Second law of thermodynamics",
+        "Kelvin-Planck statement of the second law of thermodynamics",
+        "Newton's second law",
+        "Newton's Second Law",
+        "Kelvin-Planck statement of the second law",
+        "Laws of thermodynamics"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "rr": 0.3333333333333333
+          },
+          "seeds": 4,
+          "top20_pages_fixed": [
+            80,
+            840,
+            841,
+            196
+          ],
+          "top20_pages_ppr": [
+            80,
+            840,
+            841,
+            196
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "rr": 0.3333333333333333
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            80,
+            840,
+            841,
+            196
+          ],
+          "top20_pages_ppr": [
+            80,
+            840,
+            841,
+            196
+          ]
+        }
+      },
+      "id": "gold-074",
+      "n_relevant": 1,
+      "query": "Why does the passage state that for rapid motion of an object in the air, the air does not flow around it?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Air flow",
+        "velocity of air particles",
+        "Laws of motion",
+        "Laws of Motion"
+      ],
+      "top8_concepts": [
+        "Equations of motion of air",
+        "Air flow",
+        "air movement",
+        "air velocity",
+        "velocity of air particles",
+        "laws of fluid flow",
+        "Laws of motion",
+        "Laws of Motion"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.2
+          },
+          "n_candidates": 9,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.2
+          },
+          "seeds": 7,
+          "top20_pages_fixed": [
+            301,
+            722,
+            490,
+            865,
+            848,
+            913,
+            842,
+            837,
+            378
+          ],
+          "top20_pages_ppr": [
+            301,
+            722,
+            865,
+            490,
+            848,
+            378,
+            913,
+            837,
+            842
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.2
+          },
+          "n_candidates": 9,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.2
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            301,
+            722,
+            490,
+            865,
+            848,
+            913,
+            842,
+            837,
+            378
+          ],
+          "top20_pages_ppr": [
+            301,
+            722,
+            865,
+            490,
+            848,
+            378,
+            913,
+            837,
+            842
+          ]
+        }
+      },
+      "id": "gold-076",
+      "n_relevant": 3,
+      "query": "According to the passage, how does the meaning of c differ between sound waves and light waves?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Dispersion relation for sound waves"
+      ],
+      "top8_concepts": [
+        "C",
+        "Speed of light c",
+        "Sound wave dispersion relation",
+        "wave equation for sound",
+        "Dispersion relation for sound waves",
+        "sound waves",
+        "Sound waves",
+        "Propagation of sound waves"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 2,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 3,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 2,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 4,
+          "top20_pages_fixed": [
+            887,
+            901
+          ],
+          "top20_pages_ppr": [
+            887,
+            901
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 2,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 3,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 2,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            887,
+            901
+          ],
+          "top20_pages_ppr": [
+            887,
+            901
+          ]
+        }
+      },
+      "id": "gold-078",
+      "n_relevant": 1,
+      "query": "According to the passage, how does the shape of the mouth affect the vowel sounds we recognize in speech?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Vowel sound",
+        "Vowel sounds",
+        "Speech perception",
+        "Absorption of sound"
+      ],
+      "top8_concepts": [
+        "Vowel sound",
+        "vowel sound",
+        "Vowel sounds",
+        "Mouth shape",
+        "Speech perception",
+        "Natural modes of vibration of the air in the mouth",
+        "Speed of sound increases with temperature",
+        "Absorption of sound"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 8,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "rr": 0.3333333333333333
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            34,
+            905,
+            915,
+            903,
+            911
+          ],
+          "top20_pages_ppr": [
+            34,
+            905,
+            915,
+            903,
+            911
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 8,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 1.0,
+              "20": 1.0,
+              "3": 1.0,
+              "5": 1.0
+            },
+            "rr": 0.3333333333333333
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            34,
+            905,
+            915,
+            903,
+            911
+          ],
+          "top20_pages_ppr": [
+            34,
+            905,
+            915,
+            903,
+            911
+          ]
+        }
+      },
+      "id": "gold-080",
+      "n_relevant": 1,
+      "query": "How does the change in water depth lead to the formation of shock waves, as described in the passage?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Shock Wave",
+        "Depth of water",
+        "Wave speed dependence on water depth"
+      ],
+      "top8_concepts": [
+        "Shock waves",
+        "Shock Wave",
+        "Shock wave",
+        "shock wave",
+        "Depth of water",
+        "deep-water waves",
+        "Linear increase of pressure with depth",
+        "Wave speed dependence on water depth"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 3,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 3,
+          "top20_pages_fixed": [
+            289,
+            482,
+            171
+          ],
+          "top20_pages_ppr": [
+            289,
+            482,
+            171
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 3,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            289,
+            482,
+            171
+          ],
+          "top20_pages_ppr": [
+            289,
+            482,
+            171
+          ]
+        }
+      },
+      "id": "gold-081",
+      "n_relevant": 4,
+      "query": "How long does it take for a falling body to reach a velocity of 32 ft/s, given the units of time discussed in the units and standards of time section?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Velocity of a falling body formula",
+        "formula for velocity of a falling body",
+        "Time of flight",
+        "distance-time relation for free fall",
+        "Free-fall distance in one second"
+      ],
+      "top8_concepts": [
+        "Velocity of a falling body formula",
+        "formula for velocity of a falling body",
+        "Time of flight",
+        "time of flight",
+        "distance-time relation for free fall",
+        "velocity of a falling ball",
+        "formula for time of flight in moving medium",
+        "Free-fall distance in one second"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 3,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 3,
+          "top20_pages_fixed": [
+            159,
+            863,
+            675
+          ],
+          "top20_pages_ppr": [
+            159,
+            863,
+            675
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 3,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            159,
+            863,
+            675
+          ],
+          "top20_pages_ppr": [
+            159,
+            863,
+            675
+          ]
+        }
+      },
+      "id": "gold-082",
+      "n_relevant": 3,
+      "query": "How does the mass of a particle appear in both the quantum probability density of its velocity and the classical law of gravitation?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Probability (quantum mechanics)",
+        "Probability (quantum)",
+        "Quantum Mechanical Laws",
+        "Particle momentum",
+        "Law of Gravitation"
+      ],
+      "top8_concepts": [
+        "Probability (quantum mechanics)",
+        "Probability (quantum)",
+        "Quantum theory of gravitation",
+        "Classical particle velocity",
+        "Quantum Mechanical Laws",
+        "Particle momentum",
+        "particle momentum",
+        "Law of Gravitation"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 11,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 13,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 11,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.25
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            360,
+            361,
+            921,
+            359,
+            369,
+            145,
+            383,
+            226,
+            182,
+            274,
+            910
+          ],
+          "top20_pages_ppr": [
+            910,
+            360,
+            361,
+            921,
+            359,
+            369,
+            145,
+            383,
+            182,
+            274,
+            226
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 11,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 13,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 11,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.25
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            360,
+            361,
+            921,
+            359,
+            369,
+            145,
+            383,
+            226,
+            182,
+            274,
+            910
+          ],
+          "top20_pages_ppr": [
+            910,
+            360,
+            361,
+            921,
+            359,
+            369,
+            145,
+            383,
+            182,
+            274,
+            226
+          ]
+        }
+      },
+      "id": "gold-083",
+      "n_relevant": 3,
+      "query": "How does the acceleration of the unit vector in far‑field radiation, as described by the laws of radiation, compare to the centrifugal and Coriolis forces that act on objects in a rotating spaceship?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Acceleration of a unit vector",
+        "Electric field of an accelerating charge (far-field)",
+        "Centripetal Acceleration"
+      ],
+      "top8_concepts": [
+        "Acceleration of a unit vector",
+        "Coriolis force",
+        "Electric field of an accelerating charge (far-field)",
+        "Centripetal Acceleration",
+        "centripetal acceleration",
+        "Centripetal acceleration",
+        "acceleration of gravity",
+        "Coriolis forces"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 12,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.3333333333333333
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            305,
+            34,
+            921,
+            147,
+            359,
+            358,
+            375,
+            247,
+            842
+          ],
+          "top20_pages_ppr": [
+            305,
+            842,
+            921,
+            147,
+            375,
+            247,
+            359,
+            358,
+            34
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 12,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.3333333333333333
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            305,
+            34,
+            921,
+            147,
+            359,
+            358,
+            375,
+            247,
+            842
+          ],
+          "top20_pages_ppr": [
+            305,
+            842,
+            921,
+            147,
+            375,
+            247,
+            359,
+            358,
+            34
+          ]
+        }
+      },
+      "id": "gold-084",
+      "n_relevant": 3,
+      "query": "What effect does the centrifugal force in a rotating spaceship have on the behavior of a gas described by the ideal gas law, and how does this relate to the exponential atmosphere?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Centrifugal effect",
+        "Exponential Atmosphere",
+        "Centrifugal Force"
+      ],
+      "top8_concepts": [
+        "Centrifugal effect",
+        "Centrifugal effects",
+        "Exponential Atmosphere",
+        "Exponential atmosphere",
+        "centrifugal force",
+        "Centrifugal force",
+        "Centrifugal Force",
+        "Gas behavior"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 7,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.5
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            701,
+            34,
+            921,
+            305,
+            247,
+            853
+          ],
+          "top20_pages_ppr": [
+            701,
+            921,
+            305,
+            34,
+            247,
+            853
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 7,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.5
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            701,
+            34,
+            921,
+            305,
+            247,
+            853
+          ],
+          "top20_pages_ppr": [
+            701,
+            921,
+            305,
+            34,
+            247,
+            853
+          ]
+        }
+      },
+      "id": "gold-085",
+      "n_relevant": 3,
+      "query": "How does the compressibility of radiation influence the motion of a Foucault pendulum in a rotating reference frame?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Compressibility of Radiation",
+        "Rotating frame of reference",
+        "Rotation (physics)"
+      ],
+      "top8_concepts": [
+        "Compressibility of Radiation",
+        "compressibility of radiation",
+        "Compressibility of radiation",
+        "Foucault pendulum",
+        "Rotating frame of reference",
+        "Rotation (physics)",
+        "Rotating reference frame",
+        "rotating reference frame"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 6,
+          "top20_pages_fixed": [
+            304,
+            663,
+            660,
+            689
+          ],
+          "top20_pages_ppr": [
+            304,
+            660,
+            663,
+            689
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            304,
+            663,
+            660,
+            689
+          ],
+          "top20_pages_ppr": [
+            304,
+            660,
+            663,
+            689
+          ]
+        }
+      },
+      "id": "gold-086",
+      "n_relevant": 3,
+      "query": "How does the requirement that velocity vectors be drawn with common tails for subtraction relate to the quantum idea that particles in an interference experiment cannot be described as passing exclusively through one of the slits?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Quantum interference",
+        "quantum physics"
+      ],
+      "top8_concepts": [
+        "Experiment showing inability to measure velocity without external reference",
+        "Electron trajectory through slits",
+        "Theoretical possibility of measuring velocity without external reference",
+        "Philosophical necessity of not being able to measure velocity without external reference",
+        "interference experiment with electrons",
+        "Quantum interference",
+        "Quantum physics",
+        "quantum physics"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 2,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 2,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 2,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 2,
+          "top20_pages_fixed": [
+            291,
+            157
+          ],
+          "top20_pages_ppr": [
+            291,
+            157
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 2,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 2,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 2,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            291,
+            157
+          ],
+          "top20_pages_ppr": [
+            291,
+            157
+          ]
+        }
+      },
+      "id": "gold-087",
+      "n_relevant": 2,
+      "query": "Using the relationship v² = GM/a for a satellite's orbital speed, what is the derivative dv/da of the speed with respect to the orbital radius, and how does this derivative relate to the energy required to escape Earth's gravity?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Earth's orbital motion",
+        "Orbital velocity formula",
+        "Earth's orbital motion around the Sun",
+        "Orbital speed approximation formula",
+        "Earth's orbital radius",
+        "speed as a derivative"
+      ],
+      "top8_concepts": [
+        "Earth's orbital speed",
+        "Earth's orbital motion",
+        "Orbital velocity formula",
+        "Earth's orbital motion around the Sun",
+        "Earth's orbital distance",
+        "Orbital speed approximation formula",
+        "Earth's orbital radius",
+        "speed as a derivative"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 4,
+          "top20_pages_fixed": [
+            253,
+            260,
+            224,
+            578
+          ],
+          "top20_pages_ppr": [
+            578,
+            260,
+            224,
+            253
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            253,
+            260,
+            224,
+            578
+          ],
+          "top20_pages_ppr": [
+            578,
+            260,
+            224,
+            253
+          ]
+        }
+      },
+      "id": "gold-088",
+      "n_relevant": 2,
+      "query": "According to the product rule for differentiation, how would you differentiate the electric vector of light when it is expressed as the product of two time‑dependent functions, and what implication does this differentiation have for the scattering of polarized light?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "differentiation of a vector with respect to time",
+        "differentiation with respect to time",
+        "Electric field vector of light",
+        "Product rule for differentiation"
+      ],
+      "top8_concepts": [
+        "differentiation of a vector with respect to time",
+        "Derivative of the dot product of two time-dependent vectors",
+        "differentiation with respect to time",
+        "Differentiation with respect to time",
+        "reflection of polarized light",
+        "Electric vector of light",
+        "Electric field vector of light",
+        "Product rule for differentiation"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 6,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 6,
+          "top20_pages_fixed": [
+            660,
+            813,
+            775,
+            273,
+            447,
+            582
+          ],
+          "top20_pages_ppr": [
+            273,
+            660,
+            813,
+            775,
+            582,
+            447
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 6,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 6,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            660,
+            813,
+            775,
+            273,
+            447,
+            582
+          ],
+          "top20_pages_ppr": [
+            273,
+            660,
+            813,
+            775,
+            582,
+            447
+          ]
+        }
+      },
+      "id": "gold-089",
+      "n_relevant": 3,
+      "query": "How does the continuous range of photon energies, as described in the first passage, compare with the differential forces experienced by ions versus neutral molecules in a gas when an electric field is applied, as described in the second passage?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "photon gas energy‑pressure relation",
+        "energy of photon gas"
+      ],
+      "top8_concepts": [
+        "photon gas energy‑pressure relation",
+        "Electric potential difference",
+        "electric potential difference",
+        "difference in potential energy",
+        "energy of photon gas",
+        "Electrical potential difference",
+        "Relativity of electric field",
+        "Electric field energy"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 7,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.16666666666666666
+          },
+          "n_candidates": 7,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 7,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.2
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            499,
+            558,
+            207,
+            821,
+            820,
+            822,
+            428
+          ],
+          "top20_pages_ppr": [
+            499,
+            428,
+            821,
+            820,
+            822,
+            207,
+            558
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 7,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.16666666666666666
+          },
+          "n_candidates": 7,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 7,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.2
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            499,
+            558,
+            207,
+            821,
+            820,
+            822,
+            428
+          ],
+          "top20_pages_ppr": [
+            499,
+            428,
+            821,
+            820,
+            822,
+            207,
+            558
+          ]
+        }
+      },
+      "id": "gold-090",
+      "n_relevant": 3,
+      "query": "What is the relationship between the energy loss rate of a charged oscillator (kT) and the radiative flux described by the Stefan–Boltzmann law (σT⁴ per unit area)?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Energy loss per radian",
+        "radiative energy flux",
+        "Stefan‑Boltzmann law"
+      ],
+      "top8_concepts": [
+        "Radiative energy loss",
+        "energy loss per radian",
+        "Energy loss per radian",
+        "radiative energy flux",
+        "loss of kinetic energy",
+        "Stefan-Boltzmann law",
+        "Fraction of energy lost per radian",
+        "Stefan‑Boltzmann law"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 28,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.045454545454545456
+          },
+          "n_candidates": 30,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 28,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.05
+          },
+          "seeds": 7,
+          "top20_pages_fixed": [
+            273,
+            719,
+            260,
+            252,
+            272,
+            262,
+            94,
+            482,
+            196,
+            706,
+            207,
+            97,
+            254,
+            255,
+            687,
+            786,
+            256,
+            330,
+            87,
+            311
+          ],
+          "top20_pages_ppr": [
+            94,
+            482,
+            273,
+            719,
+            260,
+            272,
+            262,
+            252,
+            196,
+            97,
+            254,
+            255,
+            687,
+            786,
+            256,
+            330,
+            87,
+            311,
+            787,
+            788
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 28,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.045454545454545456
+          },
+          "n_candidates": 30,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 28,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.05
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            273,
+            719,
+            260,
+            252,
+            272,
+            262,
+            94,
+            482,
+            196,
+            706,
+            207,
+            97,
+            254,
+            255,
+            687,
+            786,
+            256,
+            330,
+            87,
+            311
+          ],
+          "top20_pages_ppr": [
+            94,
+            482,
+            273,
+            719,
+            260,
+            272,
+            262,
+            252,
+            196,
+            97,
+            254,
+            255,
+            687,
+            786,
+            256,
+            330,
+            87,
+            311,
+            787,
+            788
+          ]
+        }
+      },
+      "id": "gold-091",
+      "n_relevant": 3,
+      "query": "How does the principle of conservation of energy in a frictionless engine compare to the energy exchange between elastic and kinetic energy in a spring system?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Conservation of kinetic energy"
+      ],
+      "top8_concepts": [
+        "Conservation of Mechanical Energy",
+        "conservation of mechanical energy",
+        "Conservation of mechanical energy",
+        "principle of conservation of energy",
+        "Principle of Conservation of Energy",
+        "Conservation of kinetic energy",
+        "conservation of kinetic energy",
+        "Conservation of energy"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 15,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.6666666666666666,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 22,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 15,
+            "recall_at": {
+              "10": 0.6666666666666666,
+              "20": 0.6666666666666666,
+              "3": 0.3333333333333333,
+              "5": 0.6666666666666666
+            },
+            "rr": 1.0
+          },
+          "seeds": 4,
+          "top20_pages_fixed": [
+            687,
+            546,
+            863,
+            861,
+            859,
+            913,
+            862,
+            858,
+            915,
+            860,
+            914,
+            573,
+            899,
+            902,
+            846
+          ],
+          "top20_pages_ppr": [
+            687,
+            861,
+            859,
+            862,
+            914,
+            860,
+            902,
+            846,
+            546,
+            863,
+            913,
+            858,
+            915,
+            573,
+            899
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 15,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.6666666666666666,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 22,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 15,
+            "recall_at": {
+              "10": 0.6666666666666666,
+              "20": 0.6666666666666666,
+              "3": 0.3333333333333333,
+              "5": 0.6666666666666666
+            },
+            "rr": 1.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            687,
+            546,
+            863,
+            861,
+            859,
+            913,
+            862,
+            858,
+            915,
+            860,
+            914,
+            573,
+            899,
+            902,
+            846
+          ],
+          "top20_pages_ppr": [
+            687,
+            861,
+            859,
+            862,
+            914,
+            860,
+            902,
+            846,
+            546,
+            863,
+            913,
+            858,
+            915,
+            573,
+            899
+          ]
+        }
+      },
+      "id": "gold-092",
+      "n_relevant": 3,
+      "query": "How does the phase velocity of surface tension waves relate to the frequency combinations described by the Ritz combination principle?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Phase (wave physics)",
+        "Phase invariance of a wave",
+        "Wave Velocity",
+        "Phase velocity formula"
+      ],
+      "top8_concepts": [
+        "Ritz combination principle",
+        "phase velocity",
+        "Phase velocity",
+        "Phase (wave physics)",
+        "Phase invariance of a wave",
+        "Wave Velocity",
+        "Wave velocity",
+        "Phase velocity formula"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.07692307692307693,
+              "20": 0.07692307692307693,
+              "3": 0.07692307692307693,
+              "5": 0.07692307692307693
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 3,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.07692307692307693,
+              "20": 0.07692307692307693,
+              "3": 0.07692307692307693,
+              "5": 0.07692307692307693
+            },
+            "rr": 1.0
+          },
+          "seeds": 3,
+          "top20_pages_fixed": [
+            932,
+            774,
+            282
+          ],
+          "top20_pages_ppr": [
+            932,
+            282,
+            774
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.07692307692307693,
+              "20": 0.07692307692307693,
+              "3": 0.07692307692307693,
+              "5": 0.07692307692307693
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 3,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 3,
+            "recall_at": {
+              "10": 0.07692307692307693,
+              "20": 0.07692307692307693,
+              "3": 0.07692307692307693,
+              "5": 0.07692307692307693
+            },
+            "rr": 1.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            932,
+            774,
+            282
+          ],
+          "top20_pages_ppr": [
+            932,
+            282,
+            774
+          ]
+        }
+      },
+      "id": "gold-093",
+      "n_relevant": 13,
+      "query": "If cobalt atoms emit electrons downward in a magnetic field pointing upward, how does applying a force that increases their speed affect the mass of those electrons?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Electron motion in a magnetic field",
+        "Cobalt atoms",
+        "cobalt atom experiment",
+        "acceleration of electrons",
+        "experiment with cobalt atom alignment"
+      ],
+      "top8_concepts": [
+        "Cobalt atoms in a strong magnetic field experiment",
+        "Electron motion in a magnetic field",
+        "Cobalt atoms",
+        "cobalt atom experiment",
+        "acceleration of electrons",
+        "Force on a charge in an electric field",
+        "experiment with cobalt atom alignment",
+        "Magnetic force on a moving charge"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.5,
+              "20": 0.5,
+              "3": 0.5,
+              "5": 0.5
+            },
+            "rr": 0.5
+          },
+          "n_candidates": 6,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.5,
+              "20": 0.5,
+              "3": 0.5,
+              "5": 0.5
+            },
+            "rr": 0.5
+          },
+          "seeds": 6,
+          "top20_pages_fixed": [
+            157,
+            108,
+            84,
+            106
+          ],
+          "top20_pages_ppr": [
+            157,
+            108,
+            106,
+            84
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.5,
+              "20": 0.5,
+              "3": 0.5,
+              "5": 0.5
+            },
+            "rr": 0.5
+          },
+          "n_candidates": 6,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.5,
+              "20": 0.5,
+              "3": 0.5,
+              "5": 0.5
+            },
+            "rr": 0.5
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            157,
+            108,
+            84,
+            106
+          ],
+          "top20_pages_ppr": [
+            157,
+            108,
+            106,
+            84
+          ]
+        }
+      },
+      "id": "gold-094",
+      "n_relevant": 2,
+      "query": "What does the 5‑billion‑year age of meteorites imply about the timescale over which quantum physics developed?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Age of rocks",
+        "Age of Earth"
+      ],
+      "top8_concepts": [
+        "Ratio of age of the universe to light travel time across a proton",
+        "Age of the Universe",
+        "age of the universe",
+        "Age of the universe",
+        "Age of rocks",
+        "Age of the Earth",
+        "Age of the Pyramids",
+        "Age of Earth"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 16,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 19,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 16,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 4,
+          "top20_pages_fixed": [
+            684,
+            677,
+            688,
+            667,
+            678,
+            59,
+            668,
+            136,
+            680,
+            672,
+            676,
+            135,
+            159,
+            60,
+            671,
+            118
+          ],
+          "top20_pages_ppr": [
+            60,
+            671,
+            684,
+            677,
+            688,
+            667,
+            678,
+            668,
+            136,
+            672,
+            676,
+            135,
+            159,
+            59,
+            680,
+            118
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 16,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 19,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 16,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            684,
+            677,
+            688,
+            667,
+            678,
+            59,
+            668,
+            136,
+            680,
+            672,
+            676,
+            135,
+            159,
+            60,
+            671,
+            118
+          ],
+          "top20_pages_ppr": [
+            60,
+            671,
+            684,
+            677,
+            688,
+            667,
+            678,
+            668,
+            136,
+            672,
+            676,
+            135,
+            159,
+            59,
+            680,
+            118
+          ]
+        }
+      },
+      "id": "gold-095",
+      "n_relevant": 3,
+      "query": "How does the Heisenberg uncertainty principle impact the precision of a beta‑decay based clock built from matter?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Heisenberg's uncertainty principle",
+        "time-energy uncertainty principle",
+        "Time-energy uncertainty principle",
+        "Heisenberg Uncertainty Relation"
+      ],
+      "top8_concepts": [
+        "Heisenberg uncertainty principle",
+        "Heisenberg Uncertainty Principle",
+        "Heisenberg's uncertainty principle",
+        "Heisenberg's Uncertainty Principle",
+        "time-energy uncertainty principle",
+        "Time-energy uncertainty principle",
+        "Heisenberg Uncertainty Relation",
+        "time uncertainty"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 13,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 17,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 13,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 4,
+          "top20_pages_fixed": [
+            257,
+            719,
+            91,
+            718,
+            274,
+            273,
+            260,
+            266,
+            265,
+            90,
+            94,
+            262,
+            279
+          ],
+          "top20_pages_ppr": [
+            279,
+            257,
+            91,
+            273,
+            265,
+            719,
+            718,
+            274,
+            266,
+            262,
+            260,
+            90,
+            94
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 13,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 17,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 13,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            257,
+            719,
+            91,
+            718,
+            274,
+            273,
+            260,
+            266,
+            265,
+            90,
+            94,
+            262,
+            279
+          ],
+          "top20_pages_ppr": [
+            279,
+            257,
+            91,
+            273,
+            265,
+            719,
+            718,
+            274,
+            266,
+            262,
+            260,
+            90,
+            94
+          ]
+        }
+      },
+      "id": "gold-096",
+      "n_relevant": 3,
+      "query": "How does the concept of gravitational potential energy in a falling object relate to the processes that formed the Earth and stars in the early solar system?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Energy of a Falling Body",
+        "Gravitational potential energy formula (near Earth's surface)",
+        "Gravitational potential energy near Earth's surface formula",
+        "gravitational potential"
+      ],
+      "top8_concepts": [
+        "Energy of a Falling Body",
+        "Gravitational potential energy formula (near Earth's surface)",
+        "Gravitational potential energy",
+        "gravitational potential energy",
+        "Gravitational Potential Energy",
+        "Gravitational potential energy near Earth's surface formula",
+        "gravitational potential",
+        "Gravitational potential"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.6666666666666666,
+              "20": 0.6666666666666666,
+              "3": 0.6666666666666666,
+              "5": 0.6666666666666666
+            },
+            "rr": 0.5
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.6666666666666666,
+              "20": 0.6666666666666666,
+              "3": 0.3333333333333333,
+              "5": 0.6666666666666666
+            },
+            "rr": 0.3333333333333333
+          },
+          "seeds": 4,
+          "top20_pages_fixed": [
+            799,
+            707,
+            118,
+            723
+          ],
+          "top20_pages_ppr": [
+            799,
+            723,
+            118,
+            707
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.6666666666666666,
+              "20": 0.6666666666666666,
+              "3": 0.6666666666666666,
+              "5": 0.6666666666666666
+            },
+            "rr": 0.5
+          },
+          "n_candidates": 4,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 4,
+            "recall_at": {
+              "10": 0.6666666666666666,
+              "20": 0.6666666666666666,
+              "3": 0.3333333333333333,
+              "5": 0.6666666666666666
+            },
+            "rr": 0.3333333333333333
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            799,
+            707,
+            118,
+            723
+          ],
+          "top20_pages_ppr": [
+            799,
+            723,
+            118,
+            707
+          ]
+        }
+      },
+      "id": "gold-097",
+      "n_relevant": 3,
+      "query": "How does the energy-time uncertainty principle affect the determination of the average kinetic energy of molecules in an ideal gas?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "time-energy uncertainty principle",
+        "Time-energy uncertainty principle",
+        "mean molecular kinetic energy",
+        "kinetic theory of gases"
+      ],
+      "top8_concepts": [
+        "time-energy uncertainty principle",
+        "Time-energy uncertainty principle",
+        "Mean kinetic energy of a molecule in a perfect gas is proportional to temperature",
+        "mean molecular kinetic energy",
+        "Mean Molecular Kinetic Energy",
+        "time uncertainty",
+        "total energy equals kinetic energy for monatomic gas",
+        "kinetic theory of gases"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 10,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            817,
+            792,
+            802,
+            801,
+            810,
+            794,
+            785,
+            694,
+            799
+          ],
+          "top20_pages_ppr": [
+            817,
+            801,
+            792,
+            802,
+            810,
+            694,
+            799,
+            794,
+            785
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 10,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 9,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            817,
+            792,
+            802,
+            801,
+            810,
+            794,
+            785,
+            694,
+            799
+          ],
+          "top20_pages_ppr": [
+            817,
+            801,
+            792,
+            802,
+            810,
+            694,
+            799,
+            794,
+            785
+          ]
+        }
+      },
+      "id": "gold-098",
+      "n_relevant": 3,
+      "query": "How does the adiabatic expansion of a perfect gas, driven by a temperature difference between two heat pads, influence the fraction of area covered by nuclei (Nσ/A) that a small particle beam encounters in a slab of material?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "area fraction covered by nuclei",
+        "Thermal Expansion",
+        "adiabatic condition for ideal gas"
+      ],
+      "top8_concepts": [
+        "adiabatic expansion",
+        "Adiabatic expansion",
+        "area fraction covered by nuclei",
+        "Thermal Expansion",
+        "thermal expansion",
+        "Thermal expansion",
+        "Mean kinetic energy of a molecule in a perfect gas is proportional to temperature",
+        "adiabatic condition for ideal gas"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 22,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.6666666666666666,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.1111111111111111
+          },
+          "n_candidates": 32,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 22,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.6666666666666666,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.1
+          },
+          "seeds": 6,
+          "top20_pages_fixed": [
+            753,
+            749,
+            34,
+            751,
+            160,
+            748,
+            45,
+            759,
+            42,
+            752,
+            43,
+            232,
+            717,
+            84,
+            750,
+            721,
+            818,
+            219,
+            619,
+            253
+          ],
+          "top20_pages_ppr": [
+            721,
+            34,
+            753,
+            749,
+            751,
+            748,
+            759,
+            752,
+            43,
+            42,
+            84,
+            160,
+            45,
+            232,
+            717,
+            750,
+            818,
+            219,
+            619,
+            253
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 22,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.6666666666666666,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.1111111111111111
+          },
+          "n_candidates": 32,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 22,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.6666666666666666,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.1
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            753,
+            749,
+            34,
+            751,
+            160,
+            748,
+            45,
+            759,
+            42,
+            752,
+            43,
+            232,
+            717,
+            84,
+            750,
+            721,
+            818,
+            219,
+            619,
+            253
+          ],
+          "top20_pages_ppr": [
+            721,
+            34,
+            753,
+            749,
+            751,
+            748,
+            759,
+            752,
+            43,
+            42,
+            84,
+            160,
+            45,
+            232,
+            717,
+            750,
+            818,
+            219,
+            619,
+            253
+          ]
+        }
+      },
+      "id": "gold-099",
+      "n_relevant": 3,
+      "query": "How might vector analysis be applied to model the flux of water molecules during evaporation?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Evaporation formula",
+        "Vector analysis"
+      ],
+      "top8_concepts": [
+        "evaporation",
+        "Evaporation",
+        "Evaporation formula",
+        "Evaporation of a liquid",
+        "flux of molecules",
+        "liquid evaporation",
+        "vector analysis",
+        "Vector analysis"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 5,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            487,
+            533,
+            134,
+            34,
+            477
+          ],
+          "top20_pages_ppr": [
+            134,
+            533,
+            34,
+            477,
+            487
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 0.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "n_candidates": 5,
+          "ppr": {
+            "hit": 0.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 0.0,
+              "20": 0.0,
+              "3": 0.0,
+              "5": 0.0
+            },
+            "rr": 0.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            487,
+            533,
+            134,
+            34,
+            477
+          ],
+          "top20_pages_ppr": [
+            134,
+            533,
+            34,
+            477,
+            487
+          ]
+        }
+      },
+      "id": "gold-100",
+      "n_relevant": 3,
+      "query": "How does the delay time in the radiation formula for slowly moving charges depend on the charge’s instantaneous speed, and what role does the surrounding temperature (as related to the average molecular velocity) play in determining that speed?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Velocity of charges",
+        "radiation from an accelerating charge",
+        "Distribution of Molecular Speeds"
+      ],
+      "top8_concepts": [
+        "time delay formula",
+        "Velocity of charges",
+        "velocity of charges",
+        "speed of molecules",
+        "radiation from an accelerating charge",
+        "Distribution of Molecular Speeds",
+        "Distribution of molecular speeds",
+        "Time delay in optical media"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 5,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.2
+          },
+          "seeds": 5,
+          "top20_pages_fixed": [
+            247,
+            219,
+            214,
+            360,
+            589
+          ],
+          "top20_pages_ppr": [
+            247,
+            360,
+            219,
+            589,
+            214
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.3333333333333333
+          },
+          "n_candidates": 5,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 5,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.0,
+              "5": 0.3333333333333333
+            },
+            "rr": 0.2
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            247,
+            219,
+            214,
+            360,
+            589
+          ],
+          "top20_pages_ppr": [
+            247,
+            360,
+            219,
+            589,
+            214
+          ]
+        }
+      },
+      "id": "gold-101",
+      "n_relevant": 3,
+      "query": "How does changing the coordinate origin influence the ability to add a transient (free) solution to a particular (forced) solution in a system described by Newton’s laws?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Origin (of a coordinate system)",
+        "Newton's Laws of Dynamics",
+        "Newton's equations"
+      ],
+      "top8_concepts": [
+        "Origin (of a coordinate system)",
+        "Newtonian coordinate system",
+        "Invariance of Newton's laws under coordinate transformations",
+        "Coordinate Origin",
+        "coordinate origin",
+        "origin of coordinates",
+        "Newton's Laws of Dynamics",
+        "Newton's equations"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 73,
+            "recall_at": {
+              "10": 0.1,
+              "20": 0.2,
+              "3": 0.0,
+              "5": 0.1
+            },
+            "rr": 0.2
+          },
+          "n_candidates": 97,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 73,
+            "recall_at": {
+              "10": 0.1,
+              "20": 0.2,
+              "3": 0.1,
+              "5": 0.1
+            },
+            "rr": 0.3333333333333333
+          },
+          "seeds": 3,
+          "top20_pages_fixed": [
+            318,
+            848,
+            147,
+            290,
+            332,
+            859,
+            299,
+            535,
+            292,
+            600,
+            546,
+            311,
+            499,
+            323,
+            284,
+            864,
+            593,
+            591,
+            861,
+            465
+          ],
+          "top20_pages_ppr": [
+            318,
+            290,
+            332,
+            859,
+            299,
+            292,
+            499,
+            284,
+            593,
+            591,
+            861,
+            465,
+            310,
+            558,
+            498,
+            105,
+            601,
+            839,
+            539,
+            529
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 73,
+            "recall_at": {
+              "10": 0.1,
+              "20": 0.2,
+              "3": 0.0,
+              "5": 0.1
+            },
+            "rr": 0.2
+          },
+          "n_candidates": 97,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 73,
+            "recall_at": {
+              "10": 0.1,
+              "20": 0.2,
+              "3": 0.1,
+              "5": 0.1
+            },
+            "rr": 0.3333333333333333
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            318,
+            848,
+            147,
+            290,
+            332,
+            859,
+            299,
+            535,
+            292,
+            600,
+            546,
+            311,
+            499,
+            323,
+            284,
+            864,
+            593,
+            591,
+            861,
+            465
+          ],
+          "top20_pages_ppr": [
+            318,
+            290,
+            332,
+            859,
+            299,
+            292,
+            499,
+            284,
+            593,
+            591,
+            861,
+            465,
+            310,
+            558,
+            498,
+            105,
+            601,
+            839,
+            539,
+            529
+          ]
+        }
+      },
+      "id": "gold-102",
+      "n_relevant": 10,
+      "query": "How does the principle that experiments yield consistent results across different environments support the use of the speed of light as a universal constant in the geometrical representation of a moving field?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "principle of invariance of the speed of light",
+        "Principle of constancy of the speed of light",
+        "Invariance of the speed of light",
+        "Proportionality of light travel time to distance in a uniform medium",
+        "Constancy of the Speed of Light"
+      ],
+      "top8_concepts": [
+        "principle of invariance of the speed of light",
+        "Principle of constancy of the speed of light",
+        "Invariance of the speed of light",
+        "Proportionality of light travel time to distance in a uniform medium",
+        "Speed of Light",
+        "Speed of light",
+        "speed of light",
+        "Constancy of the Speed of Light"
+      ]
+    },
+    {
+      "arms": {
+        "graph_restricted": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 7,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 9,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 7,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 1.0
+          },
+          "seeds": 6,
+          "top20_pages_fixed": [
+            62,
+            840,
+            288,
+            488,
+            763,
+            67,
+            63
+          ],
+          "top20_pages_ppr": [
+            62,
+            488,
+            763,
+            67,
+            63,
+            840,
+            288
+          ]
+        },
+        "production": {
+          "fixed": {
+            "hit": 1.0,
+            "n_pages_retrieved": 7,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 1.0
+          },
+          "n_candidates": 9,
+          "ppr": {
+            "hit": 1.0,
+            "n_pages_retrieved": 7,
+            "recall_at": {
+              "10": 0.3333333333333333,
+              "20": 0.3333333333333333,
+              "3": 0.3333333333333333,
+              "5": 0.3333333333333333
+            },
+            "rr": 1.0
+          },
+          "seeds": 8,
+          "top20_pages_fixed": [
+            62,
+            840,
+            288,
+            488,
+            763,
+            67,
+            63
+          ],
+          "top20_pages_ppr": [
+            62,
+            488,
+            763,
+            67,
+            63,
+            840,
+            288
+          ]
+        }
+      },
+      "id": "gold-103",
+      "n_relevant": 3,
+      "query": "How does the necessity of continuity and ordering in defining irrational numbers like sqrt(2) influence the mathematical proofs that establish quantum electrodynamics as the underlying law for all ordinary phenomena?",
+      "query_type": "multihop",
+      "top8_absent_from_graph": [
+        "Quantum electrodynamic laws",
+        "Laws of Electrodynamics"
+      ],
+      "top8_concepts": [
+        "Quantum electrodynamic laws",
+        "quantum-electrodynamic laws",
+        "laws of electrodynamics",
+        "Laws of Electrodynamics",
+        "Laws of electrodynamics",
+        "quantum electrodynamics",
+        "Quantum electrodynamics",
+        "Quantum Electrodynamics"
+      ]
+    }
+  ],
+  "summary": {
+    "graph_restricted_seeds": {
+      "cut_bites_at_k": {
+        "10": 13,
+        "20": 7,
+        "3": 35,
+        "5": 24
+      },
+      "hit20": {
+        "fixed": 0.575,
+        "ppr": 0.6
+      },
+      "mrr": {
+        "fixed": 0.288929,
+        "ppr": 0.255029
+      },
+      "mrr_paired_delta_ppr_minus_fixed": {
+        "ci95": [
+          -0.08771,
+          0.01991
+        ],
+        "mean": -0.0339,
+        "n": 40,
+        "resolved": false,
+        "sd": 0.173635
+      },
+      "mrr_win_loss_tie": {
+        "fixed_better": 7,
+        "identical": 27,
+        "ppr_better": 6
+      },
+      "queries": 40,
+      "recall_at": {
+        "10": {
+          "fixed": 0.224776,
+          "ppr": 0.213665
+        },
+        "20": {
+          "fixed": 0.255588,
+          "ppr": 0.26531
+        },
+        "3": {
+          "fixed": 0.168429,
+          "ppr": 0.120075
+        },
+        "5": {
+          "fixed": 0.206186,
+          "ppr": 0.174241
+        }
+      },
+      "recall_at_paired_delta": {
+        "10": {
+          "ci95": [
+            -0.066139,
+            0.043917
+          ],
+          "mean": -0.011111,
+          "n": 40,
+          "resolved": false,
+          "sd": 0.177564
+        },
+        "20": {
+          "ci95": [
+            -0.009333,
+            0.028778
+          ],
+          "mean": 0.009722,
+          "n": 40,
+          "resolved": false,
+          "sd": 0.061489
+        },
+        "3": {
+          "ci95": [
+            -0.104236,
+            0.007526
+          ],
+          "mean": -0.048355,
+          "n": 40,
+          "resolved": false,
+          "sd": 0.180318
+        },
+        "5": {
+          "ci95": [
+            -0.105908,
+            0.042019
+          ],
+          "mean": -0.031944,
+          "n": 40,
+          "resolved": false,
+          "sd": 0.238668
+        }
+      }
+    },
+    "production_seeds": {
+      "cut_bites_at_k": {
+        "10": 13,
+        "20": 7,
+        "3": 35,
+        "5": 24
+      },
+      "hit20": {
+        "fixed": 0.575,
+        "ppr": 0.6
+      },
+      "mrr": {
+        "fixed": 0.288929,
+        "ppr": 0.255029
+      },
+      "mrr_paired_delta_ppr_minus_fixed": {
+        "ci95": [
+          -0.08771,
+          0.01991
+        ],
+        "mean": -0.0339,
+        "n": 40,
+        "resolved": false,
+        "sd": 0.173635
+      },
+      "mrr_win_loss_tie": {
+        "fixed_better": 7,
+        "identical": 27,
+        "ppr_better": 6
+      },
+      "queries": 40,
+      "recall_at": {
+        "10": {
+          "fixed": 0.224776,
+          "ppr": 0.213665
+        },
+        "20": {
+          "fixed": 0.255588,
+          "ppr": 0.26531
+        },
+        "3": {
+          "fixed": 0.168429,
+          "ppr": 0.120075
+        },
+        "5": {
+          "fixed": 0.206186,
+          "ppr": 0.174241
+        }
+      },
+      "recall_at_paired_delta": {
+        "10": {
+          "ci95": [
+            -0.066139,
+            0.043917
+          ],
+          "mean": -0.011111,
+          "n": 40,
+          "resolved": false,
+          "sd": 0.177564
+        },
+        "20": {
+          "ci95": [
+            -0.009333,
+            0.028778
+          ],
+          "mean": 0.009722,
+          "n": 40,
+          "resolved": false,
+          "sd": 0.061489
+        },
+        "3": {
+          "ci95": [
+            -0.104236,
+            0.007526
+          ],
+          "mean": -0.048355,
+          "n": 40,
+          "resolved": false,
+          "sd": 0.180318
+        },
+        "5": {
+          "ci95": [
+            -0.105908,
+            0.042019
+          ],
+          "mean": -0.031944,
+          "n": 40,
+          "resolved": false,
+          "sd": 0.238668
+        }
+      }
+    }
+  }
+}
