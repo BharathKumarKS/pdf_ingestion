@@ -4,15 +4,20 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-21, session 5. Landed and verified: §I23's checkpoint + the `resume`
-> plumbing that makes `resume=False` reachable from the CLI, §I23(d)'s device selection,
-> **§I23(c) — the extraction-model comparison (the single-chunk "10 vs 5 concepts" did NOT
-> reproduce; the real difference is 3.2-3.6× latency)**, §G1 **closed** as measured-and-negative,
-> and the standing rule that a verifier must differ from the author **and the subject, in model
-> family** (`README.md` → "Verifier at every step"). Earlier: §G2 (Leiden), §I21 (the Phase 3 E5
-> filter), and the §G1 ablation — which came back NEGATIVE.
-> **▶ The extractor is now `Qwen/Qwen3-VL-8B-Instruct`** (owner decision, item 2) and the rebuild is
-> **prepared but NOT launched** — it needs a graph clear first, see item 3.
+> **Last updated: 2026-10-21, session 6. ⚙️ THE GRAPH REBUILD IS RUNNING.** The document-keyed graph
+> clear that item 3 named as "the first thing the next session needs" is built, verified and
+> **applied** (`f007f85` — `scripts/clear_graph_document.py`; the graph read back **0/0/0/0** from Bolt,
+> independently of the script's own table), and the rebuild is **in flight in tmux session
+> `graphrebuild`** under `Qwen/Qwen3-VL-8B-Instruct`, log
+> `logs/p1/step10/graph_rebuild_2026-10-21.txt` — read item 3 for its state and what to check.
+> Session 5 landed: §I23's checkpoint + the `resume` plumbing that makes `resume=False` reachable
+> from the CLI, §I23(d)'s device selection, **§I23(c) — the extraction-model comparison (the
+> single-chunk "10 vs 5 concepts" did NOT reproduce; the real difference is 3.2-3.6× latency)**,
+> §G1 **closed** as measured-and-negative, and the standing rule that a verifier must differ from the
+> author **and the subject, in model family** (`README.md` → "Verifier at every step"). Earlier: §G2
+> (Leiden), §I21 (the Phase 3 E5 filter), and the §G1 ablation — which came back NEGATIVE.
+> **▶ The extractor is `Qwen/Qwen3-VL-8B-Instruct`** (owner decision, item 2) and **the rebuild is
+> LIVE** — §I21 is confirmed live inside it (3,533 chunks, not 3,796).
 >
 > ## ▶ NEXT SESSION — START HERE (written 2026-10-21, session 3)
 >
@@ -134,33 +139,61 @@
 >    (**10.11-10.31 s / 2.83-3.16 s = 3.2-3.6×**) gives **≈4.5-5.1 h** — and that is an **upper bound
 >    on the saving**, because it scales the whole build although only the extraction half is
 >    model-bound (the concept-name embedding and the Memgraph writes are not).
-> 3. **THE GRAPH REBUILD — prepared 2026-10-21, NOT YET LAUNCHED. ⚠️ IT MUST BE PRECEDED BY A
->    GRAPH CLEAR, OR IT WILL BE BUILT ON TOP OF THE OLD ONE.** It needs `QDRANT_HOST=10.0.10.65`,
->    the cluster up (verified up: Qdrant 10.0.10.65:6333 → 200, router 10.0.10.70:8000 → 200), and
->    **hours, not the plan's 2 h estimate** — with `Qwen/Qwen3-VL-8B-Instruct` the projection is
->    ≈4.5-5.1 h (item 2's derivation), against the 16 h 25 m the gpt-oss-20b build took. The new
->    checkpoint makes it restartable; read **`failed_chunks`**, not the exit code.
->    - ⚠️ **`force_graph=True` does NOT clear anything** — it only bypasses the "Document node
->      already exists" skip. ⚠️ Note the flag lives in **`generate_phase3_artifacts` in `store.py`**
->      (parameter at `store.py:1676`, the skip it bypasses at `store.py:1790-1805`) — **not** in
->      `build_graph`, whose signature has no such parameter (a reviewer looked for it there and
->      reported the flag as unimplemented). `build_graph` has **no delete step** (no `DETACH DELETE`
->      anywhere in `graph_builder.py`), and its writes are `MERGE … ON MATCH SET r.weight =
->      r.weight + 1`, so rebuilding over the existing graph would (a) keep every concept the old
->      model produced and (b) **double the `RELATES_TO` weights** — the §I43 duplication class, in
->      the graph this time. Measured on the live graph: **7,834 concepts, 37,300 `RELATES_TO`,
->      15,619 `MENTIONS`**.
->    - `scripts/clean_stale_graph.py` **cannot** do this: it keys staleness on "the document has no
->      points in Qdrant", and `7ba61432` **is** the live collection. A clear keyed on **document
->      id** does not exist yet and is the first thing the next session needs.
->    - ✅ Not a problem, checked: the concept-embedding upsert is **idempotent** — point ids are
->      `uuid5("concept:<name>")` — so `concept_embeddings` will not duplicate. ⚠️ But it holds
->      **15,276** points against the graph's 7,834 concepts (it accumulates across ingests and its
->      payload carries no document id), which is the confound §G1's ablation recorded; a query can
->      resolve a concept the graph no longer holds.
->    - **The extractor is now `Qwen/Qwen3-VL-8B-Instruct`**, set per stage in `config.yaml` under
->      `concept_extraction` (owner decision 2026-10-21, item 2). ⚠️ Changing it changes the
->      checkpoint key, so a mid-build swap re-extracts everything.
+> 3. **THE GRAPH REBUILD — ✅ LAUNCHED 2026-10-21 21:48:16 (session 6), running in tmux
+>    `graphrebuild`. It WAS preceded by a graph clear, which is now built, verified and applied.**
+>    - ✅ **THE CLEAR — DONE 2026-10-21 (session 6).** NEW `scripts/clear_graph_document.py` +
+>      `tests/test_graph_clear.py` (13 tests, offline), commit **`f007f85`**, verifier
+>      `openai/gpt-oss-20b` deleg `deleg_9cfbf8dd` — **7/7 SOUND, no defects**. `clean_stale_graph.py`
+>      cannot do this job (it keys staleness on "no points in Qdrant", and `7ba61432` **is** the live
+>      collection), so the clear is keyed on **document id**: `DETACH DELETE` scoped to the ids for
+>      Chunk/Page/Document, then the Concept nodes that **no surviving chunk** mentions. Dry-run is the
+>      DEFAULT, `--yes` applies, and a `--doc-id` that is not in the graph is refused (exit 2) rather
+>      than silently deleting nothing. ⚠️ Orphan detection is two-phase and **by name** — **all four**
+>      single-query Cypher forms fail on Memgraph 2.18.1 (probed live; see §I45's sibling notes in the
+>      script's docstring). **Applied:** 1 document / 3,796 chunks / 933 pages / 7,834 concepts removed;
+>      an **independent Bolt read-back** (`logs/p1/step10/verify_graph_cleared.py`) confirms every node
+>      and edge count is **0**. Evidence: `logs/p1/step10/graph_clear_2026-10-21.txt`.
+>    - ⚠️ **The clear does NOT touch Qdrant.** `concept_embeddings` still holds **15,276** points
+>      against a graph that now holds none — it accumulates across ingests and its payload carries no
+>      document id, so the rebuild **ADDS** to it. That is the confound §G1's ablation recorded;
+>      clearing it is a separate owner decision and was deliberately **NOT** taken (open decisions).
+>    - **The run:** `logs/p1/step10/run_graph.sh` → `uv run python scripts/run_phase3.py --doc-id
+>      7ba61432-… --graph-only`. ⚠️ `run_graph.sh` redirects nothing, so it must be launched with a
+>      **new** filename — log is `logs/p1/step10/graph_rebuild_2026-10-21.txt`. The 2026-10-19 build's
+>      `graph_build.log` is the artifact §I22/§I23 cite, and `>` would have destroyed it.
+>    - ✅ **§I21 IS LIVE IN THIS BUILD, measured at launch:** the log reads *"skipped 263 non-content
+>      chunk(s) (front/back matter)"* → it extracts for **3,533 chunks, not 3,796**. 263 = §I39's
+>      measured **72 TOC + 186 index + 5 front-matter** chunks, **exactly** — the filter is doing what
+>      it was measured to do. This is the rebuild's whole purpose; before it, TOC lines were extracted
+>      as physics content (§I21).
+>    - **Checkpoint:** `data/graph_cache/7ba61432__9e758046e4a15115.jsonl`, opened **fresh** (0 resumed —
+>      a new key, as expected: the model changed). Confirmed growing: **354 → 460 lines in 61 s**.
+>    - ⚠️ **ETA — measure, do not plan off the projection.** Observed at launch: **450/3,533 chunks in
+>      288 s ≈ 1.56 chunks/s ≈ 94 chunks/min**, i.e. **≈38 min of extraction IF the rate holds**. That is
+>      **≈4.0×** the 2026-10-19 build's own *early* rate (its log reads **500/3,796 in 21 min ≈ 23.6
+>      chunks/min**), consistent with §I23(c)'s measured **3.2-3.6×** p50 latency ratio.
+>      ⚠️ But that old build finished 3,796 chunks in **16 h 25 m = 3.85 chunks/min averaged over the
+>      whole run** — its rate **degraded ~6×** as it went (§I23's shared-GPU contention). So ≈38 min is a
+>      projection from the first five minutes, and 4.5-5.1 h is the pessimistic bound; **neither is the
+>      answer — read the log.**
+>    - **When it finishes:** read **`failed_chunks`** (the `run_phase3.py` column), not the exit code;
+>      then **count in Memgraph** (§I22: the reported `concept_nodes` is MENTIONS edges, ~2× the truth).
+>      Expect **3,533 chunk nodes**, not 3,796 — the 263 non-content chunks are correctly absent.
+>    - ⚠️ **`force_graph=True` does NOT clear anything** — it only bypasses the "Document node already
+>      exists" skip. The flag lives in **`generate_phase3_artifacts` in `store.py`** (parameter at
+>      `store.py:1676`, the skip it bypasses at `store.py:1790-1805`) — **not** in `build_graph`, whose
+>      signature has no such parameter (a reviewer looked for it there and reported the flag as
+>      unimplemented). `build_graph` has **no delete step** (no `DETACH DELETE` anywhere in
+>      `graph_builder.py`), and its writes are `MERGE … ON MATCH SET r.weight = r.weight + 1`, so
+>      rebuilding over an existing graph would (a) keep every concept the old model produced and
+>      (b) **double the `RELATES_TO` weights** — the §I43 duplication class, in the graph this time.
+>      That is exactly why the clear exists; measured on the live graph before it: **7,834 concepts,
+>      37,300 `RELATES_TO`, 15,619 `MENTIONS`**.
+>    - ⚠️ **The extractor is `Qwen/Qwen3-VL-8B-Instruct`**, set per stage in `config.yaml` under
+>      `concept_extraction` (owner decision 2026-10-21, item 2). Changing it changes the checkpoint key,
+>      so a mid-build swap re-extracts everything. `run_graph.sh`'s settings gate used to print
+>      `openai_model` (`openai/gpt-oss-20b`) while the build called Qwen — **fixed** in `d4a596b`
+>      (§I45), so the log now names the extractor that actually runs.
 > 4. Then **§G3** (entity resolution — §I30's lever: 1,186 merge groups, 34.4 % of the vocabulary),
 >    then **§G2** community summaries.
 >
@@ -171,7 +204,14 @@
 > non-blocking or a hard blocker?; (iii) **§A3** — card volume vs quality; (iv) whether `e78a7ef`
 > should be amended now that §G2 is fully verified (it still carries no `[verified]` prefix, on
 > purpose: §G1's ablation was outstanding at the time and has since returned a null — with §G1 now
-> *closed*, this is decidable).
+> *closed*, this is decidable); (v) **NEW 2026-10-21 — should `concept_embeddings` be cleared as part
+> of the rebuild?** It holds **15,276** points and the graph now holds **none**; it accumulates across
+> ingests, its payload carries no document id, and the rebuild only ADDS to it. So after this build the
+> collection will hold this run's concepts *plus* every earlier ingest's, and `graph_search`'s ANN can
+> return a name the graph no longer holds (it then matches no `Concept` node and contributes nothing —
+> the confound §G1's ablation recorded). Clearing it is cheap and the rebuild re-populates it, but it
+> was **not** authorised by item 3, so it was NOT done. **It must be decided before the next graph
+> rebuild, not after.**
 >
 > **1. ✅ DONE (2026-10-21 session 2) — §I43 fixed and B5 PASSES.** `save_raptor_tree` now deletes the
 > document's RAPTOR points (and rows) before the upsert, and the 73 orphaned points were removed by
