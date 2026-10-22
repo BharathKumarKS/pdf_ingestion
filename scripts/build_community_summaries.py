@@ -26,6 +26,7 @@ from src.pdf_ingestion.community_summaries import (
     build_hierarchy,
     read_concept_chunks,
     read_concept_graph,
+    read_concept_names,
     summarize_communities,
 )
 
@@ -53,6 +54,9 @@ def main(argv=None) -> int:
     parser.add_argument("--out", type=Path, default=None, help="artifact path for the summaries")
     parser.add_argument("--max-chunks", type=int, default=None,
                         help="cap chunks per leaf community (cost control)")
+    parser.add_argument("--seed", type=int, default=20261020,
+                        help="Leiden seed — MUST match g2_leiden_gate.py's SEED (20261020) or the "
+                             "communities summarised are not the communities the gate approved")
     args = parser.parse_args(argv)
 
     from src.core.config import get_settings
@@ -67,14 +71,16 @@ def main(argv=None) -> int:
     with driver.session() as session:
         g = read_concept_graph(session, args.doc_id)
         concept_chunks = read_concept_chunks(session, args.doc_id)
+        n_names = len(read_concept_names(session, args.doc_id))
 
     if g.number_of_nodes() == 0:
         print(f"ERROR: no Concept nodes for document {args.doc_id!r} — refusing", file=sys.stderr)
         return 2
 
-    hierarchy = build_hierarchy(g)
+    hierarchy = build_hierarchy(g, seed=args.seed)
     print(
         f"concepts={g.number_of_nodes()} edges={g.number_of_edges()} "
+        f"isolated_dropped={n_names - g.number_of_nodes()} "
         f"levels={[lvl.resolution for lvl in hierarchy.levels]} "
         f"q={[round(lvl.q, 4) for lvl in hierarchy.levels]} "
         f"nesting={hierarchy.nesting}",
@@ -88,10 +94,9 @@ def main(argv=None) -> int:
                 file=sys.stderr,
             )
 
-    if args.yes:
-        get_texts = lambda ids: _full_chunk_texts(cfg, ids)          # noqa: E731
-    else:
-        get_texts = lambda ids: []                                   # dry run: no source read
+    # Read the FULL text even on a dry run: it is a local SQLite read, makes no LLM call, and it is
+    # what lets the dry run report the prompt sizes. Only the LLM calls are gated by `dry_run`.
+    get_texts = lambda ids: _full_chunk_texts(cfg, ids)             # noqa: E731
 
     out = summarize_communities(
         hierarchy, concept_chunks, get_texts, dry_run=not args.yes,

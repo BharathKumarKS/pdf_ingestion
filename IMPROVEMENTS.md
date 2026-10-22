@@ -3818,3 +3818,75 @@ from src.core.config import get_settings; print(DocumentStore(get_settings()).co
 - **New code:** `scripts/reset_derived_collections.py` (dry-run default, allowlist refuses
   `knowledge_base`/`visual_knowledge_base`, `--yes` to apply) + `tests/test_reset_derived_collections.py`
   (10 tests; proven to discriminate — breaking the allowlist fails 4).
+
+---
+
+### I50. 2026-10-22 — §G3 and §G2 execute to their apply lines, and four defects the runs exposed
+
+**Where §G3 stands.** The merge is BUILT, dry-run-verified, and **NOT yet applied**.
+`scripts/resolve_concepts.py --doc-id 7ba61432-…` (dry run is the default) reports **1,053 merge
+groups / 1,362 aliases**, taking the concept vocabulary **7,427 → 6,065**, with **1,362**
+`concept_embeddings` points to delete (V6). ⚠️ Needs
+`QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2`, or the V6 sync targets the **LOCAL
+embedded** store and deletes nothing (§I49 Finding 1).
+
+**Finding 1 — V7's by-eye read caught a defect in the T1 formula detector, and it was the author's.**
+`is_formula_like()` counted the ASCII hyphen as a formula character, so **46 groups** were flagged
+"formula-bearing" and never merged. Reading the flagged list showed **~40 were pure typography**:
+`half life` / `Half-life` / `half-life` / `Half-Life`; `x ray` / `X-rays` / `x-rays`; `space time` /
+`Space-Time`; `work energy theorem` / `Work-Energy Theorem`. None is a formula. With the hyphen
+removed from `_FORMULA_CHARS`, **6 groups** remain flagged and all six are genuinely formula-shaped:
+`A = B` / `A = -B`; `Eq. (49.16)…`; `Equation (50.4)…`; `formula (43.15)…`; `Lens Formula (27.16)`;
+`Square root of 2` — every one caught by the digit rule or the operator set, so the hyphen guarded
+nothing. **The count is the proof:** mergeable groups go **1,013 → 1,053**, and §I49's T1-unaware
+probe measured **1,059**; 1,059 − 6 flagged = **1,053** exactly. Pinned both directions by
+`test_trap1_hyphenated_compounds_are_spelling_variants_not_formulas` and
+`test_trap1_real_formulas_are_still_flagged`.
+⚠️ A T1 false positive does not corrupt the graph — it silently **skips merges**, and no count in the
+merge report shows it. V7 is the only check that can see this.
+
+**Finding 2 — V3's before-arm, RE-MEASURED on the rebuilt graph and the dense lane.**
+`logs/p1/step10/g3_query_side_baseline_2026-10-22.json`: 200 queries, **0 embed errors**, wall 86 s,
+**2,176** chunks matching ≥1 of a query's 8 concepts; histogram 1 → 2,038 · 2 → 134 · 3 → 4;
+**mean 1.0653, share≥2 0.0634**, share≥3 0.0018, exactly-1 0.9366, verdict **NON-DEGENERATE**;
+top-5 median of medians **1.0** (189/200), `graph_search` parity **200/200**.
+⚠️ **§I32's 97.86 %-at-1 is superseded as a CONFIGURATION, not as a finding** — it was measured on
+the old graph through the 768d lane. The new number is the correct before-arm for the merge because
+it is taken under the configuration the after-arm will use. **Room to move:** share≥2 went
+0.0194 → **0.0634** (~3× the discriminating room) and the top-5 median still sits at **1.0**, so
+V3's endpoint is not saturated and CAN rise.
+
+**Finding 3 — the V3 probe was measuring a dead lane and would have written an all-zeros artifact.**
+It embedded with the 768d legacy Nomic model and asserted `cfg.embedding_dim`. §I49 moved
+`concept_embeddings` to the **1024d dense lane**, so every ANN query would be rejected,
+`_find_concepts_scored` would return `[]` for all 200 queries, and the artifact would have looked
+like a measurement. It now uses `get_query_vector` (the production query path) and asserts
+`cfg.dense_dim`. **A probe pinned to a lane that has since moved measures nothing — and says so only
+if you are lucky.**
+
+**Finding 4 — §G2 was partitioning a DIFFERENT graph than the gate that released it, twice over.**
+The gate reported Q=0.783332 at resolution 1.0 on 7,398 nodes; the builder reported 0.7786. Two
+independent causes, both settled by measurement:
+  (a) **isolated concepts.** `read_concept_graph` added every concept the document mentions, so the
+      **29** concepts with no `RELATES_TO` edge became nodes: 7,427 vs the gate's 7,398.
+  (b) **node INSERTION ORDER.** With the node set fixed, Q still differed. `nx_to_igraph` indexes
+      vertices by `list(g.nodes())` — insertion order — and igraph's seeded RNG draws from that
+      indexing, so the SAME graph read two ways gives two different partitions. Measured
+      (`q_order_probe.py`): the gate's row order → **Q=0.783332, n=338** (exact reproduction);
+      sorted by (a,b) → 0.776639, n=342; reversed → 0.783601, n=342 — same 7,398 nodes and 22,799
+      edges in all three.
+  Fix: `read_concept_graph` copies the gate's Cypher **verbatim** and `nesting` uses the gate's own
+  definition (fraction of fine communities lying *wholly* inside one coarse community) rather than a
+  member-weighted variant. The builder now reproduces the gate **exactly**: Q 0.7412 / 0.7833 /
+  0.8344 and nesting 0.8779 / 0.9349.
+  ⚠️ **The general trap: "the same graph" is not enough for a seeded partitioner — the row order is
+  part of the input.** A gate and the thing it releases must read the store the same way, and the
+  agreement must be checked by reproducing the gate's number, not by matching node counts. The 29
+  isolates are counted, not dropped (`read_concept_names`).
+
+**Also fixed:** §G2's CLI dry run passed an empty text provider, so every community was "skipped"
+and it reported **0 prompt chars** — it did not deliver the "see the cost before you spend it" its
+own docstring promises. It now reads full text (a local SQLite read, no LLM) and reports
+**2,761,845** prompt chars for the leaf level with **0** LLM calls.
+
+**Suite:** 572 pass / 4 fail / 6 skip — the same 4 pre-existing failures.

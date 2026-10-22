@@ -35,15 +35,20 @@ from .graph_analytics import leiden_ladder
 
 # ── reads (session is injected, so tests use a fake) ──────────────────────────────────────────
 
-CONCEPTS_CYPHER = (
+CONCEPT_NAMES_CYPHER = (
     "MATCH (c:Chunk)-[:MENTIONS]->(k:Concept) WHERE c.document_id = $doc "
     "RETURN DISTINCT k.name AS name"
 )
+# ⚠️ This Cypher is copied VERBATIM from the §G2 gate (`logs/p1/step10/g2_leiden_gate.py`,
+# `load_relates_to`) and must stay that way. Leiden is deterministic given `seed`, but
+# `graph_analytics.nx_to_igraph` indexes vertices by `list(g.nodes())` — INSERTION ORDER — so two
+# readers of the SAME graph produce DIFFERENT partitions. Measured 2026-10-22: the gate's row order
+# gives Q=0.783332 / 338 communities at resolution 1.0; a sorted order gives Q=0.776639 / 342 and a
+# reversed order 0.783601 / 342 — same 7,398 nodes and 22,799 edges every time. Reading it any other
+# way means §G2 summarises a partition the gate never approved.
 RELATES_CYPHER = (
-    "MATCH (c:Chunk)-[:MENTIONS]->(k:Concept) WHERE c.document_id = $doc "
-    "WITH DISTINCT k "
-    "MATCH (k)-[r:RELATES_TO]-(n:Concept) "
-    "RETURN k.name AS source, n.name AS target, r.weight AS weight"
+    "MATCH (a:Concept)-[r:RELATES_TO]->(b:Concept) "
+    "RETURN a.name AS a, b.name AS b, r.weight AS w"
 )
 CONCEPT_CHUNKS_CYPHER = (
     "MATCH (c:Chunk)-[:MENTIONS]->(k:Concept) WHERE c.document_id = $doc "
@@ -51,27 +56,46 @@ CONCEPT_CHUNKS_CYPHER = (
 )
 
 
-def read_concept_graph(session, document_id: str) -> nx.Graph:
-    """The document's concept graph: nodes are concept names, edges are weighted `RELATES_TO`.
+def read_concept_graph(session, document_id: str | None = None) -> nx.Graph:
+    """The concept graph the §G2 gate partitions: nodes are `RELATES_TO` endpoints, edges weighted.
 
-    Concepts with no `RELATES_TO` edge are still nodes (they are singletons in every partition).
-    The Cypher is undirected, so each edge is returned twice; networkx dedupes and the weight is
-    taken as the maximum, which is the same value both directions carry.
+    **`document_id` is accepted for API symmetry and is NOT used in the read**, deliberately — the
+    gate's `load_relates_to` is unscoped, and matching its row order is what makes this partition
+    reproducible against the gate (see the note on `RELATES_CYPHER`). When a second document lands,
+    the gate and this reader must be scoped *together*, or the partitions diverge again.
+
+    ⚠️ **Isolated concepts are NOT nodes.** Measured 2026-10-22: adding the 29 concepts that carry no
+    `RELATES_TO` edge gives 7,427 nodes and Q=0.7786 at resolution 1.0, against the gate's 7,398
+    nodes and Q=0.783332. They are not lost — `read_concept_names` returns the full vocabulary so the
+    caller can COUNT them.
+
+    The read is directed, so each edge arrives once per direction; networkx dedupes and the weight is
+    taken as the maximum, which is the value both directions carry.
     """
     g = nx.Graph()
-    for row in session.run(CONCEPTS_CYPHER, doc=document_id).data():
-        if row.get("name"):
-            g.add_node(row["name"])
-    for row in session.run(RELATES_CYPHER, doc=document_id).data():
-        src, tgt = row.get("source"), row.get("target")
+    for row in session.run(RELATES_CYPHER).data():
+        src, tgt = row.get("a"), row.get("b")
         if not src or not tgt or src == tgt:
             continue
-        weight = float(row.get("weight") or 1.0)
+        weight = float(row.get("w") or 1.0)
         if g.has_edge(src, tgt):
             g[src][tgt]["weight"] = max(g[src][tgt]["weight"], weight)
         else:
             g.add_edge(src, tgt, weight=weight)
     return g
+
+
+def read_concept_names(session, document_id: str) -> list[str]:
+    """Every Concept name the document's chunks mention — including the isolated ones.
+
+    `read_concept_graph` drops isolated concepts on purpose (to match the gate); this is how the
+    caller reports how many were dropped instead of losing them silently.
+    """
+    return [
+        row["name"]
+        for row in session.run(CONCEPT_NAMES_CYPHER, doc=document_id).data()
+        if row.get("name")
+    ]
 
 
 def read_concept_chunks(session, document_id: str) -> dict[str, list[str]]:
@@ -123,10 +147,13 @@ def build_hierarchy(
     The ladder is walked **finest-first** (highest resolution first), because a leaf community is
     the tightest one and parents are the broader communities it nests inside. A community's parent
     is the next-coarser community holding the most of its members; ``nesting`` records the fraction
-    of members that land in that parent, which is the plan's hierarchy-nesting measurement.
+    of fine communities that lie **wholly inside one** coarse community — the §G2 gate's own
+    definition (`g2_leiden_gate.nesting`), kept identical so the numbers are comparable to the ones
+    on record.
 
-    Deterministic given ``seed`` — `leiden_ladder` is seeded and the parent is chosen by a
-    ``(count, -id)`` max, so two runs produce the same tree.
+    Deterministic given ``seed`` **and the reader's row order** — `leiden_ladder` is seeded and the
+    parent is chosen by a ``(count, -id)`` max, but igraph indexes vertices by insertion order, so
+    the caller must read the graph the same way the gate does (`read_concept_graph` does).
     """
     ladder = leiden_ladder(g, resolutions=tuple(sorted(resolutions, reverse=True)), seed=seed)
     levels: list[Level] = []
@@ -146,8 +173,7 @@ def build_hierarchy(
     nesting: dict[int, float] = {}
     for level in range(len(levels) - 1):
         fine, coarse = levels[level], levels[level + 1]
-        covered = 0
-        total = 0
+        wholly_inside = 0
         for cid, members in enumerate(fine.communities):
             counts: dict[int, int] = {}
             for node in members:
@@ -158,9 +184,13 @@ def build_hierarchy(
                 continue
             parent = max(counts, key=lambda k: (counts[k], -k))
             parent_of[(level, cid)] = (level + 1, parent)
-            covered += counts[parent]
-            total += len(members)
-        nesting[level] = round(covered / total, 4) if total else 0.0
+            # The gate's definition, kept identical so the numbers are comparable to the ones on
+            # record: a fine community is nested iff EVERY member sits in the same coarse community.
+            if len(counts) == 1:
+                wholly_inside += 1
+        nesting[level] = (
+            round(wholly_inside / len(fine.communities), 4) if fine.communities else 0.0
+        )
 
     return Hierarchy(levels=levels, parent_of=parent_of, nesting=nesting)
 

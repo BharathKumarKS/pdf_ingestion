@@ -12,6 +12,7 @@ from src.pdf_ingestion.community_summaries import (
     build_hierarchy,
     read_concept_chunks,
     read_concept_graph,
+    read_concept_names,
     summarize_communities,
 )
 
@@ -33,10 +34,8 @@ class FakeSession:
     def run(self, cypher, **params):
         if "RETURN DISTINCT k.name AS name" in cypher:
             return FakeResult([{"name": n} for n in self.names])
-        if "RETURN k.name AS source" in cypher:
-            return FakeResult(
-                [{"source": s, "target": t, "weight": w} for s, t, w in self.edges]
-            )
+        if "RETURN a.name AS a" in cypher:
+            return FakeResult([{"a": a, "b": b, "w": w} for a, b, w in self.edges])
         if "collect(DISTINCT c.id) AS chunks" in cypher:
             return FakeResult([
                 {"name": n, "chunks": self.concept_chunks.get(n, [])} for n in self.names
@@ -72,11 +71,19 @@ def _two_cliques():
 
 # ── reads ─────────────────────────────────────────────────────────────────────────────────────
 
-def test_read_concept_graph_keeps_isolated_nodes_and_edge_weight():
+def test_read_concept_graph_drops_isolates_to_match_the_gate():
+    """The gate builds its graph from edges only; §G2 must detect on the SAME graph.
+
+    Measured 2026-10-22: including isolates gave 7,427 nodes / Q=0.7786, the gate's edge-only graph
+    7,398 / Q=0.783332 — a different partition from the one the gate approved. Re-adding
+    `g.add_node(name)` for every concept fails this test.
+    """
     session = FakeSession(["x", "y", "z"], [("x", "y", 2.5), ("y", "x", 2.5)])
     g = read_concept_graph(session, "doc1")
-    assert set(g.nodes) == {"x", "y", "z"}          # z has no edge but is still a node
+    assert set(g.nodes) == {"x", "y"}          # z carries no RELATES_TO edge
     assert g["x"]["y"]["weight"] == 2.5
+    # ...and z is not silently lost: the full vocabulary is available to count it
+    assert set(read_concept_names(session, "doc1")) == {"x", "y", "z"}
 
 
 def test_read_concept_chunks_maps_names_to_chunk_ids():
