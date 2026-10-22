@@ -2505,6 +2505,28 @@ re-record it, rather than comparing across the two.
   in `embedder.py`, which today is `device = "cuda" if use_gpu else "cpu"` with **no availability
   check** (unlike `parser.py`), so `USE_GPU=true` on this Mac would try `cuda` and fail. Measured:
   `torch 2.8.0`, arm64, **cuda False / mps True**.
+- **STATUS 2026-10-21 — (a), (b) and (d) are DONE; (c) is OPEN and is an owner decision.**
+  - **(a) + (b) DONE 2026-10-20** (`50af715`): NEW `src/pdf_ingestion/graph_checkpoint.py` — a
+    side-car JSONL keyed on document + model + **prompt digest**, flush+fsync per record; a FAILED
+    extraction is never resumed as done. `build_graph` now returns **`failed_chunks`** (the honest
+    count, where the old local reported 44 failures as "0 failed") plus `chunks_resumed` and
+    `checkpoint_path`. 25 tests, both guards proven to discriminate. Verifier `deleg_5fd5575a` 9/9.
+  - **The `resume` flag was unreachable until 2026-10-21** (`aaef7fe`): `generate_phase3_artifacts`
+    never forwarded it, so the checkpoint could only ever be ON from the CLI. Verifier
+    `deleg_92c32542` 8/8.
+  - **(d) DONE 2026-10-21** (`1fa94a3`): NEW `resolve_device(use_gpu)` in `embedder.py` — CPU when
+    `use_gpu` is false (early return, before `import torch`), else CUDA → MPS → CPU, and it cannot
+    raise; `_load()` passes the resolved device for any non-cpu value. 8 offline tests in
+    `tests/test_embedder_device.py`; reverting the resolver to the old semantics fails 4 of them.
+    Verifier `deleg_f2fda5ec` 8/8. **Measured on this Mac: `resolve_device(True) == "mps"`.**
+    ⚠️ **Not covered, and NOT fixed — the sibling site:** `colpali_embedder.py:87` is
+    `"cuda" if (use_gpu and torch.cuda.is_available()) else "cpu"`. It checks availability, so it
+    cannot crash, but it has **no MPS path** either — and ColPali is where the accelerator matters
+    most (a ~5 GB model over per-page images). Deliberately not changed blind: MPS support in that
+    stack (attention/bfloat16 paths) is a real question, not a one-liner.
+  - **(c) OPEN.** Note it is a **pre-rebuild** decision, not a post-hoc one: the checkpoint key
+    includes the model, so switching the extraction model mid-build discards every completed
+    extraction. Numbers for the choice are in the Cause block above.
 - **No re-ingest** (Phase 3 only).
 - **Evidence:** `logs/p1/step10/graph_build.log`; scratch probes `lat.txt`, `usage.txt`, `mps.txt`.
 - **✅ FINAL MEASUREMENT 2026-10-19 — the run completed, and it took 16 h 25 m, not 2 h.**

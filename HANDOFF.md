@@ -4,24 +4,42 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-21, session 3 (ENDING — a clean stopping point). Landed and verified:
-> §G1 (PPR) + §G2 (Leiden), §I21 (Phase 3 applies the E5 filter), §I23's checkpoint + honest
-> failure count, and the §G1 ablation — which came back NEGATIVE. The standing rule is now
+> **Last updated: 2026-10-21, session 4. Landed and verified: §I23's checkpoint + honest failure
+> count, the `resume` plumbing that makes its `resume=False` reachable from the CLI, and §I23(d)'s
+> device selection. Earlier this day: §G1 (PPR) + §G2 (Leiden), §I21 (Phase 3 applies the E5
+> filter), and the §G1 ablation — which came back NEGATIVE. The standing rule is
 > **verifier at every step** (`README.md` → "Verifier at every step"; Session hygiene below).
-> ⚠️ **THREE FILES ARE UNCOMMITTED ON PURPOSE — do them FIRST, see "IN FLIGHT" below.**
+> ⚠️ **The tree is CLEAN — the three in-flight files are committed, see item 0 below.**
 >
 > ## ▶ NEXT SESSION — START HERE (written 2026-10-21, session 3)
 >
-> **0. ⚠️ IN FLIGHT — VERIFY AND COMMIT THESE THREE FIRST.** They are the `resume` plumbing that
-> makes §I23's checkpoint reachable, written after `deleg_5fd5575a` had already been dispatched, so
-> they are **unverified and deliberately NOT committed** (`50af715` covers only the four files the
-> 9/9 verdict actually saw — all four were last modified before that review ran):
-> `src/pdf_ingestion/store.py` (`generate_phase3_artifacts(..., resume=True)`, passed through to
-> `build_graph`), `scripts/run_phase3.py` (`--no-resume`, plus a "Failed chunks" column and a loud
-> warning when it is non-zero — parity with `run_phase2.py`), `tests/test_phase3.py` (the
-> `Capturing` stub gains `resume`, plus `test_resume_is_threaded_to_the_graph_builder`).
-> Without them the documented `resume=False` is **unreachable from the CLI**. Dispatch one verifier
-> over this delta, then commit. Suite with them applied: **490 pass / 4 fail / 6 skip**.
+> **0. ✅ DONE 2026-10-21 (session 4) — the `resume` plumbing is verified and committed.** It is what
+> makes §I23's checkpoint reachable: `src/pdf_ingestion/store.py`
+> (`generate_phase3_artifacts(..., resume=True)`, passed through to `build_graph`),
+> `scripts/run_phase3.py` (`--no-resume`, plus a "Failed chunks" column and a loud warning when it
+> is non-zero — parity with `run_phase2.py`), `tests/test_phase3.py` (the `Capturing` stub gains
+> `resume`, plus `test_resume_is_threaded_to_the_graph_builder`). Without them the documented
+> `resume=False` was **unreachable from the CLI**. Commit **`aaef7fe`**, verifier
+> `openai/gpt-oss-20b` deleg `deleg_92c32542` **8/8 confirmed**, no findings; all three files
+> byte-identical after the review. The new guard was proven to discriminate (deleting only the
+> `resume=resume,` line fails it). Suite: **490 pass / 4 fail / 6 skip**.
+> Deliberate: `force_graph` does NOT imply `resume=False` — a forced rebuild still reuses completed
+> extractions, because the extraction is the expensive half.
+>
+> **0d. ✅ DONE 2026-10-21 (session 4) — §I23(d): the embedder's device selection is availability-
+> checked** (commit `1fa94a3`; verifier `openai/gpt-oss-20b` deleg `deleg_f2fda5ec`, **8/8
+> confirmed**, no findings). `NomicEmbedder` used `"cuda" if use_gpu else "cpu"` with no check, so
+> `USE_GPU=true` on this Mac (measured `cuda False / mps True`) asked for a device that does not
+> exist. NEW `resolve_device()`: CPU when `use_gpu` is false (early return, before `import torch`),
+> else CUDA → MPS → CPU, and it cannot raise. `_load()` now passes the resolved device for any
+> non-cpu value, where before only the literal `"cuda"` was passed. NEW `tests/test_embedder_device.py`
+> (8 tests, offline); reverting the resolver to the old semantics fails 4 of them. Suite with it:
+> **498 pass / 4 fail / 6 skip**. ⚠️ Registered, not fixed: `colpali_embedder.py:87` is the sibling
+> site — it *does* check `torch.cuda.is_available()` so it cannot crash, but it has no MPS path.
+> ⚠️ The first review attempt (`deleg_fb8151cc`) is **void** — interrupted, every shell call
+> returned exit 0 with EMPTY stdout (the broken-terminal behaviour this session hit), so it burned
+> 180 s on a full suite run and tripped the heredoc approval gate. The re-dispatch forbade
+> `terminal` and embedded the evidence; that is the verdict above.
 >
 > **0a. ✅ DONE — §G1 + §G2 built, measured, INDEPENDENTLY VERIFIED** (commit `e78a7ef`; module
 > `src/pdf_ingestion/graph_analytics.py`, 18 unit tests, two probes). Deps taken per the owner
@@ -95,10 +113,16 @@
 >
 > **▶ THE NEXT STEPS, in the settled D1 order** (filter → Phase 3 filter → harden → **rebuild** →
 > §G3 → §G2):
-> 1. **Verify and commit the three uncommitted files (item 0 above).**
-> 2. **§I23 (c)+(d)** if you want them before the rebuild — (c) is a quality decision, (d) is
->    `embedder.py`'s device selection, which has no availability check (`USE_GPU=true` on this Mac
->    would try `cuda` and fail; measured `mps True / cuda False`).
+> 1. ✅ **DONE — the three uncommitted files are verified and committed** (`aaef7fe`, item 0 above).
+> 2. **§I23 (c) — the one thing left before the rebuild, and it is an OWNER decision.** (d) is
+>    **DONE** (`1fa94a3`, item 0d). (c) is the extraction-model choice, and it must be settled
+>    **before** the rebuild rather than during it: the checkpoint key includes the model, so a
+>    mid-build switch re-extracts everything. Measured on one realistic 2,000-char chunk:
+>    `openai/gpt-oss-20b` (a *reasoning* model on a JSON extraction task) **12.9 s, 1,244 completion
+>    tokens of which 4,495 chars were hidden reasoning, 10 concepts / 10 prerequisites**;
+>    `Qwen/Qwen3-VL-8B-Instruct` **3.2 s, 166 tokens, 0 reasoning chars, 5 concepts / 3
+>    prerequisites**. Both valid JSON. ~4× build time at a real quality cost — the numbers are in
+>    §I23, and the comparison §I23 asks for has not been run.
 > 3. **THE GRAPH REBUILD** — the gate that releases §G3, and the only remaining prerequisite. It
 >    needs `QDRANT_HOST=10.0.10.65`, the cluster up, and **days not hours**: budget from §I23's
 >    measurement, not the plan's 2 h estimate. The new checkpoint makes it restartable; read
