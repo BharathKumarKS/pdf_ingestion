@@ -1674,6 +1674,7 @@ def generate_phase3_artifacts(
     force: bool = False,
     skip_colpali: bool = False,
     force_graph: bool = False,
+    resume: bool = True,
 ) -> dict:
     """
     Generate ColPali visual embeddings + Memgraph concept graph for an
@@ -1689,6 +1690,11 @@ def generate_phase3_artifacts(
 
     skip_colpali=True skips ColPali entirely (use when embeddings already done).
     force_graph=True forces Memgraph rebuild even if Document node exists.
+    resume=False discards the concept-extraction checkpoint and re-extracts every chunk
+    (IMPROVEMENTS.md §I23); the default resumes whatever the last run checkpointed, which is
+    what makes a 16 h build restartable. Note force_graph does NOT imply resume=False — a
+    forced graph rebuild still reuses completed extractions on purpose, because the extraction
+    is the expensive half.
     """
     from pathlib import Path
     from sqlmodel import Session as S
@@ -1828,6 +1834,7 @@ def generate_phase3_artifacts(
                 chunks=chunks_for_graph,
                 doc_title=doc.title or "",
                 doc_subject=doc.subject or "",
+                resume=resume,
             )
             graph_stats["non_content_skipped"] = non_content_skipped
     except Exception as exc:

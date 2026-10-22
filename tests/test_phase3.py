@@ -355,8 +355,9 @@ class TestPhase3ContentFilter:
 
         class Capturing(StubGraphBuilder):
             def build_graph(self, document_id, tenant_id, chunks,
-                            doc_title="", doc_subject=""):
+                            doc_title="", doc_subject="", resume=True):
                 captured["chunks"] = list(chunks)
+                captured["resume"] = resume
                 return super().build_graph(
                     document_id, tenant_id, chunks, doc_title, doc_subject
                 )
@@ -428,6 +429,30 @@ class TestPhase3ContentFilter:
         # The refusal surfaces as a graph error, and no graph is reported as built.
         assert "non-content" in (result.get("graph_error") or "")
         assert result["graph_stats"] == {}
+
+    def test_resume_is_threaded_to_the_graph_builder(self, p3_settings, sample_pdf, monkeypatch):
+        """§I23 — `resume` must actually REACH the graph builder.
+
+        The checkpoint is only reachable if the flag survives `generate_phase3_artifacts`
+        (which `scripts/run_phase3.py --no-resume` sets). A one-line pass-through is exactly the
+        kind of thing that gets dropped silently, so it is pinned here rather than assumed.
+        """
+        from src.pdf_ingestion.store import generate_phase3_artifacts
+
+        doc_id = self._ingest_and_rewrite(p3_settings, sample_pdf)
+        captured = self._capture_graph_chunks(monkeypatch)
+
+        generate_phase3_artifacts(
+            document_id=doc_id, pdf_path=str(sample_pdf), settings=p3_settings,
+            skip_colpali=True, force_graph=True, resume=False,
+        )
+        assert captured["resume"] is False
+
+        generate_phase3_artifacts(
+            document_id=doc_id, pdf_path=str(sample_pdf), settings=p3_settings,
+            skip_colpali=True, force_graph=True,
+        )
+        assert captured["resume"] is True
 
 
 # ── Phase 3 regression ────────────────────────────────────────────────────────
