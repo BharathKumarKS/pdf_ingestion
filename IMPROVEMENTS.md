@@ -3765,7 +3765,24 @@ from src.core.config import get_settings; print(DocumentStore(get_settings()).co
     the second pass, so **`min(weight)` would be 2 and no edge would read 1**. `min(weight) = 1`
     is therefore the real proof; the count matching is a coincidence of the MERGE semantics.
     (Credit: the independent reviewer marked the count-based claim **UNVERIFIABLE** and asked what
-    would be needed to be sure — the right challenge, and it was correct.) Log `…/i12_laneB_rebuild_2026-10-22.log`, verify `…/i12_laneB_verify_2026-10-22.txt`.
+    would be needed to be sure — the right challenge, and it was correct.)
+  - ✅ **DECISIVE PROOF, and it adjudicates the reviewer's later REFUTED — which is VOID.** A second,
+    focused review of the corrected (weight-based) claim returned **REFUTED**, on the reasoning that
+    "1,029 edges with weight 2 … contradicts the claim that no edge weight was doubled". **That
+    misreads what weight 2 means.** Within a SINGLE build an edge's weight is the number of chunks in
+    which its two concepts co-occur — so a pair co-occurring in exactly two chunks *should* read 2.
+    Measured directly on the graph, for every sampled edge:
+    `weight == count(DISTINCT chunks mentioning BOTH endpoints)` —
+    `w=24 ⟺ 24 chunks` ('Angular Momentum'/'Torque'), `w=22 ⟺ 22` (\"Newton's Second Law\"/'Acceleration'),
+    `w=2 ⟺ 2` (4 samples), `w=1 ⟺ 1` (4 samples); **14 of 14 match, 0 mismatch**.
+    If a second pass had run over an uncleared graph, every edge would read `co_occurrence + 1`, and
+    **no edge could read 1** (the 21,215 weight-1 edges alone settle it). The identity holding
+    exactly means build #2 was built fresh from an empty graph — the clear worked.
+    **Adjudication: the weight-based claim is CONFIRMED; the reviewer's REFUTED verdict is void, on
+    a false premise.** Second instance this session of a reviewer reaching the right *domain* and the
+    wrong *reasoning* (the first was C4) — the register's standing rule holds: a verifier buys
+    consistency-checking, not correctness. (The `45598` an undirected `MATCH` returns is 2 × 22,799 —
+    each edge seen from both endpoints, not a real count.) Log `…/i12_laneB_rebuild_2026-10-22.log`, verify `…/i12_laneB_verify_2026-10-22.txt`.
   - **Preflight before → after:** `derivative_artifacts.dim` and `concept_embeddings.dim` both
     **FAIL → PASS**; **2 BLOCKER(S) → All checks passed**. Evidence
     `logs/p1/step10/i12_preflight_{before,after}_2026-10-22.txt`.

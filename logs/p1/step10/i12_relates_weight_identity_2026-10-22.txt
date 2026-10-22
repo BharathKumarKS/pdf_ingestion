@@ -1,0 +1,16 @@
+total edges: 45598
+  w= 24  chunks_mentioning_both= 24  MATCH   'Angular Momentum' / 'Torque'
+  w= 24  chunks_mentioning_both= 24  MATCH   'Torque' / 'Angular Momentum'
+  w= 22  chunks_mentioning_both= 22  MATCH   'Acceleration' / "Newton's Second Law"
+  w= 22  chunks_mentioning_both= 22  MATCH   "Newton's Second Law" / 'Acceleration'
+  w= 19  chunks_mentioning_both= 19  MATCH   'Entropy' / 'Second Law of Thermodynamics'
+  w= 19  chunks_mentioning_both= 19  MATCH   'Second Law of Thermodynamics' / 'Entropy'
+  w=  2  chunks_mentioning_both=  2  MATCH   'Gravitational Field' / 'Shell Theorem'
+  w=  2  chunks_mentioning_both=  2  MATCH   'acceleration' / 'distance'
+  w=  2  chunks_mentioning_both=  2  MATCH   'water waves' / 'transverse wave'
+  w=  2  chunks_mentioning_both=  2  MATCH   'Lorentz transformation' / 'proper time'
+  w=  1  chunks_mentioning_both=  1  MATCH   'comoving distance' / 'Hubble parameter'
+  w=  1  chunks_mentioning_both=  1  MATCH   'Resolution Angle of Antenna ' / 'Antenna Array Pattern'
+  w=  1  chunks_mentioning_both=  1  MATCH   'wavelength' / 'resolving power of a telesco'
+  w=  1  chunks_mentioning_both=  1  MATCH   'parabolic antenna arrangemen' / 'resolving power of a telesco'
+sampled 14: 14 match, 0 mismatch
