@@ -17,6 +17,12 @@ THE FOUR TRAPS (§I31), all measured, all designed out here — not caught in re
       failure the §G plan warns about ("merging two genuinely distinct concepts is worse than
       leaving a duplicate").  → `is_formula_like()` excludes such members; the group is FLAGGED,
       not merged.
+      ⚠️ MEASURED 2026-10-22 (V7's by-eye read): a HYPHEN is NOT a formula marker. Treating it
+      as one flagged 40 of 46 groups whose only difference was typography — `half life` vs
+      `Half-life` vs `half-life`, `x ray` vs `X-rays`, `space time` vs `Space-Time`,
+      `work energy theorem` vs `Work-Energy Theorem` — so the merge silently skipped real
+      spellings. The operators and digits below catch every genuine case (`Velocity = √(g h)`,
+      `Eq. (49.16)`, `A = B`); the dash caught only hyphenated compounds.
   T2  substring matching must NOT be used.  There are 809 normalised substring pairs and most are
       genuinely distinct (`air` ⊂ {air density, air pressure, …}).  → groups are keyed on EQUALITY
       of the normalised key only. There is no substring path in this file.
@@ -41,11 +47,16 @@ import uuid
 from dataclasses import dataclass, field
 
 # Characters that make a name look like a formula rather than a spelling variant of another name.
-# Deliberately broad: a false positive only means a group is flagged for review instead of merged
-# automatically, which is the conservative direction (§G3: "merging two genuinely distinct
-# concepts is worse than leaving a duplicate").
-_FORMULA_CHARS = set("=+−-×÷√^·*/<>≤≥∫ΣΔ")
-# An en/em dash and the minus sign are distinct code points from ASCII '-' — all are covered above.
+# Deliberately broad in the OPERATORS it accepts: a false positive only means a group is flagged for
+# review instead of merged automatically, which is the conservative direction (§G3: "merging two
+# genuinely distinct concepts is worse than leaving a duplicate").
+#
+# ⚠️ The hyphen and the Unicode dashes are deliberately NOT here, and that is a measured decision
+# (V7, 2026-10-22): including '-' flagged 40 of 46 groups whose members differed only in
+# hyphenation/case — 'half life' / 'Half-life' / 'half-life', 'x ray' / 'X-rays', 'space time' /
+# 'Space-Time' — none of which is a formula. The digit rule below plus these operators catch every
+# genuine formula in the corpus (`Velocity = √(g h)`, `Eq. (49.16)`, `A = B`, `carbon-14`).
+_FORMULA_CHARS = set("=+×÷√^·*/<>≤≥∫ΣΔ")
 
 
 def normalise(name: str) -> str:

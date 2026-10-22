@@ -143,3 +143,31 @@ def test_summarise_on_the_measured_g3_lever_shape():
     assert s["merge_groups"] == 1
     assert plans[0].canonical == "temperature"
     assert plans[0].aliases == ["Temperature"]
+
+
+# ── T1, measured: the HYPHEN is not a formula marker (V7's by-eye read, 2026-10-22) ───────────
+
+def test_trap1_hyphenated_compounds_are_spelling_variants_not_formulas():
+    """A hyphenated compound differs only in typography — it must MERGE, not be flagged.
+
+    Treating '-' as a formula character flagged 40 of the 46 groups the by-eye read inspected
+    ('half life' / 'Half-life' / 'half-life', 'x ray' / 'X-rays', 'space time' / 'Space-Time'),
+    so real spellings were silently never merged. Re-adding '-' to `_FORMULA_CHARS` fails this.
+    """
+    for names in (
+        ["half life", "Half-life", "half-life", "Half-Life"],
+        ["x ray", "X-rays", "x-rays"],
+        ["space time", "Space-Time", "Space-time"],
+        ["work energy theorem", "Work-Energy Theorem", "work-energy theorem"],
+    ):
+        groups, _ = build_groups(names)
+        assert len(mergeable_groups(groups)) == 1, names
+        assert plan_merges(groups), names
+
+
+def test_trap1_real_formulas_are_still_flagged():
+    """The other direction: the cases T1 exists for must still be excluded."""
+    for name in ("Velocity = √(g h)", "Eq. (49.16)", "A = B", "E = mc²", "carbon-14"):
+        assert is_formula_like(name), name
+    groups, _ = build_groups(["velocity", "Velocity", "Velocity = √(g h)"])
+    assert groups["velocity"].mergeable is False

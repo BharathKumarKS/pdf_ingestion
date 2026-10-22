@@ -18,9 +18,13 @@ baseline, which is the exact mistake §I29 caught in the plan.
 What this measures (read-only, no LLM, deterministic)
 -----------------------------------------------------
 For every query in the v2 gold set:
-  1. embed the RAW query with **nomic-ai/nomic-embed-text-v1.5 (768d)** via the
-     cluster embed service — the model `Concept.embedding` actually uses (§I12 keeps
-     the graph lane on the 768d legacy model);
+  1. embed the RAW query with the **DENSE lane — `Qwen/Qwen3-Embedding-0.6B` (1024d)** via
+     `get_query_vector` (`cluster_embedder`), which is the model `concept_embeddings`
+     actually uses. ⚠️ This probe was first written against the 768d legacy Nomic
+     embedder; §I49 then moved the collection onto the dense lane, so the 768d version
+     of this probe is now WRONG — Qdrant rejects the 1024d collection's dimension, the
+     concept search returns nothing, and every query reads as "resolved no concepts".
+     The 2026-10-20 artifact was produced by that 768d version and is a BEFORE-arm;
   2. take the top-8 concepts EXACTLY as `GraphBuilder._find_concepts_scored(vec, 8)`
      does (Qdrant ANN over `concept_embeddings`);
   3. run the SAME ranking Cypher `graph_search` runs, but with no LIMIT, so the whole
@@ -45,6 +49,7 @@ Run:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import statistics
@@ -55,10 +60,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-import httpx  # noqa: E402
 import numpy as np  # noqa: E402
 
 from src.core.config import get_settings  # noqa: E402
+from src.pdf_ingestion.cluster_embedder import get_query_vector  # noqa: E402
 from src.pdf_ingestion.graph_builder import GraphBuilder  # noqa: E402
 
 QUERIES = "data/eval_queries_v2.json"
@@ -80,15 +85,16 @@ RETURN ch.id AS chunk_id, matched AS concept_path,
 """
 
 
-def embed_nomic(client: httpx.Client, url: str, model: str, text: str, attempts: int = 3):
-    """One 768d query embedding from the cluster embed service. Deterministic."""
+def embed_query(text: str, attempts: int = 3):
+    """One 1024d query embedding from the DENSE lane (§I49) — the lane the collection uses.
+
+    Was an HTTP call to the 768d Nomic service. `get_query_vector` is the production query
+    path (`cluster_embedder`), so this probe now embeds exactly as retrieval does.
+    """
     last = None
     for i in range(attempts):
         try:
-            r = client.post(url, json={"model": model, "input": [text]})
-            r.raise_for_status()
-            items = sorted(r.json()["data"], key=lambda it: it.get("index", 0))
-            return [float(x) for x in items[0]["embedding"]]
+            return get_query_vector(text)
         except Exception as exc:  # noqa: BLE001
             last = exc
             time.sleep(1.5 * (i + 1))
@@ -154,19 +160,19 @@ def main() -> int:
     n_no_concepts = 0
 
     t0 = time.time()
-    with httpx.Client(timeout=60.0) as client:
+    with contextlib.nullcontext():
         for i, q in enumerate(queries, 1):
             qid, text = q["id"], q["query"]
             try:
-                vec = embed_nomic(client, cfg.sv_embed_url, cfg.embedding_model, text)
+                vec = embed_query(text)
             except Exception as exc:  # noqa: BLE001
                 n_embed_err += 1
                 out_queries.append({"id": qid, "error": f"embed: {exc}"})
                 continue
-            if len(vec) != cfg.embedding_dim:
+            if len(vec) != cfg.dense_dim:
                 raise SystemExit(
-                    f"{qid}: embed returned {len(vec)}d, expected {cfg.embedding_dim}d "
-                    f"({cfg.embedding_model}) — the graph lane is 768d (§I12)"
+                    f"{qid}: embed returned {len(vec)}d, expected {cfg.dense_dim}d "
+                    f"({cfg.dense_model}) — concept_embeddings is on the dense lane (§I49)"
                 )
 
             # (2) the top-8 concepts, exactly as graph_search does it
@@ -218,7 +224,7 @@ def main() -> int:
                 "answerable": q.get("answerable"),
                 "expected_route": q.get("expected_route"),
                 "query_vec_sha256": hashlib.sha256(
-                    json.dumps(vec).encode()
+                    json.dumps([float(x) for x in vec]).encode()
                 ).hexdigest(),
                 "top8_concepts": [[n, round(sc, SCORE_DP)] for n, sc in scored],
                 "chunks_matching_any_concept": len(rows),
@@ -297,8 +303,8 @@ def main() -> int:
             "qdrant": f"{cfg.qdrant_host}:{cfg.qdrant_port}",
             "concept_collection": cfg.concept_collection,
             "graph": f"{cfg.memgraph_host}:{cfg.memgraph_port}",
-            "embed_model": cfg.embedding_model,
-            "embed_dim": cfg.embedding_dim,
+            "embed_model": cfg.dense_model,
+            "embed_dim": cfg.dense_dim,
             "embed_url": cfg.sv_embed_url,
             "top_k_concepts": TOP_K_CONCEPTS,
             "retrieval_limit": RETRIEVAL_LIMIT,
