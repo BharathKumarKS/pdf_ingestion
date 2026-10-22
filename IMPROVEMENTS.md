@@ -1736,8 +1736,18 @@ moves *negative*, but never far enough from zero to be called. To actually settl
 that responds to a reordering, or the **expansion arm**, where the candidate pool is larger and the
 cut genuinely bites.
 
-**Open owner decision:** keep the fixed-hop ranking and close §G1 as measured-and-negative, **or**
-authorise the expansion arm. Do not re-run this ablation unchanged.
+**✅ CLOSED 2026-10-21 (owner decision) — measured-and-negative; the fixed-hop ranking stays.**
+§G1 ships nothing. The null *is* the finding: on this graph, at this pool size, PPR re-ranking does
+not beat the fixed-hop ordering, and every cut that can discriminate points negative.
+`graph_analytics.personalized_pagerank` stays in the tree as a measured, unit-tested module — it is
+the syllabus algorithm implemented faithfully and the behaviour probe
+(`logs/p1/step10/g1_ppr_probe.json`) is the record of what it does — but it is **not wired into the
+retrieval path**, and nothing depends on it. **The expansion arm is NOT authorised and is not a
+pending task**: it stays recorded above as the one untested lever, because it is a *different
+treatment* (PPR *selecting* candidates, not ordering them), it would need its own pre-registration,
+and it would need a chunk-level instrument to be readable at all. **Do not re-run this ablation
+unchanged** — a future revisit needs one of: ~100+ multihop queries, a chunk-level metric that
+responds to a reordering, or the expansion arm.
 
 ---
 

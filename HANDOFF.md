@@ -84,10 +84,12 @@
 >   before-arm. Verifier: `openai/gpt-oss-20b`, delegs `deleg_2c9e024e` (9/9) and `deleg_96b9a464`
 >   (5/5) — plus a **spot-check of my own**, because 4 of the 9 were confirmed from the probe's
 >   *docstring* rather than its code.
-> - **§G1's remaining decision (owner):** the ablation says re-ranking alone is not the lever.
->   Either **keep the fixed-hop ranking** and close §G1 as measured-and-negative, or authorise the
->   **expansion arm** (PPR to *select* candidates, not just order them) — that is the experiment the
->   null result leaves open. Do not re-run this ablation unchanged and expect a different answer.
+> - **✅ §G1 CLOSED 2026-10-21 (owner) — measured-and-negative; the fixed-hop ranking stays.** The
+>   ablation says re-ranking alone is not the lever, and every cut that can discriminate points
+>   negative. The **expansion arm is NOT authorised** — it is recorded as the one untested lever, not
+>   a pending task. `graph_analytics.personalized_pagerank` remains in the tree, unit-tested and
+>   probed, but imported by **tests and probes only, never by `src/`** (checked). **Do not re-run this
+>   ablation unchanged and expect a different answer.**
 >
 > **0b. ✅ DONE — §I21: the Phase 3 graph build now applies the E5 filter** (commit `1c0ed6d`).
 > `generate_phase3_artifacts` filtered nothing, so TOC/index lines were extracted as physics content
@@ -130,12 +132,14 @@
 > 4. Then **§G3** (entity resolution — §I30's lever: 1,186 merge groups, 34.4 % of the vocabulary),
 >    then **§G2** community summaries.
 >
-> **OPEN OWNER DECISIONS:** (i) **§G1** — close it as measured-and-negative and keep the fixed-hop
-> ranking, or authorise the **expansion arm** (the ablation's null leaves that open; do NOT re-run
-> the ablation unchanged); (ii) **§I34** — a re-ingest transition reports the graph lane as SKIP:
+> **OPEN OWNER DECISIONS:** (i) ~~**§G1**~~ **✅ CLOSED 2026-10-21 — measured-and-negative; the
+> fixed-hop ranking stays, and the expansion arm is NOT authorised** (it remains recorded as the one
+> untested lever, not a pending task — `graph_analytics` is imported by tests and probes only, never
+> by `src/`); (ii) **§I34** — a re-ingest transition reports the graph lane as SKIP:
 > non-blocking or a hard blocker?; (iii) **§A3** — card volume vs quality; (iv) whether `e78a7ef`
 > should be amended now that §G2 is fully verified (it still carries no `[verified]` prefix, on
-> purpose: §G1's ablation was outstanding at the time and has since returned a null).
+> purpose: §G1's ablation was outstanding at the time and has since returned a null — with §G1 now
+> *closed*, this is decidable).
 >
 > **1. ✅ DONE (2026-10-21 session 2) — §I43 fixed and B5 PASSES.** `save_raptor_tree` now deletes the
 > document's RAPTOR points (and rows) before the upsert, and the 73 orphaned points were removed by
