@@ -116,15 +116,21 @@
 > **▶ THE NEXT STEPS, in the settled D1 order** (filter → Phase 3 filter → harden → **rebuild** →
 > §G3 → §G2):
 > 1. ✅ **DONE — the three uncommitted files are verified and committed** (`aaef7fe`, item 0 above).
-> 2. **§I23 (c) — the one thing left before the rebuild, and it is an OWNER decision.** (d) is
->    **DONE** (`1fa94a3`, item 0d). (c) is the extraction-model choice, and it must be settled
->    **before** the rebuild rather than during it: the checkpoint key includes the model, so a
->    mid-build switch re-extracts everything. Measured on one realistic 2,000-char chunk:
->    `openai/gpt-oss-20b` (a *reasoning* model on a JSON extraction task) **12.9 s, 1,244 completion
->    tokens of which 4,495 chars were hidden reasoning, 10 concepts / 10 prerequisites**;
->    `Qwen/Qwen3-VL-8B-Instruct` **3.2 s, 166 tokens, 0 reasoning chars, 5 concepts / 3
->    prerequisites**. Both valid JSON. ~4× build time at a real quality cost — the numbers are in
->    §I23, and the comparison §I23 asks for has not been run.
+> 2. **§I23 (c) — MEASURED 2026-10-21 (`c596940`); the OWNER DECISION is the only thing left before
+>    the rebuild.** (d) is **DONE** (`1fa94a3`, item 0d). The comparison ran: 24 real chunks, both
+>    arms on the production prompt, **three runs** to measure the instrument's own noise
+>    (`logs/p1/step10/i23c_extraction_model_compare.{py,json}`). **The 10-vs-5 concept gap that
+>    started this did NOT reproduce** — at n=24 both arms sit at ~4.3-4.6 concepts/chunk, inside the
+>    prompt's own 3-7 rule. What separates: **p50 latency 3.4× (10.1 s vs 3.0 s)**, prereq edges ~2×,
+>    off-enum types 0 vs ~9 per 24 chunks. ⚠️ **The two things gpt-oss-20b does better are read by no
+>    code path** — `graph_search` is a MENTIONS-only single-hop lookup, `PREREQUISITE_OF` is only ever
+>    written, and nothing branches on `type` — while the latency is paid on every rebuild.
+>    ⚠️ **The swap is one-way**: the checkpoint key includes the model.
+>    **Decide: keep `openai/gpt-oss-20b` or switch to `Qwen/Qwen3-VL-8B-Instruct`.** The cost side is
+>    derived, not measured: scaling §I23's measured **16 h 25 m** build by the measured p50 ratio
+>    (**10.11-10.31 s / 2.83-3.16 s = 3.2-3.6×**) gives **≈4.5-5.1 h** — and that is an **upper bound
+>    on the saving**, because it scales the whole build although only the extraction half is
+>    model-bound (the concept-name embedding and the Memgraph writes are not).
 > 3. **THE GRAPH REBUILD** — the gate that releases §G3, and the only remaining prerequisite. It
 >    needs `QDRANT_HOST=10.0.10.65`, the cluster up, and **days not hours**: budget from §I23's
 >    measurement, not the plan's 2 h estimate. The new checkpoint makes it restartable; read
@@ -212,8 +218,10 @@
 > releases §G3 is the rebuild landing. **§G1 (PPR) is the one graph item not gated** — it is a
 > traversal change and does not care which concepts are in the graph. Full reasoning: §I21's
 > "D1 SETTLED" block. **Still open:** **§I34** (a re-ingest transition reports the graph lane as SKIP
-> — non-blocking as built, or a hard blocker?); **§A3** (card volume vs quality); **D3** (commit the
-> untracked graph-analytics plan). **B1 (the §G3 merge) is still NOT authorised.**
+> — non-blocking as built, or a hard blocker?); **§A3** (card volume vs quality). ~~**D3** (commit the
+> untracked graph-analytics plan)~~ — **STALE, corrected 2026-10-21: the plan is already tracked**
+> (`.hermes/plans/2026-10-18-p1-graph-analytics-plan.md`, `git ls-files` returns it). **B1 (the §G3
+> merge) is still NOT authorised.**
 >
 > **Uncommitted when this was written:** `scripts/preflight.py`, `src/pdf_ingestion/store.py`,
 > `logs/p1/step10/verify_phaseb_{cards,raptor}.py`, `IMPROVEMENTS.md`, `HANDOFF.md`.

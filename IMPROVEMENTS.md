@@ -2534,9 +2534,54 @@ re-record it, rather than comparing across the two.
     cannot crash, but it has **no MPS path** either — and ColPali is where the accelerator matters
     most (a ~5 GB model over per-page images). Deliberately not changed blind: MPS support in that
     stack (attention/bfloat16 paths) is a real question, not a one-liner.
-  - **(c) OPEN.** Note it is a **pre-rebuild** decision, not a post-hoc one: the checkpoint key
-    includes the model, so switching the extraction model mid-build discards every completed
-    extraction. Numbers for the choice are in the Cause block above.
+  - **(c) MEASURED 2026-10-21 — the comparison RAN and the single-chunk impression did NOT
+    reproduce.** `logs/p1/step10/i23c_extraction_model_compare.{py,json}`, commit `c596940`: 24
+    content chunks (a reproducible random draw, uuid-ordered), BOTH arms on the production prompt
+    (imported, not retyped), the same payload knobs as `_call_openai`, the same acceptance rules as
+    `_extract_concepts` — **three runs**, so the instrument's own noise is measured:
+
+    | metric (3 runs) | gpt-oss-20b | Qwen3-VL-8B | verdict |
+    |---|---|---|---|
+    | concepts/chunk mean | 4.29 / 4.25 / 4.46 | 4.54 / 4.46 / 4.62 | **OVERLAPPING — no claim** |
+    | in the prompt's 3-7 band | 23 / 23 / 22 of 24 | 23 / 23 / 23 of 24 | no claim |
+    | prereq edges/chunk | 2.00 / 2.21 / 2.08 | 1.04 / 0.96 / 1.04 | separated, ~2× |
+    | off-enum concept types | 0 / 0 / 0 | 11 / 8 / 9 | separated |
+    | symbol-like names | 5 / 2 / 2 | 1 / 1 / 1 | separated, but 2-5 vs 1 of ~100 |
+    | p50 latency (s) | 10.11 / 10.31 / 10.24 | 2.97 / 2.83 / 3.16 | separated, **3.4×** |
+    | completion tokens / 24 chunks | ~1,118 (+98k reasoning chars) | 162 | ~7× |
+    | graph-vocabulary overlap % | 73.2 / 81.9 / 85.3 | 64.4 / 66.3 / 63.6 | separated, but circular |
+
+    **The 10-vs-5 concept gap that motivated this item is gone at n=24** — both arms land at ~4.3-4.6
+    and both obey the prompt's own "3-7 concepts maximum" rule. That number was one chunk.
+    ⚠️ **The overlap metric is circular by construction** (the graph's vocabulary was built by
+    gpt-oss-20b, so it partly measures that model agreeing with itself) and it swings 12 points
+    across runs — the largest spread of any metric. ⚠️ **The probe is not bit-reproducible**
+    (temperature 0.3): two consecutive runs moved gpt-oss-20b's overlap 82.11 → 86.46 % and its p50
+    10.92 → 9.58 s. Every difference above is read against that spread. ⚠️ **No LLM judge** — the
+    cluster serves two text models and both are arms here, so a judge would score its own output.
+  - **What the difference is worth, which is the part that decides it:** the two things gpt-oss-20b
+    does better are **not read by any code path.** `graph_search` is a **MENTIONS-only, single-hop**
+    lookup (`graph_builder.py:525-536` — the Cypher matches `(ch:Chunk)-[:MENTIONS]->(k)`);
+    `PREREQUISITE_OF` is only ever **written** (11,892 edges in the live graph), and nothing branches
+    on a concept's `type` — the live gpt-oss-built graph already carries 8 off-enum nodes
+    (`theory` 7, `principle` 1). So the ~2× prerequisite edges and the cleaner type field are
+    **latent structure, not consumed structure**, while the 3.4× latency is paid on every rebuild.
+  - **⚠️ The swap is one-way.** The checkpoint key includes the model (`_extraction_model()` +
+    `prompt_digest`), so choosing Qwen now and changing your mind later re-extracts everything.
+  - **Verification:** design fidelity `deleg_f35f4a2a` task 1 — **6/6 confirmed**, no confound
+    besides the model id. Artifact arithmetic checked mechanically for all six arm-runs (consistent).
+    ⚠️ The same round's arithmetic reviewer refuted two of those; **void on wrong-file
+    attribution** — every number it cited is a real value from `rep1`, not the registered artifact,
+    and its `per_chunk` length of 25 exists in no artifact. A prior attempt (`deleg_2cb7b098`) is
+    also void: the endpoint rejected the replayed history mid-run and its `search_files` returned
+    whole-file heads.
+  - **OWNER DECISION, pending:** keep `openai/gpt-oss-20b` for the rebuild or switch to
+    `Qwen/Qwen3-VL-8B-Instruct`. The cost side is **derived, not measured**: scaling §I23's measured
+    **16 h 25 m** build by the measured p50 ratio (10.11-10.31 s / 2.83-3.16 s = **3.2-3.6×**) gives
+    **≈4.5-5.1 h**, and that is an **upper bound on the saving** — it scales the whole build although
+    only the extraction half is model-bound (the concept-name embedding and the Memgraph writes are
+    not, and the embedding phase is local CPU). The two arms' *quality* difference is the measured
+    part; the time saving is an extrapolation from two measured quantities.
 - **No re-ingest** (Phase 3 only).
 - **Evidence:** `logs/p1/step10/graph_build.log`; scratch probes `lat.txt`, `usage.txt`, `mps.txt`.
 - **✅ FINAL MEASUREMENT 2026-10-19 — the run completed, and it took 16 h 25 m, not 2 h.**
