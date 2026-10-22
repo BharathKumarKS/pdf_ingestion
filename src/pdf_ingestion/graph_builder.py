@@ -33,6 +33,21 @@ import numpy as np
 from loguru import logger
 
 from src.core.config import Settings, get_settings
+from src.pdf_ingestion.graph_checkpoint import GraphCheckpoint, prompt_digest
+
+
+def _chunk_id(chunk) -> str:
+    """The chunk's id, whichever attribute its class exposes.
+
+    Chunk identity is read in several places in this module and the two attribute names
+    (``id`` on the SQLite model, ``chunk_id`` on ``TextChunk``) were previously re-derived at
+    each site — which is how a checkpoint key and a graph node id can silently disagree. Raising
+    on a chunk with neither keeps that from becoming a silent ``None`` key.
+    """
+    cid = getattr(chunk, "id", None) or getattr(chunk, "chunk_id", None)
+    if cid is None:
+        raise ValueError(f"chunk {chunk!r} exposes neither 'id' nor 'chunk_id'")
+    return str(cid)
 
 
 # -- Concept extraction prompt -------------------------------------------------
@@ -99,10 +114,11 @@ class StubGraphBuilder:
         chunks: list,
         doc_title: str = "",
         doc_subject: str = "",
+        resume: bool = True,
     ) -> dict:
         node_count = 0
         for chunk in chunks:
-            cid = getattr(chunk, "id", None) or getattr(chunk, "chunk_id", None)
+            cid = _chunk_id(chunk)
             self._chunks[cid] = {
                 "text": chunk.text,
                 "tenant_id": tenant_id,
@@ -117,6 +133,10 @@ class StubGraphBuilder:
             "chunk_nodes": len(chunks),
             "concept_nodes": node_count,
             "edges": len(chunks) * 3,
+            # Signature parity with the real builder: the stub has no LLM, so nothing can fail.
+            "failed_chunks": 0,
+            "chunks_resumed": 0,
+            "checkpoint_path": None,
         }
 
     def graph_search(
@@ -200,6 +220,7 @@ class GraphBuilder:
         chunks: list,
         doc_title: str = "",
         doc_subject: str = "",
+        resume: bool = True,
     ) -> dict:
         """
         Two-phase build:
@@ -208,6 +229,16 @@ class GraphBuilder:
 
         Separating the phases means CONCEPT_GEN_WORKERS threads can saturate
         Ollama while Memgraph writes stay single-session and conflict-free.
+
+        Phase A is **checkpointed** (§I23): each completed extraction is appended to
+        ``data/graph_cache/<doc8>__<key>.jsonl`` and a re-run skips what is done. The
+        2026-10-19 build took 16 h 25 m and held every extraction in RAM until the end, so an
+        abort discarded all of it. ``resume=False`` discards the checkpoint and re-extracts
+        everything. A chunk whose extraction FAILED is not treated as done — it is re-attempted.
+
+        The returned stats carry **``failed_chunks``**, the count of chunks that contributed no
+        concepts because their extraction call failed. That count — not the old ``failed`` local,
+        which stayed 0 for all 44 failures of that build — is the phase's exit criterion.
         """
         try:
             driver = self._get_driver()
@@ -215,39 +246,78 @@ class GraphBuilder:
             logger.warning("Memgraph unavailable ({}), skipping graph build", exc)
             return {"document_nodes": 0, "chunk_nodes": 0, "concept_nodes": 0, "edges": 0}
 
-        # ── Phase A: parallel concept extraction ──────────────────────────────
+        # ── Phase A: parallel concept extraction, CHECKPOINTED (§I23) ──────────
         workers = self._cfg.concept_gen_workers
+
+        # A side-car checkpoint, as the card phase has (§I27): Memgraph stays the single write
+        # point, and this only persists the extraction output so an abort costs the chunks since
+        # the last checkpoint rather than the whole run.
+        checkpoint = None
+        if getattr(self._cfg, "graph_checkpoint_enabled", True):
+            try:
+                checkpoint = GraphCheckpoint.open(
+                    directory=getattr(self._cfg, "graph_checkpoint_dir", "./data/graph_cache"),
+                    document_id=document_id,
+                    chunk_ids=[_chunk_id(c) for c in chunks],
+                    model=self._extraction_model(),
+                    prompt_digest_=prompt_digest(_CONCEPT_PROMPT),
+                    fresh=not resume,
+                )
+            except Exception as exc:  # a broken checkpoint must not lose the run
+                logger.warning("Graph checkpoint unavailable ({}): continuing without one", exc)
+                checkpoint = None
+
+        chunk_concepts: dict[str, dict] = {}
+        if checkpoint is not None:
+            chunk_concepts.update(checkpoint.extractions)
+        pending = [c for c in chunks if checkpoint is None or _chunk_id(c) not in checkpoint.done]
+        every_n = int(getattr(self._cfg, "graph_checkpoint_every", 25))
+
         logger.info(
-            "Extracting concepts for {} chunks with {} parallel workers…",
-            len(chunks), workers,
+            "Extracting concepts for {} of {} chunks with {} parallel workers — {} already "
+            "checkpointed{}",
+            len(pending), len(chunks), workers, len(chunks) - len(pending),
+            f" [{checkpoint.path.name}]" if checkpoint is not None else " [no checkpoint]",
         )
-        chunk_concepts: dict[str, dict] = {}   # cid → {"concepts": [...], "prerequisites": [...]}
-        failed = 0
 
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            future_to_cid = {
-                executor.submit(
-                    self._extract_concepts,
-                    chunk.text,
-                ): getattr(chunk, "id", None) or getattr(chunk, "chunk_id", None)
-                for chunk in chunks
-            }
-            for future in as_completed(future_to_cid):
-                cid = future_to_cid[future]
+            future_to_chunk = {executor.submit(self._extract_concepts, c.text): c for c in pending}
+            for future in as_completed(future_to_chunk):
+                chunk = future_to_chunk[future]
+                cid = _chunk_id(chunk)
                 try:
-                    chunk_concepts[cid] = future.result()
-                    done = len(chunk_concepts)
-                    if done % 500 == 0:
-                        logger.debug("Concept extraction progress: {}/{}", done, len(chunks))
-                except Exception as exc:
-                    failed += 1
-                    chunk_concepts[cid] = {"concepts": [], "prerequisites": []}
-                    logger.warning("Concept extraction failed for chunk {} ({})", cid[:8], exc)
+                    result = future.result()
+                except Exception as exc:  # the extractor swallows its own errors; belt and braces
+                    result = {"concepts": [], "prerequisites": [], "ok": False, "error": str(exc)}
+                chunk_concepts[cid] = result
+                if checkpoint is not None:
+                    # Recorded whether it succeeded or failed; a FAILED one is written with
+                    # ok=false so a resume re-attempts it instead of baking the loss in (§I23).
+                    checkpoint.record(cid, getattr(chunk, "chunk_index", 0) or 0, result)
+                    if checkpoint.due(every_n, 60.0):
+                        checkpoint.note_flushed()
+                        logger.info(
+                            "Concept extraction: {}/{} done …", len(chunk_concepts), len(chunks),
+                        )
 
+        if checkpoint is not None:
+            checkpoint.close()
+
+        # The count that matters (§I23 defect 2). The old `failed` local only incremented when the
+        # future itself raised, and `_extract_concepts` swallows every exception — so 44 real
+        # failures on the 2026-10-19 build were reported as "0 failed".
+        failed_chunks = sum(1 for r in chunk_concepts.values() if not r.get("ok", False))
         logger.success(
-            "Concept extraction done: {} chunks, {} failed",
-            len(chunks), failed,
+            "Concept extraction done: {} chunks, {} FAILED (contributed no concepts)",
+            len(chunks), failed_chunks,
         )
+        if failed_chunks:
+            logger.warning(
+                "{} chunk(s) contributed NO concepts because their extraction call failed — "
+                "retry these, and read THIS count rather than the absence of an error line "
+                "(IMPROVEMENTS.md §I23).",
+                failed_chunks,
+            )
 
         # ── Phase A.5: embed unique concept names (once, reused at query time) ─
         # Collect unique names across all chunks
@@ -391,8 +461,14 @@ class GraphBuilder:
         return {
             "document_nodes": 1,
             "chunk_nodes":    len(chunks),
+            # NB: this counts (chunk, concept) MENTIONS pairs, not distinct concepts — the label
+            # is wrong and is a separate register item (§I22). Do not read it as a concept count.
             "concept_nodes":  concept_node_count,
             "edges":          edge_count,
+            # §I23: the honest extraction outcome. `failed_chunks` is the phase's exit criterion.
+            "failed_chunks":  failed_chunks,
+            "chunks_resumed": len(chunks) - len(pending),
+            "checkpoint_path": str(checkpoint.path) if checkpoint is not None else None,
         }
 
     def document_exists(self, document_id: str) -> bool:
@@ -579,18 +655,50 @@ class GraphBuilder:
     # -- LLM helpers -----------------------------------------------------------
 
     def _extract_concepts(self, chunk_text: str) -> dict:
+        """Extract concepts for one chunk.
+
+        The result **always** carries ``ok``. ``ok=False`` means the call failed or its output was
+        unusable — the LLM errored, returned nothing, or returned something that is not JSON.
+        That is NOT the same as "this chunk has no concepts": valid JSON with an empty list is
+        ``ok=True`` and IS a completed extraction.
+
+        The two were indistinguishable before, which is why 44 real failures on the 2026-10-19
+        build were reported as "0 failed" (§I23): the exception was swallowed into an empty
+        concept list and the caller's counter never moved.
+        """
         from src.core.llm import call_llm
         prompt = _CONCEPT_PROMPT.format(text=chunk_text[:2000])
         try:
-            raw  = call_llm(prompt=prompt, settings=self._cfg, json_mode=True)
-            data = json.loads(raw) if raw else {}
-            return {
-                "concepts":      data.get("concepts", []),
-                "prerequisites": data.get("prerequisites", []),
-            }
+            raw = call_llm(prompt=prompt, settings=self._cfg, json_mode=True)
         except Exception as exc:
-            logger.debug("Concept extraction failed ({}), skipping chunk concepts", exc)
-            return {"concepts": [], "prerequisites": []}
+            logger.debug("Concept extraction call failed ({})", exc)
+            return {"concepts": [], "prerequisites": [], "ok": False, "error": str(exc)}
+        if not raw:
+            return {"concepts": [], "prerequisites": [], "ok": False, "error": "empty response"}
+        try:
+            data = json.loads(raw)
+        except (json.JSONDecodeError, TypeError) as exc:
+            logger.debug("Concept extraction returned unusable JSON ({})", exc)
+            return {"concepts": [], "prerequisites": [], "ok": False,
+                    "error": f"invalid JSON: {exc}"}
+        if not isinstance(data, dict):
+            return {"concepts": [], "prerequisites": [], "ok": False,
+                    "error": f"expected a JSON object, got {type(data).__name__}"}
+        return {
+            "concepts":      data.get("concepts", []),
+            "prerequisites": data.get("prerequisites", []),
+            "ok":            True,
+            "error":         None,
+        }
+
+    def _extraction_model(self) -> str:
+        """The model concept extraction will actually call — part of the checkpoint's key.
+
+        A model swap changes what an extraction means, so a checkpoint written under one model
+        must not be resumed under another.
+        """
+        return (self._cfg.openai_model if self._cfg.llm_backend == "openai"
+                else self._cfg.ollama_model)
 
     def _extract_query_concepts(self, query_text: str) -> list[str]:
         from src.core.llm import call_llm

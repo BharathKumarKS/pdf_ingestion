@@ -179,6 +179,15 @@ class Settings(BaseSettings):
     card_checkpoint_dir: str = "./data/card_cache"
     card_checkpoint_every: int = 25      # chunks between checkpoint log lines (writes are per chunk)
 
+    # Phase 3 concept extraction — the same side-car pattern as the card phase above, for the same
+    # reason: the 2026-10-19 graph build ran 16 h 25 m and held every extraction in RAM until the
+    # end, so an abort discarded all of it (IMPROVEMENTS.md §I23). Memgraph stays the single write
+    # point; this only persists the extraction output. Keyed by (document, model, prompt digest),
+    # so a prompt or model change does not find it. Derived and re-derivable — safe to delete.
+    graph_checkpoint_enabled: bool = True
+    graph_checkpoint_dir: str = "./data/graph_cache"
+    graph_checkpoint_every: int = 25     # chunks between checkpoint log lines (writes are per chunk)
+
     # RAPTOR
     raptor_max_levels: int = 3
     raptor_min_cluster_size: int = 2     # minimum chunks per cluster
