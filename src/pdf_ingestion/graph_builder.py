@@ -669,7 +669,7 @@ class GraphBuilder:
         from src.core.llm import call_llm
         prompt = _CONCEPT_PROMPT.format(text=chunk_text[:2000])
         try:
-            raw = call_llm(prompt=prompt, settings=self._cfg, json_mode=True)
+            raw = call_llm(prompt=prompt, settings=self._extraction_settings(), json_mode=True)
         except Exception as exc:
             logger.debug("Concept extraction call failed ({})", exc)
             return {"concepts": [], "prerequisites": [], "ok": False, "error": str(exc)}
@@ -691,20 +691,52 @@ class GraphBuilder:
             "error":         None,
         }
 
+    def _extraction_settings(self) -> Settings:
+        """The settings concept extraction actually calls with (§I23(c)).
+
+        The extractor is chosen per stage in `config.yaml` (`concept_extraction.model`) so it can
+        differ from the card/RAPTOR model, which lives in `card_generation`. Read fresh on each call
+        rather than cached — `pipeline_config` already caches the file, and a cached *settings*
+        object here would silently survive a config edit mid-run.
+
+        **Both** the index-time extraction (`_extract_concepts`) and the query-time one
+        (`_extract_query_concepts`) go through this on purpose: if the graph is built by one model
+        and a query resolves concepts with another, their naming conventions differ and the query
+        misses nodes the index holds — the §G3 defect class, manufactured on purpose.
+
+        Falls back to `.env`'s model when the section is absent, so a checkout without
+        `config.yaml` behaves exactly as before.
+        """
+        from src.core.pipeline_config import get_section
+        section = get_section("concept_extraction") or {}
+        updates: dict = {}
+        model = section.get("model")
+        if isinstance(model, str) and model.strip():
+            if self._cfg.llm_backend == "openai":
+                updates["openai_model"] = model.strip()
+            else:
+                updates["ollama_model"] = model.strip()
+        base = section.get("base_url")
+        if isinstance(base, str) and base.strip() and self._cfg.llm_backend == "openai":
+            updates["openai_api_base"] = base.strip()
+        return self._cfg.model_copy(update=updates) if updates else self._cfg
+
     def _extraction_model(self) -> str:
         """The model concept extraction will actually call — part of the checkpoint's key.
 
         A model swap changes what an extraction means, so a checkpoint written under one model
-        must not be resumed under another.
+        must not be resumed under another. This reads the SAME resolution the call uses, so the key
+        cannot disagree with the model that produced the record.
         """
-        return (self._cfg.openai_model if self._cfg.llm_backend == "openai"
-                else self._cfg.ollama_model)
+        cfg = self._extraction_settings()
+        return (cfg.openai_model if cfg.llm_backend == "openai"
+                else cfg.ollama_model)
 
     def _extract_query_concepts(self, query_text: str) -> list[str]:
         from src.core.llm import call_llm
         prompt = _QUERY_CONCEPT_PROMPT.format(question=query_text)
         try:
-            raw  = call_llm(prompt=prompt, settings=self._cfg,
+            raw  = call_llm(prompt=prompt, settings=self._extraction_settings(),
                             timeout=30, json_mode=True)
             data = json.loads(raw) if raw else {}
             return data.get("concepts", [])

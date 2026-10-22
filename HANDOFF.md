@@ -4,12 +4,15 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-21, session 4. Landed and verified: §I23's checkpoint + honest failure
-> count, the `resume` plumbing that makes its `resume=False` reachable from the CLI, and §I23(d)'s
-> device selection. Earlier this day: §G1 (PPR) + §G2 (Leiden), §I21 (Phase 3 applies the E5
-> filter), and the §G1 ablation — which came back NEGATIVE. The standing rule is
-> **verifier at every step** (`README.md` → "Verifier at every step"; Session hygiene below).
-> ⚠️ **The tree is CLEAN — the three in-flight files are committed, see item 0 below.**
+> **Last updated: 2026-10-21, session 5. Landed and verified: §I23's checkpoint + the `resume`
+> plumbing that makes `resume=False` reachable from the CLI, §I23(d)'s device selection,
+> **§I23(c) — the extraction-model comparison (the single-chunk "10 vs 5 concepts" did NOT
+> reproduce; the real difference is 3.2-3.6× latency)**, §G1 **closed** as measured-and-negative,
+> and the standing rule that a verifier must differ from the author **and the subject, in model
+> family** (`README.md` → "Verifier at every step"). Earlier: §G2 (Leiden), §I21 (the Phase 3 E5
+> filter), and the §G1 ablation — which came back NEGATIVE.
+> **▶ The extractor is now `Qwen/Qwen3-VL-8B-Instruct`** (owner decision, item 2) and the rebuild is
+> **prepared but NOT launched** — it needs a graph clear first, see item 3.
 >
 > ## ▶ NEXT SESSION — START HERE (written 2026-10-21, session 3)
 >
@@ -131,10 +134,33 @@
 >    (**10.11-10.31 s / 2.83-3.16 s = 3.2-3.6×**) gives **≈4.5-5.1 h** — and that is an **upper bound
 >    on the saving**, because it scales the whole build although only the extraction half is
 >    model-bound (the concept-name embedding and the Memgraph writes are not).
-> 3. **THE GRAPH REBUILD** — the gate that releases §G3, and the only remaining prerequisite. It
->    needs `QDRANT_HOST=10.0.10.65`, the cluster up, and **days not hours**: budget from §I23's
->    measurement, not the plan's 2 h estimate. The new checkpoint makes it restartable; read
->    `failed_chunks`, not the exit code.
+> 3. **THE GRAPH REBUILD — prepared 2026-10-21, NOT YET LAUNCHED. ⚠️ IT MUST BE PRECEDED BY A
+>    GRAPH CLEAR, OR IT WILL BE BUILT ON TOP OF THE OLD ONE.** It needs `QDRANT_HOST=10.0.10.65`,
+>    the cluster up (verified up: Qdrant 10.0.10.65:6333 → 200, router 10.0.10.70:8000 → 200), and
+>    **hours, not the plan's 2 h estimate** — with `Qwen/Qwen3-VL-8B-Instruct` the projection is
+>    ≈4.5-5.1 h (item 2's derivation), against the 16 h 25 m the gpt-oss-20b build took. The new
+>    checkpoint makes it restartable; read **`failed_chunks`**, not the exit code.
+>    - ⚠️ **`force_graph=True` does NOT clear anything** — it only bypasses the "Document node
+>      already exists" skip. ⚠️ Note the flag lives in **`generate_phase3_artifacts` in `store.py`**
+>      (parameter at `store.py:1676`, the skip it bypasses at `store.py:1790-1805`) — **not** in
+>      `build_graph`, whose signature has no such parameter (a reviewer looked for it there and
+>      reported the flag as unimplemented). `build_graph` has **no delete step** (no `DETACH DELETE`
+>      anywhere in `graph_builder.py`), and its writes are `MERGE … ON MATCH SET r.weight =
+>      r.weight + 1`, so rebuilding over the existing graph would (a) keep every concept the old
+>      model produced and (b) **double the `RELATES_TO` weights** — the §I43 duplication class, in
+>      the graph this time. Measured on the live graph: **7,834 concepts, 37,300 `RELATES_TO`,
+>      15,619 `MENTIONS`**.
+>    - `scripts/clean_stale_graph.py` **cannot** do this: it keys staleness on "the document has no
+>      points in Qdrant", and `7ba61432` **is** the live collection. A clear keyed on **document
+>      id** does not exist yet and is the first thing the next session needs.
+>    - ✅ Not a problem, checked: the concept-embedding upsert is **idempotent** — point ids are
+>      `uuid5("concept:<name>")` — so `concept_embeddings` will not duplicate. ⚠️ But it holds
+>      **15,276** points against the graph's 7,834 concepts (it accumulates across ingests and its
+>      payload carries no document id), which is the confound §G1's ablation recorded; a query can
+>      resolve a concept the graph no longer holds.
+>    - **The extractor is now `Qwen/Qwen3-VL-8B-Instruct`**, set per stage in `config.yaml` under
+>      `concept_extraction` (owner decision 2026-10-21, item 2). ⚠️ Changing it changes the
+>      checkpoint key, so a mid-build swap re-extracts everything.
 > 4. Then **§G3** (entity resolution — §I30's lever: 1,186 merge groups, 34.4 % of the vocabulary),
 >    then **§G2** community summaries.
 >

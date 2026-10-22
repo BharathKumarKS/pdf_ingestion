@@ -44,3 +44,16 @@ evaluation:
   judge_model: openai/gpt-oss-20b
   # judge_model: openai/gpt-oss-120b
   judge_base_url: http://10.0.10.70:8000/v1
+
+# Phase 3 concept extraction — the graph's extractor, chosen separately from the card/RAPTOR model
+# so the two can be settled on their own evidence. Measured 2026-10-21 (IMPROVEMENTS.md §I23(c),
+# logs/p1/step10/i23c_extraction_model_compare.json, three runs on 24 real chunks): Qwen3-VL-8B is
+# 3.2-3.6x faster (p50 2.8-3.2 s vs 10.1-10.3 s) at ~1/7 the completion tokens, with the SAME
+# concept volume (the "10 vs 5 concepts" that motivated the question did not reproduce). gpt-oss-20b
+# emits ~2x the PREREQUISITE_OF edges and 0 off-enum types against Qwen's 8-11 per 24 chunks — but
+# nothing reads either today: `graph_search` is a MENTIONS-only single-hop lookup.
+# ⚠️ Changing this model changes the checkpoint key, so an in-flight build re-extracts everything.
+concept_extraction:
+  model: Qwen/Qwen3-VL-8B-Instruct
+  # model: openai/gpt-oss-20b          # the 2026-10-19 build used this; slower, see §I23(c)
+  base_url: http://10.0.10.70:8000/v1
