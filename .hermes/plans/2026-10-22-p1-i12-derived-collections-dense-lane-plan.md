@@ -158,7 +158,7 @@ create the situation.
 | B2c | collection dim | 768d | **1024d == dense_dim** (`preflight.py` `qdrant.concept_embeddings.dim` PASS) |
 | B2d | points ≈ distinct concepts in Memgraph | 15,276 (stale accumulator) | **== distinct `Concept` count** (expect ≈ 7,427; §I22: count it in Memgraph, never read the run's `concept_nodes`) |
 | B2e | **the lane actually returns** (the §I47 discriminator) | `_find_concepts_scored(np.zeros(1024))` → **0** concepts | **> 0** concepts |
-| B2f | graph edge counts not doubled | — | `RELATES_TO` **≈ 22,799**, not ~45,598 |
+| B2f | graph edge weights NOT doubled (⚠️ **not** the edge COUNT — see below) | — | `min(RELATES_TO.weight) == 1` (a doubled build re-matches every edge, so min would be 2); measured: min 1, 93.1 % at weight 1, max 24 |
 | B2g | §I21 still live | — | 3,533 chunk nodes, not 3,796 |
 
 **B2e is the load-bearing check**, exactly as A3 is for Lane A. It is §I47's own probe:

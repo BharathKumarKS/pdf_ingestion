@@ -3752,8 +3752,20 @@ from src.core.config import get_settings; print(DocumentStore(get_settings()).co
     **1024d**; `_find_concepts_scored(np.zeros(1024))` returns **8** concepts (was **0** — the §I47
     discriminator). Graph shape **identical to the verified 2026-10-21 rebuild**: 3,533 Chunk /
     907 Page / 7,427 Concept / 14,407 MENTIONS / **22,799 RELATES_TO** / 3,295 PREREQUISITE_OF —
-    the `RELATES_TO` count matching pre-clear **proves the graph clear prevented the §I43-class
-    weight doubling**. Log `…/i12_laneB_rebuild_2026-10-22.log`, verify `…/i12_laneB_verify_2026-10-22.txt`.
+    identical to the pre-clear counts.
+  - ⚠️ **CORRECTED the same session — the `RELATES_TO` COUNT is NOT the evidence the clear worked,
+    and the first draft of this entry said it was.** The edge write is
+    `MERGE (ka)-[r:RELATES_TO]-(kb) ON CREATE SET r.weight = 1 ON MATCH SET r.weight = r.weight + 1`
+    (`graph_builder.py:457-462`). `MERGE` **reuses** an existing edge and only increments its
+    `weight` — so an UNCLEARED rebuild would leave the count at **22,799 too**, with doubled
+    weights. The count is invariant to the bug.
+    **The discriminator is the weight distribution.** Measured on the rebuilt graph: `n=22,799`,
+    **`min(weight)=1`**, `max=24`, `sum=25,741`, `mean=1.129`, and **21,215 of 22,799 edges
+    (93.1 %) sit at weight 1**. A doubled build would have re-matched every edge at least once in
+    the second pass, so **`min(weight)` would be 2 and no edge would read 1**. `min(weight) = 1`
+    is therefore the real proof; the count matching is a coincidence of the MERGE semantics.
+    (Credit: the independent reviewer marked the count-based claim **UNVERIFIABLE** and asked what
+    would be needed to be sure — the right challenge, and it was correct.) Log `…/i12_laneB_rebuild_2026-10-22.log`, verify `…/i12_laneB_verify_2026-10-22.txt`.
   - **Preflight before → after:** `derivative_artifacts.dim` and `concept_embeddings.dim` both
     **FAIL → PASS**; **2 BLOCKER(S) → All checks passed**. Evidence
     `logs/p1/step10/i12_preflight_{before,after}_2026-10-22.txt`.
