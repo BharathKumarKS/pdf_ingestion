@@ -599,19 +599,17 @@ with tab_search:
                 graph_results = []
                 if also_graph:
                     try:
-                        from src.pdf_ingestion.embedder import get_embedder
                         from src.pdf_ingestion.graph_builder import get_graph_builder
-                        # The graph lane ranks CONCEPT nodes in ``concept_embeddings``, which
-                        # is still built by the retired local 768d Nomic embedder — a
-                        # different space from the dense lane's q_vec. Passing q_vec here
-                        # would be a dimension error. Phase 3's re-index (plan Step 9) moves
-                        # that collection onto the dense lane and this vector goes away.
-                        graph_vec = get_embedder(cfg).embed_query(query)
+                        # The graph lane ranks CONCEPT nodes in ``concept_embeddings``, which now
+                        # lives in the DENSE space (§I12) — so it takes the same ``q_vec`` every
+                        # other lane uses. This used to embed a SECOND, 768d vector right here,
+                        # because that collection was built by the retired local Nomic embedder;
+                        # the second vector is gone, and with it the two-space split.
                         graph = get_graph_builder(cfg)
                         graph_results = graph.graph_search(
                             query_text=query,
                             tenant_id=tenant_id,
-                            query_vector=graph_vec,
+                            query_vector=q_vec,
                             limit=3,
                         )
                     except Exception as _graph_exc:
@@ -1310,13 +1308,13 @@ if tab_graph is not None:
         if st.button("Graph Search", type="primary") and graph_query.strip():
             with st.spinner("Traversing concept graph…"):
                 try:
-                    # NOT the dense lane: this vector ranks CONCEPT nodes in
-                    # ``concept_embeddings``, which is still built by the retired local 768d
-                    # Nomic embedder. Phase 3's re-index (plan Step 9) moves that collection
-                    # to the dense lane; until then the two spaces must not be mixed.
-                    from src.pdf_ingestion.embedder import get_embedder
+                    # The DENSE lane, same as every other lane (§I12). This vector ranks CONCEPT
+                    # nodes in ``concept_embeddings``, which now lives in the dense space; it
+                    # used to be embedded by the retired local 768d Nomic embedder to match a
+                    # 768d collection. The two spaces must never be mixed, and now they are one.
+                    from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
                     from src.pdf_ingestion.graph_builder import get_graph_builder
-                    gq_vec = get_embedder(cfg).embed_query(graph_query)
+                    gq_vec = get_cluster_embedder(cfg).embed_query(graph_query)
                     graph  = get_graph_builder(cfg)
                     results = graph.graph_search(
                         query_text=graph_query,

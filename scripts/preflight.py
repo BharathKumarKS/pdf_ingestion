@@ -72,7 +72,8 @@ def check_config(cfg) -> dict:
     t.add_row("Memgraph", f"{cfg.memgraph_host}:{cfg.memgraph_port}")
     t.add_row("embedding (query+index)", f"{cfg.dense_model} ({cfg.dense_dim}d + {cfg.dense_dim_low}d MRL)")
     t.add_row("embedding (derived indexes)",
-              f"{cfg.embedding_model} ({cfg.embedding_dim}d) — DA/concept collections only")
+              f"{cfg.dense_model} ({cfg.dense_dim}d) — DA/concept collections (§I12; was "
+              f"{cfg.embedding_model} {cfg.embedding_dim}d)")
     t.add_row("reranker", f"{cfg.reranker_model}  enabled={cfg.reranker_enabled}")
     t.add_row("colbert", f"enabled={cfg.colbert_enabled}  url={cfg.sv_colbert_url or '(local)'}")
     t.add_row("splade", f"enabled={cfg.splade_enabled}  url={cfg.sv_sparse_url or '(local)'}")
@@ -146,6 +147,33 @@ def check_qdrant(cfg) -> object | None:
             t.add_row(name, "[red]error[/red]", str(exc)[:40])
             record(f"qdrant.{name}", False, str(exc)[:80])
     console.print(t)
+
+    # ── Lane dimension probe (§I12 / §I47) ────────────────────────────────────
+    # A collection checked by POINT COUNT alone reads PASS even when it cannot be queried at
+    # all. `derivative_artifacts` and `concept_embeddings` held 768d vectors while every query
+    # against them carried the dense lane's 1024d, so BOTH lanes returned [] on every query and
+    # preflight said nothing about it — the only trace was a WARNING line per query (§I47;
+    # §I12's update). This is the check that catches it, and the register asks for it here.
+    for name in (cfg.da_collection, cfg.concept_collection):
+        if name not in cols:
+            continue
+        try:
+            vecs = client.get_collection(name).config.params.vectors
+            size = getattr(vecs, "size", None)
+        except Exception as exc:  # noqa: BLE001
+            record(f"qdrant.{name}.dim", False, f"unreadable: {type(exc).__name__}: {exc}")
+            continue
+        if size is None:
+            continue        # a named-vector layout; the KB collection is checked elsewhere
+        if int(size) == int(cfg.dense_dim):
+            record(f"qdrant.{name}.dim", True, f"{size}d == dense_dim — lane is callable")
+        else:
+            record(
+                f"qdrant.{name}.dim", False,
+                f"{size}d, but the query side is {cfg.dense_dim}d — every query against this "
+                f"lane is REJECTED, so the lane silently returns nothing. It predates the "
+                f"dense-lane move (§I12): drop the collection and re-index. See §I47.",
+            )
     return client
 
 

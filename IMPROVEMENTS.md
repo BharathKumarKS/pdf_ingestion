@@ -2006,6 +2006,35 @@ The Step 10 §3d retrieval-only run logged, for **every** query:
 - **Cost:** small — two scripts, no re-ingest. Not on the critical path; do it before anyone needs
   a recovery.
 
+**Update 2026-10-21 (session 6) — the two scripts are addressed, and the "small" cost above is WRONG
+for `reembed_chunks.py`. It is a re-ingest-shaped job, and the script now REFUSES rather than
+half-doing it.**
+
+- ✅ **`validate_embedders.py` — DONE.** The dense lane is now the default and the retired 768d Nomic
+  check sits behind an explicit `--legacy-embedder` flag, with the lane named in its output. That is
+  the whole fix the entry asks for.
+- ⚠️ **`reembed_chunks.py` — the fix is NOT "move it to the dense lane".** Measured on the live
+  collection 2026-10-21: `knowledge_base_v2` requires **four** lanes on every point —
+  `dense_64` (64d), `dense_1024` (1024d), `colbert` (128d **multivector**, `max_sim`) **and** the
+  sparse vector `sparse`. This script computes **only the dense one**. Because Qdrant accepts a point
+  with named vectors **absent**, a dense-only upsert would *succeed* and leave the ColBERT and SPLADE
+  stages of the funnel looking at nothing — a **degraded index that looks recovered**, discovered at
+  the worst possible moment (which is what this entry's own "Why it matters" warns about). So the
+  entry's fix text ("reuse `store.save_document`'s payload builder") is right but understated: it
+  means recomputing every lane, including the re-normalised 64d MRL truncation (`ARCHITECTURE.md` §8
+  trap 5) and the multivector/sparse payload shapes — not re-pointing one embedder.
+- **What was done instead, deliberately:** the script now exits with the reason and the path forward
+  rather than writing a partial payload. Measured: `reembed_chunks.py --doc-id 7ba61432…` against the
+  cluster → `REFUSING: collection 'knowledge_base_v2' expects named vectors ['colbert', 'dense_1024',
+  'dense_64'], and this script computes only the dense lane(s). Writing it would leave ['colbert',
+  'sparse'] ABSENT on every point …`, exit 1, nothing written. It is still a loud failure (it already
+  failed loudly at the upsert with a vector-name error), but now it fails with the reason and before
+  any work.
+- **Still open, and now correctly scoped:** extend `reembed_chunks.py` to rebuild all four lanes.
+  Until then the documented recovery path for "Qdrant empty, SQLite intact" is
+  `scripts/ingest_base_textbook.py --reindex`, not this script.
+- **No re-ingest. No LLM calls.**
+
 ### I14. NEW 2026-10-17 (found pre-flighting Step 8) — `SV_EMBED_URL` is missing from the live `.env`, and the whole query path now needs it
 
 - **What:** `SV_COLBERT_URL` / `SV_SPARSE_URL` / `SV_RERANK_URL` are set in `.env`, but
@@ -3510,6 +3539,107 @@ signal is the next step; the effect is 2,256 cards (3.0 %) on the old bands.
 - **Evidence:** `logs/p1/step10/b5_raptor_verify_2026-10-21.log` (contains PASS, 3,869) versus the
   measured live state 3,942 / 146; the post-fix run is
   `logs/p1/step10/b5_raptor_verify_2026-10-21_post_dedupe.log`.
+
+### I45. NEW 2026-10-21 (session 6) — the graph rebuild's settings gate asserted a model the build no longer calls
+
+- **What:** `logs/p1/step10/run_graph.sh`'s launch gate exists to *"assert what is actually in force"*.
+  It printed `openai_model` — `openai/gpt-oss-20b`, from `.env` — and that was correct until §I23(c)
+  made the extractor **per stage** in `config.yaml` under `concept_extraction:`. The graph build calls
+  `Qwen/Qwen3-VL-8B-Instruct`. So the gate's own banner named a model the run would never call, and that
+  banner is the only place a reader would look to confirm the extractor.
+- **Why it matters:** it is §I22's class again — a field whose label says one thing and whose value is
+  another. A ~5 h run whose log names the wrong extractor is unrecoverable evidence: the log *is* the
+  record, and §I23's "0 failed" and §I22's "15619 concept nodes" are two existing examples of this
+  project having had to correct a number *after* trusting a run's own report.
+- **Measured:** the gate, extracted verbatim (`sed -n '23,70p'`) and run so the build was not started,
+  printed both lines side by side:
+  `openai_model : openai/gpt-oss-20b @ http://10.0.10.70:8000` /
+  `concept_extraction: Qwen/Qwen3-VL-8B-Instruct   <- what the graph build actually calls`.
+- **✅ FIXED 2026-10-21 (session 6), commit `d4a596b`.** The gate now resolves the model the way
+  `build_graph` does — `GraphBuilder(settings=c)._extraction_model()`, which reads the
+  `concept_extraction` section and falls back to `.env` — prints it, and asserts it is non-empty.
+  `GraphBuilder(settings=…)` opens **no** Bolt connection (the driver is lazy), so the gate stays
+  side-effect-free. Verifier `openai/gpt-oss-20b`, deleg `deleg_51e615b9`, no defects; it confirmed the
+  resolver is the build's own, that the constructor is side-effect-free, and that the assert is not
+  vacuous (it fails when the section is emptied).
+- ⚠️ **Found in the same read, and deliberately NOT fixed in the script:** `run_graph.sh` redirects
+  **nothing**, so launching it as the 2026-10-19 build did — `> logs/p1/step10/graph_build.log` —
+  **overwrites** the log §I22 and §I23 cite as their evidence. The rebuild was launched to a new dated
+  filename instead. This is §I44's rule a third time (*a run's output goes to a new, dated filename*).
+  If the harness is re-run again, give it its own dated `$LOG` — it already computes one and never uses it.
+- **No re-ingest. No LLM calls.** A 7-line diff to a bash harness.
+
+### I46. NEW 2026-10-21 (session 6) — Memgraph 2.18.1 cannot express "a node with no incoming edge", so orphan detection must be two-phase and by name
+
+- **What:** clearing a document's graph has to remove the `Concept` nodes that only that document's
+  chunks mentioned. The natural Cypher for that is a negative pattern, and **all four forms fail** —
+  probed against the live server, not read from a docstring:
+  `NOT (k)<-[:MENTIONS]-()` → *"Not yet implemented: atom expression '(k)<-[:MENTIONS]-()'"*;
+  `NOT ()-[:MENTIONS]->(k)` → the same, *"atom expression '()-[:MENTIONS]->(k)'"*;
+  `NOT EXISTS { MATCH (:Chunk)-[:MENTIONS]->(k) }` → parse error (`mismatched input '{'`);
+  `OPTIONAL MATCH (:Chunk)-[:MENTIONS]->(k) AS m … WHERE m IS NULL` → parse error
+  (`mismatched input 'AS'`).
+- **Why it matters:** `clean_stale_graph.py` already carried this as a *docstring claim* ("Memgraph does
+  not implement the `(k)<-[:MENTIONS]-()` atom pattern"), and the new
+  `scripts/clear_graph_document.py` would have been written against the elegant one-query form if the
+  claim had been taken on faith in the other direction — i.e. assumed *fixed* in 2.18.1. It is not.
+  The workable predicate is a positive one: `WHERE NOT (c.document_id IN $ids)` **does** parse.
+- **The shape that works:** two phases, by name — read the target's concept names, read the names a
+  surviving chunk still mentions, delete the difference.
+  ⚠️ And the surviving set must be read as *"names mentioned by chunks whose `document_id` is NOT in the
+  target set"*, **not** as *"all mentions minus the target's"*: a concept mentioned by both a doomed
+  chunk and a surviving one is in both sets, and subtracting would orphan it and delete a live
+  document's concept. Caught by a test, not by review (`tests/test_graph_clear.py`).
+- **Evidence:** the four probe failures and the working predicate, `logs/p1/step10/` (probe output in the
+  session record; the surviving form is in `scripts/clear_graph_document.py`).
+- **No re-ingest. No LLM calls.**
+
+### I47. NEW 2026-10-21 (session 6, found while starting §I12) — §I12's sibling: the GRAPH lane is dead on every multihop query in `evaluate_rag.py`
+
+- **What:** `scripts/evaluate_rag.py` passes the dense-lane **1024d** `q_vec` straight into
+  `graph.graph_search(query_vector=q_vec, …)` (`evaluate_rag.py:191-196`). `graph_search` hands it to
+  `_find_concepts_scored`, which queries `concept_embeddings` — a **768d** collection (§I12). The query
+  is rejected, the `except Exception` in `_find_concepts_scored` swallows it and returns `[]`, and
+  `graph_search` then hits its own `if not scored_concepts: return []`. **The graph lane contributes
+  nothing.**
+- **Measured on the live cluster 2026-10-21 (read-only, one ANN call per arm):**
+  `_find_concepts_scored(np.zeros(1024))` →
+  `WARNING Concept Qdrant search failed (Unexpected Response: 400 (Bad Request)
+  b'{"status":{"error":"Wrong input: Vector dimension error: expected dim: 768, got 1024"}}')`
+  → **0 concepts**. The same call with `np.zeros(768)` → **3 concepts**. So the lane is not degraded,
+  it is **absent**.
+- **Why it matters:** §I12's update already records the dead **DA** lane in this harness ("every
+  `evaluate_rag.py` measurement taken after the 2026-10-17 query-side switch has had **one fewer lane
+  than it appears to**"). For **multihop** queries it is **two fewer**: DA on every query, and the graph
+  lane on every multihop query. It also means §G5's "multihop is nominal" is worse than recorded: in
+  the harness the lane does not return anything at all.
+- **⚠️ WHICH runs are affected — MEASURED, and the first draft of this entry had it WRONG.** The lane
+  died with the **2026-10-17** query-side switch (§E6), not before it. Measured in the §3d
+  retrieval-only log (`logs/p1/step10/a3d_retrieval_only.log`): **40** `Concept Qdrant search failed`
+  warnings — **exactly one per 40 multihop query** — alongside **167** DA-lane failures. So the affected
+  runs are the **post-switch** ones.
+  **Step 4's multihop R@20 0.619 is NOT contaminated.** It is real and correct:
+  `data/eval_results/p0-9-gold-v2_2026-10-17_0422.md` line 11 reads
+  `| multihop | 0.709 | 0.619 | … | 40/40 |`, and that run was **2026-10-16 20:13-21:22 — it predates
+  the switch**, so its query vector was the then-current 768d and **both** lanes were live. This is
+  §I12's own point about §D12's baseline, applied to the graph lane.
+  An earlier draft of this entry asserted the opposite — that 0.619 had been measured with the graph
+  lane contributing zero — by inferring it from the code rather than reading a log. That is the
+  "a plausible inference is not a measurement" error this register exists to catch: an independent
+  reviewer marked the claim **UNVERIFIABLE** rather than accepting it, and the log settled it.
+- **Why nothing caught it:** the same reason as the DA lane — the failure is a per-query `WARNING` and
+  `preflight.py` checks the collection by **point count**, never by issuing a query. The register
+  already asks for a dimension-compatibility probe per named-vector collection; that would catch both.
+- **Fix:** the same one §I12 names — move `concept_embeddings` (and `derivative_artifacts`) to
+  `dense_dim` in one pass, after which one `q_vec` serves every lane. **No separate fix is needed for
+  the graph lane**; that is the point of doing §I12 properly.
+- **⚠️ Sequencing hazard, stated so it is not hit:** `concept_embeddings` is **768d on the cluster** and
+  Qdrant cannot change a collection's dimension. The moment the concept-name embedder moves to the
+  dense lane, a Phase-3 build against the **un-recreated** collection fails at the upsert (loudly — a
+  400, not corruption). So the lane move must ship **with** dropping the two collections, and a
+  *resumed* in-flight build must not be resumed against the new code. See §I12's fix note.
+- **Evidence:** the live probe output above (session record); `scripts/evaluate_rag.py:191-196`;
+  `src/pdf_ingestion/graph_builder.py:_find_concepts_scored`. **No re-ingest. No LLM calls.**
 
 ### Visual-index cleanup rides along with the re-ingest (§B4b)
 

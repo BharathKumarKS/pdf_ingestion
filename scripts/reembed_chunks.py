@@ -7,6 +7,13 @@ records and cards. Re-embeds all chunks for a tenant/document and upserts
 them to Qdrant using the existing qdrant_point_id values so card chunk_id
 references remain valid.
 
+⚠️ CURRENTLY REFUSES (IMPROVEMENTS.md §I13). It computes only the dense lane, while the collection
+carries four (`dense_64`, `dense_1024`, `colbert`, `sparse`). A dense-only upsert is accepted by
+Qdrant and leaves the ColBERT and SPLADE stages of the funnel empty — a degraded index that looks
+recovered. Until the script is extended to recompute every lane (reusing the ingest's payload
+builder), it exits with the reason rather than writing one. Rebuild with
+`scripts/ingest_base_textbook.py --reindex` instead.
+
 After running this, re-run RAPTOR:
     uv run python scripts/run_phase2.py --tenant global --raptor-only
 
@@ -38,21 +45,73 @@ def parse_args():
     return p.parse_args()
 
 
+def _refuse_partial_payload(cfg, qdrant) -> None:
+    """Refuse when the collection expects lanes this script does not compute.
+
+    See the block in `reembed_document`. Qdrant happily accepts a point with named vectors ABSENT,
+    so a dense-only write "succeeds" and quietly yields a collection whose ColBERT and SPLADE
+    stages see nothing.
+    """
+    try:
+        params = qdrant.get_collection(cfg.qdrant_collection).config.params
+        vectors = params.vectors
+        names = list(vectors.keys()) if hasattr(vectors, "keys") else None
+        # Sparse lanes live in a SEPARATE config key, so a named-vector check alone misses them.
+        sparse = getattr(params, "sparse_vectors", None)
+        sparse_names = list(sparse.keys()) if sparse else []
+    except Exception:
+        return                      # unreadable → let the upsert speak for itself
+    if not names:
+        return                      # a single-vector collection: dense-only IS complete
+    computed = {"dense_64", "dense_768", "dense_1024", "dense"}
+    missing = sorted(n for n in names if n not in computed)
+    missing += sorted(sparse_names)     # this script computes no sparse lane at all
+    if missing:
+        raise SystemExit(
+            f"REFUSING: collection '{cfg.qdrant_collection}' expects named vectors "
+            f"{sorted(names)}, and this script computes only the dense lane(s). Writing it would "
+            f"leave {missing} ABSENT on every point — a silently DEGRADED index presented as a "
+            f"recovered one, discovered at the worst possible moment. Rebuild with the ingest "
+            f"instead (IMPROVEMENTS.md §I13):\n"
+            f"    uv run python scripts/ingest_base_textbook.py --pdf <pdf> --collection-name "
+            f"{cfg.qdrant_collection} --reindex"
+        )
+
+
 def reembed_document(doc_id: str, batch_size: int) -> int:
     from sqlmodel import Session, select
     from qdrant_client.models import PointStruct
 
     from src.core.config import get_settings
     from src.core.database import get_qdrant, get_engine
-    from src.pdf_ingestion.embedder import get_embedder
+    from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
     from src.pdf_ingestion.store import DocumentStore
     from src.core.database import Chunk
 
     cfg      = get_settings()
     engine   = get_engine(cfg)
     qdrant   = get_qdrant(cfg)
-    embedder = get_embedder(cfg)
+    # The DENSE lane, not the retired 768d Nomic (§I13).
+    embedder = get_cluster_embedder(cfg)
     store    = DocumentStore(cfg)
+
+    # ── Why this refuses by default (IMPROVEMENTS.md §I13) ────────────────────
+    # This script used the retired local 768d Nomic embedder and wrote `{"dense": [...]}` — or a
+    # bare vector — neither of which matches the collection's NAMED vectors, so it has been broken
+    # since the re-ingest (it failed at the upsert with a Qdrant vector-name error).
+    #
+    # Moving it onto the dense lane is NOT sufficient. `knowledge_base_v2` carries FOUR lanes on
+    # every point — `dense_64`, `dense_1024`, `colbert` (128d multivector, max_sim) and the sparse
+    # `sparse` — and this script computes only the dense one. A dense-only upsert succeeds, because
+    # Qdrant permits absent named vectors, and leaves the ColBERT and SPLADE stages of the funnel
+    # looking at nothing. That is a degraded index that LOOKS recovered.
+    #
+    # The register's fix — "reuse `store.save_document`'s payload builder" — is therefore a scoped
+    # job: it must recompute all four lanes (the 64d MRL slice is a re-normalised truncation, not a
+    # raw slice; ARCHITECTURE.md §8 trap 5), not re-point one embedder. Until that lands, refusing
+    # is the correct behaviour: it is the difference between "recovery did not run" and "recovery
+    # ran and produced a quietly worse index".
+    _refuse_partial_payload(cfg, qdrant)
 
     # Load chunks from SQLite
     with Session(engine) as session:

@@ -351,7 +351,7 @@ def _ensure_da_collection(client: QdrantClient, cfg: Settings) -> None:
     if cfg.da_collection not in existing:
         client.create_collection(
             collection_name=cfg.da_collection,
-            vectors_config=VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
+            vectors_config=VectorParams(size=cfg.dense_dim, distance=Distance.COSINE),
         )
         logger.info("Created Qdrant DA collection '{}'", cfg.da_collection)
 
@@ -377,7 +377,7 @@ def _ensure_concept_collection(client: QdrantClient, cfg: Settings) -> None:
     if cfg.concept_collection not in existing:
         client.create_collection(
             collection_name=cfg.concept_collection,
-            vectors_config=VectorParams(size=cfg.embedding_dim, distance=Distance.COSINE),
+            vectors_config=VectorParams(size=cfg.dense_dim, distance=Distance.COSINE),
         )
         logger.info("Created Qdrant concept collection '{}'", cfg.concept_collection)
 

@@ -47,6 +47,12 @@ def main() -> int:
     ap.add_argument("--n-queries", type=int, default=8)
     ap.add_argument("--lanes", default="colbert,dense")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument(
+        "--legacy-embedder", action="store_true",
+        help="Validate the RETIRED local 768d Nomic embedder instead of the dense lane. "
+             "Off by default: the query path uses the dense lane, so validating the legacy model "
+             "reads as a green light for a lane nothing uses (§I13).",
+    )
     args = ap.parse_args()
 
     from src.core.config import get_settings
@@ -111,10 +117,19 @@ def main() -> int:
 
     # ── Dense: single-vector, cosine ─────────────────────────────────────────
     if "dense" in lanes:
-        from src.pdf_ingestion.embedder import get_embedder
-        em = get_embedder(cfg)
+        # The DENSE lane by default (§I13). This used to validate the retired local 768d Nomic
+        # embedder — a lane the query path no longer uses — so a PASS here said nothing about the
+        # lane that actually serves queries.
+        if args.legacy_embedder:
+            from src.pdf_ingestion.embedder import get_embedder
+            em = get_embedder(cfg)
+            lane_label = f"LEGACY {cfg.embedding_model} ({cfg.embedding_dim}d) — NOT the query lane"
+        else:
+            from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
+            em = get_cluster_embedder(cfg)
+            lane_label = f"{cfg.dense_model} ({cfg.dense_dim}d) — the query lane"
         v = np.asarray(em.embed_query("what is the kinetic energy formula"), dtype=np.float32)
-        print(f"\nDENSE    query shape {v.shape}  norm {np.linalg.norm(v):.4f}")
+        print(f"\nDENSE    {lane_label}\n         query shape {v.shape}  norm {np.linalg.norm(v):.4f}")
         if v.ndim != 1:
             failures.append("dense: query is not a 1-d vector")
 

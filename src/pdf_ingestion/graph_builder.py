@@ -246,6 +246,15 @@ class GraphBuilder:
             logger.warning("Memgraph unavailable ({}), skipping graph build", exc)
             return {"document_nodes": 0, "chunk_nodes": 0, "concept_nodes": 0, "edges": 0}
 
+        # ── Loud dimension guard, BEFORE the expensive half (§I12/§I47) ────────
+        # Checked here rather than at the upsert, because the upsert happens AFTER concept
+        # extraction — a multi-hour half — and a stale collection would waste all of it.
+        if not self._cfg.use_stub_embedder:
+            from src.core.database import get_qdrant
+            self._assert_collection_dim(
+                get_qdrant(self._cfg), self._cfg.concept_collection, self._cfg.dense_dim
+            )
+
         # ── Phase A: parallel concept extraction, CHECKPOINTED (§I23) ──────────
         workers = self._cfg.concept_gen_workers
 
@@ -333,8 +342,18 @@ class GraphBuilder:
         concept_embeddings: dict[str, list[float]] = {}
         if unique_concept_names and not self._cfg.use_stub_embedder:
             try:
-                from src.pdf_ingestion.embedder import get_embedder
-                embedder = get_embedder(self._cfg)
+                # The DENSE lane (§I12). These vectors rank Concept nodes in
+                # ``concept_embeddings``, and the query side reaches them with the same dense
+                # vector the KB lanes use — so both sides must be the dense space. They were
+                # built by the retired local 768d Nomic embedder, which is why the collection
+                # was 768d while every query against it was 1024d; that mismatch is what made
+                # the graph lane return nothing at all in `evaluate_rag.py` (§I47).
+                # ``embed_query`` on BOTH sides is deliberate and unchanged: it keeps the index
+                # and the query in one space. Whether concept NAMES should be embedded as
+                # passages (``embed_documents``) instead is a separate, unmeasured question —
+                # not bundled into a lane migration.
+                from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
+                embedder = get_cluster_embedder(self._cfg)
                 logger.info(
                     "Embedding {} unique concept names for graph search…",
                     len(unique_concept_names),
@@ -559,6 +578,35 @@ class GraphBuilder:
                 "lane returns no results", exc,
             )
             return []
+
+    @staticmethod
+    def _assert_collection_dim(qdrant, collection: str, dim: int) -> None:
+        """Fail loudly, naming the fix, when a collection's dimension no longer matches.
+
+        `concept_embeddings` and `derivative_artifacts` were created at the retired 768d
+        `embedding_dim`; they are now created at `dense_dim` (§I12). Qdrant **cannot** resize a
+        collection in place, so a store built before the move keeps a 768d collection and every
+        1024d write or query against it is rejected.
+
+        Without this check the only symptom is a bare `400 Bad Request` from Qdrant, which reads
+        as a transport error rather than a stale schema. That is precisely how §I47 went
+        unnoticed: the graph lane returned nothing on every multihop query in
+        `scripts/evaluate_rag.py` for a week, visible only as a WARNING line per query.
+        """
+        try:
+            vectors = qdrant.get_collection(collection).config.params.vectors
+            size = getattr(vectors, "size", None)
+        except Exception:
+            return              # absent, or a named-vector layout — ensure_* handles creation
+        if size is not None and int(size) != int(dim):
+            raise RuntimeError(
+                f"collection '{collection}' is {size}d but this run embeds {dim}d. It predates "
+                f"the dense-lane move (IMPROVEMENTS.md §I12) and Qdrant cannot resize a "
+                f"collection in place. Nothing was written. Drop it and re-run — e.g. "
+                f"`uv run python scripts/reset_for_reingest.py --yes`, which deletes "
+                f"'{collection}' along with the other derived collections, or delete just this "
+                f"collection to keep the rest."
+            )
 
     def _upsert_concepts_to_qdrant(
         self,

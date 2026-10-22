@@ -94,14 +94,21 @@ def main() -> None:
 
     from src.core.config import get_settings
     from src.core.database import Card, Chunk, get_engine, get_qdrant
-    from src.pdf_ingestion.embedder import get_embedder
+    from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
     from sqlmodel import Session, select
     from qdrant_client.models import PointStruct, Filter, FieldCondition, MatchValue
 
     cfg     = get_settings()
     engine  = get_engine(cfg)
     qdrant  = get_qdrant(cfg)          # also creates da_collection if absent
-    embedder = get_embedder(cfg)
+    # The DENSE lane (§I12). `derivative_artifacts` is created at `dense_dim`, and the query side
+    # reaches it with the dense query vector, so the index must be built in the same space. This
+    # used the retired local 768d Nomic embedder, which is why the DA lane returned [] on every
+    # `evaluate_rag.py` query (a 1024d query against a 768d collection).
+    # `embed_documents` (not `embed_query`) because these are PASSAGES: the query side applies the
+    # instruction, the index side must not. It also batches — the old per-text `embed_query` loop
+    # was written for a local model where a call cost nothing.
+    embedder = get_cluster_embedder(cfg)
 
     console.print(f"\n[bold blue]Phase A — Derivative Artifact Indexing[/]")
     console.print(f"  Collection : [cyan]{cfg.da_collection}[/]")
@@ -165,7 +172,7 @@ def main() -> None:
             nonlocal upserted
             if not batch_texts:
                 return
-            vecs = [embedder.embed_query(t) for t in batch_texts]
+            vecs = embedder.embed_documents(batch_texts)
             for vec, (card, chunk) in zip(vecs, batch_meta):
                 page_numbers = [chunk.page_number] if chunk.page_number is not None else []
                 embed_text = _card_embed_text(
