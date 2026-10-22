@@ -1,0 +1,41 @@
+Synapse — clear a document's graph
+  Memgraph: localhost:7687
+                               Documents to clear                               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━┳━━━━━━━┓
+┃ document_id              ┃ title                   ┃ tenant ┃ chunks ┃ pages ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━┩
+│ 7ba61432-c5e0-416d-aecf… │ The Feynman Lectures on │ global │   3796 │   933 │
+│                          │ Physics, Volume I       │        │        │       │
+└──────────────────────────┴─────────────────────────┴────────┴────────┴───────┘
+
+Will delete: 1 document(s), 3796 chunks, 933 pages, and 7834 of 7834 concept(s) 
+they mention (the other 0 are still mentioned by a surviving chunk).
+NOTE: this is EVERY document in the graph — it will be left empty.
+2026-10-21 21:47:24.607 | INFO     | __main__:apply_clear:225 - Cleared 1 document(s), 3796 chunks, 933 pages, 7834 orphaned concept(s)
+        Graph before → after        
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┓
+┃                 ┃ before ┃ after ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━┩
+│ Document        │      1 │     0 │
+│ Chunk           │   3796 │     0 │
+│ Page            │    933 │     0 │
+│ Concept         │   7834 │     0 │
+│ PART_OF         │   4729 │     0 │
+│ ON_PAGE         │   3796 │     0 │
+│ MENTIONS        │  15619 │     0 │
+│ RELATES_TO      │  37300 │     0 │
+│ PREREQUISITE_OF │  11892 │     0 │
+└─────────────────┴────────┴───────┘
+Done. Removed 1 document(s), 3796 chunks, 933 pages, 7834 orphaned concept(s).
+
+=== INDEPENDENT READ-BACK FROM BOLT (verify_graph_cleared.py) ===
+  Document         0
+  Chunk            0
+  Page             0
+  Concept          0
+  PART_OF          0
+  ON_PAGE          0
+  MENTIONS         0
+  RELATES_TO       0
+  PREREQUISITE_OF  0
+  documents: []
