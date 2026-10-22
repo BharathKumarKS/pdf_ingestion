@@ -1656,6 +1656,89 @@ but none of the analytics built on top of it.
 | G4 | **global / local / drift query modes** | To brainstorm — the project has one traversal mode. Drift is the interesting one for multihop |
 | G5 | **Genuine multi-hop traversal** | `hop_distance` is currently a constant 0, so "multihop" is nominal |
 
+### G1 outcome — BUILT, MEASURED, and the ablation says NO (2026-10-21)
+
+**Built:** `src/pdf_ingestion/graph_analytics.py::personalized_pagerank` — the syllabus iteration
+verbatim, `v(k+1) = (1−lam)·W·v(k) + lam·v(0)` with `W = D⁻¹A` over the weighted `RELATES_TO`
+adjacency, `lam = 1/2`, 10 iterations (commit `e78a7ef`; 18 unit tests; behaviour probe
+`logs/p1/step10/g1_ppr_probe.py`). ⚠️ `W = D⁻¹A` is row-stochastic, **not** doubly stochastic, so
+total mass is conserved only on a regular graph — the probe reports `sum(v) = 8.23` and the output
+is deliberately **not** normalised. That is the specified iteration, not a defect.
+
+**Measured — verifier 4, the ablation (`logs/p1/step10/g1_ppr_ablation.py`, commit `50af094`):**
+40 multihop gold queries, both arms seeing the same seeds and the same candidates and differing
+only in the ranking key.
+
+| metric | fixed-hop | PPR | delta (ppr−fixed) | 95 % CI | verdict |
+|---|---|---|---|---|---|
+| MRR | 0.2889 | 0.2550 | **−0.0339** | [−0.0877, +0.0199] | UNRESOLVED |
+| R@3 | 0.1684 | 0.1201 | **−0.0484** | [−0.1042, +0.0075] | UNRESOLVED |
+| R@5 | 0.2062 | 0.1742 | −0.0319 | [−0.1059, +0.0420] | UNRESOLVED |
+| R@10 | 0.2248 | 0.2137 | −0.0111 | [−0.0661, +0.0439] | UNRESOLVED |
+| R@20 | 0.2556 | 0.2653 | +0.0097 | [−0.0093, +0.0288] | UNRESOLVED |
+
+**Verdict: PPR re-ranking does not improve the graph lane.** No metric resolves, and the point
+estimates are negative at every cut that can discriminate. The one positive figure (R@20) sits at
+the cut that bites on **7 of 40** queries.
+
+**⚠️ Two limits, both in the artifact — do not quote these numbers without them:**
+1. **The test is structurally weak.** The lane's candidate pool is median **7.5 chunks / 6.5 pages**
+   per query, so a page-level Recall@k above the pool is inert: the cut returns the whole set and
+   **both arms are identical by construction**. `meta.power.cut_bites_at_k` counts the queries where
+   the cut can change the set — k=3: 35/40, k=5: 24/40, k=10: 13/40, k=20: 7/40.
+2. **Candidate EXPANSION was not tested** (chunks that mention no seed concept but are graph-near).
+   Verifier 4 specifies a ranking comparison, so that is what ran. **A null here is not evidence
+   that PPR cannot help the lane** — it is evidence that *re-ranking alone* does not, on this graph,
+   at this pool size.
+
+**Confounds measured, not assumed:** `concept_embeddings` holds **15,276** points while Memgraph
+holds **7,834** `Concept` nodes — of which **7,808** carry at least one `RELATES_TO` edge. That
+second figure is the node count of the graph PPR actually runs on, and it is the PPR **behaviour**
+probe (`logs/p1/step10/g1_ppr_probe.json`, `graph.nodes`) that prints it — **not** the ablation
+artifact, whose `meta.graph` is only a host string. **Do not confuse the two** (a reviewer did,
+2026-10-21; the first draft of this sentence then blamed the wrong artifact, and a second pass
+caught it). A top-8 seed can therefore name a concept absent from the graph — **mean 3.02 of 8** do. Both arms see the same seeds so the delta is unaffected, and the artifact *verifies* that a
+graph-restricted seed set agrees exactly with the unrestricted one (an absent seed matches no node
+in either arm), which is the evidence the confound is inert here. This ran **before** the §I21
+rebuild, so it is a before-arm; §G3's merges would move it again.
+
+**Verification:** `openai/gpt-oss-20b`, delegs `deleg_2c9e024e` (9/9 confirmed, re-ran the probe)
+and `deleg_96b9a464` (5/5). **Spot-checked by the author**, because 4 of the 9 were confirmed from
+the probe's *docstring* rather than its code — re-read the code and the mechanism holds.
+
+**⚠️ WHY EVERY METRIC IS UNRESOLVED — three separate causes, decomposed 2026-10-21.** "Unresolved"
+means the 95 % CI on the paired difference spans zero. It is **not** "no difference found", and the
+distinction matters here because the instrument is mostly inert:
+
+| metric | cut bites | queries that actually DIFFER | mean Δ | SD | CI half-width | N needed for δ=0.05 |
+|---|---|---|---|---|---|---|
+| MRR | — | 13/40 | −0.0339 | 0.1736 | 0.0538 | **95** |
+| R@3 | 35/40 | **7/40** | −0.0484 | 0.1803 | 0.0559 | **102** |
+| R@5 | 24/40 | 6/40 | −0.0319 | 0.2387 | 0.0740 | **179** |
+| R@10 | 13/40 | 4/40 | −0.0111 | 0.1776 | 0.0550 | **99** |
+| R@20 | 7/40 | 3/40 | +0.0097 | 0.0615 | 0.0191 | 12 |
+
+1. **The ranking cannot matter for most queries.** At k=20 the cut returns the *entire* candidate
+   pool for 33 of 40 queries, so both arms return the same set — **37/40 queries are exactly equal**.
+   That is identity by construction, not a measurement, and it is why the single positive figure
+   (+0.0097 at R@20) is the *least* trustworthy number in the table.
+2. **Even where the cut bites, almost nothing moves.** At k=3 the cut bites on 35/40 queries but only
+   **7** change. The metric is **page-level and coarse**: pages dedupe and count once, at their best
+   chunk's rank, so reordering chunks usually leaves the retrieved page *set* unchanged. The ranking
+   moves chunks; the metric counts pages, and is blind to most of what the ranking does.
+3. **Power.** Where a query does move it moves a lot — one relevant page entering or leaving the
+   top-k is worth 1/|relevant| ≈ 0.33 on a 0–1 scale — so SD is 0.17–0.24 against a mean of
+   0.03–0.05. At n=40 the design is **underpowered 2.4–4.5×**.
+
+**Consequence — do NOT read this as evidence against PPR either.** Every metric that moves at all
+moves *negative*, but never far enough from zero to be called. To actually settle §G1 the lever is a
+**different instrument**, not more of the same: ~100+ multihop queries, or a **chunk-level** metric
+that responds to a reordering, or the **expansion arm**, where the candidate pool is larger and the
+cut genuinely bites.
+
+**Open owner decision:** keep the fixed-hop ranking and close §G1 as measured-and-negative, **or**
+authorise the expansion arm. Do not re-run this ablation unchanged.
+
 ---
 
 ## H. Course standards — compliance check (de-identified)

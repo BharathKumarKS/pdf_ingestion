@@ -39,20 +39,36 @@
 >   truncates (`…(+1044 chars)`) and exposes only C1–C3; the delivered result carried all seven.
 >   The record above is correct, and the reviewer's *concern* (that the record be checkable) is now
 >   met by the Session-hygiene rule on transcripts.
-> - ⚠️ **§G1 is NOT finished.** Its verifier 4 — the **retrieval ablation** (PPR vs the current
->   fixed-hop ranking on the v2 gold set) — is **DEFERRED** and recorded as such in the artifact.
->   It needs the query→concept path (768d query embedding against `Concept.embedding`, §I12) and
->   **can run now that the cluster is reachable**. `e78a7ef` carries **no `[verified]` prefix**
->   for exactly this reason.
+> - ⚠️ **§G1's verifier 4 — the retrieval ABLATION — RAN 2026-10-21 and the answer is NO.**
+>   Commit `50af094`; `logs/p1/step10/g1_ppr_ablation.py`. 40 multihop gold queries; both arms see
+>   the same seeds and the same candidates, differing only in the ranking key. **PPR re-ranking does
+>   not beat the fixed-hop ranking** — every metric UNRESOLVED, and the point estimates are
+>   *negative* where the test can discriminate: MRR −0.0339 [−0.0877, +0.0199], R@3 −0.0484
+>   [−0.1042, +0.0075], R@5 −0.0319, R@10 −0.0111; only R@20 is positive (+0.0097) and that is the
+>   cut that bites on 7 of 40 queries. ⚠️ **The test is structurally weak and the artifact says so:**
+>   the graph lane's candidate pool is median **7.5 chunks / 6.5 pages**, so a page-level Recall@k
+>   above the pool is inert — both arms identical *by construction*. Quote `meta.power.cut_bites_at_k`
+>   (k=3: 35/40 · k=5: 24/40 · k=10: 13/40 · k=20: 7/40) before trusting any k. **NOT tested:**
+>   candidate *expansion* — §G1's verifier 4 specifies a ranking comparison, so a null here is not
+>   evidence PPR cannot help the lane. This ran on the graph **before** the §I21 rebuild, so it is a
+>   before-arm. Verifier: `openai/gpt-oss-20b`, delegs `deleg_2c9e024e` (9/9) and `deleg_96b9a464`
+>   (5/5) — plus a **spot-check of my own**, because 4 of the 9 were confirmed from the probe's
+>   *docstring* rather than its code.
+> - **§G1's remaining decision (owner):** the ablation says re-ranking alone is not the lever.
+>   Either **keep the fixed-hop ranking** and close §G1 as measured-and-negative, or authorise the
+>   **expansion arm** (PPR to *select* candidates, not just order them) — that is the experiment the
+>   null result leaves open. Do not re-run this ablation unchanged and expect a different answer.
 >
-> **0b. IN FLIGHT — §I21, next in the settled D1 order: the Phase 3 graph build now applies the E5
-> filter.** `generate_phase3_artifacts` filtered nothing, so TOC/index lines were extracted as
-> physics content and their concepts entered the graph (measured: a TOC fragment yielded 4
-> concepts) and were matched by `graph_search` at query time. The fix mirrors
-> `generate_phase2_artifacts`, and additionally **refuses to build an empty graph** when every
-> chunk is non-content. 3 new tests in `tests/test_phase3.py`, all three proven to discriminate
-> (removing the filter fails 2, removing the guard fails 1). **Awaiting its verifier — do NOT
-> commit it before that lands.** Takes effect on a **graph rebuild**, which is the step after it.
+> **0b. ✅ DONE — §I21: the Phase 3 graph build now applies the E5 filter** (commit `1c0ed6d`).
+> `generate_phase3_artifacts` filtered nothing, so TOC/index lines were extracted as physics content
+> and their concepts entered the graph (measured: a TOC fragment yielded 4 concepts) and were matched
+> by `graph_search` at query time. The fix mirrors `generate_phase2_artifacts`, and additionally
+> **refuses to build an empty graph** when every chunk is non-content. 3 new tests in
+> `tests/test_phase3.py`, all three proven to discriminate (removing the filter fails 2, removing the
+> guard fails 1). Verifier `openai/gpt-oss-20b`, deleg `deleg_98d6a755`: **5/5 confirmed**.
+> **Takes effect on a graph REBUILD — which is the next step in the D1 order and is not yet run.**
+> Also in that commit: the "verifier at every step" rule in `README.md` + Session hygiene, and the
+> README test count corrected from a stale "135" to the measured 464 / 4 / 6.
 >
 > **1. ✅ DONE (2026-10-21 session 2) — §I43 fixed and B5 PASSES.** `save_raptor_tree` now deletes the
 > document's RAPTOR points (and rows) before the upsert, and the 73 orphaned points were removed by
