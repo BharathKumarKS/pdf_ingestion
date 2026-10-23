@@ -23,24 +23,38 @@
 > drop the json write → 3 fail; neuter the encoder → 1; make unknown types silent → 1; each on its
 > own assertion, tree restored byte-identical. ⚠️ **Verifier `deleg_e9e29bc5` returned `completed`,
 > CONFIRMED on C1–C3**, but it was **cheap (19 s, 3 reads, no test run) with pack-relative line
-> numbers → NOT banked**; the mutation runs are the evidence. ⚠️ **NOT COMMITTED — full verdict
-> pending.**
+> numbers → NOT banked**; the mutation runs are the evidence. ✅ **COMMITTED `0a5bead`** — the
+> verdict's C6 refutation (which blamed this diff for §I55's pre-existing `return 3`) is recorded
+> as **void** in §I57.
 >
-> **3. ▶ PHASE E IS RUNNING (owner decision, this session).** The authoritative FULL
-> `evaluate_rag.py` run on `knowledge_base_v2` — **the run that has never happened**, and the only
-> thing that can answer "is the new system better?" (§I57). Pre-registered:
-> `.hermes/plans/2026-10-22-p1-phaseE-preregistration.md`. Harness
-> `logs/p1/step10/run_phaseE.sh` (asserts the QDRANT override **and** a cross-family judge before
-> spending anything); log `logs/p1/step10/phaseE_run_<ts>.txt`; artifact
-> `data/eval_results/p1-phaseE-v2_<ts>.{md,json}`. **tmux session `phaseE`.** 200 queries — 133 text
-> metrics rows + 33 visual skipped + 34 negatives; `--skip-visual` matches §D12's `n=133`; judge
-> `Qwen/Qwen3-VL-8B-Instruct`, cross-family from the generator `openai/gpt-oss-20b`. A 3-query
-> smoke test passed end-to-end (all lanes live, judge live, twin written). **~1–2 h.**
-> ⚠️ **gold-004 hit the §I55 reranker fallback at 21:27:44** — the known deterministic failure, so
-> the run will **`exit 3`** with `reranked_metrics_valid=false` and gold-004 named. **That is the
-> guard working, not a fault.**
-> ⚠️ **PHASE E STILL NEEDS ITS VERIFIER** — dispatch it once the artifact lands; the guards are
-> E1–E5 in the pre-registration's §7.
+> **3. ✅ PHASE E RAN AND ITS NUMBERS EXIST — the run that had never happened (owner decision,
+> session 11).** The authoritative FULL `evaluate_rag.py` (retrieval + synthesis + judge) on
+> `knowledge_base_v2`, pre-registered **before the run finished**
+> (`.hermes/plans/2026-10-22-p1-phaseE-preregistration.md`, `36e28f3`) and harnessed
+> (`logs/p1/step10/run_phaseE.sh`). Artifact
+> `data/eval_results/p1-phaseE-v2_2026-10-23_0650.{md,json}`; log
+> `logs/p1/step10/phaseE_run_2026-10-22_2127.txt`. 4,180 s compute, **5,434 judge calls / 0
+> failures**, 167/167 synthesis. **All five guards pass**, including **E5 — the `aggregated` block
+> re-derives EXACTLY from the per-query `results` array** (the §I57 fix's first production use).
+> `reranked_metrics_valid=false` with **gold-004** named (exit 3); reported both ways, and it moves
+> the headline by ≤0.003, so the conclusion does not depend on it. **Full entry: `IMPROVEMENTS.md`
+> §I64.**
+>
+> **THE ANSWER, stated as narrowly as the evidence allows:** the missing half is now measured and it
+> is a **TIE** — Faithfulness **0.637** vs the deployed system's **0.661**, Answer Relevance
+> **0.852** vs **0.852**. On retrieval, ceiling-normalised (§I58), the new index still captures
+> **less** of its headroom (R@100 **0.7058** vs **0.7259**; R@20 **0.4453** vs **0.5275**) while
+> **raw R@100 rose** (+0.035) and **MRR fell** (−0.121). **There is no generation-side improvement
+> to show** — the rebuild's hoped-for gain did not appear where the product ships. ⚠️ The §D12
+> comparison is **descriptive, not causal** (a different run on a different day; the six §I57
+> confounds plus this run's own).
+>
+> ⚠️ **PHASE E'S ARTIFACT VERIFIER IS DISPATCHED, NOT RETURNED** — `deleg_4bdde8d0` (guards E1–E5,
+> the headline, and the confound labelling). ✅ The **harness + pre-registration** were verified
+> 2026-10-22 (`deleg_9533b2a5`, 7/7 CONFIRMED, no defects) — a cheap verdict (8 API calls, 32 s)
+> with misattributed line numbers, so **not banked**: C7 was re-proven by the author
+> (`set -euo pipefail` + `tee` propagates a non-zero exit; the control without `pipefail` swallows
+> it, so the check can genuinely fail).
 >
 > **4. ✅ OWNER DECISIONS TAKEN 2026-10-22 (session 11):** **V5 is SIGNED OFF as written** (level 2
 > / res 0.5 primary, equal 2-slot budget, C/D only if the primary resolves, null ⇒

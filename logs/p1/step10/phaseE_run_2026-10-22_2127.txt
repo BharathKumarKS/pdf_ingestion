@@ -1,0 +1,928 @@
+
+Synapse RAG Evaluation Pipeline
+  Query file:       data/eval_queries_v2.json
+  Tenant:           global
+  Score threshold:  0.0
+  Mode:             full (retrieval + generation)
+  Judge LLM:        openai / Qwen/Qwen3-VL-8B-Instruct
+
+Loaded 200 queries from data/eval_queries_v2.json
+2026-10-22 21:27:29.246 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-22 21:27:30.086 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-10-22 21:27:30.086 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:324 - Dense embedder: SV cluster 'Qwen/Qwen3-Embedding-0.6B' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-22 21:27:30.086 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+  [ 1/200] gold-003: Which section number is titled 'Thermionic emission'?...
+2026-10-22 21:27:33.216 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (246 chars)
+2026-10-22 21:27:33.282 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-10-22 21:27:33.393 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+2026-10-22 21:27:35.578 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.734 (kept 20/100)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [ 2/200] gold-004: What is the title of section 42-4?...
+2026-10-22 21:27:43.139 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (59 chars)
+2026-10-22 21:27:44.940 | ERROR    | src.pdf_ingestion.reranker:rerank:164 - RERANKER DISABLED — cluster rerank call to http://10.0.10.70:8123/rerank/v1/rank failed (HTTPStatusError: Server error '500 Internal Server Error' for url 'http://10.0.10.70:8123/rerank/v1/rank'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500). Returning UNRANKED results in original retrieval order; Precision@k/NDCG@k will be measured on unranked output. [fallback #1]
+        recall@100=0.000 recall@20=0.000 hit@20=0.000 mrr=0.000 ndcg@20=0.000
+  [ 3/200] gold-005: According to the passage, is it easy to learn all the rules
+...
+2026-10-22 21:27:50.745 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (406 chars)
+2026-10-22 21:27:52.257 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.350 (kept 20/90)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=0.631
+  [ 4/200] gold-008: How did astronomers discover that stars are made of atoms 
+of...
+2026-10-22 21:27:59.914 | INFO     | src.core.database:get_memgraph:417 - Memgraph: connected at bolt://localhost:7687
+2026-10-22 21:28:00.245 | INFO     | src.pdf_ingestion.graph_builder:ensure_schema:212 - Memgraph: schema ready
+2026-10-22 21:28:00.318 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Composition of stars and Earth', 'element formation in stars', 'formation of the Earth from extraterrestrial material', 'element synthesis in stars', 'Atomic nature of matter', 'atomic structure of the brain', 'cosmic abundance of elements', 'Motion of stars and planets']
+2026-10-22 21:28:01.149 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/90)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=0.631
+  [ 5/200] gold-009: According to the passage, how many quarts of water per 
+secon...
+2026-10-22 21:28:19.777 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (312 chars)
+2026-10-22 21:28:22.965 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.935 (kept 20/100)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [ 6/200] gold-010: According to the passage, how are antibaryons counted?...
+2026-10-22 21:28:28.634 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (436 chars)
+2026-10-22 21:28:30.460 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.979 (kept 20/68)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=0.289
+  [ 7/200] gold-011: What does the vertical position in Figure 6-4 represent?...
+2026-10-22 21:28:34.900 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (386 chars)
+2026-10-22 21:28:37.810 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.646 (kept 20/100)
+        recall@100=0.000 recall@20=0.000 hit@20=0.000 mrr=0.000 ndcg@20=0.000
+  [ 8/200] gold-013: What happens to the focus of an ellipse when it is viewed 
+at...
+2026-10-22 21:28:42.569 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['focusing on a point on the sun', 'Focal Property of Ellipse', 'Focal Point of a Lens', 'radius of curvature of the eye', 'angle of telescope tilt', 'Image as object for next lens', 'converging of parallel rays', 'Image formation by curved surfaces']
+2026-10-22 21:28:43.383 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.893 (kept 20/103)
+        recall@100=0.000 recall@20=0.000 hit@20=0.000 mrr=0.000 ndcg@20=0.000
+  [ 9/200] gold-014: Which figure is mentioned as indicating that the law of 
+grav...
+2026-10-22 21:28:55.361 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (206 chars)
+2026-10-22 21:28:57.024 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.555 (kept 20/77)
+        recall@100=1.000 recall@20=0.750 hit@20=1.000 mrr=1.000 ndcg@20=0.539
+  [10/200] gold-015: What symbol is used to denote the limit as the time 
+interval...
+2026-10-22 21:29:06.376 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (335 chars)
+2026-10-22 21:29:08.125 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.718 (kept 20/85)
+        recall@100=0.600 recall@20=0.200 hit@20=1.000 mrr=1.000 ndcg@20=0.339
+  [11/200] gold-016: According to the passage, what does the integral sign ∫ 
+repr...
+2026-10-22 21:29:19.491 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (370 chars)
+2026-10-22 21:29:21.129 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.391 (kept 20/87)
+        recall@100=0.600 recall@20=0.333 hit@20=1.000 mrr=1.000 ndcg@20=0.421
+  [12/200] gold-017: Which principle will be used as the basis for discussing 
+the...
+2026-10-22 21:29:27.697 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (342 chars)
+2026-10-22 21:29:29.293 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.992 (kept 20/71)
+        recall@100=0.771 recall@20=0.457 hit@20=1.000 mrr=1.000 ndcg@20=0.850
+  [13/200] gold-019: What is the expression for acceleration described in the 
+pas...
+2026-10-22 21:29:37.045 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (108 chars)
+2026-10-22 21:29:39.814 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.185 (kept 20/100)
+        recall@100=0.625 recall@20=0.375 hit@20=1.000 mrr=0.017 ndcg@20=0.328
+  [14/200] gold-021: What is the expression for the time rate of change of the 
+ki...
+2026-10-22 21:29:46.526 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (447 chars)
+2026-10-22 21:29:48.472 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.981 (kept 20/94)
+        recall@100=0.600 recall@20=0.200 hit@20=1.000 mrr=1.000 ndcg@20=0.339
+  [15/200] gold-022: According to the passage, what does the term m(dv/dt) 
+repres...
+2026-10-22 21:29:57.413 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (276 chars)
+2026-10-22 21:29:59.433 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.982 (kept 20/97)
+        recall@100=0.600 recall@20=0.200 hit@20=1.000 mrr=0.500 ndcg@20=0.170
+  [16/200] gold-023: Under what condition is the gravitational field considered 
+u...
+2026-10-22 21:30:12.645 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (464 chars)
+2026-10-22 21:30:14.197 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.978 (kept 20/83)
+        recall@100=1.000 recall@20=0.000 hit@20=0.000 mrr=1.000 ndcg@20=0.000
+  [17/200] gold-024: Which plane corresponds to the zero potential energy point 
+P...
+2026-10-22 21:30:26.505 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (331 chars)
+2026-10-22 21:30:28.395 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.954 (kept 20/82)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [18/200] gold-025: According to Einstein's modification of Newton's laws, what
+...
+2026-10-22 21:30:35.083 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (495 chars)
+2026-10-22 21:30:36.898 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.746 (kept 20/85)
+        recall@100=0.889 recall@20=0.278 hit@20=1.000 mrr=1.000 ndcg@20=0.325
+  [19/200] gold-026: Under Einstein's modification, what condition must still 
+hol...
+2026-10-22 21:30:46.367 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (386 chars)
+2026-10-22 21:30:48.071 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.958 (kept 20/81)
+        recall@100=0.833 recall@20=0.417 hit@20=1.000 mrr=1.000 ndcg@20=0.342
+  [20/200] gold-027: Why does the passage state that we look at the 'blob' from 
+d...
+2026-10-22 21:30:56.035 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['focusing on a point on the sun', 'speed of the moving object', 'light propagation in moving frame', 'inability to measure velocity without external reference', 'local observation of a system', "the concept of 'right now'", 'failure of simultaneity at a distance', 'observer frame of reference']
+2026-10-22 21:30:56.972 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.971 (kept 20/104)
+        recall@100=0.538 recall@20=0.154 hit@20=1.000 mrr=0.333 ndcg@20=0.239
+  [21/200] gold-028: What is called a given point (x, y, z, t) in space-time?...
+2026-10-22 21:31:05.625 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (285 chars)
+2026-10-22 21:31:07.135 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.987 (kept 20/76)
+        recall@100=1.000 recall@20=0.750 hit@20=1.000 mrr=1.000 ndcg@20=0.326
+  [22/200] gold-029: What is the mass of the particle discussed in Fig. 18-3?...
+2026-10-22 21:31:13.449 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (270 chars)
+2026-10-22 21:31:15.267 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.888 (kept 20/93)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [23/200] gold-030: According to the passage, how is the x-component of force 
+re...
+2026-10-22 21:31:22.814 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (366 chars)
+2026-10-22 21:31:24.441 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.958 (kept 20/85)
+        recall@100=0.625 recall@20=0.250 hit@20=1.000 mrr=0.250 ndcg@20=0.217
+  [24/200] gold-031: What sidewise force must Moe exert to move mass m outward 
+at...
+2026-10-22 21:31:40.988 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (522 chars)
+2026-10-22 21:31:42.913 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.896 (kept 20/82)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=0.500 ndcg@20=1.000
+  [25/200] gold-032: When a mass moves only along the radius, which quantity 
+stay...
+2026-10-22 21:31:51.412 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Torque Equals Rate of Change of Angular Momentum', 'Dependence of torque on axis of rotation', 'Torque as a vector quantity', 'Theorem Relating Torque and Angular Momentum', 'Component Form of Torque and Angular Momentum', 'magnitude of Coriolis force', 'Velocity of a point in a rigid body', 'Tangential Component of Force']
+2026-10-22 21:31:52.130 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.991 (kept 20/87)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=0.250 ndcg@20=0.270
+  [26/200] gold-033: According to the passage, what mathematical function of 
+time...
+2026-10-22 21:32:01.789 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (260 chars)
+2026-10-22 21:32:03.429 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.837 (kept 20/85)
+        recall@100=0.625 recall@20=0.250 hit@20=1.000 mrr=0.250 ndcg@20=0.203
+  [27/200] gold-034: According to the passage, what experiment can be devised to
+...
+2026-10-22 21:32:11.453 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (546 chars)
+2026-10-22 21:32:13.090 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.979 (kept 20/77)
+        recall@100=1.000 recall@20=0.500 hit@20=1.000 mrr=0.125 ndcg@20=0.387
+  [28/200] gold-035: What is the real part of the eighth complex number listed 
+in...
+2026-10-22 21:32:29.042 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (237 chars)
+2026-10-22 21:32:30.530 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.665 (kept 20/63)
+        recall@100=1.000 recall@20=0.000 hit@20=0.000 mrr=0.040 ndcg@20=0.000
+  [29/200] gold-036: What is the imaginary part of the tenth complex number 
+liste...
+2026-10-22 21:32:37.228 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (178 chars)
+2026-10-22 21:32:39.957 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.423 (kept 20/100)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=0.010 ndcg@20=0.228
+  [30/200] gold-037: According to the passage, what happens to the stored energy
+...
+2026-10-22 21:32:49.258 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (506 chars)
+2026-10-22 21:32:50.907 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.942 (kept 20/75)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=0.500
+  [31/200] gold-038: Why, according to the passage, does the force only need to 
+f...
+2026-10-22 21:32:58.652 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['driving force in oscillatory systems', 'Equilibrium between Oscillator and Radiation', 'velocity independence of friction', 'energy dissipation in oscillators', 'cyclic behavior in oscillatory motion', 'Natural frequency of oscillators', 'object acted on by a field', 'frictional force']
+2026-10-22 21:32:59.515 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.939 (kept 20/103)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [32/200] gold-039: What does turning dial number ten do in terms of shock 
+absor...
+2026-10-22 21:33:11.106 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (313 chars)
+2026-10-22 21:33:12.809 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.816 (kept 20/87)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [33/200] gold-040: Which dial is associated with changing the stiffness of the
+...
+2026-10-22 21:33:21.031 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (266 chars)
+2026-10-22 21:33:22.629 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.774 (kept 20/82)
+        recall@100=1.000 recall@20=0.000 hit@20=0.000 mrr=1.000 ndcg@20=0.000
+  [34/200] gold-041: According to the passage, what speed is assumed for light 
+on...
+2026-10-22 21:33:27.299 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (245 chars)
+2026-10-22 21:33:28.927 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.605 (kept 20/89)
+        recall@100=0.500 recall@20=0.200 hit@20=1.000 mrr=1.000 ndcg@20=0.125
+  [35/200] gold-042: By what factor does light travel more slowly in the glass, 
+a...
+2026-10-22 21:33:36.400 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (397 chars)
+2026-10-22 21:33:37.994 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.962 (kept 20/76)
+        recall@100=1.000 recall@20=0.500 hit@20=1.000 mrr=0.500 ndcg@20=0.425
+  [36/200] gold-043: Which phenomena of light and radio propagation are 
+mentioned...
+2026-10-22 21:33:44.756 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (351 chars)
+2026-10-22 21:33:46.550 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.621 (kept 20/92)
+        recall@100=0.348 recall@20=0.116 hit@20=1.000 mrr=1.000 ndcg@20=0.353
+  [37/200] gold-044: What was the purpose of writing down the rest of Eq. (28.3)
+...
+2026-10-22 21:33:55.504 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (316 chars)
+2026-10-22 21:33:58.266 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.117 (kept 20/100)
+        recall@100=0.194 recall@20=0.037 hit@20=1.000 mrr=0.333 ndcg@20=0.284
+  [38/200] gold-045: What is the additional phase due to the time delay between 
+e...
+2026-10-22 21:34:11.273 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (424 chars)
+2026-10-22 21:34:13.074 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.955 (kept 20/71)
+        recall@100=1.000 recall@20=0.500 hit@20=1.000 mrr=1.000 ndcg@20=0.645
+  [39/200] gold-046: What does the case α = 0 represent about the relative 
+phases...
+2026-10-22 21:34:21.598 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (325 chars)
+2026-10-22 21:34:23.343 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.055 (kept 20/91)
+        recall@100=1.000 recall@20=0.667 hit@20=1.000 mrr=1.000 ndcg@20=0.346
+  [40/200] gold-047: According to the passage, at what speed does light appear 
+to...
+2026-10-22 21:34:32.316 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (262 chars)
+2026-10-22 21:34:33.899 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.993 (kept 20/72)
+        recall@100=0.714 recall@20=0.429 hit@20=1.000 mrr=1.000 ndcg@20=0.445
+  [41/200] gold-048: According to the passage, why does light appear to travel 
+sl...
+2026-10-22 21:34:38.956 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['speed of light in a medium', 'retardation of light in a medium', 'speed of light in vacuum', 'light propagation in moving frame', 'retardation of signals due to finite speed of light', 'Speed of Light in Medium', 'time delay due to finite speed of light', 'velocity of light in medium']
+2026-10-22 21:34:40.122 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.887 (kept 20/101)
+        recall@100=0.556 recall@20=0.333 hit@20=1.000 mrr=1.000 ndcg@20=0.397
+  [42/200] gold-049: According to the passage, what is the total energy flux per
+...
+2026-10-22 21:35:00.522 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (301 chars)
+2026-10-22 21:35:02.284 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.964 (kept 20/89)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [43/200] gold-050: For a motion whose acceleration is initially and finally 
+zer...
+2026-10-22 21:35:13.409 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (455 chars)
+2026-10-22 21:35:15.117 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.969 (kept 20/83)
+        recall@100=0.750 recall@20=0.750 hit@20=1.000 mrr=1.000 ndcg@20=0.514
+  [44/200] gold-051: What assumption is made about the detector's distance from 
+t...
+2026-10-22 21:35:26.719 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (601 chars)
+2026-10-22 21:35:28.660 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.934 (kept 20/73)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [45/200] gold-052: In Fig. 34-1, what does the point A represent?...
+2026-10-22 21:35:36.500 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (292 chars)
+2026-10-22 21:35:38.382 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.892 (kept 20/94)
+        recall@100=1.000 recall@20=0.000 hit@20=0.000 mrr=0.020 ndcg@20=0.000
+  [46/200] gold-053: How many kinds of cells are there in the retina?...
+2026-10-22 21:35:45.917 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (294 chars)
+2026-10-22 21:35:47.348 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.930 (kept 20/60)
+        recall@100=1.000 recall@20=0.333 hit@20=1.000 mrr=0.333 ndcg@20=0.469
+  [47/200] gold-054: What are the two main functions of the different kinds of 
+ce...
+2026-10-22 21:35:51.593 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (388 chars)
+2026-10-22 21:35:53.239 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.471 (kept 20/61)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=0.500 ndcg@20=1.000
+  [48/200] gold-057: What does the curve marked P1 in part (b) of Fig. 37-3 
+show?...
+2026-10-22 21:36:04.280 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (244 chars)
+2026-10-22 21:36:06.137 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.870 (kept 20/83)
+        recall@100=0.333 recall@20=0.333 hit@20=1.000 mrr=0.500 ndcg@20=0.469
+  [49/200] gold-058: How does the result P12 obtained with both holes open 
+differ...
+2026-10-22 21:36:16.503 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['1/2 kT Theorem', 'hole with finite width', 'partition with a tiny hole', 'general formula (29.16)', 'Difference in number of heads and tails', 'number of particles without collisions', 'Equation (32.12)', 'Approximation for small values of s']
+2026-10-22 21:36:17.306 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.992 (kept 20/104)
+        recall@100=0.583 recall@20=0.583 hit@20=1.000 mrr=1.000 ndcg@20=0.679
+  [50/200] gold-059: How many spin cases allow two electrons to sit on top of 
+eac...
+2026-10-22 21:36:32.659 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (376 chars)
+2026-10-22 21:36:34.711 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.958 (kept 20/94)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [51/200] gold-060: Why does the inability of all electrons to occupy the same 
+p...
+2026-10-22 21:36:42.888 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['electron behavior in atoms', 'quantum mechanical explanation of atomic stability', 'quantum behavior of electrons', 'atomic arrangement in solids', 'fraction of electrons and ions', 'energy levels of an atom', 'Quantum mechanical behavior of particles', 'particle nature of electrons']
+2026-10-22 21:36:43.924 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.996 (kept 20/105)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [52/200] gold-061: What is the kinetic energy associated with the component of
+...
+2026-10-22 21:36:59.926 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (288 chars)
+2026-10-22 21:37:01.854 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.973 (kept 20/84)
+        recall@100=1.000 recall@20=0.300 hit@20=1.000 mrr=1.000 ndcg@20=0.285
+  [53/200] gold-062: How many independent directions contribute to the total 
+kine...
+2026-10-22 21:37:08.372 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Mean Kinetic Energy of a Molecule', 'internal energy of a monatomic gas', 'number density times average kinetic energy', 'mean energy of a harmonic oscillator at thermal equilibrium', 'kinetic energy of a rigid body', 'average energy of a molecule', 'mean value of kinetic energy', 'mean molecular kinetic energy']
+2026-10-22 21:37:09.301 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.925 (kept 20/89)
+        recall@100=1.000 recall@20=0.500 hit@20=1.000 mrr=1.000 ndcg@20=0.584
+  [54/200] gold-063: According to the passage, what is the energy of a particle 
+w...
+2026-10-22 21:37:19.398 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (36 chars)
+2026-10-22 21:37:23.145 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.035 (kept 20/100)
+        recall@100=1.000 recall@20=0.000 hit@20=0.000 mrr=1.000 ndcg@20=0.000
+  [55/200] gold-064: In Figure 41-1, what component reflects light from source L
+...
+2026-10-22 21:37:27.946 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (298 chars)
+2026-10-22 21:37:29.515 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.993 (kept 20/83)
+        recall@100=1.000 recall@20=0.000 hit@20=0.000 mrr=0.018 ndcg@20=0.000
+  [56/200] gold-065: What is occurring to a certain number of atoms at a given 
+mo...
+2026-10-22 21:37:33.916 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['number of atoms per unit area', 'Rate of change of number of molecules', 'Isotropic distribution of molecular velocities', 'work done to remove a molecule from liquid', 'Motion of molecules of a gas', 'fraction of electrons and ions', 'collision of atoms with a piston', 'number of particles without collisions']
+2026-10-22 21:37:34.847 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.867 (kept 20/105)
+        recall@100=0.889 recall@20=0.667 hit@20=1.000 mrr=1.000 ndcg@20=0.722
+  [57/200] gold-067: What term does the passage use to refer to the majority of 
+m...
+2026-10-22 21:38:33.608 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (255 chars)
+2026-10-22 21:38:35.407 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.547 (kept 20/74)
+        recall@100=0.556 recall@20=0.111 hit@20=1.000 mrr=0.200 ndcg@20=0.148
+  [58/200] gold-068: Why does the passage refer to molecules that differ from 
+the...
+2026-10-22 21:38:43.583 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['fraction of molecules with velocity in range du', 'Isotropic distribution of molecular velocities', 'Motion of molecules of a gas', 'molecular distribution in space', 'molecular motion in gases', 'Molecular motion in atmosphere', 'equilibrium distribution of molecular speeds', 'molecular distribution in velocity']
+2026-10-22 21:38:44.452 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.974 (kept 20/104)
+        recall@100=1.000 recall@20=0.800 hit@20=1.000 mrr=1.000 ndcg@20=0.806
+  [59/200] gold-069: What is the net result of the two machines in tandem in 
+term...
+2026-10-22 21:39:03.145 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Thermodynamic heating due to mechanical work', 'Heat rejected at unit temperature', 'work done by a substance in a thermodynamic cycle', 'heat generated in the expansion of a rubber band', 'Efficiency of a Heat Engine', 'Net work in a thermodynamic cycle', 'Heat delivered at standard temperature', 'Heat Added to a Gas']
+2026-10-22 21:39:04.029 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 1.000 (kept 20/84)
+        recall@100=0.889 recall@20=0.667 hit@20=1.000 mrr=1.000 ndcg@20=0.705
+  [60/200] gold-070: What action does the second machine perform with the heat 
+Q3...
+2026-10-22 21:39:13.639 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (384 chars)
+2026-10-22 21:39:15.277 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/63)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=0.431
+  [61/200] gold-071: What temperature condition is assumed for T1 and T2 in the 
+d...
+2026-10-22 21:39:25.617 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (393 chars)
+2026-10-22 21:39:27.156 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.657 (kept 20/57)
+        recall@100=0.759 recall@20=0.345 hit@20=1.000 mrr=0.333 ndcg@20=0.614
+  [62/200] gold-072: Why would the proposed device violate the Second Law of 
+Ther...
+2026-10-22 21:39:33.669 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Second Law of Thermodynamics', 'Third Law of Thermodynamics', 'First Law of Thermodynamics', 'irreversibility in thermodynamics', 'laws of thermodynamics', 'Principle of Thermodynamics', 'reversibility of the laws of mechanics', 'Efficiency of a Heat Engine']
+2026-10-22 21:39:34.650 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.918 (kept 20/103)
+        recall@100=0.462 recall@20=0.308 hit@20=1.000 mrr=0.048 ndcg@20=0.304
+  [63/200] gold-073: According to the passage, what type of disturbance does the
+...
+2026-10-22 21:39:44.910 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (298 chars)
+2026-10-22 21:39:46.701 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.981 (kept 20/86)
+        recall@100=0.809 recall@20=0.571 hit@20=1.000 mrr=1.000 ndcg@20=0.686
+  [64/200] gold-074: Why does the passage state that for rapid motion of an 
+objec...
+2026-10-22 21:39:54.735 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['displacement of air due to sound wave', 'speed of the moving object', 'Velocity of a point in a rigid body', 'velocity of water in a channel', 'radiation of energy by fast-moving charged particles', 'Speed of Light in Air', 'Motion of molecules of a gas', 'speed of sound in ideal gas']
+2026-10-22 21:39:55.835 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.906 (kept 20/103)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [65/200] gold-075: What does the variable c represent in the one‑dimensional 
+wa...
+2026-10-22 21:40:03.401 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (421 chars)
+2026-10-22 21:40:05.028 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.990 (kept 20/71)
+        recall@100=0.800 recall@20=0.500 hit@20=1.000 mrr=1.000 ndcg@20=0.532
+  [66/200] gold-076: According to the passage, how does the meaning of c differ 
+b...
+2026-10-22 21:40:16.842 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['speed of light in vacuum', 'speed of light in a medium', 'invariance of the speed of light', 'Speed of Light in Medium', 'Speed of Light in Air', 'Speed of Light in Water', 'velocity of light in medium', 'invariant speed of light']
+2026-10-22 21:40:17.681 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/104)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=0.333 ndcg@20=0.765
+  [67/200] gold-077: By throwing the switches on an organ, which instrument 
+sound...
+2026-10-22 21:40:28.689 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (405 chars)
+2026-10-22 21:40:30.438 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.798 (kept 20/68)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=0.790
+  [68/200] gold-078: According to the passage, how does the shape of the mouth 
+af...
+2026-10-22 21:40:39.682 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['vowel recognition in speech', 'vowel sound quality', 'mouth shape', 'Vocal tract resonance', 'shape of the Earth', 'vocal cord vibration', 'voice production', 'structure and function of the eye']
+2026-10-22 21:40:40.367 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.980 (kept 20/102)
+        recall@100=0.000 recall@20=0.000 hit@20=0.000 mrr=0.000 ndcg@20=0.000
+  [69/200] gold-079: According to the passage, how does the speed of long waves 
+i...
+2026-10-22 21:40:49.081 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (332 chars)
+2026-10-22 21:40:50.609 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.882 (kept 20/62)
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=1.000 ndcg@20=1.000
+  [70/200] gold-080: How does the change in water depth lead to the formation of
+...
+2026-10-22 21:41:00.867 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['wave speed in shallow water', 'wave speed in deep water', 'displacement of air due to sound wave', 'density variation due to displacement gradient', 'depth-dependent wave speed', 'velocity formula for shallow water waves', 'deep-water waves', 'density difference across a surface']
+2026-10-22 21:41:01.876 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.534 (kept 20/105)
+2026-10-22 21:42:05.869 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.9s
+        recall@100=1.000 recall@20=1.000 hit@20=1.000 mrr=0.028 ndcg@20=1.000
+  [71/200] gold-081: How long does it take for a falling body to reach a 
+velocity...
+2026-10-22 21:42:26.639 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['distance fallen under constant acceleration', 'kinematic equation for velocity under constant acceleration', 'constant acceleration due to gravity', 'vertical motion under constant acceleration', 'Acceleration as a Function of Time', 'distance fallen under gravity', 'Velocity as a Function of Time', 'time calculation from distance and speed']
+2026-10-22 21:42:27.333 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.812 (kept 20/70)
+        recall@100=0.750 recall@20=0.500 hit@20=1.000 mrr=1.000 ndcg@20=0.586
+  [72/200] gold-082: How does the mass of a particle appear in both the quantum 
+p...
+2026-10-22 21:42:40.583 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['particle with zero rest mass', 'mass invariance under velocity change', 'Quantum mechanical behavior of particles', 'Momentum of a Particle', 'mass invariance under speed', 'particle nature of electrons', 'relativistic momentum of photon', 'Uncertainty in Particle Position and Velocity']
+2026-10-22 21:42:41.492 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.520 (kept 20/102)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=0.033 ndcg@20=0.580
+  [73/200] gold-083: How does the acceleration of the unit vector in far‑field 
+ra...
+2026-10-22 21:43:01.306 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Liénard-Wiechert electric field for nonrelativistic accelerating charge', 'direction of electric field due to accelerating charge', 'radiation of energy by fast-moving charged particles', 'Law of the Electric Field Produced by a Moving Charge', 'projection of acceleration perpendicular to line of sight', 'electromagnetic field of an oscillating charge', 'force on a charge in an electric field', 'Velocity of a point in a rigid body']
+2026-10-22 21:43:02.171 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.428 (kept 20/85)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=0.250 ndcg@20=0.578
+  [74/200] gold-084: What effect does the centrifugal force in a rotating 
+spacesh...
+2026-10-22 21:43:35.275 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Gravitational Force on a Gas Column', 'Pressure of an Ideal Gas', "Newton's calculation of pressure-density rate of change", 'Motion of molecules of a gas', 'total force on a gas', 'Centripetal Force in Circular Motion', 'Pressure at the center of the Earth', 'Adiabatic Equation for Ideal Gas']
+2026-10-22 21:43:36.164 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.134 (kept 20/105)
+        recall@100=0.333 recall@20=0.333 hit@20=1.000 mrr=0.037 ndcg@20=0.469
+  [75/200] gold-085: How does the compressibility of radiation influence the 
+moti...
+2026-10-22 21:43:49.569 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Frequency shift due to relative motion', 'Radiated energy from an oscillating system', 'Pendulum Clock Behavior in Orbit', 'Isochronism of Pendulums', 'Pendulum Clock Behavior on Mars', 'Foucault Pendulum', 'retardation of light in a medium', 'light propagation in moving frame']
+2026-10-22 21:43:50.603 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.087 (kept 20/103)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=0.020 ndcg@20=0.305
+  [76/200] gold-086: How does the requirement that velocity vectors be drawn 
+with...
+2026-10-22 21:43:58.103 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Diffraction pattern of a continuous line of oscillators', 'directional independence of velocity distribution', 'fraction of molecules with velocity in range du', 'wave-particle duality of neutrons', 'interference condition for coherent sources', 'Component of vector perpendicular to another vector', 'direction of force relative to velocity', 'Quantum mechanical behavior of particles']
+2026-10-22 21:43:59.211 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.353 (kept 20/101)
+        recall@100=0.667 recall@20=0.000 hit@20=0.000 mrr=0.083 ndcg@20=0.000
+  [77/200] gold-087: Using the relationship v² = GM/a for a satellite's orbital 
+s...
+2026-10-22 21:44:28.736 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Derivative of Velocity with Respect to Time', 'velocity proportional to square root of wavelength', 'rate of change of distance along a curve', 'time rate of change of kinetic energy', 'rate of change of χ with respect to x', "Earth's orbit around the Sun", 'Acceleration as a Function of Time', 'time rate of change of velocity']
+2026-10-22 21:44:29.722 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.606 (kept 20/94)
+        recall@100=1.000 recall@20=0.500 hit@20=1.000 mrr=1.000 ndcg@20=0.613
+  [78/200] gold-088: According to the product rule for differentiation, how 
+would...
+2026-10-22 21:44:58.544 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['differentiation of vectors with respect to time', 'time average of the square of the electric field', 'partial derivative of phase with respect to distance', 'partial derivative of displacement with respect to position', 'direction of electric field due to accelerating charge', 'relationship between wave number and angular frequency for light', 'direction of propagation of light', 'Derivative of Position with Respect to Time']
+2026-10-22 21:44:59.729 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.496 (kept 20/103)
+        recall@100=0.000 recall@20=0.000 hit@20=0.000 mrr=0.000 ndcg@20=0.000
+  [79/200] gold-089: How does the continuous range of photon energies, as 
+describ...
+2026-10-22 21:45:10.039 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['radiation of energy by fast-moving charged particles', 'radiation of energy by accelerating charges', 'photon energy in moving frame', "Einstein's relation between absorption and induced emission probabilities", 'electromagnetic radiation interaction with atoms', 'proportionality between energy and electric field squared', 'x-ray emission from hot objects', 'quantum theory of light interacting with harmonic oscillator']
+2026-10-22 21:45:11.091 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.463 (kept 20/103)
+        recall@100=0.667 recall@20=0.000 hit@20=0.000 mrr=0.037 ndcg@20=0.000
+  [80/200] gold-090: What is the relationship between the energy loss rate of a 
+c...
+2026-10-22 21:45:32.238 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Radiated Power Proportionality to Current Squared', 'Radiated energy from an oscillating system', "Planck's Law of Blackbody Radiation", 'energy radiated per second', 'Radiated Power in a Direction', 'Power Radiated by an Antenna', "Einstein's relation between absorption and induced emission probabilities", 'radiation of energy by fast-moving charged particles']
+2026-10-22 21:45:33.005 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.660 (kept 20/80)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=0.500 ndcg@20=0.416
+  [81/200] gold-091: How does the principle of conservation of energy in a 
+fricti...
+2026-10-22 21:46:01.771 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Conservation of Energy in Central Force Motion', 'conservation of energy and momentum', 'Principle of Conservation of Energy', 'Conservation of Energy Theorem', 'kinetic energy of a rigid body', 'potential energy in a spring', 'classical theory of energy and velocity', 'energy in a spring']
+2026-10-22 21:46:02.588 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.357 (kept 20/93)
+        recall@100=0.667 recall@20=0.333 hit@20=1.000 mrr=0.143 ndcg@20=0.469
+  [82/200] gold-092: How does the phase velocity of surface tension waves relate
+...
+2026-10-22 21:46:31.438 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['relationship between wave number and angular frequency for light', 'Frequency Independence of Wave Speed in Air', 'relationship between group velocity and phase velocity', 'wave speed dependence on wavelength', 'Wave Formula for Phase Velocity', 'wave speed in shallow water', 'wave speed in deep water', 'relationship between wave number and wavelength']
+2026-10-22 21:46:32.331 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.840 (kept 20/99)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=1.000 ndcg@20=0.765
+  [83/200] gold-093: If cobalt atoms emit electrons downward in a magnetic field
+...
+2026-10-22 21:47:05.216 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Electron spiral motion in magnetic field', 'radiation of energy by fast-moving charged particles', 'direction of electric field due to accelerating charge', 'relativistic electron in circular motion', 'magnetic deflection of mu-mesons', 'electron behavior in atoms', 'radiation of energy by accelerating charges', 'cobalt isotope decay']
+2026-10-22 21:47:06.083 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.653 (kept 20/84)
+        recall@100=0.231 recall@20=0.231 hit@20=1.000 mrr=1.000 ndcg@20=0.385
+  [84/200] gold-094: What does the 5‑billion‑year age of meteorites imply about 
+t...
+2026-10-22 21:47:26.539 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['age of meteorites', 'age of the Earth', 'Ratio of Age of Universe to Time for Light to Cross a Proton', 'Age of the Universe', 'formation of the Earth from extraterrestrial material', 'origin of the universe', "Earth's geological formation", 'Origin of the Solar System']
+2026-10-22 21:47:27.691 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.175 (kept 20/102)
+        recall@100=0.500 recall@20=0.500 hit@20=1.000 mrr=1.000 ndcg@20=0.613
+  [85/200] gold-095: How does the Heisenberg uncertainty principle impact the 
+pre...
+2026-10-22 21:47:44.980 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=["Heisenberg's Uncertainty Principle", 'Heisenberg Uncertainty Principle', 'Uncertainty in Particle Position and Velocity', 'uncertainty in number of waves', 'practical indeterminacy in classical physics', 'precision of time measurements', 'time scale of atomic emission', 'Lifetime of an atomic oscillator']
+2026-10-22 21:47:46.025 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.302 (kept 20/97)
+        recall@100=0.333 recall@20=0.333 hit@20=1.000 mrr=0.125 ndcg@20=0.202
+  [86/200] gold-096: How does the concept of gravitational potential energy in a
+...
+2026-10-22 21:48:22.865 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['formation of the Earth from extraterrestrial material', 'Potential energy due to mass element', 'gravitational potential energy formula', 'earth as a reference for time', 'potential energy of two point masses', 'gravitational potential energy', 'Origin of the Solar System', 'gravitational equilibrium in stars']
+2026-10-22 21:48:23.637 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.181 (kept 20/91)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=0.083 ndcg@20=0.251
+  [87/200] gold-097: How does the energy-time uncertainty principle affect the 
+de...
+2026-10-22 21:48:51.100 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['mean energy of a harmonic oscillator at thermal equilibrium', 'average energy of a molecule', 'average energy of an oscillator', 'average energy distribution in harmonic oscillator', 'Energy-Time Uncertainty Relation', 'internal energy of a monatomic gas', 'Uncertainty in Particle Position and Velocity', 'average energy of harmonic oscillators']
+2026-10-22 21:48:52.105 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.736 (kept 20/103)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=0.037 ndcg@20=0.315
+  [88/200] gold-098: How does the adiabatic expansion of a perfect gas, driven 
+by...
+2026-10-22 21:49:02.346 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['heat generated in the expansion of a rubber band', 'Pressure-Volume Relationship in Adiabatic Compression', 'Adiabatic Equation for Ideal Gas', 'temperature dependence of adiabatic index', 'work done by a substance in a thermodynamic cycle', 'Temperature Change During Adiabatic Compression', 'Rate of Change of Internal Energy with Volume at Constant Temperature', 'internal energy of a monatomic gas']
+2026-10-22 21:49:03.234 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.888 (kept 20/86)
+        recall@100=0.333 recall@20=0.333 hit@20=1.000 mrr=0.200 ndcg@20=0.469
+  [89/200] gold-099: How might vector analysis be applied to model the flux of 
+wa...
+2026-10-22 21:49:31.538 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['net flow of molecules', 'flow of special molecules', 'directional change of unit vector', 'motion of charges in electric fields', 'rate of change of field', 'continuity equation for fluid flow', 'direction of electric field due to accelerating charge', 'Rate of change of number of molecules']
+2026-10-22 21:49:32.344 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.026 (kept 20/105)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=0.015 ndcg@20=0.611
+  [90/200] gold-100: How does the delay time in the radiation formula for slowly
+...
+2026-10-22 21:50:20.094 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['retardation of signals due to finite speed of light', 'time delay due to finite speed of light', 'radiation of energy by fast-moving charged particles', 'Liénard-Wiechert electric field for nonrelativistic accelerating charge', 'phase delay due to wave slowing in a medium', 'time delay due to slower wave propagation', 'radiation of energy by accelerating charges', 'retardation of light in a medium']
+2026-10-22 21:50:21.369 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.616 (kept 20/91)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=1.000 ndcg@20=0.600
+  [91/200] gold-101: How does changing the coordinate origin influence the 
+abilit...
+2026-10-22 21:51:10.235 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['equation of motion for a damped oscillator', 'solving differential equations for sinusoidal forcing', 'Equation of motion under external force', 'method of using complex numbers to analyze physical systems', 'equation of motion with damping', 'Steady-state response to sinusoidal forcing', 'general solution for a string', 'Complex exponential representation of oscillatory functions']
+2026-10-22 21:51:11.146 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.373 (kept 20/97)
+        recall@100=0.333 recall@20=0.333 hit@20=1.000 mrr=1.000 ndcg@20=0.469
+  [92/200] gold-102: How does the principle that experiments yield consistent 
+res...
+2026-10-22 21:51:27.354 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['invariance of the speed of light', 'invariance of physical laws across coordinate systems', 'Equivalence of physical laws in different spatial locations', 'invariance of physical phenomena under spatial translation', 'invariance of physical laws under spatial displacement', 'invariance of physical laws under coordinate transformations', 'invariance of physical laws under temporal displacement', 'invariance of physical quantities under coordinate transformation']
+2026-10-22 21:51:28.337 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.275 (kept 20/102)
+        recall@100=0.500 recall@20=0.200 hit@20=1.000 mrr=1.000 ndcg@20=0.278
+  [93/200] gold-103: How does the necessity of continuity and ordering in 
+definin...
+2026-10-22 21:51:49.312 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=["Dedekind's construction of real numbers", 'Equivalence of physical laws in different spatial locations', 'practical indeterminacy in classical physics', 'simplicity and beauty of mathematical relationships', 'mathematical form of physical laws', 'Separation of real and imaginary parts in linear equations', 'conservation of physical laws under transformation', 'approximation of irrational numbers']
+2026-10-22 21:51:50.350 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.436 (kept 20/103)
+        recall@100=0.667 recall@20=0.667 hit@20=1.000 mrr=0.026 ndcg@20=0.704
+  [94/200] ovw-001: In what ways does Feynman use the principle of conservation 
+...
+2026-10-22 21:52:03.600 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (1040 chars)
+2026-10-22 21:52:05.463 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.969 (kept 20/86)
+        recall@100=0.313 recall@20=0.087 hit@20=1.000 mrr=1.000 ndcg@20=0.553
+  [95/200] ovw-002: How does Feynman develop the principle of conservation of 
+mo...
+2026-10-22 21:52:52.248 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (728 chars)
+2026-10-22 21:52:53.986 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.869 (kept 20/80)
+2026-10-22 21:54:06.345 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.4s
+        recall@100=0.529 recall@20=0.275 hit@20=1.000 mrr=1.000 ndcg@20=0.700
+  [96/200] ovw-003: How does Feynman develop the concept of conservation of 
+angu...
+2026-10-22 21:54:50.164 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (668 chars)
+2026-10-22 21:54:51.810 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.881 (kept 20/69)
+        recall@100=0.909 recall@20=0.409 hit@20=1.000 mrr=1.000 ndcg@20=0.431
+  [97/200] ovw-004: How does the Feynman Lectures on Physics, Volume 1, trace 
+th...
+2026-10-22 21:56:09.829 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (988 chars)
+2026-10-22 21:56:12.595 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.791 (kept 20/81)
+        recall@100=0.412 recall@20=0.094 hit@20=1.000 mrr=0.500 ndcg@20=0.464
+  [98/200] ovw-005: How does Feynman develop the concept of wave‑particle 
+dualit...
+2026-10-22 21:56:57.757 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (687 chars)
+2026-10-22 21:56:59.625 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.705 (kept 20/79)
+        recall@100=0.614 recall@20=0.318 hit@20=1.000 mrr=0.500 ndcg@20=0.664
+  [99/200] ovw-006: How does Feynman build up the concept of quantum 
+probability...
+2026-10-22 21:57:49.765 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (881 chars)
+2026-10-22 21:57:51.755 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.242 (kept 20/76)
+        recall@100=0.587 recall@20=0.239 hit@20=1.000 mrr=1.000 ndcg@20=0.600
+  [100/200] ovw-007: How does the Feynman Lectures on Physics, Volume 1 develop 
+t...
+2026-10-22 21:58:39.733 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (941 chars)
+2026-10-22 21:58:41.663 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.391 (kept 20/80)
+        recall@100=0.633 recall@20=0.306 hit@20=1.000 mrr=0.500 ndcg@20=0.800
+  [101/200] ovw-008: How does Feynman develop the concept of mass-energy 
+equivale...
+2026-10-22 21:59:10.663 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (744 chars)
+2026-10-22 21:59:12.921 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.875 (kept 20/92)
+        recall@100=0.758 recall@20=0.333 hit@20=1.000 mrr=1.000 ndcg@20=0.631
+  [102/200] ovw-009: How does Feynman develop the kinetic theory of gases 
+through...
+2026-10-22 21:59:42.154 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (954 chars)
+2026-10-22 21:59:43.973 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.625 (kept 20/79)
+        recall@100=0.370 recall@20=0.110 hit@20=1.000 mrr=1.000 ndcg@20=0.693
+  [103/200] ovw-010: In what way does Feynman build the concept of entropy from 
+i...
+2026-10-22 22:00:18.335 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (807 chars)
+2026-10-22 22:00:20.174 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.791 (kept 20/61)
+        recall@100=0.472 recall@20=0.278 hit@20=1.000 mrr=1.000 ndcg@20=0.565
+  [104/200] ovw-011: How does Feynman develop the concept of electromagnetic 
+radi...
+2026-10-22 22:01:02.885 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (784 chars)
+2026-10-22 22:01:04.725 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.237 (kept 20/80)
+        recall@100=0.344 recall@20=0.099 hit@20=1.000 mrr=1.000 ndcg@20=0.722
+  [105/200] ovw-012: How does Feynman develop the concept of Fermat's principle 
+t...
+2026-10-22 22:02:11.075 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (928 chars)
+2026-10-22 22:02:13.046 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.801 (kept 20/86)
+        recall@100=0.630 recall@20=0.296 hit@20=1.000 mrr=1.000 ndcg@20=0.515
+  [106/200] ovw-013: How does Feynman develop the concept of oscillatory motion 
+a...
+2026-10-22 22:02:35.457 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (809 chars)
+2026-10-22 22:02:37.395 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.228 (kept 20/95)
+        recall@100=0.363 recall@20=0.108 hit@20=1.000 mrr=1.000 ndcg@20=0.786
+  [107/200] ovw-014: How does Feynman develop the concept of the harmonic 
+oscilla...
+2026-10-22 22:03:19.524 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (750 chars)
+2026-10-22 22:03:21.323 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.296 (kept 20/86)
+        recall@100=0.569 recall@20=0.138 hit@20=1.000 mrr=1.000 ndcg@20=0.370
+  [108/200] ovw-015: How does Feynman build the statistical mechanical framework
+...
+2026-10-22 22:03:58.623 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (789 chars)
+2026-10-22 22:04:00.440 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.674 (kept 20/75)
+        recall@100=0.305 recall@20=0.146 hit@20=1.000 mrr=0.333 ndcg@20=0.562
+  [109/200] ovw-016: How does Feynman develop the concept of chemical energy 
+thro...
+2026-10-22 22:04:30.664 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (609 chars)
+2026-10-22 22:04:32.797 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.631 (kept 20/84)
+2026-10-22 22:05:32.845 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 1.3s
+        recall@100=0.512 recall@20=0.116 hit@20=1.000 mrr=0.333 ndcg@20=0.198
+  [110/200] ovw-017: How does Feynman build the concept of atomic forces 
+througho...
+2026-10-22 22:06:22.783 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (798 chars)
+2026-10-22 22:06:24.924 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.738 (kept 20/94)
+2026-10-22 22:07:24.971 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.0s
+        recall@100=0.329 recall@20=0.058 hit@20=1.000 mrr=1.000 ndcg@20=0.434
+  [111/200] ovw-019: In what ways does Feynman's discussion of the uncertainty 
+pr...
+2026-10-22 22:08:34.198 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (771 chars)
+2026-10-22 22:08:36.100 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.785 (kept 20/74)
+        recall@100=0.710 recall@20=0.323 hit@20=1.000 mrr=1.000 ndcg@20=0.606
+  [112/200] ovw-020: How does Feynman's exposition of electron interference 
+evolv...
+2026-10-22 22:09:27.806 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (764 chars)
+2026-10-22 22:09:29.658 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.824 (kept 20/70)
+2026-10-22 22:20:01.029 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 1.5s
+        recall@100=0.758 recall@20=0.303 hit@20=1.000 mrr=1.000 ndcg@20=0.610
+  [113/200] ovw-024: How does Feynman develop the concept of rotational dynamics
+...
+2026-10-22 22:20:37.725 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (871 chars)
+2026-10-22 22:20:39.516 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.788 (kept 20/66)
+2026-10-22 22:38:12.436 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 1.1s
+2026-10-22 23:11:14.933 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 2/2 in 2.6s
+        recall@100=0.667 recall@20=0.389 hit@20=1.000 mrr=1.000 ndcg@20=0.722
+  [114/200] ovw-027: How does Feynman develop the concept of diffusion from the 
+m...
+2026-10-22 23:11:34.139 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (933 chars)
+2026-10-22 23:11:37.258 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.491 (kept 20/83)
+        recall@100=0.571 recall@20=0.171 hit@20=1.000 mrr=1.000 ndcg@20=0.242
+  [115/200] ovw-029: How does Feynman's treatment of color vision evolve 
+througho...
+2026-10-22 23:12:26.141 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (732 chars)
+2026-10-22 23:12:27.879 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.477 (kept 20/57)
+        recall@100=0.765 recall@20=0.382 hit@20=1.000 mrr=1.000 ndcg@20=0.656
+  [116/200] ovw-030: How does Feynman integrate the concepts of sound wave 
+propag...
+2026-10-22 23:13:32.021 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (762 chars)
+2026-10-22 23:13:34.135 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.458 (kept 20/88)
+        recall@100=0.507 recall@20=0.137 hit@20=1.000 mrr=1.000 ndcg@20=0.497
+  [117/200] ovw-031: How does Feynman develop the concept of Fourier analysis 
+thr...
+2026-10-22 23:14:07.520 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (905 chars)
+2026-10-22 23:14:09.461 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.423 (kept 20/94)
+        recall@100=0.316 recall@20=0.092 hit@20=1.000 mrr=0.500 ndcg@20=0.461
+  [118/200] ovw-034: How does The Feynman Lectures on Physics, Volume 1, build 
+th...
+2026-10-22 23:14:47.462 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (784 chars)
+2026-10-22 23:14:49.399 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.638 (kept 20/84)
+2026-10-22 23:31:29.564 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.6s
+        recall@100=0.720 recall@20=0.320 hit@20=1.000 mrr=1.000 ndcg@20=0.414
+  [119/200] ovw-035: How does Feynman build the concept of probability as a 
+found...
+2026-10-22 23:32:22.352 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (748 chars)
+2026-10-22 23:32:29.208 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.498 (kept 20/80)
+        recall@100=0.424 recall@20=0.212 hit@20=1.000 mrr=1.000 ndcg@20=0.391
+  [120/200] ovw-036: How does Feynman develop the concept of thermodynamic 
+temper...
+2026-10-22 23:33:27.411 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (983 chars)
+2026-10-22 23:33:29.420 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.674 (kept 20/82)
+        recall@100=0.543 recall@20=0.129 hit@20=1.000 mrr=1.000 ndcg@20=0.520
+  [121/200] ovw-037: How does Feynman develop the concept of boundary conditions
+...
+2026-10-22 23:34:10.549 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (942 chars)
+2026-10-22 23:34:13.407 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.308 (kept 20/100)
+        recall@100=0.287 recall@20=0.053 hit@20=1.000 mrr=1.000 ndcg@20=0.369
+  [122/200] ovw-038: How does Feynman develop the concept of potential energy 
+fie...
+2026-10-22 23:34:53.186 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (888 chars)
+2026-10-22 23:34:55.176 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.946 (kept 20/80)
+        recall@100=0.597 recall@20=0.254 hit@20=1.000 mrr=1.000 ndcg@20=0.891
+  [123/200] ovw-039: How does The Feynman Lectures on Physics, Volume 1 develop 
+t...
+2026-10-22 23:35:53.601 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (1049 chars)
+2026-10-22 23:35:55.642 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.884 (kept 20/91)
+        recall@100=0.442 recall@20=0.096 hit@20=1.000 mrr=1.000 ndcg@20=0.586
+  [124/200] ovw-040: How does Feynman's presentation in Volume 1 illustrate the 
+t...
+2026-10-22 23:36:31.084 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (674 chars)
+2026-10-22 23:36:33.537 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.092 (kept 20/100)
+        recall@100=0.489 recall@20=0.130 hit@20=1.000 mrr=0.200 ndcg@20=0.585
+  [125/200] ovw-041: How does Feynman develop the concept and applications of 
+cen...
+2026-10-22 23:36:55.250 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (787 chars)
+2026-10-22 23:36:56.877 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.625 (kept 20/65)
+        recall@100=0.739 recall@20=0.391 hit@20=1.000 mrr=1.000 ndcg@20=0.919
+  [126/200] ovw-042: How does Feynman develop a unified understanding of wave 
+pro...
+2026-10-22 23:37:54.548 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (935 chars)
+2026-10-22 23:37:56.376 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.484 (kept 20/86)
+        recall@100=0.350 recall@20=0.130 hit@20=1.000 mrr=1.000 ndcg@20=0.720
+  [127/200] ovw-043: How does Feynman develop the concept of transformation 
+prope...
+2026-10-22 23:38:30.888 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (1033 chars)
+2026-10-22 23:38:32.830 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.862 (kept 20/87)
+        recall@100=0.344 recall@20=0.126 hit@20=1.000 mrr=1.000 ndcg@20=0.639
+  [128/200] ovw-044: How does Feynman develop the concept of time–distance 
+relati...
+2026-10-22 23:39:34.571 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (767 chars)
+2026-10-22 23:39:37.438 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.652 (kept 20/100)
+        recall@100=0.169 recall@20=0.041 hit@20=1.000 mrr=1.000 ndcg@20=0.629
+  [129/200] ovw-045: How does Feynman build a coherent narrative of thermal 
+radia...
+2026-10-22 23:40:20.759 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (955 chars)
+2026-10-22 23:40:22.495 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.716 (kept 20/72)
+        recall@100=0.527 recall@20=0.182 hit@20=1.000 mrr=1.000 ndcg@20=0.450
+  [130/200] ovw-046: How does Feynman's presentation of molecular kinetic 
+behavio...
+2026-10-22 23:41:48.880 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (795 chars)
+2026-10-22 23:41:50.767 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.335 (kept 20/89)
+        recall@100=0.404 recall@20=0.123 hit@20=1.000 mrr=0.500 ndcg@20=0.669
+  [131/200] ovw-047: How does Feynman's treatment of the interaction of light 
+wit...
+2026-10-22 23:42:23.538 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (690 chars)
+2026-10-22 23:42:25.481 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.710 (kept 20/84)
+        recall@100=0.390 recall@20=0.105 hit@20=1.000 mrr=1.000 ndcg@20=0.487
+  [132/200] ovw-048: How does Feynman develop the concept of atomic and 
+molecular...
+2026-10-22 23:43:32.056 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (966 chars)
+2026-10-22 23:43:33.987 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.175 (kept 20/86)
+        recall@100=0.708 recall@20=0.250 hit@20=1.000 mrr=0.500 ndcg@20=0.333
+  [133/200] ovw-049: How does Feynman build the theory of quantum state 
+evolution...
+2026-10-22 23:44:05.633 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (865 chars)
+2026-10-22 23:44:07.574 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.170 (kept 20/89)
+        recall@100=0.435 recall@20=0.174 hit@20=1.000 mrr=1.000 ndcg@20=0.309
+  [134/200] vis-001: Show me the figure that displays water magnified one 
+billion...
+        Skipped: visual query, --skip-visual set
+  [135/200] vis-002: Show me the schematic diagram of DNA from Fig. 3-2....
+        Skipped: visual query, --skip-visual set
+  [136/200] vis-003: Show me the diagram of a pendulum (Fig. 4‑7) that displays 
+t...
+        Skipped: visual query, --skip-visual set
+  [137/200] vis-005: Show me the graph that plots the fraction of heads versus 
+th...
+        Skipped: visual query, --skip-visual set
+  [138/200] vis-006: Show me the diagram of the apparatus that demonstrates the 
+i...
+        Skipped: visual query, --skip-visual set
+  [139/200] vis-007: Locate the figure that illustrates the Cavendish torsion 
+bal...
+        Skipped: visual query, --skip-visual set
+  [140/200] vis-008: Show me the diagram of a parabolic trajectory of a falling 
+b...
+        Skipped: visual query, --skip-visual set
+  [141/200] vis-010: Find the figure that illustrates the addition of vectors by
+...
+        Skipped: visual query, --skip-visual set
+  [142/200] vis-011: Show me the diagram of the closed path in a gravitational 
+fi...
+        Skipped: visual query, --skip-visual set
+  [143/200] vis-012: Show the diagram that illustrates the coordinate 
+transformat...
+        Skipped: visual query, --skip-visual set
+  [144/200] vis-013: Show the diagram of the torque produced by a force, 
+includin...
+        Skipped: visual query, --skip-visual set
+  [145/200] vis-014: Show me the diagram illustrating the two coordinate systems
+...
+        Skipped: visual query, --skip-visual set
+  [146/200] vis-015: Show me the figure of the actual motion of the tip of the 
+ax...
+        Skipped: visual query, --skip-visual set
+  [147/200] vis-018: Show me the figure of a light ray reflecting off a surface 
+w...
+        Skipped: visual query, --skip-visual set
+  [148/200] vis-019: Show me the diagram of the paraboloidal mirror, including 
+it...
+        Skipped: visual query, --skip-visual set
+  [149/200] vis-020: Show me the diagram of a thin lens with two positive radii,
+...
+        Skipped: visual query, --skip-visual set
+  [150/200] vis-021: Show me the diagram of the two-antenna system (Fig. 29‑6) 
+th...
+        Skipped: visual query, --skip-visual set
+  [151/200] vis-022: Find the figure that shows a linear array of n equal 
+oscilla...
+        Skipped: visual query, --skip-visual set
+  [152/200] vis-026: Show me the diagram of a charged particle moving in a 
+circul...
+        Skipped: visual query, --skip-visual set
+  [153/200] vis-027: Show me the diagram of the wavefronts of a wave traveling 
+at...
+        Skipped: visual query, --skip-visual set
+  [154/200] vis-028: Locate the figure that shows the spectral sensitivity of 
+the...
+        Skipped: visual query, --skip-visual set
+  [155/200] vis-029: Show me the diagram of the neural connections from the eyes
+...
+        Skipped: visual query, --skip-visual set
+  [156/200] vis-030: Show me the graph that displays the response to light of 
+the...
+        Skipped: visual query, --skip-visual set
+  [157/200] vis-031: Show me Fig. 38-2, the diagram of the single-slit 
+experiment...
+        Skipped: visual query, --skip-visual set
+  [158/200] vis-032: Show me the diagram of the gas box with a piston, labeled 
+V,...
+        Skipped: visual query, --skip-visual set
+  [159/200] vis-033: Show me the diagram of the velocity distribution function 
+(F...
+        Skipped: visual query, --skip-visual set
+  [160/200] vis-034: Show me the diagram of the 36‑step random walk of step 
+lengt...
+        Skipped: visual query, --skip-visual set
+  [161/200] vis-035: Show me the figure of the heated rubber band (Fig. 
+44-1)....
+        Skipped: visual query, --skip-visual set
+  [162/200] vis-036: Show me the figure that illustrates the change in entropy 
+du...
+        Skipped: visual query, --skip-visual set
+  [163/200] vis-037: Show me the figure that displays the electric field as a 
+fun...
+        Skipped: visual query, --skip-visual set
+  [164/200] vis-038: Show me the frequency spectrum diagram of a carrier wave 
+mod...
+        Skipped: visual query, --skip-visual set
+  [165/200] vis-039: Show me the schematic diagram (Fig. 50-2) that depicts a 
+per...
+        Skipped: visual query, --skip-visual set
+  [166/200] vis-040: Show me the graph of phase velocity versus wavelength for 
+wa...
+        Skipped: visual query, --skip-visual set
+  [167/200] neg-out-001: What is the capital of France?...
+2026-10-22 23:44:46.317 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (316 chars)
+2026-10-22 23:44:48.636 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.042 (kept 20/100)
+  [168/200] neg-out-002: Who wrote Pride and Prejudice?...
+2026-10-22 23:44:52.330 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (173 chars)
+2026-10-22 23:44:54.682 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.017 (kept 20/100)
+  [169/200] neg-out-003: What is the boiling point of mercury in Fahrenheit?...
+2026-10-22 23:44:58.363 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (198 chars)
+2026-10-22 23:44:59.898 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.350 (kept 20/80)
+  [170/200] neg-out-004: What are the rules of cricket?...
+2026-10-22 23:45:04.509 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (509 chars)
+2026-10-22 23:45:06.944 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.464 (kept 20/100)
+  [171/200] neg-out-005: How do you bake sourdough bread?...
+2026-10-22 23:45:10.417 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (672 chars)
+2026-10-22 23:45:12.932 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.516 (kept 20/100)
+  [172/200] neg-out-006: What is the population of Tokyo?...
+2026-10-22 23:45:17.206 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (367 chars)
+2026-10-22 23:45:19.970 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.019 (kept 20/100)
+  [173/200] neg-out-007: Which company makes the iPhone?...
+2026-10-22 23:45:24.278 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (483 chars)
+2026-10-22 23:45:27.033 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.052 (kept 20/100)
+  [174/200] neg-out-008: What language is spoken in Brazil?...
+2026-10-22 23:45:30.616 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (235 chars)
+2026-10-22 23:45:32.971 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.006 (kept 20/100)
+  [175/200] neg-out-009: What is the tallest mountain in the world?...
+2026-10-22 23:45:37.168 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (244 chars)
+2026-10-22 23:45:39.528 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.273 (kept 20/100)
+  [176/200] neg-out-010: Who painted the Mona Lisa?...
+2026-10-22 23:45:44.566 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (385 chars)
+2026-10-22 23:45:46.182 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.306 (kept 20/99)
+  [177/200] neg-out-011: How do you change a car tyre?...
+2026-10-22 23:45:51.499 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (506 chars)
+2026-10-22 23:45:53.152 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.139 (kept 20/85)
+  [178/200] neg-out-012: What is the capital of Australia?...
+2026-10-22 23:45:56.086 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (40 chars)
+2026-10-22 23:45:58.570 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.014 (kept 20/100)
+  [179/200] neg-in_-001: What does the book say about the Schrödinger equation 
+for th...
+2026-10-22 23:46:05.322 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (629 chars)
+2026-10-22 23:46:07.177 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.354 (kept 20/86)
+  [180/200] neg-in_-002: What is the book's treatment of general relativity and 
+curve...
+2026-10-22 23:46:20.078 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (498 chars)
+2026-10-22 23:46:22.226 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.292 (kept 20/92)
+  [181/200] neg-in_-003: What does the book say about the Higgs boson and 
+electroweak...
+2026-10-22 23:47:02.243 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (457 chars)
+2026-10-22 23:47:03.982 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.525 (kept 20/70)
+  [182/200] neg-in_-004: What is the book's explanation of quantum entanglement 
+and B...
+2026-10-22 23:47:08.695 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (572 chars)
+2026-10-22 23:47:10.537 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.723 (kept 20/81)
+  [183/200] neg-in_-005: What does the book say about the Standard Model of 
+particle ...
+2026-10-22 23:47:20.785 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (646 chars)
+2026-10-22 23:47:22.516 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.172 (kept 20/76)
+  [184/200] neg-in_-006: What is the book's derivation of the Navier-Stokes 
+equations...
+2026-10-22 23:47:27.641 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (758 chars)
+2026-10-22 23:47:30.507 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.342 (kept 20/100)
+  [185/200] neg-in_-007: What does the book say about superconductivity and the 
+BCS t...
+2026-10-22 23:47:34.307 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (584 chars)
+2026-10-22 23:47:36.953 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.826 (kept 20/100)
+  [186/200] neg-in_-008: What is the book's treatment of the Fourier transform 
+in sig...
+2026-10-22 23:47:47.189 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (700 chars)
+2026-10-22 23:47:49.039 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.290 (kept 20/78)
+  [187/200] neg-in_-009: What does the book say about the quantum Hall 
+effect?...
+2026-10-22 23:48:11.979 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (484 chars)
+2026-10-22 23:48:14.538 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.925 (kept 20/100)
+  [188/200] neg-in_-010: What is the book's treatment of the strong nuclear 
+force?...
+2026-10-22 23:48:24.255 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (437 chars)
+2026-10-22 23:48:25.898 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.387 (kept 20/80)
+  [189/200] neg-in_-011: What does the book say about gravitational waves?...
+2026-10-22 23:48:46.263 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (474 chars)
+2026-10-22 23:48:48.022 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.418 (kept 20/97)
+  [190/200] neg-in_-012: What is the book's explanation of black hole 
+thermodynamics?...
+2026-10-22 23:48:53.494 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (674 chars)
+2026-10-22 23:48:55.397 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.952 (kept 20/74)
+  [191/200] neg-nea-001: What numerical value does the book give for the 
+electron's m...
+2026-10-22 23:49:01.122 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (215 chars)
+2026-10-22 23:49:02.692 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.193 (kept 20/85)
+  [192/200] neg-nea-002: What does the book say the mass of the top quark is?...
+2026-10-22 23:49:06.966 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (263 chars)
+2026-10-22 23:49:08.604 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.331 (kept 20/80)
+  [193/200] neg-nea-003: Which year does the book state that the laser was 
+invented?...
+2026-10-22 23:49:12.488 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (301 chars)
+2026-10-22 23:49:14.747 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.121 (kept 20/100)
+  [194/200] neg-nea-005: What value does the book use for the cosmological 
+constant?...
+2026-10-22 23:49:22.751 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (231 chars)
+2026-10-22 23:49:25.501 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.134 (kept 20/100)
+  [195/200] neg-nea-006: What does the book say the speed of sound in seawater 
+is?...
+2026-10-22 23:49:29.295 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (216 chars)
+2026-10-22 23:49:30.826 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.518 (kept 20/62)
+  [196/200] neg-nea-007: What does the book list as the melting point of 
+tungsten?...
+2026-10-22 23:49:35.638 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (268 chars)
+2026-10-22 23:49:37.278 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.434 (kept 20/98)
+  [197/200] neg-nea-008: How many moons does the book say Jupiter has?...
+2026-10-22 23:49:41.715 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (222 chars)
+2026-10-22 23:49:43.317 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.554 (kept 20/75)
+  [198/200] neg-nea-009: What value does the book give for the mass of the 
+proton?...
+2026-10-22 23:49:48.468 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (146 chars)
+2026-10-22 23:49:49.975 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.366 (kept 20/84)
+  [199/200] neg-nea-011: What does the book give as the boiling point of liquid 
+nitro...
+2026-10-22 23:50:03.280 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (311 chars)
+2026-10-22 23:50:04.925 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.306 (kept 20/78)
+  [200/200] neg-nea-012: Which year does the book give for the discovery of the 
+neutr...
+2026-10-22 23:50:08.611 | DEBUG    | __main__:run_retrieval:207 - HyDE: generated hypothetical (257 chars)
+2026-10-22 23:50:09.972 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.224 (kept 20/78)
+
+Evaluation complete in 4179.9s
+                             RAG Evaluation Results                             
+┏━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━━┳━━━━━━┳━━━━━━━┳━━━━━━┓
+┃      ┃      ┃      ┃      ┃      ┃      ┃      ┃       ┃      ┃ Cita… ┃  n / ┃
+┃ Sco… ┃ Rec… ┃ Rec… ┃ Hit… ┃ Ctx… ┃  MRR ┃ NDC… ┃ Fait… ┃ Ans… ┃  Acc. ┃ cal… ┃
+┡━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━━╇━━━━━━╇━━━━━━━╇━━━━━━┩
+│ Ove… │ 0.6… │ 0.4… │ 0.9… │ 0.2… │ 0.7… │ 0.5… │ 0.637 │ 0.8… │ 1.000 │  133 │
+│      │      │      │      │      │      │      │       │      │       │    / │
+│      │      │      │      │      │      │      │       │      │       │  133 │
+│   f… │ 0.8… │ 0.5… │ 0.8… │ 0.1… │ 0.7… │ 0.4… │ 0.685 │ 0.7… │ 1.000 │ 53 / │
+│      │      │      │      │      │      │      │       │      │       │   53 │
+│   m… │ 0.6… │ 0.5… │ 0.8… │ 0.0… │ 0.5… │ 0.4… │ 0.734 │ 0.8… │ 1.000 │ 40 / │
+│      │      │      │      │      │      │      │       │      │       │   40 │
+│   o… │ 0.5… │ 0.1… │ 1.0… │ 0.5… │ 0.8… │ 0.5… │ 0.475 │ 0.9… │ 1.000 │ 40 / │
+│      │      │      │      │      │      │      │       │      │       │   40 │
+└──────┴──────┴──────┴──────┴──────┴──────┴──────┴───────┴──────┴───────┴──────┘
+
+Results saved to: data/eval_results/p1-phaseE-v2_2026-10-23_0650.md
+Structured twin: data/eval_results/p1-phaseE-v2_2026-10-23_0650.json
+
+Tip: Run again with --run-name <name> after each system change to track lift.
+
+⚠️  RERANKER FELL BACK on 1/200 queries — their top-20 lists are UNRANKED, so 
+Recall@top_k / NDCG@top_k are NOT reranked metrics for them. Artifact: 
+`reranker.reranked_metrics_valid=false` (§I55).

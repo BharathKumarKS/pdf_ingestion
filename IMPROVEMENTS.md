@@ -4907,3 +4907,79 @@ model the phase runs), §I57 (the production tie this is consistent with).
 collection.**
 
 ---
+
+
+### I64. 2026-10-23 — PHASE E: the new system's generation metrics exist at last, and they are indistinguishable from the deployed system's — while the ranking stays worse
+
+**The run that had never happened.** §I57 established that `knowledge_base_v2` had **no generation
+metrics at all** (the only v2 run was retrieval-only, §3d) and that this was the one thing blocking
+"is the new system better?". Phase E is that run: the authoritative FULL `evaluate_rag.py`
+(retrieval + synthesis + judge) against the rebuilt index, pre-registered
+(`.hermes/plans/2026-10-22-p1-phaseE-preregistration.md`, committed `36e28f3` **before** the run
+finished) and harnessed (`logs/p1/step10/run_phaseE.sh`).
+
+**Cost:** 4,180 s wall (1 h 10 m of compute, ~2 h 23 m clock), **5,434 judge calls, 0 failures**,
+167/167 synthesis, 167/167 faithfulness. No re-ingest, no graph write, no Qdrant write.
+
+**Artifact:** `data/eval_results/p1-phaseE-v2_2026-10-23_0650.{md,json}` (the `.json` twin is the
+§I57 fix's first production use). Log `logs/p1/step10/phaseE_run_2026-10-22_2127.txt`.
+
+| scope | n | R@100 | R@20 | Hit@20 | Ctx.Prec | MRR | NDCG@20 | Faith | Ans.Rel | Cite |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **overall** | **133** | 0.6737 | 0.4250 | 0.9023 | 0.2421 | 0.7059 | 0.5050 | **0.6368** | **0.8521** | 1.0 |
+| factual | 53 | 0.8214 | 0.5217 | 0.8491 | 0.1302 | 0.7251 | 0.4716 | 0.6853 | 0.7925 | 1.0 |
+| multihop | 40 | 0.6391 | 0.5236 | 0.8750 | 0.0962 | 0.5146 | 0.4945 | 0.7343 | 0.8000 | 1.0 |
+| overview | 40 | 0.5127 | 0.1982 | 1.0000 | 0.5362 | 0.8717 | 0.5598 | 0.4750 | 0.9833 | 1.0 |
+
+Abstention **18/34 = 0.5294**. All five pre-registered guards pass (E1 collection is
+`knowledge_base_v2`; E2 judge `Qwen/Qwen3-VL-8B-Instruct` named and cross-family; E3 133 metrics rows
++ 34 negatives; E4 `reranked_metrics_valid=false` with **gold-004** named; **E5 the `aggregated`
+block re-derives EXACTLY from the per-query `results` array** — the check that makes the §I57 fix
+earn its place).
+
+**The answer, stated as narrowly as the evidence allows.** Against §D12 (the deployed system, the
+only comparable run — **a different run on a different day, so this is descriptive, not causal**):
+
+| metric | OLD §D12 | NEW Phase E | delta |
+|---|---|---|---|
+| R@100 | 0.639 | 0.6737 | **+0.0347** |
+| R@20 | 0.465 | 0.4250 | −0.0400 |
+| Hit@20 | 0.947 | 0.9023 | −0.0447 |
+| Ctx.Prec | 0.235 | 0.2421 | +0.0071 |
+| **MRR** | **0.827** | **0.7059** | **−0.1211** |
+| NDCG@20 | 0.540 | 0.5050 | −0.0350 |
+| **Faithfulness** | **0.661** | **0.6368** | **−0.0242** |
+| **Answer Relevance** | **0.852** | **0.8521** | **+0.0001** |
+| Citation | 1.000 | 1.0000 | 0 |
+| Abstention | 0.500 | 0.5294 | +0.0294 |
+
+- **The half that was missing is now measured, and it is a TIE.** Faithfulness 0.637 vs 0.661 and
+  Answer Relevance 0.852 vs 0.852 — the deployed system's answer quality is not beaten, and it is
+  not beaten by the new one either. There is **no generation-side improvement to show**, which is
+  the honest headline: the rebuild's hoped-for gain did not appear where the product actually ships
+  (an answer, not a page list).
+- **Ceiling-normalised (§I58), the new index still captures LESS of its headroom**: R@100 **0.7058**
+  vs OLD **0.7259**; R@20 **0.4453** vs OLD **0.5275**. §I58's finding — *the index improved and the
+  retriever did not capture it* — reproduces on a fresh full run with every lane live.
+- **Raw R@100 rose** (+0.0347) while **ranking fell** (MRR −0.1211). More pages are reachable, and
+  they are ordered worse. That is §I59's "the loss is masked, not absent" seen end-to-end.
+- ⚠️ **The §I55 fallback is real and reported both ways.** gold-004's top-20 is UNRANKED
+  (`reranked_metrics_valid=false`, the run exited **3**). Without it (n=132): R@20 0.4282, MRR
+  0.7112, Faith 0.6378 — i.e. the fallback query moves the headline by ≤0.003, so **the conclusion
+  does not depend on it**. Reported because §I55 says a fallback query must be named, not averaged
+  silently.
+
+⚠️ **A consistency worth recording, and NOT an attribution.** §3d (retrieval-only, **dead** DA lane,
+**no** RAPTOR) measured NEW R@20 **0.4524**; Phase E (live DA lane **and** RAPTOR) measures **0.4250**
+— a fall of **−0.0274**, very close to §I56's independently measured DA-lane effect on top-20 R@20
+(**−0.0262**). Two differences arrived at once, so this is **consistent with** §I56 and **does not
+attribute** the drop to the DA lane; it is the reason §I56's "keep as-is" disposition is worth
+revisiting with a live-vs-gated comparison rather than assumed.
+
+**Confounds, all recorded (this is not a clean A/B):** the six §I57 lists, plus this run's own —
+visual excluded (§3, matching §D12's effective n=133), a different calendar day, and the §D12 arm's
+labels having been built against the deployed index (§D4/§D6).
+
+**Register against:** §I57 (the question this answers), §I58 (the ceiling normalisation that carries
+the finding), §I56 (the DA-lane effect this is consistent with), §I55 (the fallback it reports),
+§I59 (the masked ordering loss), §I63 (the embedder that is the larger half of it).
