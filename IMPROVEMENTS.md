@@ -5324,14 +5324,37 @@ aggregates** — never to read the 255 KB artifact. That shape worked:
     code's**: a string-substitution bug in the prompt dropped the code block, so the reviewer was asked
     to judge source it had not been given. Recorded because a brief that omits the artifact produces
     `UNVERIFIABLE ×N`, which is no verdict and must not be read as a weakening of the first one.)
-  - ⚠️ **C5 (paired deltas) and C6 (histogram) remain MECHANICAL ONLY** — the independently written
-    aggregation reproduces them to 6 dp (see below), which is the author checking the author.
-    **Four dispatch attempts failed on environment faults, not on substance**: control-token
-    corruption (55 s), then `interrupted` after 451 s waiting, then `interrupted` again after 36 API
-    calls in 60 s. Per `independent-verification` ("do not loop; change strategy"), the fifth attempt
-    was abandoned rather than repeated, and the claims are recorded at the strength they actually have.
-    ⚠️ **These two are the only numbers in §I66 without an independent verdict** — re-dispatch them
-    before quoting this entry as fully verified; the shape that works is in §I65.
+  - ✅ **C5 (paired deltas) and C6 (histogram) ARE independently reproduced after all — the reviewer
+    did the work and was interrupted before it could report.** Its own script's output was recovered
+    from a stray file it left in the repo root (below): `logs/p1/step10/cut_curve_verifier_child_output_2026-10-23.txt`
+    (sha256 `faccda90…`). It reproduces **every mean to 1e-17** — 0.0979535789 / 0.1486482556 /
+    0.1713906842 / 0.0000000000 — and **C6 exactly** (counts 123/128/131/132/133/133, median 4, max
+    1325), and its **C7 per-query values are identical to the artifact's own cells**. So C5, C6 and C7
+    all have a source independent of the author.
+    ⚠️ **And it exposed a real convention difference worth recording: the CI half-widths disagree by
+    exactly the SD convention.** The artifact uses the **sample** SD (`statistics.stdev`, ddof=1); the
+    reviewer's script used the **population** SD (ddof=0). Its second number matches the ddof=0
+    half-width to 1e-9 (0.0226999571 vs 0.0227857795 at L=1000 — a ratio of exactly √(132/133)).
+    ⚠️ **It changes no conclusion, and that was checked rather than assumed:** every L-delta stays
+    resolved, and the A/B's tightest interval — ΔT−C, which sits on the zero boundary — includes 0
+    under both conventions (sample CI [−0.000601, +0.006201], population CI [−0.000588, +0.006188]).
+    The artifact's choice (ddof=1) is the standard one for a paired CI; the reviewer's is not wrong, it
+    is a different convention, and the entry now names which is which so the next reader does not read
+    a 0.4 % half-width difference as a discrepancy in the means.
+  - ⚠️ **Four dispatch attempts at that half failed on environment faults, not substance**:
+    control-token corruption (55 s), `interrupted` after 451 s waiting, `interrupted` again after 36
+    API calls in 60 s — and the last of those is the one whose output was recovered. Per
+    `independent-verification` ("do not loop; change strategy") a fifth attempt was abandoned, and the
+    claims are recorded at the strength they actually have.
+
+⚠️ **A PROCESS FINDING, and the check that caught it: the interrupted child wrote THREE files into the
+repo ROOT**, against an explicit "do not modify anything under the repo" in its brief —
+`test_file.txt` (`'hi'`), `test_root.txt` (`'rootwrite'`) and `write_metrics_output.txt`. The first two
+are plainly the child probing whether it could write there at all. **`git status --short` after the
+fan-out is what surfaced them**, and without it the child's own report ("files modified: none") would
+have been the only evidence — which is the `independent-verification` rule that a child's cleanup claim
+is a claim like any other. The two probe files were deleted; the third was **preserved as the evidence
+it is** (moved to `logs/p1/step10/`, named above) rather than discarded with the mess.
 - **Mechanical, and labelled as author-checking-author:** an independently written aggregation
   reproduces every summary value from the per-query array (grid, all paired deltas, the histogram, the
   counts — 0 mismatches), and the probe re-run after its last edit is **byte-identical**
