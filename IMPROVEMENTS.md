@@ -5313,15 +5313,25 @@ aggregates** — never to read the 255 KB artifact. That shape worked:
   rows and matching every expected value**; **C4** `0.815136` vs `0.8151` at 6 dp and `1.000000` vs
   `1.0000`; **C9** `nre=0 rows: 0`, `nr=0 rows: 0`, `null cells: 0`. **This is independent
   verification of the grid — not the author's arithmetic.**
-- ⚠️ **C5–C8 ARE STILL NOT INDEPENDENTLY VERIFIED, and the entry does not claim they are.** The
-  sibling carrying them died on the control-token corruption; the re-dispatch (`deleg_311dcc5c`,
-  3 API calls) was **`interrupted`** — "waiting for model response (451.2 s elapsed)", an environment
-  failure, not a finding. **An interrupted run is no verdict** (`independent-verification` step 5), so
-  it counts as neither a pass nor a fail. Current cover: **C5 (paired deltas) and C6 (histogram) rest
-  on the mechanical re-derivation** below; **C8 (the method is exact) is confirmed by the single-turn
-  reviewer**; **C7 (the refutation) rests on the artifact's own per-query cells**, which are
-  unambiguous. **Re-dispatch C5–C8 before quoting this entry as fully verified** — the shape that works
-  is in §I65.
+- **C7 and C8 have independent verdicts; C5 and C6 do not, and the entry says which is which.**
+  - **C7 (the refutation) — CONFIRMED by a single-turn reviewer** (`openai/gpt-oss-20b`, no tools, the
+    eight rows embedded): `eq_1.0: 5`, `gt_0: 7`, `eq_0.0: 1`, `lost_ids: ["gold-078"]`,
+    `refutation_stands: true`. **It reproduces the corrected split exactly** (5 / 2 / 1) — the same
+    numbers the entry quotes, from a source independent of the author's reading of them.
+  - **C8 (the method is exact) — CONFIRMED by the single-turn reviewer**: brute-force matrix products
+    over fetched vectors; Qdrant used only to fetch; the 64d lane is an exact ranking of a re-normalised
+    64-slice. (A later single-turn attempt returned `unverified` for C8 — **the brief's fault, not the
+    code's**: a string-substitution bug in the prompt dropped the code block, so the reviewer was asked
+    to judge source it had not been given. Recorded because a brief that omits the artifact produces
+    `UNVERIFIABLE ×N`, which is no verdict and must not be read as a weakening of the first one.)
+  - ⚠️ **C5 (paired deltas) and C6 (histogram) remain MECHANICAL ONLY** — the independently written
+    aggregation reproduces them to 6 dp (see below), which is the author checking the author.
+    **Four dispatch attempts failed on environment faults, not on substance**: control-token
+    corruption (55 s), then `interrupted` after 451 s waiting, then `interrupted` again after 36 API
+    calls in 60 s. Per `independent-verification` ("do not loop; change strategy"), the fifth attempt
+    was abandoned rather than repeated, and the claims are recorded at the strength they actually have.
+    ⚠️ **These two are the only numbers in §I66 without an independent verdict** — re-dispatch them
+    before quoting this entry as fully verified; the shape that works is in §I65.
 - **Mechanical, and labelled as author-checking-author:** an independently written aggregation
   reproduces every summary value from the per-query array (grid, all paired deltas, the histogram, the
   counts — 0 mismatches), and the probe re-run after its last edit is **byte-identical**
