@@ -237,3 +237,47 @@ def test_judge_from_env_ollama_uses_judge_model_when_set(ev):
     assert args.judge_backend == "ollama"
     assert args.judge_api_base == "http://localhost:11434"
     assert args.judge_model == "qwen2.5:7b"
+
+
+# ── §I57: every run must emit a machine-readable per-query twin, not only a .md ───────────────
+# Until this fix the only artifact was a `.md`, so a cross-run comparison had to PARSE markdown
+# (compare_old_vs_new_index.py). These guard that the `.json` is written and is real data.
+
+def test_writes_md_and_json_twin(ev, tmp_path):
+    """The run writes BOTH artifacts. Removing the `.json` write fails here."""
+    record = {"run_name": "t", "results": [{"id": "q1", "query_type": "factual"}]}
+    md_path, json_path = ev.write_run_artifacts(
+        tmp_path, "t", "2026-01-01_0000", "# the markdown\n", record
+    )
+    assert md_path.exists() and json_path.exists()
+    assert md_path.read_text() == "# the markdown\n"  # the .md is passed through unchanged
+    loaded = json.loads(json_path.read_text())
+    assert loaded["results"][0]["id"] == "q1"
+    assert loaded["run_name"] == "t"
+
+
+def test_json_twin_serialises_numpy_scalars(ev, tmp_path):
+    """np.int64 / np.float32 are NOT Python subclasses, so json.dumps raises on them without the
+    encoder fallback — the write would crash at the end of a long run. (np.float64 IS a float
+    subclass and needs no help; the fallback exists for the others.)"""
+    import numpy as np
+
+    record = {
+        "results": [{"id": "q1", "n_hits": np.int64(7), "score": np.float32(0.5)}],
+        "aggregated": {"overall": {"mrr": np.float64(0.25)}},
+    }
+    _, json_path = ev.write_run_artifacts(tmp_path, "t", "2026-01-01_0000", "x", record)
+    loaded = json.loads(json_path.read_text())
+    assert loaded["results"][0]["n_hits"] == 7
+    assert abs(loaded["results"][0]["score"] - 0.5) < 1e-6
+    assert loaded["aggregated"]["overall"]["mrr"] == 0.25
+
+
+def test_json_twin_raises_on_unknown_type(ev, tmp_path):
+    """An object the encoder cannot represent must be LOUD, not silently stringified into the
+    artifact (which would read as data)."""
+    class _Opaque:
+        pass
+
+    with pytest.raises(TypeError):
+        ev.write_run_artifacts(tmp_path, "t", "2026-01-01_0000", "x", {"x": _Opaque()})

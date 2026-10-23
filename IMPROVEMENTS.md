@@ -4479,6 +4479,41 @@ real wins in context precision and the overview lane.**
 §D15 (the four differences that make §3d a smoke test), §D4/§D6 (the labels were built against the
 deployed index), §I56 (the DA lane's measured effect), §I44 (evidence on disk).
 
+**✅ THE REGISTERED DURABLE FIX LANDED 2026-10-22 (session 11).** `evaluate_rag.py` now emits a
+**machine-readable per-query JSON twin** alongside the `.md`. NEW `write_run_artifacts` writes the
+`.md` (content unchanged — it stays the regression baseline) **and** a `.json` carrying
+`config_snapshot`, an `integrity` block, `aggregated`, and the per-query `results`, so a cross-run
+comparison pairs runs **by query id** instead of parsing markdown — which is the only reason
+`compare_old_vs_new_index.py` had to. `_json_default` converts numpy scalars via `.item()` and
+**re-raises** for anything else, so an unrepresentable object is loud rather than silently
+stringified into the artifact.
+
+**Three guards, all proven to discriminate by mutation on the author's own run** (each failing on
+its own assertion, tree restored byte-identical): dropping the `json_path.write_text(...)` line
+fails **3**; `if hasattr(o, "item"):` → `if False:` fails **1**; `raise TypeError(...)` →
+`return str(o)` fails **1**. `tests/test_eval_integrity.py` 20 passed.
+
+⚠️ **A first attempt at the encoder guard COULD NOT FAIL and was caught before it was believed.**
+The test used `np.float64`, on the claim that `json.dumps` rejects it — **false**: `np.float64`
+subclasses Python `float`, so json serialises it natively. The mutation (neutering the encoder)
+therefore passed 19/19. The fallback exists for `np.int64` / `np.float32` / `np.bool_`, which are
+**not** Python subclasses and do raise — measured, not assumed. Test and docstring were corrected to
+those types. Same class as §I63's constant-vector probe: **a check that cannot fail is not a check.**
+
+⚠️ **Verifier `deleg_e9e29bc5` (openai/gpt-oss-20b) returned 6 CONFIRMED / 1 REFUTED — and the
+refutation is VOID.** It refuted C6 ("the change is additive; §I55's exit-3 is intact") on the
+grounds that "main() now returns 3 when any reranker fallback occurs … introducing a new exit
+code". **That code is not this change's**: the author's diff contains no `return 3` (it only reads
+the existing `n_reranker_fallbacks` into the new integrity dict), and `git log -S'return 3' --
+scripts/evaluate_rag.py` pins that line to `6f17abe` (§I55), committed before it. The reviewer
+inspected the current file and attributed a pre-existing line to the diff under review — **a
+reviewer without the diff's boundary will misattribute what it reads.** The verdict was also cheap
+(4 API calls, 18.8 s, no test run) with pack-relative line numbers, so it was **not banked**: the
+mutation runs above are the evidence.
+
+**Register against (this block):** §I55 (the exit-3 the reviewer misattributed), §I44 (evidence on
+disk), §I63 (the "check that cannot fail" trap, again), §I25 (a failure that reads as a success).
+
 ---
 
 ### I58. 2026-10-22 — the gold set does NOT need rebuilding for the new index; it is *better* served by it, and that exposes the real problem

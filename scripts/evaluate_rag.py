@@ -76,6 +76,38 @@ from rich.table import Table
 console = Console()
 
 
+def _json_default(o):
+    """JSON encoder fallback for numpy scalars (np.int64 / np.float32 / np.bool_).
+
+    The metrics currently produce only np.float64, which json serialises natively because it
+    subclasses `float`. But a numpy int or bool anywhere in the record — a count, a comparison —
+    would raise TypeError at the very END of a long run, after the work is done. This converts a
+    numpy scalar via `.item()` and RE-RAISES for anything else, so an unknown type is loud rather
+    than silently stringified into the artifact.
+    """
+    if hasattr(o, "item"):
+        return o.item()
+    raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
+
+
+def write_run_artifacts(output_dir, run_name: str, ts: str, md_text: str,
+                        record: dict) -> tuple[Path, Path]:
+    """Write the run's two artifacts: the human `.md` and the machine-readable `.json` (§I57).
+
+    The `.md` is the regression baseline the project compares against and is written unchanged.
+    The `.json` carries the same run as data (config snapshot, integrity block, aggregated
+    metrics, per-query results) so a cross-run comparison pairs queries by id instead of parsing
+    a markdown table — which is the only reason `compare_old_vs_new_index.py` had to.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    md_path   = output_dir / f"{run_name}_{ts}.md"
+    json_path = output_dir / f"{run_name}_{ts}.json"
+    md_path.write_text(md_text)
+    json_path.write_text(json.dumps(record, indent=2, sort_keys=True, default=_json_default))
+    return md_path, json_path
+
+
 # ── Config snapshot ──────────────────────────────────────────────────────────
 
 def build_config_snapshot(cfg, threshold: float, tenant_id: str) -> dict:
@@ -1195,11 +1227,11 @@ def main():
             f"Recall@top_k / NDCG@top_k are **not** reranked metrics for those queries (§I55)."
         )
 
-    # Save results — single .md file (summary + per-query tables + config)
+    # Save results — the human .md (summary + per-query tables + config) AND its machine-readable
+    # .json twin (§I57). The .md stays the regression baseline; the .json is what a cross-run
+    # comparison reads, so it never has to PARSE markdown again (compare_old_vs_new_index.py).
     output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
     ts       = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M")
-    out_path = output_dir / f"{args.run_name}_{ts}.md"
 
     timestamp   = datetime.now(timezone.utc).isoformat(timespec="seconds")
     summary_tbl = build_summary_table(aggregated, cfg)
@@ -1228,7 +1260,7 @@ def main():
     config_snapshot["reranker"]["last_error"] = getattr(reranker, "last_fallback", None)
     snapshot_json = json.dumps(config_snapshot, indent=2, sort_keys=True)
 
-    out_path.write_text(
+    md_text = (
         f"# {args.run_name}\n\n"
         f"**{timestamp}**\n\n"
         f"## Summary\n\n"
@@ -1244,6 +1276,37 @@ def main():
         f"</details>\n"
     )
 
+    # §I57 — the structured twin. `results` carry the per-query metrics/generation dicts, so a
+    # comparison can pair runs by query id instead of regexing a markdown table. The integrity
+    # block is the same facts the .md's "Run integrity" section states, as data.
+    run_record = {
+        "run_name": args.run_name,
+        "timestamp": timestamp,
+        "query_file": args.query_file,
+        "tenant": args.tenant,
+        "n_queries": n,
+        "elapsed_s": round(elapsed, 1),
+        "config_snapshot": config_snapshot,
+        "integrity": {
+            "retrieval_only": bool(args.retrieval_only),
+            "judge_enabled": judge_fn is not None,
+            "synthesis_ok": synth_ok,
+            "synthesis_failed": synth_failed,
+            "faithfulness_computed": faith_done,
+            "judge_calls": judge_stats.get("calls", 0),
+            "judge_failures": judge_stats.get("failures", 0),
+            "judge_last_error": judge_stats.get("last_error", ""),
+            "reranker_fallbacks": n_reranker_fallbacks,
+            "reranker_fallback_ids": reranker_fallback_ids,
+            "reranked_metrics_valid": n_reranker_fallbacks == 0,
+        },
+        "aggregated": aggregated,
+        "results": results,
+    }
+    out_path, json_path = write_run_artifacts(
+        output_dir, args.run_name, ts, md_text, run_record
+    )
+
     if synth_failed or judge_stats.get("failures"):
         console.print(
             f"\n[bold red]⚠️  RUN INTEGRITY WARNING[/bold red] — "
@@ -1252,6 +1315,7 @@ def main():
         )
 
     console.print(f"\n[green]Results saved to:[/] {out_path}")
+    console.print(f"[green]Structured twin:[/] {json_path}")
     console.print(
         "\n[dim]Tip: Run again with --run-name <name> after each system change "
         "to track lift.[/]"
