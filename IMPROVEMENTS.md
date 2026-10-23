@@ -4739,6 +4739,76 @@ reaches **1.0000** — the loss is the **filtered-HNSW search path**, not the ve
 
 ---
 
+### I61. 2026-10-23 — the prefetch limit, NOT the dimension, is the lever: raising it recovers the pool the filtered ANN is losing
+
+**✅ WRITTEN UP 2026-10-23 (session 11).** The sweep **ran on 2026-10-22 but was never registered** —
+`logs/p1/step10/prefetch_limit_sweep.{py,json}` existed with a full summary and §I60 referred to it
+only as "§I61, in progress". The numbers below are **re-derived from the artifact's own per-query
+array** (all 16 cells exact); nothing here is read off the summary block.
+
+**The question.** §I60's *exact brute-force* sweep found the pool **saturated at 1000 chunks at every
+MRL dimension** (ceiling-normalised R@1000 = 1.0000, both indexes). Yet §I59's **Qdrant** query at the
+same limit reached only **0.8151** (new) / **0.9224** (old). If the gap is the **filtered HNSW search
+path** — Qdrant walks a graph whose nodes the filter excludes — then **the limit is the lever and the
+dimension is not**. This measures it directly.
+
+**Design.** Query `dense_64` and the full-dimension lane at limits {1000, 1500, 2000, 3489}. ⚠️
+`limit` is in **CHUNKS** and recall is over the **deduped PAGE pool** (§I60's convention, *not*
+§I59's, whose `k` indexes pages — §I63 settled that distinction). `limit = 3489` (every in-window
+chunk of the new index) is **effectively exact search and is the control**. Read-only: no LLM calls,
+no writes. ⚠️ **A 40-query strided subsample** of the 133 answerable text queries
+(`queries[::3][:40]`), i.e. a **screening** result, not the pre-registered endpoint.
+
+**Result — mean ceiling-normalised pool recall, re-derived:**
+
+| index | lane | limit 1000 | 1500 | 2000 | 3489 (=exact) |
+|---|---|---|---|---|---|
+| **NEW** (40 q) | **`dense_64`** | **0.804127** | 0.904495 | 0.971526 | **1.0000** |
+| NEW | full-dim | 0.932368 | 0.965171 | 0.971966 | 1.0000 |
+| OLD (39 q) | `dense_64` | 0.930702 | 0.955416 | 0.974099 | 0.998992 |
+| OLD | full-dim | 0.934881 | 0.960130 | 0.984654 | 0.999251 |
+
+**Four findings.**
+
+1. ⚠️ **At the PRODUCTION limit (1000) the new index's 64d prefetch lane covers only 0.804127 of the
+   reachable pool, against 0.932368 for full-dim — a 0.128241 gap.** On the **old** index the same
+   comparison is 0.930702 vs 0.934881, a **0.004179** gap. So the new index's 64d prefetch loses
+   **~30× more pool coverage** than the old index's does. §I59's "8.7× worse truncation penalty for
+   Qwen3" is a *ranking* measurement; **this is the same weakness showing up as coverage.**
+2. **Raising the limit recovers it, and the recovery is large at every step** (new `dense_64`):
+   +0.100368 (1000→1500), +0.067031 (1500→2000), +0.028474 (2000→exact).
+3. ⚠️ **At limit 2000 the dimension STOPS MATTERING** — 64d 0.971526 vs full-dim 0.971966, a gap of
+   **0.00044**. So §I60's "128d is dead" is confirmed **from a second, independent direction**: with
+   a high enough limit the 64d lane is as good as full-dim at the pool level, so there is no case for
+   adding a 128d named vector.
+4. **The control holds: at `limit = 3489` (every in-window chunk) BOTH lanes are exactly 1.0000.**
+   The loss is **entirely the ANN search path**, not the vector and not the filter — nothing is
+   unreachable, it is only under-returned.
+
+**The cheap fix this licenses — and it is code/config only.** Raise the 64d prefetch limit in
+`store.py` (1000 → 2000, or to the collection's in-window chunk count, which is **exact search** at
+this corpus size). **No re-ingest, no model change, no new named vector, no Qdrant write.** §I59
+reached the same recommendation from the ranking side; this is its coverage-side confirmation.
+
+⚠️ **What this does NOT license: shipping the change on this evidence.** The sweep is a 40-query
+screening subsample with **no paired CI and no pre-registration**. The change touches the production
+retrieval path, so it needs its own **pre-registered** A/B (raise-the-limit vs current, 133 queries,
+paired, on the product endpoint) before it ships — the §D1 discipline every other lever here has been
+held to. It is registered as **the next lever to test**, not as a pending commit.
+
+⚠️ **A naming trap in the artifact, recorded so the next reader is not caught:** the summary block's
+`median_pages_in_pool` **is** a median, but the neighbouring `pool_recall_ceiling_norm` is a
+**mean**. Both are unlabelled; reading the second as a median gives 1.0000 for 12 of the 16 cells
+(the author's own first re-derivation did exactly that). The write-up above uses means, matching the
+artifact's own aggregation.
+
+**Register against:** §I60 (whose "128d is dead" this confirms from the coverage side), §I59 (the
+ranking-side loss this mirrors), §I63 (the k-units/pool-depth distinction that fixes the convention
+here), §I57 (the production tie this would be measured against), §I58 (the ceiling normalisation),
+§I44 (an artifact that is not written up is not evidence).
+
+---
+
 ### I62. 2026-10-22 — the cluster serves Nomic, but does NOT apply its task prefixes — and the timing table for any Nomic re-embed
 
 **Found while costing the cross-embedder experiment** (§I59 Effect 2 needs "hold the corpus fixed,

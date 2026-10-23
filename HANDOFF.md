@@ -63,9 +63,32 @@
 > / res 0.5 primary, equal 2-slot budget, C/D only if the primary resolves, null ⇒
 > recorded-and-not-wired); **§I56 keeps the DA lane AS-IS** (no change); **Phase E runs next.**
 >
-> **5. ⚠️ STILL OPEN, UNCHANGED:** §G5/§I2 (`hop_distance` is a constant 0); §I55's
-> exclude-from-metrics follow-on; §G2's V5 **build** (now signed off, not built); §I58's caveat that
-> `gold-003`'s label is a TOC line that will die at the next re-ingest.
+> **5. ▶ NEXT TASKS, IN ORDER (written 2026-10-23, session 11).**
+>
+> 1. **§I61 — RAISE THE 64d PREFETCH LIMIT. This is the cheapest lever found so far, and it is new
+>    this session.** The sweep had **run but was never written up**; §I61 now records it, re-derived
+>    from the per-query array. At the production limit 1000 the new index's `dense_64` lane covers
+>    **0.804127** of the reachable pool against **0.932368** full-dim — a **0.128** gap, ~**30×** the
+>    old index's 0.004. Raising the limit recovers it (1500 → 0.904495, 2000 → 0.971526), **at 2000
+>    the dimension stops mattering** (64d 0.971526 vs full-dim 0.971966), and at limit = every
+>    in-window chunk **both lanes are exactly 1.0000** — so the loss is **entirely the filtered-HNSW
+>    search path**. **Code/config only: no re-ingest, no model change, no new named vector.** ⚠️ It
+>    is a **40-query screening subsample**, so it needs its own **pre-registered** A/B (raise vs
+>    current, 133 queries, paired, product endpoint) before it ships.
+> 2. **§I56's DA lane — settle it with a ONE-VARIABLE test** (DA live vs DA off, everything else
+>    pinned). The owner's "keep as-is" stands; this is why it is worth re-opening: §I56 measured
+>    **−0.0262** on top-20 R@20 and Phase E moved **−0.0274** from §3d — consistent, but **four**
+>    things changed at once, so it is not attributed.
+> 3. **§G2's V5 build — SIGNED OFF, not built.** Plan
+>    `.hermes/plans/2026-10-22-p1-g2-v5-ablation-plan.md` (level 2 primary, equal 2-slot budget, C/D
+>    only if the primary resolves, null ⇒ recorded-and-not-wired). Steps 1a–1c: new
+>    `community_summary_search.py`, a CLI, and `--community-summaries` **off** by default.
+> 4. **§G5/§I2** — `hop_distance` is a constant 0, so "multihop" is nominal.
+> 5. **Smaller, still open:** §I55's exclude-from-metrics follow-on; §I58's caveat that `gold-003`'s
+>    label is a TOC line that will die at the next re-ingest; and **§I53 item 6** — the committed §G2
+>    artifact (`g2_summaries_2026-10-22.json`) **predates the code that made it**
+>    (`prompt_chars_by_level: {}` and the old `planned_leaf_map_calls`), so regenerate it or mark it
+>    stale before quoting it.
 >
 > **Last updated: 2026-10-22, session 10. ✅ THE CROSS-EMBEDDER EXPERIMENT RAN — ALL SIX VERIFIERS PASS.
 > §I59's Effect 2 is 68 % ATTRIBUTED to the embedder (a residual of +0.0648 is still unattributed —
