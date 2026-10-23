@@ -5168,11 +5168,14 @@ propagate, and it also **refutes this entry's own first hypothesis** about where
 Phase E table (different run, HyDE on).
 
 **⚠️ VERIFICATION — and the route is NOT the usual one, so it is recorded in two labelled halves.**
-The tool-using reviewer could not run on this gateway: `openai/gpt-oss-20b` died twice on the
-multi-turn tool loop — once by output-length truncation after reading the 255 KB artifact whole, once
-with `Unknown role: assistant<|channel|>commentary` (its own control tokens leaking into the replayed
-history — the gateway failure `independent-verification` documents for exactly this transport). The
-verdict was therefore split by what each half can actually establish:
+The tool-using reviewer died twice on this probe's dispatch: once by output-length truncation after
+reading the 255 KB artifact whole, once with `Unknown role: assistant<|channel|>commentary` (its own
+control tokens leaking into the replayed history — the gateway failure `independent-verification`
+documents for exactly this transport). ⚠️ **Do not read that as "the tool loop cannot run here": it
+can, and it did — see §I66, where the same model on the same data, given a compact raw-row extract
+and told to write one script rather than read the artifact, returned a full independently recomputed
+verdict (6 API calls, 141 s).** The shape of the brief is the variable, not the gateway. For *this*
+entry the verdict was taken in two halves:
 
 - **(a) MECHANICAL EVIDENCE — not a second opinion.** An independent aggregation implementation
   (manual sums and a different CI formulation; none of the probe's aggregation code reused)
@@ -5276,19 +5279,32 @@ candidates for a pre-registered A/B on the product endpoint, exactly as §I61's 
 same size can deliver — not a prediction of the pipeline. The pipeline's own observed value is quoted
 beside it above for that reason.
 
-**✅ VERIFICATION (same two-half route as §I65 — see there for why the tool loop is unusable).**
-**Mechanical:** an independent aggregation reproduces every summary value from the per-query array
-(grid, all paired deltas, the histogram, the counts — 0 mismatches), and the probe re-run after its
-last edit is **byte-identical** (`038e12ba…`). **Single-turn reviewer** (`openai/gpt-oss-20b`, no
-tools): **C1 counts, C2 the SQLite↔collection cross-check, C4 internal consistency, C8 the method is
-EXACT (brute-force matrix products; Qdrant used only to fetch, never to score), C9 no silent exclusion
-— all CONFIRMED**, no defects raised. It returned **C3, C5 and C6 `unverified`** because it declined
-to do 133-row arithmetic by hand — which is the honest answer and exactly why the arithmetic is
-carried by the mechanical half above rather than by the reviewer.
-⚠️ **The reviewer's C7 evidence was sloppy and is NOT what the entry rests on**: it wrote
+**✅ VERIFICATION — a TOOL-USING reviewer did run in the end, and it recomputed the arithmetic
+itself.** The route matters, so it is recorded in full. Two dispatches had died on the gateway's
+multi-turn loop (§I65 records the signatures), so the claims were split and re-dispatched as smaller
+children told to **write one script that loads a compact raw-row extract and prints only the
+aggregates** — never to read the 255 KB artifact. That shape worked:
+
+- **`deleg_e9bd91ca` task 1/2, `openai/gpt-oss-20b`, 6 API calls, 141 s — ALL FIVE CONFIRMED, and
+  "None" for what it could not check:** **C1** counts `(3489, 888, 133, 133)`; **C2** the
+  SQLite↔collection cross-check `(888, 888, 0)`; **C3** **the entire 18-cell grid recomputed from the
+  rows and matching every expected value**; **C4** `0.815136` vs `0.8151` at 6 dp and `1.000000` vs
+  `1.0000`; **C9** `nre=0 rows: 0`, `nr=0 rows: 0`, `null cells: 0`. **This is independent
+  verification of the grid — not the author's arithmetic.**
+- The sibling carrying **C5–C8** died on the same `Unknown role: assistant<|channel|>commentary`
+  corruption and was re-dispatched (`deleg_311dcc5c`). Until it returns: **C5 (paired deltas) and C6
+  (histogram) rest on the mechanical re-derivation** below; **C8 (the method is exact) is confirmed by
+  the single-turn reviewer**; **C7 (the refutation) rests on the artifact's own per-query cells**,
+  which are unambiguous.
+- **Mechanical, and labelled as author-checking-author:** an independently written aggregation
+  reproduces every summary value from the per-query array (grid, all paired deltas, the histogram, the
+  counts — 0 mismatches), and the probe re-run after its last edit is **byte-identical**
+  (`038e12ba…`). Recorded as mechanical evidence, not as a second opinion.
+
+⚠️ **One earlier reviewer's C7 evidence was sloppy and is NOT what the entry rests on**: it wrote
 `gold-004,013,035,052,064,088 have >0; 078,088 have 0`, double-listing `gold-088` and getting the
-split wrong in both directions. The per-query cells are unambiguous — **5 at 1.0, 2 partial, 1 at
-0.0** — and the entry quotes those, not the reviewer's paraphrase.
+split wrong in both directions. The per-query cells give **5 at 1.0, 2 partial, 1 at 0.0** — and the
+re-dispatch brief now demands the three counts separately rather than a single rounded number.
 
 **Register against:** §I65 (the A/B whose null this explains, and whose hypothesis it refutes), §I61
 (the mechanism), §I60 (the ANN loss excluded here by construction), §I58 (the ceiling rule), §I56 (the
