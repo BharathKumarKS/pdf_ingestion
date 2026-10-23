@@ -1,0 +1,1123 @@
+{
+  "meta": {
+    "generated_by": "logs/p1/step10/reranker_payload_probe.py",
+    "model": "BAAI/bge-reranker-v2-m3",
+    "n_queries": 133,
+    "no_llm_calls": true,
+    "qdrant_collection": "knowledge_base_v2",
+    "reranker_fetch_k": 100,
+    "reranker_top_k": 20,
+    "url": "http://10.0.10.70:8123/rerank/v1/rank",
+    "what": "\u00a7I55 \u2014 the reranker's payload-acceptance rate on the real v2 pools"
+  },
+  "queries": [
+    {
+      "id": "gold-003",
+      "max_doc_chars": 1560,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 47358
+    },
+    {
+      "id": "gold-004",
+      "max_doc_chars": 2949,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 500,
+      "total_chars": 50773
+    },
+    {
+      "id": "gold-005",
+      "max_doc_chars": 1677,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 49890
+    },
+    {
+      "id": "gold-008",
+      "max_doc_chars": 2213,
+      "n_docs": 88,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 59893
+    },
+    {
+      "id": "gold-009",
+      "max_doc_chars": 2345,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 58671
+    },
+    {
+      "id": "gold-010",
+      "max_doc_chars": 1288,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 47065
+    },
+    {
+      "id": "gold-011",
+      "max_doc_chars": 1289,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 50767
+    },
+    {
+      "id": "gold-013",
+      "max_doc_chars": 1296,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 51349
+    },
+    {
+      "id": "gold-014",
+      "max_doc_chars": 2065,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 62276
+    },
+    {
+      "id": "gold-015",
+      "max_doc_chars": 2345,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 55661
+    },
+    {
+      "id": "gold-016",
+      "max_doc_chars": 1111,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 40702
+    },
+    {
+      "id": "gold-017",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 66165
+    },
+    {
+      "id": "gold-019",
+      "max_doc_chars": 1311,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 47481
+    },
+    {
+      "id": "gold-021",
+      "max_doc_chars": 2065,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 54981
+    },
+    {
+      "id": "gold-022",
+      "max_doc_chars": 1289,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 45404
+    },
+    {
+      "id": "gold-023",
+      "max_doc_chars": 1652,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 56009
+    },
+    {
+      "id": "gold-024",
+      "max_doc_chars": 2261,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 53248
+    },
+    {
+      "id": "gold-025",
+      "max_doc_chars": 2345,
+      "n_docs": 87,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 56664
+    },
+    {
+      "id": "gold-026",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 61269
+    },
+    {
+      "id": "gold-027",
+      "max_doc_chars": 2213,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 58584
+    },
+    {
+      "id": "gold-028",
+      "max_doc_chars": 1387,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 55803
+    },
+    {
+      "id": "gold-029",
+      "max_doc_chars": 1570,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 47066
+    },
+    {
+      "id": "gold-030",
+      "max_doc_chars": 1338,
+      "n_docs": 97,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 56844
+    },
+    {
+      "id": "gold-031",
+      "max_doc_chars": 1634,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 61561
+    },
+    {
+      "id": "gold-032",
+      "max_doc_chars": 1634,
+      "n_docs": 84,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 57836
+    },
+    {
+      "id": "gold-033",
+      "max_doc_chars": 1701,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 62377
+    },
+    {
+      "id": "gold-034",
+      "max_doc_chars": 1701,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 60273
+    },
+    {
+      "id": "gold-035",
+      "max_doc_chars": 1565,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 45833
+    },
+    {
+      "id": "gold-036",
+      "max_doc_chars": 1368,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 42320
+    },
+    {
+      "id": "gold-037",
+      "max_doc_chars": 1701,
+      "n_docs": 77,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 51754
+    },
+    {
+      "id": "gold-038",
+      "max_doc_chars": 1701,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 63013
+    },
+    {
+      "id": "gold-039",
+      "max_doc_chars": 1662,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 46077
+    },
+    {
+      "id": "gold-040",
+      "max_doc_chars": 1701,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 49119
+    },
+    {
+      "id": "gold-041",
+      "max_doc_chars": 1570,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 52039
+    },
+    {
+      "id": "gold-042",
+      "max_doc_chars": 1571,
+      "n_docs": 99,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 62882
+    },
+    {
+      "id": "gold-043",
+      "max_doc_chars": 1754,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 68923
+    },
+    {
+      "id": "gold-044",
+      "max_doc_chars": 1237,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 44056
+    },
+    {
+      "id": "gold-045",
+      "max_doc_chars": 1701,
+      "n_docs": 85,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 57186
+    },
+    {
+      "id": "gold-046",
+      "max_doc_chars": 1701,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 47182
+    },
+    {
+      "id": "gold-047",
+      "max_doc_chars": 1804,
+      "n_docs": 98,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 57496
+    },
+    {
+      "id": "gold-048",
+      "max_doc_chars": 1571,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 57907
+    },
+    {
+      "id": "gold-049",
+      "max_doc_chars": 1464,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 57860
+    },
+    {
+      "id": "gold-050",
+      "max_doc_chars": 2261,
+      "n_docs": 96,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 59365
+    },
+    {
+      "id": "gold-051",
+      "max_doc_chars": 2345,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 65784
+    },
+    {
+      "id": "gold-052",
+      "max_doc_chars": 1634,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 48873
+    },
+    {
+      "id": "gold-053",
+      "max_doc_chars": 1884,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 51091
+    },
+    {
+      "id": "gold-054",
+      "max_doc_chars": 1884,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 53057
+    },
+    {
+      "id": "gold-057",
+      "max_doc_chars": 1288,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 49779
+    },
+    {
+      "id": "gold-058",
+      "max_doc_chars": 1527,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 51534
+    },
+    {
+      "id": "gold-059",
+      "max_doc_chars": 2261,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 54400
+    },
+    {
+      "id": "gold-060",
+      "max_doc_chars": 2261,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 69414
+    },
+    {
+      "id": "gold-061",
+      "max_doc_chars": 2065,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 67971
+    },
+    {
+      "id": "gold-062",
+      "max_doc_chars": 2261,
+      "n_docs": 86,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 59130
+    },
+    {
+      "id": "gold-063",
+      "max_doc_chars": 2345,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 61697
+    },
+    {
+      "id": "gold-064",
+      "max_doc_chars": 1418,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 52358
+    },
+    {
+      "id": "gold-065",
+      "max_doc_chars": 2261,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 58898
+    },
+    {
+      "id": "gold-067",
+      "max_doc_chars": 1639,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 50383
+    },
+    {
+      "id": "gold-068",
+      "max_doc_chars": 1639,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 50438
+    },
+    {
+      "id": "gold-069",
+      "max_doc_chars": 1662,
+      "n_docs": 81,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 47501
+    },
+    {
+      "id": "gold-070",
+      "max_doc_chars": 1662,
+      "n_docs": 80,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 49776
+    },
+    {
+      "id": "gold-071",
+      "max_doc_chars": 1287,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 51328
+    },
+    {
+      "id": "gold-072",
+      "max_doc_chars": 2345,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 61636
+    },
+    {
+      "id": "gold-073",
+      "max_doc_chars": 1701,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 57199
+    },
+    {
+      "id": "gold-074",
+      "max_doc_chars": 1533,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 59134
+    },
+    {
+      "id": "gold-075",
+      "max_doc_chars": 1701,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 50925
+    },
+    {
+      "id": "gold-076",
+      "max_doc_chars": 1661,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 51327
+    },
+    {
+      "id": "gold-077",
+      "max_doc_chars": 1837,
+      "n_docs": 100,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 59445
+    },
+    {
+      "id": "gold-078",
+      "max_doc_chars": 1227,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 45734
+    },
+    {
+      "id": "gold-079",
+      "max_doc_chars": 1701,
+      "n_docs": 92,
+      "query_type": "factual",
+      "status": 200,
+      "total_chars": 54544
+    },
+    {
+      "id": "gold-080",
+      "max_doc_chars": 1669,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 59458
+    },
+    {
+      "id": "gold-081",
+      "max_doc_chars": 1570,
+      "n_docs": 67,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 42303
+    },
+    {
+      "id": "gold-082",
+      "max_doc_chars": 2261,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 68392
+    },
+    {
+      "id": "gold-083",
+      "max_doc_chars": 1698,
+      "n_docs": 83,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 59844
+    },
+    {
+      "id": "gold-084",
+      "max_doc_chars": 1722,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 72341
+    },
+    {
+      "id": "gold-085",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 61813
+    },
+    {
+      "id": "gold-086",
+      "max_doc_chars": 2261,
+      "n_docs": 96,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 68473
+    },
+    {
+      "id": "gold-087",
+      "max_doc_chars": 1634,
+      "n_docs": 90,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 58692
+    },
+    {
+      "id": "gold-088",
+      "max_doc_chars": 1746,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 63993
+    },
+    {
+      "id": "gold-089",
+      "max_doc_chars": 2345,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 72514
+    },
+    {
+      "id": "gold-090",
+      "max_doc_chars": 1688,
+      "n_docs": 78,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 50018
+    },
+    {
+      "id": "gold-091",
+      "max_doc_chars": 1748,
+      "n_docs": 89,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 57777
+    },
+    {
+      "id": "gold-092",
+      "max_doc_chars": 1701,
+      "n_docs": 96,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 63319
+    },
+    {
+      "id": "gold-093",
+      "max_doc_chars": 2261,
+      "n_docs": 80,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 55945
+    },
+    {
+      "id": "gold-094",
+      "max_doc_chars": 1614,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 59354
+    },
+    {
+      "id": "gold-095",
+      "max_doc_chars": 2261,
+      "n_docs": 95,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 62490
+    },
+    {
+      "id": "gold-096",
+      "max_doc_chars": 2065,
+      "n_docs": 87,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 58264
+    },
+    {
+      "id": "gold-097",
+      "max_doc_chars": 2261,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 67842
+    },
+    {
+      "id": "gold-098",
+      "max_doc_chars": 1722,
+      "n_docs": 84,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 59331
+    },
+    {
+      "id": "gold-099",
+      "max_doc_chars": 1212,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 48736
+    },
+    {
+      "id": "gold-100",
+      "max_doc_chars": 2345,
+      "n_docs": 90,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 65605
+    },
+    {
+      "id": "gold-101",
+      "max_doc_chars": 2345,
+      "n_docs": 94,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 62322
+    },
+    {
+      "id": "gold-102",
+      "max_doc_chars": 2345,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 74317
+    },
+    {
+      "id": "gold-103",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "multihop",
+      "status": 200,
+      "total_chars": 70471
+    },
+    {
+      "id": "ovw-001",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 70302
+    },
+    {
+      "id": "ovw-002",
+      "max_doc_chars": 2345,
+      "n_docs": 92,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 68395
+    },
+    {
+      "id": "ovw-003",
+      "max_doc_chars": 1507,
+      "n_docs": 90,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 61914
+    },
+    {
+      "id": "ovw-004",
+      "max_doc_chars": 2312,
+      "n_docs": 94,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 65261
+    },
+    {
+      "id": "ovw-005",
+      "max_doc_chars": 2312,
+      "n_docs": 99,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 68868
+    },
+    {
+      "id": "ovw-006",
+      "max_doc_chars": 2261,
+      "n_docs": 93,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 68955
+    },
+    {
+      "id": "ovw-007",
+      "max_doc_chars": 2312,
+      "n_docs": 90,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 69813
+    },
+    {
+      "id": "ovw-008",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 73084
+    },
+    {
+      "id": "ovw-009",
+      "max_doc_chars": 1722,
+      "n_docs": 81,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 63620
+    },
+    {
+      "id": "ovw-010",
+      "max_doc_chars": 1614,
+      "n_docs": 63,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 43279
+    },
+    {
+      "id": "ovw-011",
+      "max_doc_chars": 2345,
+      "n_docs": 86,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 61969
+    },
+    {
+      "id": "ovw-012",
+      "max_doc_chars": 2312,
+      "n_docs": 97,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 69730
+    },
+    {
+      "id": "ovw-013",
+      "max_doc_chars": 1701,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 64959
+    },
+    {
+      "id": "ovw-014",
+      "max_doc_chars": 1701,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 68350
+    },
+    {
+      "id": "ovw-015",
+      "max_doc_chars": 1754,
+      "n_docs": 82,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 60334
+    },
+    {
+      "id": "ovw-016",
+      "max_doc_chars": 2312,
+      "n_docs": 90,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 70894
+    },
+    {
+      "id": "ovw-017",
+      "max_doc_chars": 2065,
+      "n_docs": 97,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 73148
+    },
+    {
+      "id": "ovw-019",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 71554
+    },
+    {
+      "id": "ovw-020",
+      "max_doc_chars": 2261,
+      "n_docs": 85,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 67819
+    },
+    {
+      "id": "ovw-024",
+      "max_doc_chars": 1507,
+      "n_docs": 87,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 59934
+    },
+    {
+      "id": "ovw-027",
+      "max_doc_chars": 1614,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 69770
+    },
+    {
+      "id": "ovw-029",
+      "max_doc_chars": 2312,
+      "n_docs": 72,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 50272
+    },
+    {
+      "id": "ovw-030",
+      "max_doc_chars": 2261,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 69070
+    },
+    {
+      "id": "ovw-031",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 63635
+    },
+    {
+      "id": "ovw-034",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 73561
+    },
+    {
+      "id": "ovw-035",
+      "max_doc_chars": 1614,
+      "n_docs": 88,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 62902
+    },
+    {
+      "id": "ovw-036",
+      "max_doc_chars": 1614,
+      "n_docs": 77,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 56355
+    },
+    {
+      "id": "ovw-037",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 69169
+    },
+    {
+      "id": "ovw-038",
+      "max_doc_chars": 2065,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 65411
+    },
+    {
+      "id": "ovw-039",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 70122
+    },
+    {
+      "id": "ovw-040",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 67736
+    },
+    {
+      "id": "ovw-041",
+      "max_doc_chars": 1722,
+      "n_docs": 95,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 65299
+    },
+    {
+      "id": "ovw-042",
+      "max_doc_chars": 2312,
+      "n_docs": 90,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 65567
+    },
+    {
+      "id": "ovw-043",
+      "max_doc_chars": 2312,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 72307
+    },
+    {
+      "id": "ovw-044",
+      "max_doc_chars": 1607,
+      "n_docs": 100,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 64309
+    },
+    {
+      "id": "ovw-045",
+      "max_doc_chars": 1688,
+      "n_docs": 80,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 62395
+    },
+    {
+      "id": "ovw-046",
+      "max_doc_chars": 2312,
+      "n_docs": 87,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 66359
+    },
+    {
+      "id": "ovw-047",
+      "max_doc_chars": 2345,
+      "n_docs": 95,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 68287
+    },
+    {
+      "id": "ovw-048",
+      "max_doc_chars": 2261,
+      "n_docs": 99,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 78187
+    },
+    {
+      "id": "ovw-049",
+      "max_doc_chars": 2261,
+      "n_docs": 93,
+      "query_type": "overview",
+      "status": 200,
+      "total_chars": 69032
+    }
+  ],
+  "summary": {
+    "accepted": 132,
+    "by_type": {
+      "factual": {
+        "n": 53,
+        "rejected": 1
+      },
+      "multihop": {
+        "n": 40,
+        "rejected": 0
+      },
+      "overview": {
+        "n": 40,
+        "rejected": 0
+      }
+    },
+    "n_docs": {
+      "accepted": {
+        "max": 100,
+        "median": 100.0,
+        "min": 63
+      },
+      "rejected": {
+        "max": 100,
+        "median": 100,
+        "min": 100
+      }
+    },
+    "rejected": 1,
+    "rejected_share": 0.0075,
+    "total": 133,
+    "total_chars": {
+      "accepted": {
+        "max": 78187,
+        "median": 59651.0,
+        "min": 40702
+      },
+      "rejected": {
+        "max": 50773,
+        "median": 50773,
+        "min": 50773
+      }
+    }
+  }
+}

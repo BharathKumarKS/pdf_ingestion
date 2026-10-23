@@ -213,8 +213,15 @@ def run_retrieval(
 
     hits_above = [h for h in hits if h.get("score", 1.0) >= threshold]
 
+    # §I55 — the cluster reranker SWALLOWS its failures and returns the pool UNRANKED while the
+    # artifact still records `reranker.enabled=true`. It counts them (`reranker.fallbacks`), so a
+    # delta across this one call tells whether THIS query's top-k is unranked. That is the fact
+    # the run-integrity block and the artifact's `reranked_metrics_valid` flag are built on.
+    reranker_fallback = False
     if cfg.reranker_enabled and hits:
+        _fallbacks_before = getattr(reranker, "fallbacks", 0)
         reranked = reranker.rerank(rerank_query, hits, top_k=cfg.reranker_top_k)
+        reranker_fallback = getattr(reranker, "fallbacks", 0) > _fallbacks_before
     else:
         reranked = hits[: cfg.reranker_top_k]
 
@@ -223,6 +230,7 @@ def run_retrieval(
         "hits": hits,
         "hits_above": hits_above,
         "reranked": reranked,
+        "reranker_fallback": reranker_fallback,
     }
 
 
@@ -701,6 +709,9 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
         "metrics":     {},
         "generation":  {},
         "top_chunks":  [],
+        # §I55 — True when the cross-encoder fell back for this query, so its top-k is the
+        # UNRANKED retrieval order. Surfaced in the artifact rather than left in a log line.
+        "reranker_fallback": False,
     }
 
     # Visual queries use the ColPali MaxSim lane, not text retrieval.
@@ -736,6 +747,9 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
     except Exception as exc:
         result["error"] = str(exc)
         return result
+
+    # §I55 — carry the reranker's swallow up to the artifact.
+    result["reranker_fallback"] = bool(retrieval.get("reranker_fallback", False))
 
     # Top chunks for inspection
     result["top_chunks"] = [
@@ -1013,6 +1027,15 @@ def print_report(aggregated: dict, cfg):
 
 # ── CLI ────────────────────────────────────────────────────────────────────────
 
+def collect_reranker_fallbacks(results: list[dict]) -> list:
+    """§I55 — ids of queries whose cross-encoder fell back, so their top-k is UNRANKED.
+
+    A run-level fact the artifact must carry: `reranker.enabled=true` alone says nothing about
+    whether the reported Recall@top_k / NDCG@top_k were computed on a RERANKED order.
+    """
+    return [r.get("id") for r in results if r.get("reranker_fallback")]
+
+
 def parse_args():
     p = argparse.ArgumentParser(
         description="Evaluate Synapse RAG pipeline against labeled query set"
@@ -1125,6 +1148,12 @@ def main():
     aggregated = aggregate_metrics(results, cfg)
     print_report(aggregated, cfg)
 
+    # §I55 — the reranker's SWALLOWED failures. `ClusterCrossEncoderReranker.rerank` catches every
+    # exception and returns the pool UNRANKED, and before this the artifact recorded
+    # `reranker.enabled=true` with no trace. Counted per query in `run_retrieval`; surfaced here.
+    reranker_fallback_ids = collect_reranker_fallbacks(results)
+    n_reranker_fallbacks = len(reranker_fallback_ids)
+
     # Run integrity — what actually ran and what failed. Without this a dead judge
     # or generator is invisible: the columns simply read "—" and the artifact looks
     # complete. (Every artifact before this one had that property.)
@@ -1155,6 +1184,17 @@ def main():
             parts.append(f"- ⚠️ **Judge last error:** `{judge_stats.get('last_error', '')}`")
         integrity_lines = "\n".join(parts)
 
+    # §I55 — the reranker's fallback, stated where a reader of the artifact will see it. The
+    # artifact otherwise says only `reranker.enabled=true`, which is the whole defect.
+    if n_reranker_fallbacks:
+        shown = ", ".join(str(i) for i in reranker_fallback_ids[:10])
+        integrity_lines += (
+            f"\n- ⚠️ **Reranker fell back on {n_reranker_fallbacks}/{n} queries** ({shown}"
+            f"{', …' if n_reranker_fallbacks > 10 else ''}) — the cross-encoder call failed and "
+            f"their top-{cfg.reranker_top_k} is the **UNRANKED** retrieval order. "
+            f"Recall@top_k / NDCG@top_k are **not** reranked metrics for those queries (§I55)."
+        )
+
     # Save results — single .md file (summary + per-query tables + config)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -1171,6 +1211,8 @@ def main():
         f"- **Embedder:** {cfg.embedding_model}",
         f"- **SPLADE:** {cfg.splade_enabled}",
         f"- **Reranker:** {cfg.reranker_enabled}" + (f" ({cfg.reranker_model})" if cfg.reranker_enabled else ""),
+        f"- **Reranker fallbacks:** {n_reranker_fallbacks} "
+        f"({'reranked metrics valid' if n_reranker_fallbacks == 0 else 'RERANKED METRICS INVALID — see Run integrity'})",
         f"- **Min content page:** {cfg.min_content_page}",
         f"- **Score threshold:** {args.score_threshold}",
         f"- **Judge:** {args.judge_model if args.judge_backend != 'skip' else 'none'}",
@@ -1179,6 +1221,11 @@ def main():
 
     # The snapshot was built but never written — the artifact could not say which
     # lanes were live. It is exactly the "which prerequisites were active" record.
+    # §I55 — and the reranker's swallow is part of that record, not a log line.
+    config_snapshot["reranker"]["fallbacks"] = n_reranker_fallbacks
+    config_snapshot["reranker"]["queries_with_fallback"] = reranker_fallback_ids
+    config_snapshot["reranker"]["reranked_metrics_valid"] = n_reranker_fallbacks == 0
+    config_snapshot["reranker"]["last_error"] = getattr(reranker, "last_fallback", None)
     snapshot_json = json.dumps(config_snapshot, indent=2, sort_keys=True)
 
     out_path.write_text(
@@ -1210,6 +1257,20 @@ def main():
         "to track lift.[/]"
     )
 
+    # §I55 — REFUSE to certify a reranked metric when the reranker fell back. The artifact is
+    # still written (it is the evidence), its flag says the metric is not a reranked one, and the
+    # non-zero exit is what a harness notices. Before this the run exited 0 with
+    # `reranker.enabled=true` and an unranked top-20.
+    if n_reranker_fallbacks:
+        console.print(
+            f"\n[bold red]⚠️  RERANKER FELL BACK on {n_reranker_fallbacks}/{n} queries[/bold red] — "
+            f"their top-{cfg.reranker_top_k} lists are UNRANKED, so Recall@top_k / NDCG@top_k are "
+            f"NOT reranked metrics for them. Artifact: "
+            f"`reranker.reranked_metrics_valid=false` (§I55)."
+        )
+        return 3
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

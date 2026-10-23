@@ -66,11 +66,23 @@ class ClusterCrossEncoderReranker:
     cluster 2026-10-06: with `top_n=2` over 6 documents the server returned all 6 (the key
     is ignored), while `top_k=2` returned 2. Harmless here only because `rerank()` below
     slices to `top_k` itself; sending `top_n` just moves every candidate over the wire.
+
+    ⚠️ **This class SWALLOWS its own failures** (§I55): `rerank()` catches every exception and
+    returns the pool **unranked**, so any metric that depends on the reranked ORDER (R@20, NDCG)
+    is computed on the retrieval order with no trace. The fallback is now **counted**
+    (`self.fallbacks`) and the last error kept (`self.last_fallback`), so a caller can see it and
+    refuse to certify a reranked metric. The counter is per-instance and `get_reranker()` is a
+    singleton, so a caller detects a fallback for ONE query by comparing the counter before and
+    after its `rerank()` call (`scripts/evaluate_rag.py:run_retrieval`).
     """
 
     def __init__(self, url: str, model: str) -> None:
         self._url   = url
         self._model = model
+        # §I55 — the swallow count. Never reset implicitly: a run's total is `fallbacks`, and a
+        # per-query delta is what tells one query's call apart from the run's.
+        self.fallbacks: int = 0
+        self.last_fallback: str | None = None
         logger.info("ClusterCrossEncoderReranker: {} @ {}", model, url)
 
     def rerank(self, query: str, chunks: list[dict], top_k: int) -> list[dict]:
@@ -123,6 +135,19 @@ class ClusterCrossEncoderReranker:
                 ranked = [chunks[i] for i, _ in pairs[:top_k]]
                 top_score = pairs[0][1] if pairs else 0
 
+            # §I55, SECOND PATH — a 200 that parses CLEANLY and yields an EMPTY ranking. Measured
+            # 2026-10-22 (probe, session 10): `{"results": []}` and `{}` (no `results` key) both
+            # return **0 chunks**, move no counter, and log nothing above DEBUG — so the query is
+            # averaged in as a TOTAL MISS while the artifact still says
+            # `reranked_metrics_valid: true`. Same class as the swallowed exception below and
+            # strictly worse: it returns *nothing* rather than the unranked pool, so every metric
+            # for that query is 0 by construction. Raised into the SAME handler — one counter, one
+            # log line, one disposition. (A pool of 100 documents cannot legitimately rank 0.)
+            if not ranked:
+                raise ValueError(
+                    f"reranker returned an EMPTY ranking for a {len(chunks)}-document pool"
+                )
+
             logger.debug(
                 "Cluster reranker: top score {:.3f} (kept {}/{})",
                 top_score, len(ranked), len(chunks),
@@ -132,11 +157,15 @@ class ClusterCrossEncoderReranker:
             # LOUD on purpose: this returns UNRANKED results. Downstream metrics (Precision@k,
             # NDCG@k) are meaningless when this fires, and the artifact would otherwise still
             # record reranker.enabled=true. Do not downgrade this to debug/warning.
+            # §I55 — COUNTED as well as logged: a log line nobody reads is not a control, and
+            # `evaluate_rag.py` reads this counter to refuse to certify a reranked metric.
+            self.fallbacks += 1
+            self.last_fallback = f"{type(exc).__name__}: {exc}"
             logger.error(
                 "RERANKER DISABLED — cluster rerank call to {} failed ({}: {}). "
                 "Returning UNRANKED results in original retrieval order; "
-                "Precision@k/NDCG@k will be measured on unranked output.",
-                self._url, type(exc).__name__, exc,
+                "Precision@k/NDCG@k will be measured on unranked output. [fallback #{}]",
+                self._url, type(exc).__name__, exc, self.fallbacks,
             )
             return chunks[:top_k]
 
