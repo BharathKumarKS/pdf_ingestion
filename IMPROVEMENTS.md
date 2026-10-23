@@ -4980,6 +4980,17 @@ revisiting with a live-vs-gated comparison rather than assumed.
 visual excluded (§3, matching §D12's effective n=133), a different calendar day, and the §D12 arm's
 labels having been built against the deployed index (§D4/§D6).
 
+**✅ INDEPENDENT VERIFIER RAN 2026-10-23 — `openai/gpt-oss-20b`, `deleg_4bdde8d0`,
+`status=completed`: 7/7 CONFIRMED, no defects.** Unlike the two cheap verdicts earlier this session
+(§I57's 4 calls / 19 s, the harness's 8 calls / 32 s), this one was substantive — **15 API calls,
+104.6 s** — and it did the work the claims asked for rather than agreeing: it **counted 133
+answerable metrics rows and 34 negatives out of `results` itself**, and **recomputed every overall
+mean from `results`**, matching the `aggregated` block exactly (R@100 0.6737, R@20 0.4250, Hit@20
+0.9023, Ctx.Prec 0.2421, MRR 0.7059, NDCG@20 0.5050, Faith 0.6368, Ans.Rel 0.8521, Citation 1.000).
+It also confirmed gold-004 carries `reranker_fallback=true` with `recall_at_20 0.0`, and listed the
+confounds it could see directly in the two artifacts (collection, embedding dimensionality, and the
+per-metric deltas). **E5 therefore has a second, independent re-derivation — not just the author's.**
+
 **Register against:** §I57 (the question this answers), §I58 (the ceiling normalisation that carries
 the finding), §I56 (the DA-lane effect this is consistent with), §I55 (the fallback it reports),
 §I59 (the masked ordering loss), §I63 (the embedder that is the larger half of it).

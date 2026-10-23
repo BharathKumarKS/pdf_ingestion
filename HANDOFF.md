@@ -49,8 +49,11 @@
 > comparison is **descriptive, not causal** (a different run on a different day; the six §I57
 > confounds plus this run's own).
 >
-> ⚠️ **PHASE E'S ARTIFACT VERIFIER IS DISPATCHED, NOT RETURNED** — `deleg_4bdde8d0` (guards E1–E5,
-> the headline, and the confound labelling). ✅ The **harness + pre-registration** were verified
+> ✅ **PHASE E'S ARTIFACT VERIFIER RETURNED — `deleg_4bdde8d0`, 7/7 CONFIRMED, no defects.** Unlike
+> the session's two cheap verdicts, this one was substantive (**15 API calls, 104.6 s**): it
+> **counted 133 metrics rows / 34 negatives out of `results` itself** and **recomputed every overall
+> mean from `results`**, matching the `aggregated` block exactly — so guard **E5 has an independent
+> re-derivation, not just the author's**. ✅ The **harness + pre-registration** were verified
 > 2026-10-22 (`deleg_9533b2a5`, 7/7 CONFIRMED, no defects) — a cheap verdict (8 API calls, 32 s)
 > with misattributed line numbers, so **not banked**: C7 was re-proven by the author
 > (`set -euo pipefail` + `tee` propagates a non-zero exit; the control without `pipefail` swallows
