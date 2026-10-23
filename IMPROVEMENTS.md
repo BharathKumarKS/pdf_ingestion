@@ -4972,9 +4972,11 @@ only comparable run — **a different run on a different day, so this is descrip
 ⚠️ **A consistency worth recording, and NOT an attribution.** §3d (retrieval-only, **dead** DA lane,
 **no** RAPTOR) measured NEW R@20 **0.4524**; Phase E (live DA lane **and** RAPTOR) measures **0.4250**
 — a fall of **−0.0274**, very close to §I56's independently measured DA-lane effect on top-20 R@20
-(**−0.0262**). Two differences arrived at once, so this is **consistent with** §I56 and **does not
-attribute** the drop to the DA lane; it is the reason §I56's "keep as-is" disposition is worth
-revisiting with a live-vs-gated comparison rather than assumed.
+(**−0.0262**). ⚠️ **But several things changed at once between the two runs, not two** — RAPTOR was
+added, the DA lane went live, the **graph lane** went live for multihop, and the §G3 merge landed
+(§I57's own list). So this is **consistent with** §I56 and **does not attribute** the drop to the DA
+lane; it is the reason §I56's "keep as-is" disposition is worth settling with a **one-variable**
+comparison (DA live vs DA off, everything else pinned) rather than left assumed.
 
 **Confounds, all recorded (this is not a clean A/B):** the six §I57 lists, plus this run's own —
 visual excluded (§3, matching §D12's effective n=133), a different calendar day, and the §D12 arm's
