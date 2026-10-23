@@ -4,6 +4,52 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
+> **Last updated: 2026-10-22, session 11. ✅ SESSION 10'S VERIFIED WORK IS COMMITTED; §I57's DURABLE
+> FIX LANDED; ▶ PHASE E IS RUNNING.** Read this block first, then session 10's below.
+>
+> ## ▶ SESSION 11 — WHAT HAPPENED, AND WHAT IS IN FLIGHT
+>
+> **1. ✅ SESSION 10'S VERIFIED WORK IS COMMITTED — 4 commits, working tree clean.** `5ac90b5`
+> §I53a · `6f17abe` §I55 · `9c99f88` §I58 (the three label re-points) · `75ac3f2` §I63 + the
+> session-10 measurement register (§I56/§I57/§I59/§I60/§I62) and the two plans. **Nothing pushed.**
+>
+> **2. ✅ §I57's DURABLE FIX — `evaluate_rag.py` now emits a per-query JSON twin.** NEW
+> `write_run_artifacts` writes the `.md` (content unchanged, still the regression baseline) **and**
+> a `.json` carrying `config_snapshot`, an `integrity` block, `aggregated` and the per-query
+> `results` — so a cross-run comparison pairs by query id instead of parsing markdown (which is
+> the only reason `compare_old_vs_new_index.py` had to). `_json_default` converts numpy scalars
+> and **re-raises** for anything else (loud, never silently stringified). 3 new tests in
+> `tests/test_eval_integrity.py` (20 there). **Three guards proven to discriminate by mutation** —
+> drop the json write → 3 fail; neuter the encoder → 1; make unknown types silent → 1; each on its
+> own assertion, tree restored byte-identical. ⚠️ **Verifier `deleg_e9e29bc5` returned `completed`,
+> CONFIRMED on C1–C3**, but it was **cheap (19 s, 3 reads, no test run) with pack-relative line
+> numbers → NOT banked**; the mutation runs are the evidence. ⚠️ **NOT COMMITTED — full verdict
+> pending.**
+>
+> **3. ▶ PHASE E IS RUNNING (owner decision, this session).** The authoritative FULL
+> `evaluate_rag.py` run on `knowledge_base_v2` — **the run that has never happened**, and the only
+> thing that can answer "is the new system better?" (§I57). Pre-registered:
+> `.hermes/plans/2026-10-22-p1-phaseE-preregistration.md`. Harness
+> `logs/p1/step10/run_phaseE.sh` (asserts the QDRANT override **and** a cross-family judge before
+> spending anything); log `logs/p1/step10/phaseE_run_<ts>.txt`; artifact
+> `data/eval_results/p1-phaseE-v2_<ts>.{md,json}`. **tmux session `phaseE`.** 200 queries — 133 text
+> metrics rows + 33 visual skipped + 34 negatives; `--skip-visual` matches §D12's `n=133`; judge
+> `Qwen/Qwen3-VL-8B-Instruct`, cross-family from the generator `openai/gpt-oss-20b`. A 3-query
+> smoke test passed end-to-end (all lanes live, judge live, twin written). **~1–2 h.**
+> ⚠️ **gold-004 hit the §I55 reranker fallback at 21:27:44** — the known deterministic failure, so
+> the run will **`exit 3`** with `reranked_metrics_valid=false` and gold-004 named. **That is the
+> guard working, not a fault.**
+> ⚠️ **PHASE E STILL NEEDS ITS VERIFIER** — dispatch it once the artifact lands; the guards are
+> E1–E5 in the pre-registration's §7.
+>
+> **4. ✅ OWNER DECISIONS TAKEN 2026-10-22 (session 11):** **V5 is SIGNED OFF as written** (level 2
+> / res 0.5 primary, equal 2-slot budget, C/D only if the primary resolves, null ⇒
+> recorded-and-not-wired); **§I56 keeps the DA lane AS-IS** (no change); **Phase E runs next.**
+>
+> **5. ⚠️ STILL OPEN, UNCHANGED:** §G5/§I2 (`hop_distance` is a constant 0); §I55's
+> exclude-from-metrics follow-on; §G2's V5 **build** (now signed off, not built); §I58's caveat that
+> `gold-003`'s label is a TOC line that will die at the next re-ingest.
+>
 > **Last updated: 2026-10-22, session 10. ✅ THE CROSS-EMBEDDER EXPERIMENT RAN — ALL SIX VERIFIERS PASS.
 > §I59's Effect 2 is 68 % ATTRIBUTED to the embedder (a residual of +0.0648 is still unattributed —
 > §I63). §I55 IS FIXED and verified. Read `IMPROVEMENTS.md` §I63 first, then §I55 and §I53a.**
