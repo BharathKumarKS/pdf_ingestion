@@ -4,8 +4,128 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
+> **Last updated: 2026-10-23, session 12. ✅ §I61'S PRE-REGISTERED A/B RAN — THE LEVER IS A NULL, AND
+> THE LOSS IS THE 100-SLOT FUSION, NOT THE PREFETCH. Read `IMPROVEMENTS.md` §I65 and §I66 first.**
+>
+> ## ▶ SESSION 12 — WHAT HAPPENED, AND WHAT IS NEXT
+>
+> **1. ✅ §I61's PRE-REGISTERED A/B RAN AND THE LEVER IS A NULL — `IMPROVEMENTS.md` §I65.** The
+> pre-registration (`.hermes/plans/2026-10-23-p1-i61-prefetch-limit-ab-preregistration.md`) was
+> **committed alone first (`e0fed5e`)** — that is what makes it a pre-registration. Four arms, one
+> variable (`cfg.dense_prefetch_limit`, a NEW config field; default 1000 = the shipped value), 133
+> queries, paired, on the product retrieval path, **HyDE off** so every arm shares one query vector:
+>
+> | arm | limit | R@20 |
+> |---|---|---|
+> | C control | 1000 | 0.431769 |
+> | T treatment | 2000 | 0.434590 — Δ **+0.0028**, CI [−0.0006, +0.0062] **UNRESOLVED** |
+> | S exact search | 3489 | 0.434849 — Δ **+0.0031**, CI [−0.0004, +0.0065] **UNRESOLVED** |
+> | N negative control | 1000 | **bit-exact vs C: 0 mismatches / 931 metrics, max_abs_diff 0.0** |
+>
+> W/L/T **6/2/125**; **Hit@20 identical to 4 dp in every arm**; every secondary metric and every
+> per-type cut UNRESOLVED. **The mechanism reproduced at full sample** (64d lane pool coverage 0.815136
+> @1000 → 0.960627 @2000 → 1.0000 @3489, vs §I61's 40-query screening 0.804127 / 0.971526 / 1.0000) —
+> so §I61 was right about the mechanism and the product endpoint still did not move. **Per the
+> pre-registered rule the change does NOT ship; §I61 is recorded measured-and-unresolved.** Power was
+> ample, not the limit (SD_d 0.020013 → required n for δ=0.05 is **1**; the effect is ~17× below δ).
+> ⚠️ **Not production numbers** (HyDE off by design) — quote the delta, not the absolute.
+>
+> **2. ✅ §I66 — THE LOSS IS THE 100-SLOT FUSION. `logs/p1/step10/rescore_cut_curve.{py,json}`.** A
+> direct (prefetch N × re-score cut L) ceiling, computed by **exact brute force at both dimensions**
+> (no ANN, no Qdrant scoring, no RRF/dedup/MMR), so it isolates the cut instead of confounding it. It
+> **reproduces §I65's mechanism arm exactly** (0.8151 at N=1000/L≥N vs M1's 0.815136; 1.0000 at
+> N=3489/L=3489) — different code path, same number, which is what makes the grid trustworthy. The
+> decomposition, of a query's reachable labelled pages:
+>
+> | stage | production (N=1000) | exact prefetch (N=3489) |
+> |---|---|---|
+> | 64d lane | 0.8151 | 1.0000 |
+> | → after the full-dim re-score cut (L=500) | 0.7478 | 0.8286 |
+> | → after the fusion (RRF + dedup + MMR to 100) | **0.6048** | **0.6071** |
+> | → after the cross-encoder to top-20 | 0.4318 | 0.4348 |
+>
+> ⚠️ **The session's own hypothesis was WRONG and the probe refuted it.** The re-score cut was named as
+> the prime suspect for the 8 queries whose pool held none of their labelled pages even at exact
+> prefetch; **5 of the 8 have ALL their labelled pages inside the L=500 candidate set and 2 more are
+> partially inside** (`gold-004`'s best labelled chunk ranks **127th of 3,489**, `gold-052`'s 470th)
+> — only `gold-078` (rank **1325**) is entirely lost. **So the loss is downstream of the cut.**
+> ⚠️ **And this explains the null mechanistically: at exact prefetch the fusion's own loss GROWS
+> (0.143 → 0.222).** Feeding the fusion more candidates does not grow the pool, because the fusion's
+> output width (`fetch_k` = 100) does not grow. **The binding constraint is the 100-slot fusion
+> output.** The cut is still a large *ceiling* lever at exact prefetch (L=1000 +0.0980, L=2000 +0.1486,
+> L=3489 +0.1714, all RESOLVED) — but a raised ceiling is not recall, and the fusion's 0.143–0.222 has
+> never been attributed between RRF, page dedup and MMR.
+>
+> **3. ⚠️ THE GOLD SET NEEDS NO PRUNING — the premise that "41 queries have answers out of bounds" is
+> not right.** `n_reachable == 0` on **0 of 133** queries: no query is unanswerable. **38 of 133** have
+> *at least one* label outside the window (98.51 % of all 3,631 labels are reachable), **30 of the 38
+> are overview** — a label-*size* artifact (§I58: overview averages 73.8 labels, so any single miss
+> caps the query). Dropping them would take n 133 → 95 for a bias **ceiling-normalisation already
+> removes**; and the §I65 null survives on the uncapped subset alone (n=95, ΔT−C +0.0036, CI
+> [−0.0012, +0.0083], UNRESOLVED). **§I58's repair list stands: re-point `gold-003` and optionally the
+> two ±1 queries — 1–3 queries, not 38.**
+>
+> **4. ▶ NEXT TASKS, IN ORDER.**
+> 1. **The DOWNSTREAM WIDTHS — the re-score cut L (500) and `fetch_k`/MMR (100). This is the lever
+>    §I66 points at, and it is the only one left with a measured ceiling.** Both are hardcoded in
+>    `store._qdrant_search` / `search_with_das`; make them settings as `dense_prefetch_limit` was, then
+>    run a **pre-registered A/B** on the product endpoint. Arms to pre-register: L ∈ {500, 1000, 2000}
+>    with the prefetch at 2000 (so the lane is not the cap), and `fetch_k`/MMR ∈ {100, 200}. Expected
+>    ceilings from §I66: L=500 → 0.8286, L=1000 → 0.9266, L=2000 → 0.9773 at exact prefetch.
+>    ⚠️ **Do not assume the ceiling becomes recall** — §I65 is the cautionary case.
+> 2. **§I56's DA lane — settle it with a ONE-VARIABLE test** (DA live vs DA off, everything else
+>    pinned). The owner's "keep as-is" stands; §I56 measured −0.0262 on top-20 R@20 and §I64 moved
+>    −0.0274 from §3d, consistent but **unattributed** (four things changed at once). ⚠️ **The DA lane
+>    enters the same fusion stage §I66 fingers**, so it is worth reading the two together.
+> 3. **The EMBEDDER SCREEN — owner decision this session: defer it, and do NOT force a fixed 64d.**
+>    Use **each model's own available MRL slice**. Candidates, all already served by the cluster
+>    (verified live on `10.0.10.70:8123/embed-text`, not assumed):
+>    `Qwen/Qwen3-Embedding-0.6B` (incumbent, 1024d, MRL 32–1024, MTEB-ml-v2 64.33) ·
+>    `nomic-ai/nomic-embed-text-v1.5` (768d, MRL 64–768 — the §I63 known-best on this corpus, +0.1400
+>    over Qwen3) · `google/embeddinggemma-300m` (768d, **MRL 512/256/128 — there is NO 64d slot**;
+>    308M params, MTEB-ml-v2 61.15 @768d) · `tomaarsen/mpnet-base-nli-matryoshka` (768d, MRL
+>    **768/512/256/128/64**, trained with `MatryoshkaLoss`, base ~110M, NLI-trained). ⚠️ **"EmbeddingGemma-500m"
+>    does not exist** (the family is `embeddinggemma-300m` and the un-loaded `embeddinggemma-2`, 740M).
+>    ⚠️ **The endpoint IGNORES a `dimensions` param** — slice client-side and re-normalise. ⚠️ **The
+>    §I62 prefix trap applies to EmbeddingGemma too** (`"task: search result | query: "` /
+>    `"title: none | text: "`, asymmetric) — the cluster is a generic passthrough and applies none.
+>    Instrument: §I63's cross-embedder experiment (fixed corpus, swap only the embedder, exact
+>    brute-force cosine, 133 queries, ceiling-normalised paired R@20; 124 s, no LLM, no writes).
+>    Pre-register the rule: **a candidate must beat BOTH Qwen3-1024 AND Nomic-768** before a re-ingest
+>    is even costed. **Nothing here is a recall lever** — §I65/§I66 show coverage is not the constraint;
+>    the embedder can only help through full-dimension *ranking*.
+> 4. **§G2's V5 build — SIGNED OFF, not built.** Plan
+>    `.hermes/plans/2026-10-22-p1-g2-v5-ablation-plan.md` (level 2 primary, equal 2-slot budget, C/D
+>    only if the primary resolves, null ⇒ recorded-and-not-wired). Steps 1a–1c: new
+>    `community_summary_search.py`, a CLI, and `--community-summaries` **off** by default.
+> 5. **§G5/§I2** — `hop_distance` is a constant 0, so "multihop" is nominal.
+> 6. **Smaller, still open:** §I55's exclude-from-metrics follow-on; §I58's caveat that `gold-003`'s
+>    label is a TOC line that will die at the next re-ingest; and **§I53 item 6** — the committed §G2
+>    artifact (`g2_summaries_2026-10-22.json`) **predates the code that made it**
+>    (`prompt_chars_by_level: {}` and the old `planned_leaf_map_calls`), so regenerate it or mark it
+>    stale before quoting it.
+>
+> **5. ⚠️ VERIFIED IN TWO LABELLED HALVES — NOT `[verified]`, AND THE REASON IS IN THE REGISTER.**
+> ⚠️ **The tool-using reviewer cannot run on this gateway.** `openai/gpt-oss-20b` died twice on the
+> multi-turn tool loop — once truncated after reading the 255 KB artifact whole, once with
+> `Unknown role: assistant<|channel|>commentary` (its own control tokens leaking into the replayed
+> history). The verdict was therefore taken as **(a) mechanical evidence** — an independent
+> aggregation reproduces every summary value from the per-query array (grid 18/18, deltas 6/6,
+> histogram, counts; probe re-run byte-identical, `038e12ba…`) — and **(b) a single-turn reviewer**
+> (no tools, data embedded) on the *method*, which confirmed single-variable design, the negative
+> control's meaning, the endpoint choice, no cross-arm leakage, and HyDE-off's legitimacy; its one
+> UNVERIFIED item (a silent-failure audit) was adjudicated — two claimed defects do not occur, the
+> third is guard E4 itself. ⚠️ **`[verified]` is deliberately OFF on both commits**: the arithmetic
+> half is the author checking the author, so per the standing rule this is partial verification, not
+> verification. Details: `IMPROVEMENTS.md` §I65 and §I66.
+>
+> **Committed:** the `dense_prefetch_limit` field + its single read site, `tests/test_dense_prefetch_limit.py`
+> (8 tests, mutation-proven: 5 of 8 fail on restoring the hardcoded 1000), both probes and their
+> artifacts, the harness, the two compact verifier extracts, the §I65/§I66 register entries, this
+> HANDOFF block, and `.hermes/plans/2026-10-23-p1-downstream-widths-and-embedder-screen-plan.md`.
+>
 > **Last updated: 2026-10-22, session 11. ✅ SESSION 10'S VERIFIED WORK IS COMMITTED; §I57's DURABLE
-> FIX LANDED; ▶ PHASE E IS RUNNING.** Read this block first, then session 10's below.
+> FIX LANDED; ✅ PHASE E RAN (see §I64).** Read this block next, then session 10's below.
 >
 > ## ▶ SESSION 11 — WHAT HAPPENED, AND WHAT IS IN FLIGHT
 >

@@ -4827,6 +4827,15 @@ ranking-side loss this mirrors), §I63 (the k-units/pool-depth distinction that 
 here), §I57 (the production tie this would be measured against), §I58 (the ceiling normalisation),
 §I44 (an artifact that is not written up is not evidence).
 
+**✅ THE PRE-REGISTERED A/B RAN 2026-10-23 — and the lever is a NULL at the product endpoint.**
+`logs/p1/step10/prefetch_limit_ab.json`, pre-registration committed `e0fed5e` before the run. Raising
+the prefetch 1000 → 2000 moves R@20 by **+0.0028, CI [−0.0006, +0.0062] → UNRESOLVED**; exact search
+(3489) gives **+0.0031, UNRESOLVED**; Hit@20 is identical to 4 dp in every arm; the negative control is
+bit-exact (0 mismatches over 931 metrics). The mechanism reproduces at full sample (lane coverage
+0.815 → 1.000) and **still does not move the product**. **The change does NOT ship; this entry is
+recorded measured-and-unresolved.** Full detail in **§I65**; the mechanism — the loss is the 100-slot
+fusion, not the prefetch and not the re-score cut — in **§I66**.
+
 ---
 
 ### I62. 2026-10-22 — the cluster serves Nomic, but does NOT apply its task prefixes — and the timing table for any Nomic re-embed
@@ -5086,3 +5095,201 @@ per-metric deltas). **E5 therefore has a second, independent re-derivation — n
 **Register against:** §I57 (the question this answers), §I58 (the ceiling normalisation that carries
 the finding), §I56 (the DA-lane effect this is consistent with), §I55 (the fallback it reports),
 §I59 (the masked ordering loss), §I63 (the embedder that is the larger half of it).
+
+---
+
+### I65. 2026-10-23 — the §I61 prefetch-limit A/B RAN, and the lever is a NULL at the product endpoint: coverage is not the constraint
+
+**§I61's own gate, discharged.** §I61 found the lever (the 64d prefetch limit, not the MRL dimension,
+is what loses pool coverage) and registered it as *"the next lever to test"*, requiring **its own
+pre-registered A/B (raise-the-limit vs current, 133 queries, paired, on the product endpoint)** before
+it ships, because the sweep behind it was a **40-query screening subsample with no paired CI**.
+Pre-registration `.hermes/plans/2026-10-23-p1-i61-prefetch-limit-ab-preregistration.md`, **committed
+`e0fed5e` before the run** (the plan file alone, nothing measured — that is the point of it).
+
+**Design (fixed before any number existed).** Four arms, one variable (`cfg.dense_prefetch_limit`),
+everything else pinned — same collection, same query file, same 133 answerable text queries, same
+query vector (**HyDE off**, so every arm shares one vector), same `mmr_candidates` 100,
+`reranker_fetch_k` 100, `reranker_top_k` 20, same reranker, DA lane on:
+
+| arm | limit | role |
+|---|---|---|
+| **C** | **1000** | control — the shipped value |
+| **T** | **2000** | primary treatment |
+| **S** | **3489** | sensitivity — every in-window chunk = exact search |
+| **N** | 1000 | **negative control** — arm C re-run; **E4 requires it to be bit-exact** |
+
+**The change is config-only** — `cfg.dense_prefetch_limit` (default 1000) read by
+`store._qdrant_search`; the outer full-dim re-score cut stays 500 and the inner stage stays the 64d
+lane, both **pinned by `tests/test_dense_prefetch_limit.py`** (8 tests; restoring the hardcoded `1000`
+fails **5 of 8 on their own assertions**, tree restored byte-identical). No re-ingest, no model
+change, no named vector, no Qdrant write.
+
+**Artifacts:** `logs/p1/step10/prefetch_limit_ab.{py,json}`, harness
+`logs/p1/step10/run_prefetch_ab.sh` (its resolved-settings gate refuses a blank `QDRANT_HOST`, a
+collection other than `knowledge_base_v2`, **and a `dense_prefetch_limit` that is not the shipped
+1000** — so arm C cannot silently stop being the production arm), log
+`logs/p1/step10/prefetch_ab_run_2026-10-23_0637.txt`. n=133, **0 errors**, 31 min.
+
+**E4 PASSED, and it is load-bearing: 931 metrics compared, 0 mismatches, max_abs_diff 0.0.** With HyDE
+off there is no legitimate source of per-query nondeterminism left, so a non-zero N−C would have
+voided the A/B. It is exactly zero.
+
+| endpoint | C (1000) | T (2000) | S (3489) | ΔT−C | ΔS−C |
+|---|---|---|---|---|---|
+| **R@20 (raw)** | **0.431769** | 0.434590 | 0.434849 | **+0.0028** CI [−0.0006, +0.0062] **UNRESOLVED** | +0.0031 CI [−0.0004, +0.0065] **UNRESOLVED** |
+| R@20 ceiling-norm | 0.527178 | 0.530172 | 0.530547 | +0.0030 UNRESOLVED | +0.0034 UNRESOLVED |
+| R@100 | 0.604785 | 0.606341 | 0.607089 | +0.0016 UNRESOLVED | +0.0023 UNRESOLVED |
+| Hit@20 | 0.9173 | 0.9173 | 0.9173 | **+0.0000** | **+0.0000** |
+| NDCG@20 / MRR / Ctx.Prec | — | — | — | all UNRESOLVED | all UNRESOLVED |
+
+Win/Loss/Tie T vs C on R@20: **6 / 2 / 125**. Per type, all unresolved (factual +0.0050, multihop
++0.0021, overview +0.0007). **Power is ample, not the limit:** SD_d 0.020013 → the n required for
+δ=0.05 is **1**; the effect is ~17× below the project's δ. The cut bites (pool min 63 / median 100
+against a top-20 cut).
+
+**The mechanism reproduced at full sample (M1), so §I61's screening was right about the mechanism:**
+
+| 64d lane pool coverage | screening (§I61, 40 q) | full sample (n=133) |
+|---|---|---|
+| limit 1000 | 0.804127 | **0.815136** |
+| limit 2000 | 0.971526 | **0.960627** |
+| limit 3489 | 1.0000 | **1.0000** |
+
+**The verdict, per the pre-registered rule: the change does NOT ship and §I61 is recorded
+measured-and-unresolved.** A real mechanism (the lane's coverage goes 0.815 → 1.000) with a product
+endpoint that does not move (+0.003, CI includes 0). **Coverage is not the binding constraint** — and
+that is the finding that matters beyond this lever, because it kills the whole "return more relevant
+documents" family of hypotheses for this corpus. §I66 explains mechanistically why the gain does not
+propagate, and it also **refutes this entry's own first hypothesis** about where the loss sits.
+
+⚠️ **Not production numbers.** HyDE is off in both arms by design (pre-registration §4), so the
+**absolute** values are not the shipped system's; the **delta** is unaffected. Not comparable to §I64's
+Phase E table (different run, HyDE on).
+
+**⚠️ VERIFICATION — and the route is NOT the usual one, so it is recorded in two labelled halves.**
+The tool-using reviewer could not run on this gateway: `openai/gpt-oss-20b` died twice on the
+multi-turn tool loop — once by output-length truncation after reading the 255 KB artifact whole, once
+with `Unknown role: assistant<|channel|>commentary` (its own control tokens leaking into the replayed
+history — the gateway failure `independent-verification` documents for exactly this transport). The
+verdict was therefore split by what each half can actually establish:
+
+- **(a) MECHANICAL EVIDENCE — not a second opinion.** An independent aggregation implementation
+  (manual sums and a different CI formulation; none of the probe's aggregation code reused)
+  reproduces **every** summary value from the per-query array: the **grid 18/18**, the **paired deltas
+  6/6**, the depth histogram, the win/loss/tie and the counts. The probe was also re-run after its
+  last edit and produced a **byte-identical** artifact (`038e12ba…`). This settles the arithmetic; it
+  is the author checking the author, and is labelled as such.
+- **(b) A SINGLE-TURN REVIEWER** (`openai/gpt-oss-20b`, no tools, data embedded) on the method:
+  **C1 single-variable, C2 the negative control is meaningful, C3 the endpoint is the right one for
+  this lever, C5 no inert headline, C6 no cross-arm leakage, C7 HyDE-off is legitimate — all
+  CONFIRMED.** **C4 (silent-failure audit) returned UNVERIFIED** with three claimed defects, all
+  adjudicated against the artifact: two do **not** occur (0 rows with `n_relevant == 0`; **0 null
+  metric values** and **every delta denominator == 133**), and the third (no explicit nondeterminism
+  check) *is* guard E4, which passed bit-exact.
+- ⚠️ **The reviewer's third concern is registered rather than dismissed**, because it is right in its
+  *concern* even though the mechanism does not fire here: a null metric value would silently shrink a
+  delta denominator. The aggregation should count its exclusions. Registered as a hardening item.
+
+**Register against:** §I61 (the lever this closes), §I60 (128d is dead — confirmed from the coverage
+side), §I66 (where the loss actually is), §I58 (the ceiling rule), §I44 (an artifact that is not
+written up is not evidence), §I25 (a null that reads as a result).
+
+---
+
+### I66. 2026-10-23 — the loss is NOT the prefetch and NOT the re-score cut: it is the 100-slot fusion. A direct (N, L) ceiling, and a refutation of this session's own hypothesis
+
+**Why this exists.** §I65 left the loss between the 64d lane and the funnel's pool unexplained, and
+§I65's entry named the **outer full-dim re-score cut** (`limit=500`, hardcoded in
+`store._qdrant_search`) as the prime suspect for the 8 queries whose pool held **none** of their
+labelled pages even at exact prefetch. **That hypothesis is WRONG, and this probe refutes it.** It
+also produces the (prefetch N × re-score cut L) ceiling that the next step needs.
+
+**Method — exact, so it isolates the cut rather than confounding it.** `logs/p1/step10/rescore_cut_curve.py`
+→ `rescore_cut_curve.json`. Fetches all **3,489 in-window content chunks / 888 pages** of doc
+`7ba61432` with their `dense_1024` vectors, then for each of the 133 queries: the MRL lane's output at
+limit N is the **exact brute-force 64d** top-N (so the filtered-HNSW loss — §I60 measured up to
+18.5 % — is excluded); the candidate set passed to fusion is the **exact full-dim top-L within it**.
+No ANN, no Qdrant scoring, no RRF, no dedup, no MMR. Read-only, no LLM calls, 24 s.
+**Cross-check: the SQLite reachable-page set and the collection's page set agree exactly
+(symmetric difference 0).**
+
+**Coverage = fraction of a query's REACHABLE labelled pages present in the candidate set:**
+
+| | L=100 | L=200 | **L=500** | L=1000 | L=2000 | L=3489 |
+|---|---|---|---|---|---|---|
+| N=1000 | 0.5123 | 0.6182 | **0.7478** | 0.8151 | 0.8151 | 0.8151 |
+| N=2000 | 0.5127 | 0.6471 | 0.8240 | 0.9157 | 0.9606 | 0.9606 |
+| N=3489 | 0.5192 | 0.6488 | **0.8286** | 0.9266 | 0.9773 | 1.0000 |
+
+Production is the bold cell. **Internal consistency, and it is exact:** at N=1000 with L≥N the cell is
+**0.8151**, which is §I65's independently measured M1 lane coverage (**0.815136**); at N=3489/L=3489 it
+is **1.0000**, M1's exact-prefetch value. The probe reproduces the A/B's mechanism arm from a
+different code path — that is what makes the rest of the grid trustworthy.
+
+**At exact prefetch, the cut's own contribution (paired vs L=500):**
+
+| L | coverage | Δ vs 500 | CI95 |
+|---|---|---|---|
+| 1000 | 0.9266 | **+0.0980** | [+0.0752, +0.1207] RESOLVED |
+| 2000 | 0.9773 | **+0.1486** | [+0.1178, +0.1795] RESOLVED |
+| 3489 | 1.0000 | **+0.1714** | [+0.1389, +0.2038] RESOLVED |
+
+**⚠️ THE REFUTATION — the 500-cut is NOT what lost the 8 zero-pool queries.** Cell `N3489_L500` per
+query, read from the artifact: **5 of the 8 have ALL their labelled pages inside the L=500 candidate
+set** — `gold-004` (1.0, best labelled chunk ranks **127th** of 3,489 at full dimension), `gold-013`
+(1.0, rank 204), `gold-035` (1.0, rank 108), `gold-052` (1.0, rank 470), `gold-064` (1.0, rank 116);
+**2 more are partially inside** — `gold-011` (0.333, rank 23) and `gold-088` (0.5, rank 109); and
+**only `gold-078` is entirely lost** (cell 0.0, best rank **1325**). **Yet §I65's pipeline pool held
+none of them.** So for **7 of the 8** the cut did not remove the page, and for 5 of those it did not
+remove any of their labelled pages. The loss is **downstream of the cut**, in RRF / page dedup / MMR.
+⚠️ **An earlier draft of this entry said "6 of the 8 … (cell = 1.0)"; the count and the parenthetical
+disagreed with each other.** The precise split is **5 fully / 2 partially / 1 entirely** — caught by
+re-reading the cells, not by the reviewer.
+
+**The decomposition this licenses** (all of a query's reachable labelled pages as the denominator):
+
+| stage | production (N=1000) | exact prefetch (N=3489) |
+|---|---|---|
+| 64d lane | 0.8151 | 1.0000 |
+| → after the full-dim **re-score cut** L=500 | 0.7478 | 0.8286 |
+| → after the **fusion** (RRF + dedup + MMR to 100) | **0.6048** | **0.6071** |
+| → after the cross-encoder to top-20 | 0.4318 | 0.4348 |
+
+**⚠️ And this explains §I65's null mechanistically: at exact prefetch the fusion's own loss GROWS
+(0.143 → 0.222).** Handing the fusion more candidates does not grow the pool, because the fusion's
+output width (`fetch_k` = 100) does not grow — the extra candidates simply compete for the same 100
+slots. **The binding constraint is the 100-slot fusion output, not the prefetch and not the cut.**
+Depth histogram, for scale: the query's best labelled chunk sits within full-dim rank ≤100 for
+**123/133** queries, ≤500 for **131/133**, ≤1000 for 132/133, ≤2000 for 133/133 (median rank 4, max
+1325) — so the cut rarely blocks a *query*, while it costs a large fraction of its *labels* (queries
+average 27.3 labels).
+
+**What this licenses, and what it does not.** It licenses a **measurement** of the two downstream
+widths — the re-score cut L and `fetch_k`/MMR — as the next lever, and it gives that measurement its
+expected ceilings. It does **not** license shipping either: a raised ceiling is not recall, and the
+fusion's 0.143–0.222 loss has never been attributed between RRF, page dedup and MMR. **Both are
+candidates for a pre-registered A/B on the product endpoint, exactly as §I61's lever was.**
+
+⚠️ **One caveat on the ceiling's meaning.** This is a *page-level* ceiling and the fusion is
+*chunk-level* before it dedups pages, so the grid is an upper bound on what a chunk-level cut of the
+same size can deliver — not a prediction of the pipeline. The pipeline's own observed value is quoted
+beside it above for that reason.
+
+**✅ VERIFICATION (same two-half route as §I65 — see there for why the tool loop is unusable).**
+**Mechanical:** an independent aggregation reproduces every summary value from the per-query array
+(grid, all paired deltas, the histogram, the counts — 0 mismatches), and the probe re-run after its
+last edit is **byte-identical** (`038e12ba…`). **Single-turn reviewer** (`openai/gpt-oss-20b`, no
+tools): **C1 counts, C2 the SQLite↔collection cross-check, C4 internal consistency, C8 the method is
+EXACT (brute-force matrix products; Qdrant used only to fetch, never to score), C9 no silent exclusion
+— all CONFIRMED**, no defects raised. It returned **C3, C5 and C6 `unverified`** because it declined
+to do 133-row arithmetic by hand — which is the honest answer and exactly why the arithmetic is
+carried by the mechanical half above rather than by the reviewer.
+⚠️ **The reviewer's C7 evidence was sloppy and is NOT what the entry rests on**: it wrote
+`gold-004,013,035,052,064,088 have >0; 078,088 have 0`, double-listing `gold-088` and getting the
+split wrong in both directions. The per-query cells are unambiguous — **5 at 1.0, 2 partial, 1 at
+0.0** — and the entry quotes those, not the reviewer's paraphrase.
+
+**Register against:** §I65 (the A/B whose null this explains, and whose hypothesis it refutes), §I61
+(the mechanism), §I60 (the ANN loss excluded here by construction), §I58 (the ceiling rule), §I56 (the
+DA lane enters the same fusion stage), §I25 (a hypothesis that reads as a finding unless measured).
