@@ -4798,9 +4798,29 @@ held to. It is registered as **the next lever to test**, not as a pending commit
 
 ⚠️ **A naming trap in the artifact, recorded so the next reader is not caught:** the summary block's
 `median_pages_in_pool` **is** a median, but the neighbouring `pool_recall_ceiling_norm` is a
-**mean**. Both are unlabelled; reading the second as a median gives 1.0000 for 12 of the 16 cells
-(the author's own first re-derivation did exactly that). The write-up above uses means, matching the
-artifact's own aggregation.
+**mean**. Both are unlabelled; reading the second as a median gives 1.0000 for **15 of the 16 cells**
+— only `new` / `mrl64` / `limit 1000` differs, at a median of 0.8875. (The author's own first
+re-derivation did exactly that and first wrote "12 of 16"; the verifier's count of 15 was right and
+the entry is corrected.) The write-up above uses means, matching the artifact's own aggregation.
+
+**✅ INDEPENDENT VERIFIER RAN 2026-10-23 — `openai/gpt-oss-20b`, `deleg_ba350d60`,
+`status=completed`: 7/7 CONFIRMED.** Substantive rather than cheap (**20 API calls, 64.6 s**): it
+re-derived the mean for **all 16 cells** from the per-query array and matched every one, and it read
+the script's `--sample` handling to confirm the `queries[::3][:40]` selection.
+
+⚠️ **Its one flagged "defect" is VOID, and it is the third misattribution of the session.** It
+reported: *"Summary reports old lanes at limit 3489 as pool_recall_ceiling_norm 1.0, whereas
+per-query means are 0.999251 (fulldim) and 0.998992 (mrl64)."* **The summary does not say 1.0** — it
+says **0.999251** and **0.998992**, exactly the means. The reviewer compared against the wrong field
+(most likely `median_pages_in_pool`, or the `new` rows) and reported a disagreement that does not
+exist. Checked mechanically: both cells match to 1e-9.
+
+⚠️ **But the same verdict contained a REAL catch about the author's text, in a place it did not point
+at:** its "median is 1.0 for 15 of 16 cells" is **correct**, and this entry had said 12. That number
+is now fixed. **The lesson is the §I57 one again, from the other side:** a reviewer that reports a
+defect has to have its *claim* checked, not just its *count* — here the count was right and the
+stated defect was invented, so accepting the flag wholesale would have "corrected" a cell that was
+already correct, while rejecting it wholesale would have left a wrong number in the register.
 
 **Register against:** §I60 (whose "128d is dead" this confirms from the coverage side), §I59 (the
 ranking-side loss this mirrors), §I63 (the k-units/pool-depth distinction that fixes the convention
