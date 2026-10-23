@@ -5167,32 +5167,54 @@ propagate, and it also **refutes this entry's own first hypothesis** about where
 **absolute** values are not the shipped system's; the **delta** is unaffected. Not comparable to §I64's
 Phase E table (different run, HyDE on).
 
-**⚠️ VERIFICATION — and the route is NOT the usual one, so it is recorded in two labelled halves.**
-The tool-using reviewer died twice on this probe's dispatch: once by output-length truncation after
-reading the 255 KB artifact whole, once with `Unknown role: assistant<|channel|>commentary` (its own
-control tokens leaking into the replayed history — the gateway failure `independent-verification`
-documents for exactly this transport). ⚠️ **Do not read that as "the tool loop cannot run here": it
-can, and it did — see §I66, where the same model on the same data, given a compact raw-row extract
-and told to write one script rather than read the artifact, returned a full independently recomputed
-verdict (6 API calls, 141 s).** The shape of the brief is the variable, not the gateway. For *this*
-entry the verdict was taken in two halves:
+**✅ INDEPENDENTLY VERIFIED — 12/12 CONFIRMED, NO DEFECTS.** `openai/gpt-oss-20b`,
+`deleg_0296daa3` task 1/2, **15 API calls, 315 s** (a substantive verdict, not a cheap one). It
+recomputed every aggregate itself from the per-query array rather than reading the summary block, and
+independently re-checked the load-bearing guard:
 
-- **(a) MECHANICAL EVIDENCE — not a second opinion.** An independent aggregation implementation
-  (manual sums and a different CI formulation; none of the probe's aggregation code reused)
-  reproduces **every** summary value from the per-query array: the **grid 18/18**, the **paired deltas
-  6/6**, the depth histogram, the win/loss/tie and the counts. The probe was also re-run after its
-  last edit and produced a **byte-identical** artifact (`038e12ba…`). This settles the arithmetic; it
-  is the author checking the author, and is labelled as such.
-- **(b) A SINGLE-TURN REVIEWER** (`openai/gpt-oss-20b`, no tools, data embedded) on the method:
-  **C1 single-variable, C2 the negative control is meaningful, C3 the endpoint is the right one for
-  this lever, C5 no inert headline, C6 no cross-arm leakage, C7 HyDE-off is legitimate — all
-  CONFIRMED.** **C4 (silent-failure audit) returned UNVERIFIED** with three claimed defects, all
-  adjudicated against the artifact: two do **not** occur (0 rows with `n_relevant == 0`; **0 null
-  metric values** and **every delta denominator == 133**), and the third (no explicit nondeterminism
-  check) *is* guard E4, which passed bit-exact.
-- ⚠️ **The reviewer's third concern is registered rather than dismissed**, because it is right in its
-  *concern* even though the mechanism does not fire here: a null metric value would silently shrink a
-  delta denominator. The aggregation should count its exclusions. Registered as a hardening item.
+| claim | verdict | the reviewer's own numbers |
+|---|---|---|
+| C1 | confirmed | `n_queries` 133, `n_queries_errored` 0, 133 rows |
+| **C2 — the negative control** | **confirmed** | **checked programmatically over all 133 rows: every `arms.N.*` equals `arms.C.*` exactly, no mismatches** |
+| C3 | confirmed | C 0.431769 · T 0.434590 · S 0.434849 |
+| C4 | confirmed | ΔT−C +0.0028 CI [−0.0006, +0.0062] unresolved · ΔS−C +0.0031 CI [−0.0004, +0.0065] unresolved (SD_T 0.020013, SD_S 0.020037) |
+| C5 | confirmed | W/L/T 6 / 2 / 125 |
+| C6 | confirmed | `hit_at_20` 0.9173 for all three arms; ΔT−C exactly 0 on every query |
+| C7 | confirmed | mechanism means 0.815136 · 0.960627 · 1.0000 |
+| C8 | confirmed | SD 0.020013; `ceil((1.96·SD/0.05)²)` = 1, arithmetic checked |
+| C9 | confirmed | HyDE OFF, `no_llm_calls` true, collection `knowledge_base_v2`, fetch_k 100 / top_k 20 / mmr 100 / outer cut 500 |
+| C10 | confirmed | `_qdrant_search` passes `cfg.dense_prefetch_limit`, outer cut stays 500, inner stage stays `dense_64` |
+| C11 | confirmed | **ran only `tests/test_dense_prefetch_limit.py`: 8 passed** |
+| C12 | confirmed | no row with `n_reachable` 0 or `n_relevant` 0, no null `recall_at_20` |
+
+**Post-review integrity re-checked, as the standing rule requires:** both artifacts are **byte-identical
+to their pre-review hashes** (`prefetch_limit_ab.json 395cef8e…`, `rescore_cut_curve.json 038e12ba…`),
+the working tree is clean, and `pyproject.toml`/`uv.lock` are untouched — the child's "files modified:
+none" is true. ⚠️ **One citation is loose and is not what the entry rests on:** its C10 evidence says
+"the argument list to `qdrant.search`", where the code calls `self._qdrant.query_points`. The claim
+holds on the source and is independently pinned by the test file; the paraphrase is imprecise, which
+is the §I57 lesson again — a verdict's *citation* needs checking even when its *claim* survives.
+
+**Why the route took three attempts, recorded so the next session does not repeat it.** The first two
+dispatches died — output-length truncation after reading the 255 KB artifact whole, then
+`Unknown role: assistant<|channel|>commentary` (control tokens leaking into the replayed history).
+**Neither is a statement about the gateway: the variable is the BRIEF.** Given a compact raw-row
+extract (the author's summary block deliberately excluded, so it still had to recompute) and told to
+write one script that prints only the aggregates rather than read the artifact into its context, the
+same model on the same data returned the full verdict above. §I66's sibling did the same at 6 calls.
+
+**Two supporting checks, neither of which is a second opinion on its own.** (a) An independent
+aggregation implementation (manual sums, a different CI formulation, none of the probe's aggregation
+code reused) reproduces every summary value from the per-query array — **author checking author, and
+labelled as such**. (b) A **single-turn** reviewer on the *method* (no tools, data embedded) confirmed
+the design — single-variable, the negative control meaningful, the endpoint right for this lever, no
+inert headline, no cross-arm leakage, HyDE-off legitimate — and returned its **silent-failure audit
+`unverified`** with three claimed defects, all adjudicated against the artifact: two do **not** occur
+(0 rows with `n_relevant == 0`; **0 null metric values** and **every delta denominator == 133**), and
+the third (no explicit nondeterminism check) *is* guard E4, which passed bit-exact.
+⚠️ **That third concern is registered rather than dismissed**, because it is right in its *concern*
+even though the mechanism does not fire here: a null metric value would silently shrink a delta
+denominator. The aggregation should count its exclusions. Registered as a hardening item.
 
 **Register against:** §I61 (the lever this closes), §I60 (128d is dead — confirmed from the coverage
 side), §I66 (where the loss actually is), §I58 (the ceiling rule), §I44 (an artifact that is not
@@ -5291,11 +5313,15 @@ aggregates** — never to read the 255 KB artifact. That shape worked:
   rows and matching every expected value**; **C4** `0.815136` vs `0.8151` at 6 dp and `1.000000` vs
   `1.0000`; **C9** `nre=0 rows: 0`, `nr=0 rows: 0`, `null cells: 0`. **This is independent
   verification of the grid — not the author's arithmetic.**
-- The sibling carrying **C5–C8** died on the same `Unknown role: assistant<|channel|>commentary`
-  corruption and was re-dispatched (`deleg_311dcc5c`). Until it returns: **C5 (paired deltas) and C6
-  (histogram) rest on the mechanical re-derivation** below; **C8 (the method is exact) is confirmed by
-  the single-turn reviewer**; **C7 (the refutation) rests on the artifact's own per-query cells**,
-  which are unambiguous.
+- ⚠️ **C5–C8 ARE STILL NOT INDEPENDENTLY VERIFIED, and the entry does not claim they are.** The
+  sibling carrying them died on the control-token corruption; the re-dispatch (`deleg_311dcc5c`,
+  3 API calls) was **`interrupted`** — "waiting for model response (451.2 s elapsed)", an environment
+  failure, not a finding. **An interrupted run is no verdict** (`independent-verification` step 5), so
+  it counts as neither a pass nor a fail. Current cover: **C5 (paired deltas) and C6 (histogram) rest
+  on the mechanical re-derivation** below; **C8 (the method is exact) is confirmed by the single-turn
+  reviewer**; **C7 (the refutation) rests on the artifact's own per-query cells**, which are
+  unambiguous. **Re-dispatch C5–C8 before quoting this entry as fully verified** — the shape that works
+  is in §I65.
 - **Mechanical, and labelled as author-checking-author:** an independently written aggregation
   reproduces every summary value from the per-query array (grid, all paired deltas, the histogram, the
   counts — 0 mismatches), and the probe re-run after its last edit is **byte-identical**
