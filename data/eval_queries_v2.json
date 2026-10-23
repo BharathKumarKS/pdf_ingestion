@@ -9,11 +9,11 @@
     "query_type": "factual",
     "expected_route": "vector",
     "relevant_pages": [
-      30
+      34
     ],
     "calibrated": true,
     "answerable": true,
-    "calibration_note": "Generated from chunk 262c3449-2f19-4fc2-82bd-b639d22fd50b (page 30) | scan-expanded: 1 pages"
+    "calibration_note": "Generated from chunk 262c3449-2f19-4fc2-82bd-b639d22fd50b (page 30) | scan-expanded: 1 pages | §I58 re-point [30] -> [34] (exact text match in the re-ingested index)"
   },
   {
     "id": "gold-004",
@@ -59,11 +59,11 @@
     "query_type": "factual",
     "expected_route": "vector",
     "relevant_pages": [
-      99
+      98
     ],
     "calibrated": true,
     "answerable": true,
-    "calibration_note": "Generated from chunk bcd66abf-be2a-482f-b5ab-46a34b1d6f87 (page 99) | scan-expanded: 1 pages"
+    "calibration_note": "Generated from chunk bcd66abf-be2a-482f-b5ab-46a34b1d6f87 (page 99) | scan-expanded: 1 pages | §I58 re-point [99] -> [98] (exact text match in the re-ingested index)"
   },
   {
     "id": "gold-010",
@@ -71,11 +71,11 @@
     "query_type": "factual",
     "expected_route": "vector",
     "relevant_pages": [
-      99
+      98
     ],
     "calibrated": true,
     "answerable": true,
-    "calibration_note": "Generated from chunk bcd66abf-be2a-482f-b5ab-46a34b1d6f87 (page 99) | scan-expanded: 1 pages"
+    "calibration_note": "Generated from chunk bcd66abf-be2a-482f-b5ab-46a34b1d6f87 (page 99) | scan-expanded: 1 pages | §I58 re-point [99] -> [98] (exact text match in the re-ingested index)"
   },
   {
     "id": "gold-011",

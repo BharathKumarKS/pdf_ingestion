@@ -95,6 +95,57 @@ def _clamp_unretrievable(entries: list[dict], lo: int, hi: int) -> tuple[list[di
     return clamped, removed
 
 
+# ── re-points forced by the re-ingest (IMPROVEMENTS.md §I58) ──────────────────────────────────
+# The labels were authored against the deployed index (doc 6d55c52b, 5,048 chunks). The rebuilt
+# index (doc 7ba61432, 3,796 chunks) is a re-chunk of the SAME PDF, so a page number can move even
+# though the answering text did not. Each entry below was established by an **exact text match in
+# the new index's SQLite chunks** — never by "whatever the retriever returns", which would make the
+# eval easier rather than correct.
+_REPOINT: dict[str, dict[int, int]] = {
+    # '42-2 Thermionic emission' — the TOC line sits on p30 in the old index and p34 in the new one
+    # (both `is_content=1`). ⚠️ §I58 caveat: this is TOC content, and the §I39 E5 filter excludes
+    # TOC at ingest. The stored `is_content` predates §I39, so it is reachable TODAY; the next
+    # re-ingest will make this query unanswerable by design. Kept measurable, flagged in §I58.
+    "gold-003": {30: 34},
+    # The source sentence ("...10 quarts of water per second...", "* Counting antibaryons as -1
+    # baryon.") is on p98 in the new index — p99 has NO chunks at all after the re-chunk.
+    "gold-009": {99: 98},
+    "gold-010": {99: 98},
+}
+
+
+def _repoint_pages(entries: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Move label pages the re-ingest relocated, so a label is not stranded by a page-number shift.
+
+    Why this exists (§I58): a label page that the new index has no chunk for caps the query's
+    achievable maximum — `gold-003` read **0.0000** (unreachable even at ±1), i.e. its R@20 was 0
+    *by construction*, silently dragging the factual lane's mean down. This is a re-point, not a
+    clamp: the clamp removes labels outside the window, this moves labels the re-chunk shifted.
+    """
+    out: list[dict] = []
+    moved: list[dict] = []
+    for q in entries:
+        mapping = _REPOINT.get(q.get("id"))
+        pages = q.get("relevant_pages") or []
+        if not mapping or not pages:
+            out.append(q)
+            continue
+        new_pages = sorted({mapping.get(p, p) for p in pages})
+        if new_pages == sorted(pages):
+            out.append(q)
+            continue
+        moved.append({"id": q["id"], "lane": q.get("query_type"),
+                      "from": list(pages), "to": new_pages})
+        note = (q.get("calibration_note") or "").strip()
+        out.append({
+            **q,
+            "relevant_pages": new_pages,
+            "calibration_note": (note + f" | §I58 re-point {list(pages)} -> {new_pages} "
+                                        f"(exact text match in the re-ingested index)").strip(" |"),
+        })
+    return out, moved
+
+
 def main() -> int:
     p = argparse.ArgumentParser(
         description="Assemble data/eval_queries_v2.json from the scanned gold pieces "
@@ -123,6 +174,11 @@ def main() -> int:
     overview, clamp_o = _clamp_unretrievable(overview, lo, hi)
     visual, clamp_v = _clamp_unretrievable(visual, lo, hi)
     clamped = clamp_g + clamp_o + clamp_v
+    # ...and finally move labels the RE-INGEST relocated (§I58) — a page-number shift, not a clamp.
+    gold, repoint_g = _repoint_pages(gold)
+    overview, repoint_o = _repoint_pages(overview)
+    visual, repoint_v = _repoint_pages(visual)
+    repointed = repoint_g + repoint_o + repoint_v
 
     note = {
         "id": "_note",
@@ -155,6 +211,12 @@ def main() -> int:
                   f"n {c['n_before']} -> {c['n_after']}")
     else:
         print(f"  clamped: none (no surviving query carries a page outside [{lo}, {hi}])")
+    if repointed:
+        print("  re-pointed (page moved by the re-ingest; §I58, exact text match):")
+        for c in repointed:
+            print(f"    {c['id']:14} {c['lane']:9} {c['from']} -> {c['to']}")
+    else:
+        print("  re-pointed: none")
     print(f"  => {ans} answerable + {len(negs)} negatives = {total}  ({pct:.1f}% negatives)")
 
     if total and pct < 15.0:
