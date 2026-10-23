@@ -100,6 +100,10 @@ data/card_cache/
 # derived, re-derivable, keyed on (document, model, prompt digest), and it exists so an aborted
 # multi-hour build can resume. Machine-local by nature.
 data/graph_cache/
+# The §G2 community-summarisation checkpoint (IMPROVEMENTS.md §I53): same class again — derived,
+# re-derivable, keyed on (document, model, seed, resolutions, prompt budget, prompt digests), and
+# it exists so an aborted ~600-call summarisation build can resume. Machine-local by nature.
+data/summary_cache/
 # data/eval_results/ is deliberately NOT ignored — these artifacts ARE the regression
 # baseline the project compares against, and the "Definition of done" requires the run's
 # artifact to be committed. Ignoring this directory is why the report's "v10" figure had

@@ -26,12 +26,19 @@ unit-testable offline with fakes.
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import Callable, Iterable
 
 import networkx as nx
 
 from .graph_analytics import leiden_ladder
+from .summary_checkpoint import SummaryCheckpoint, input_digest
+
+# The syllabus' resolution ladder (`Week_Plan/week-5-summer-lesson-plan.pdf`; `graph_analytics`
+# walks it finest-first). Named here so `build_hierarchy`'s default and the checkpoint's run key
+# cannot drift apart — a checkpoint written under one ladder must not be resumed under another.
+DEFAULT_RESOLUTIONS = (0.5, 1.0, 2.0)
 
 # ── reads (session is injected, so tests use a fake) ──────────────────────────────────────────
 
@@ -139,7 +146,7 @@ class Hierarchy:
 
 def build_hierarchy(
     g: nx.Graph,
-    resolutions: Iterable[float] = (0.5, 1.0, 2.0),
+    resolutions: Iterable[float] = DEFAULT_RESOLUTIONS,
     seed: int = 0,
 ) -> Hierarchy:
     """Run Leiden at each resolution and link each fine community to its coarse parent.
@@ -266,11 +273,26 @@ def _batch_texts(texts: list[str], budget_chars: int, overhead: int) -> tuple[li
     return batches, truncated
 
 
-def _call(llm: Callable[[str], str], prompt: str, counters: dict) -> str:
-    """One LLM call, counted. An empty return is counted as a FAILURE, never as a summary (§I25)."""
+def _call(
+    llm: Callable[[str], str],
+    prompt: str,
+    counters: dict,
+    on_call: Callable[..., None] | None = None,
+    where: tuple[int, int] | None = None,
+    kind: str = "single",
+) -> str:
+    """One LLM call, counted and reported. An empty return is a FAILURE, never a summary (§I25).
+
+    ``on_call`` receives ``(kind, where, prompt_chars, elapsed_seconds, empty)`` for **every** call —
+    §I53's monitoring gap: the 597-call build logged nothing per call, so a stalled run and a healthy
+    slow one looked identical in the log (§I23's lesson: read the RATE, not a status code).
+    """
     counters["calls"] += 1
     counters["prompt_chars"] += len(prompt)
+    started = time.monotonic()
     text = llm(prompt) or ""
+    if on_call is not None:
+        on_call(kind, where, len(prompt), time.monotonic() - started, not text.strip())
     if not text.strip():
         counters["empty_returns"] += 1
     return text
@@ -282,6 +304,8 @@ def _summarise_with_batching(
     map_template: str,
     budget_chars: int,
     counters: dict,
+    on_call: Callable[..., None] | None = None,
+    where: tuple[int, int] | None = None,
 ) -> str:
     """One call if the material fits; otherwise map-reduce. Every call lands in `counters` (V4)."""
     texts = [t for t in texts if t and t.strip()]
@@ -293,14 +317,16 @@ def _summarise_with_batching(
 
     if len(batches) == 1:
         counters["single_calls"] += 1
-        return _call(llm, map_template.format(body=SEP.join(batches[0])), counters)
+        return _call(llm, map_template.format(body=SEP.join(batches[0])), counters,
+                     on_call, where, "single")
 
     # MAP — one summary per batch of source material.
     counters["batched_communities"] += 1
     parts: list[str] = []
     for batch in batches:
         counters["map_calls"] += 1
-        text = _call(llm, map_template.format(body=SEP.join(batch)), counters)
+        text = _call(llm, map_template.format(body=SEP.join(batch)), counters,
+                     on_call, where, "map")
         if text.strip():
             parts.append(text)
 
@@ -310,7 +336,8 @@ def _summarise_with_batching(
         merged = []
         for group in groups:
             counters["reduce_calls"] += 1
-            text = _call(llm, PARENT_PROMPT.format(body=SEP.join(group)), counters)
+            text = _call(llm, PARENT_PROMPT.format(body=SEP.join(group)), counters,
+                         on_call, where, "reduce")
             if text.strip():
                 merged.append(text)
         if len(merged) >= len(parts):     # cannot shrink further — stop rather than loop
@@ -333,6 +360,8 @@ def summarize_communities(
     dry_run: bool = False,
     max_chunks_per_community: int | None = None,
     max_prompt_chars: int = DEFAULT_MAX_PROMPT_CHARS,
+    checkpoint: SummaryCheckpoint | None = None,
+    on_call: Callable[..., None] | None = None,
 ) -> dict:
     """Summarise every community bottom-up: leaves from full passages, parents from child summaries.
 
@@ -370,6 +399,12 @@ def summarize_communities(
     ``get_chunk_texts`` receives a list of chunk ids and must return their FULL text (V6); the
     caller wires it to SQLite/Qdrant. A community whose passages are empty is SKIPPED, not
     summarised from nothing.
+
+    ``checkpoint`` (§I53) makes the walk resumable: a community whose recorded input digest matches
+    the material being summarised now is reused with **no call**, and one whose calls returned empty
+    is re-attempted. It is a side-car — the artifact stays the single write point. ``on_call`` is
+    invoked once per LLM call with ``(kind, where, prompt_chars, elapsed, empty)`` so a run can be
+    watched call by call; §I53 measured a 597-call build that logged nothing per call.
     """
     llm = llm or _default_llm
 
@@ -426,9 +461,17 @@ def summarize_communities(
                 before = counters["calls"]
                 before_chars = counters["prompt_chars"]
                 before_prompts = counters["single_calls"] + counters["map_calls"]
-                summaries[(level, cid)] = _summarise_with_batching(
-                    llm, texts, LEAF_PROMPT, max_prompt_chars, counters
+                digest = input_digest(texts)
+                if checkpoint is not None:
+                    hit = checkpoint.lookup(level, cid, digest)
+                    if hit is not None:
+                        summaries[(level, cid)] = hit
+                        continue
+                summary = _summarise_with_batching(
+                    llm, texts, LEAF_PROMPT, max_prompt_chars, counters,
+                    on_call=on_call, where=(level, cid),
                 )
+                summaries[(level, cid)] = summary
                 leaf_prompt_calls += (
                     counters["single_calls"] + counters["map_calls"] - before_prompts
                 )
@@ -437,6 +480,10 @@ def summarize_communities(
                     prompt_chars_by_level.get(level, 0)
                     + counters["prompt_chars"] - before_chars
                 )
+                if checkpoint is not None:
+                    # An empty summary is a FAILED community, not a done one — written ok=False so a
+                    # resume re-attempts it rather than baking the loss in (§I25).
+                    checkpoint.record(level, cid, digest, summary, ok=bool(summary.strip()))
                 continue
 
             # ── parent levels: merge child summaries ──────────────────────────────────────────
@@ -458,13 +505,23 @@ def summarize_communities(
                 continue
             before = counters["calls"]
             before_chars = counters["prompt_chars"]
-            summaries[(level, cid)] = _summarise_with_batching(
-                llm, parts, PARENT_PROMPT, max_prompt_chars, counters
+            digest = input_digest(parts)
+            if checkpoint is not None:
+                hit = checkpoint.lookup(level, cid, digest)
+                if hit is not None:
+                    summaries[(level, cid)] = hit
+                    continue
+            summary = _summarise_with_batching(
+                llm, parts, PARENT_PROMPT, max_prompt_chars, counters,
+                on_call=on_call, where=(level, cid),
             )
+            summaries[(level, cid)] = summary
             calls_by_level[level] = calls_by_level.get(level, 0) + (counters["calls"] - before)
             prompt_chars_by_level[level] = (
                 prompt_chars_by_level.get(level, 0) + counters["prompt_chars"] - before_chars
             )
+            if checkpoint is not None:
+                checkpoint.record(level, cid, digest, summary, ok=bool(summary.strip()))
 
     return {
         "summaries": summaries,
@@ -483,4 +540,10 @@ def summarize_communities(
         "planned_leaf_prompts": planned_leaf_prompts,
         "leaf_prompt_calls": leaf_prompt_calls,
         "planned_leaf_batched_communities": planned_leaf_batched_communities,
+        # §I53: what a resume saved. `resumed_communities` made NO call, so it is deliberately
+        # absent from `total_calls` — the ledger counts spend, not work avoided.
+        "resumed_communities": checkpoint.resumed_communities if checkpoint is not None else 0,
+        "stale_communities": checkpoint.stale_communities if checkpoint is not None else 0,
+        "retried_communities": checkpoint.retried_communities if checkpoint is not None else 0,
+        "checkpoint_path": str(checkpoint.path) if checkpoint is not None else None,
     }

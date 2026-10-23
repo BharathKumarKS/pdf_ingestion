@@ -383,7 +383,6 @@ def test_reduce_that_always_fails_terminates_and_reports_empty():
 
 
 # ── V6: the FULL passage, not the graph's 500-char stub ───────────────────────────────────────
-
 def test_v6_full_text_is_passed_not_the_500_char_stub():
     long_passage = "x" * 600
     names = ["a0", "a1"]
@@ -398,3 +397,64 @@ def test_v6_full_text_is_passed_not_the_500_char_stub():
     assert llm.prompts, "the leaf community with a chunk should have been summarised"
     assert long_passage in llm.prompts[0]           # all 600 chars — a [:500] slice fails here
     assert len(llm.prompts[0]) > 500
+
+
+# ── §I53: per-call reporting (the 597-call build logged nothing per call) ─────────────────────
+
+def test_every_llm_call_is_reported_to_the_progress_callback():
+    """`on_call` fires once per LLM call — §I53: a stalled run and a slow healthy one looked alike.
+
+    The 2026-10-22 build made **597** sequential calls and its log carried no per-call line, so
+    nothing in it could distinguish "healthy and slow" from "stalled" (§I23's lesson: read the RATE,
+    not a status code). Dropping the `on_call(...)` call in `_call` fails this test.
+    """
+    h, concept_chunks, texts = _long_text_hierarchy()
+    llm = FakeLLM()
+    seen: list[tuple] = []
+    out = summarize_communities(h, concept_chunks, _provider(texts), llm=llm, dry_run=False,
+                                max_prompt_chars=3000,
+                                on_call=lambda kind, where, chars, elapsed, empty:
+                                seen.append((kind, where, chars, elapsed, empty)))
+
+    assert len(seen) == out["total_calls"] == len(llm.prompts)      # one report per call
+    assert {s[0] for s in seen} == {"single", "map", "reduce"}      # batching is visible per call
+    # within one community the order is map* then reduce* (or a lone single) — never reduce before map
+    by_comm: dict[tuple, list[str]] = {}
+    for kind, where, *_ in seen:
+        by_comm.setdefault(where, []).append(kind)
+    for kinds in by_comm.values():
+        assert kinds.count("single") in (0, 1)
+        if "reduce" in kinds:
+            assert kinds.index("reduce") > kinds.index("map")
+    # the reported prompt size is the size actually sent
+    assert [s[2] for s in seen] == [len(p) for p in llm.prompts]
+    assert all(s[3] >= 0.0 for s in seen)                            # a real elapsed time
+    assert all(s[4] is False for s in seen)                          # nothing was empty
+
+
+def test_the_progress_callback_reports_the_community_it_belongs_to():
+    """`where` is the (level, community) the call was issued for — so a log line is traceable."""
+    h, concept_chunks, texts = _long_text_hierarchy()
+    seen: list[tuple] = []
+    out = summarize_communities(h, concept_chunks, _provider(texts), llm=FakeLLM(), dry_run=False,
+                                max_prompt_chars=3000,
+                                on_call=lambda kind, where, chars, elapsed, empty:
+                                seen.append((kind, where)))
+
+    levels = {w[0] for _, w in seen}
+    assert levels == set(out["calls_by_level"])                      # every level reports
+    for _, (level, cid) in seen:
+        assert 0 <= level < len(h.levels)
+        assert 0 <= cid < len(h.levels[level].communities)
+
+
+def test_the_progress_callback_marks_an_empty_return_as_a_failure():
+    """An empty return is flagged at the call, not only counted at the end (§I25)."""
+    h, concept_chunks, texts = _long_text_hierarchy()
+    seen: list[tuple] = []
+    out = summarize_communities(h, concept_chunks, _provider(texts), llm=lambda p: "",
+                                dry_run=False, max_prompt_chars=3000,
+                                on_call=lambda kind, where, chars, elapsed, empty:
+                                seen.append(empty))
+    assert seen and all(seen)
+    assert out["empty_returns"] == out["total_calls"]
