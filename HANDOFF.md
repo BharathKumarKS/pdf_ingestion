@@ -4,6 +4,185 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
+> **Last updated: 2026-10-22, session 10. ✅ THE CROSS-EMBEDDER EXPERIMENT RAN — ALL SIX VERIFIERS PASS.
+> §I59's Effect 2 is 68 % ATTRIBUTED to the embedder (a residual of +0.0648 is still unattributed —
+> §I63). §I55 IS FIXED and verified. Read `IMPROVEMENTS.md` §I63 first, then §I55 and §I53a.**
+>
+> ## ▶ NEXT SESSION — START HERE (written 2026-10-22, session 10)
+>
+> **1. ✅ §I63 — THE CROSS-EMBEDDER EXPERIMENT. THE FULL-DIM REGRESSION IS THE EMBEDDER.**
+> `logs/p1/step10/cross_embedder_experiment.{py,json}` (sha256 `7c5e92f9…`). **124 s wall, no LLM
+> calls, no writes.** Hold the corpus fixed (new doc `7ba61432`, 3,489 in-window chunks), swap ONLY
+> the embedder, exact brute-force cosine (not Qdrant — §I60 measured up to 18.5 % HNSW loss), 133
+> queries, endpoint R@20 paired + ceiling-normalised:
+>
+> | arm | embedder | R@20 | R@100 | R@500 | R@1000 |
+> |---|---|---|---|---|---|
+> | **Q** | Qwen3 1024d | 0.2939 | 0.5691 | 0.9230 | 1.0000 |
+> | **N** | Nomic 768d | **0.4339** | **0.6290** | 0.9273 | 1.0000 |
+>
+> **Δ R@20 = +0.1400, CI [+0.0907, +0.1893], W/L/T 26/60/47 → RESOLVED, N > Q.** Secondary R@100
+> +0.0599 [+0.0132, +0.1067] → also RESOLVED. So **Qwen3 ranks worse than Nomic on this corpus**, and
+> §I59's Effect 2 — the full-dimension ranking loss no instrument could attribute — is **68 % the
+> embedder**: swapping the embedder alone recovers **+0.139996** of the **−0.204788** drop. ⚠️ **A
+> residual of +0.064792 (31.6 %) is NOT attributed** — it mixes the chunking, the content filter and
+> the chunk count, so **§I59's Effect 2 is 68 % attributed, not closed**. ⚠️ **The chunking itself is
+> already BUILT** (E1 semantic chunking / E2 parents / E3 late chunking, landed 2026-10-17 and in this
+> corpus) — what is missing is its **attribution**, plus one knob never re-tuned
+> (`min_chunk_tokens = 32`). ⚠️ **This does NOT license a revert** (plan §1: a revert is a
+> re-ingest + a re-index of 73,406 DA + 6,065 concept points + the intent classifier). **The embedder
+> is the larger half of the lever; choosing it is an owner decision, not taken.**
+>
+> **All six verifiers pass** — X1 (cluster Nomic reproduces the LOCAL `NomicEmbedder`: doc cos
+> **1.000000** prefixed / **0.937749** raw, query cos **1.000000** — §I62's prefix trap, confirmed
+> live in the run that depends on it); **X2** (arm Q reproduces §I60's d=1024 row **all four k
+> exact**); **X2b** (arm Q reproduces §I59's `new_fulldim` row **all four k exact**); X3 (identical
+> chunk→page mapping); **X4** (A-vs-A at batch 64 vs 128 → **max_abs_diff 0.0**); X5 (0 errors).
+>
+> **⚠️ §I63 ALSO CORRECTS A PLAN PREMISE.** The plan's §5 says *"§I59's k is in PAGES, §I60's is in
+> CHUNKS"* — **wrong in its mechanism**. Both apply `k` to a deduped **page** list; what differs is
+> the **pool depth** feeding it: §I59's is the **top-1000 chunks** (production's prefetch depth,
+> `store.py:416`), §I60's is **every chunk** (`max(KS)` = 5000). Identical at k=20/100 — so the
+> pre-registered endpoint is convention-free — diverging at k≥500 (§I59 R@1000 **0.926563** vs §I60
+> **1.0000**). X2 and X2b reproducing **both** rows exactly is what settles it; §I60's entry and the
+> artifact both carry the correction.
+>
+> **2. ✅ §I55 — THE RERANKER'S SWALLOW IS FIXED** (counted, surfaced, and the run refuses to certify
+> a reranked metric). `reranker.py` counts `fallbacks`/`last_fallback`; `evaluate_rag.py` takes a
+> per-query **delta** (the reranker is a singleton), carries `reranker_fallback` onto each result, and
+> `main()` writes `reranker.reranked_metrics_valid=false` + a Run-integrity warning + **exit 3**.
+> `tests/test_reranker_fallback.py` (7); **both guards proven to discriminate by mutation** (removing
+> the counter increment fails 1; neutering the delta fails 2; tree restored byte-identical).
+> ⚠️ **Verifier dispatched, pending.** ⚠️ **Not done deliberately:** the fix does NOT exclude a
+> fallback query from the metrics — that changes denominators. Registered as the follow-on.
+>
+> **3. ⚠️ THREE VERIFIERS DISPATCHED 2026-10-22 (session 10).** Reviewer `openai/gpt-oss-20b` for all
+> three (resolved from `hermes config get delegation` — provider `custom` @ `10.0.10.70:8000`, empty
+> fallback chain; independent of the author's DeepSeek family, and of the subject in each case):
+> - ✅ **§I53a (the §G2 checkpoint) — `deleg_dd8d2c29` RETURNED: 8/9 confirmed, no silent wrong answer.**
+>   C9 (a suite-wide test count) is `unverified` because the brief carried the diff, not the suite —
+>   measured separately as 606/4/6. The verdict was cheap and its cited line numbers are fabricated,
+>   so it was **not banked**: all five cited test names were confirmed to exist and **all four guards
+>   were re-proven by mutation on my own run** (1/2/3/1 tests fail respectively, each on its own
+>   assertion; tree restored byte-identical). **`[verified]` — commit it.**
+> - ✅ **§I55 (the reranker swallow) — VERIFIED AS OF v2 (`deleg_297b66a3`, 7/8 confirmed).** v1
+>   (`deleg_8c4afa8b`) explicitly dismissed the empty-`results` case as harmless; a probe showed a
+>   clean HTTP 200 with `{"results": []}` (or no `results` key) returns **0 chunks**, moves no
+>   counter, logs only at DEBUG, and is then **averaged in as a total miss** while the artifact says
+>   `reranked_metrics_valid: true` — worse than the swallowed exception, which at least returns the
+>   unranked pool. Guard added, 2 new tests, mutation-proven (removing it fails 2). **`[verified]` —
+>   commit it.** (v2's `if not chunks: return []` observation was correctly judged unreachable.)
+> - ⚠️ **§I63 (the cross-embedder probe and its numbers) — `deleg_ac1507f8` RETURNED: 8/8 confirmed.**
+>   Cheap verdict (2 calls, 16 s) with pack-relative line numbers, so **not banked**: the endpoint
+>   arithmetic was recomputed from the artifact's own per-query array (mean 0.139996, CI
+>   [0.090737, 0.189255], W/L/T 26/60/47 — exact) and the query↔ranking ordering guarantee was
+>   re-proven with a probe that CAN fail (shuffled server response, including across batches).
+>   **`[verified]` — commit it.**
+>
+> Evidence packs: `~/.hermes/cache/scratch/{g2_checkpoint,i55,i63}_review_pack.md`. **Do not commit the
+> two pending items on the author's own evidence if either returns UNVERIFIABLE or times out.**
+>
+> **4. Suite: 608 passed / 4 pre-existing fail / 6 skipped** (`logs/p1/step10/session10_suite_v2.txt`,
+> 224 s; the earlier run in `session10_suite.txt` was 606/4/6, before §I55's second-path tests). The 4
+> are the documented pre-existing set (`test_phase1` ×1, `test_phase2` ×1, `test_splade` ×2) — **none
+> of those files imports `reranker` or `evaluate_rag`**, and `pyproject.toml`/`uv.lock` are untouched.
+>
+> **5. ⚠️ STILL OPEN, UNCHANGED:** §G5/§I2 (`hop_distance` is a constant 0); §I57's **Phase E** (the
+> new index has NEVER had generation metrics — the only thing that can answer "is the new system
+> better?"); the **V5 plan** is written and unsigned (`.hermes/plans/2026-10-22-p1-g2-v5-ablation-plan.md`,
+> four signoff points in its §6); §I56's DA-lane disposition (owner decision, not taken); §I55's
+> exclude-from-metrics follow-on; and §I57's registered durable fix (`evaluate_rag.py` should emit
+> per-query JSON, not only `.md`).
+>
+> **Last updated: 2026-10-22, session 9. ✅ The §G2 monitoring gap is FIXED, the DA lane is MEASURED,
+> and V5 has a plan. Read `IMPROVEMENTS.md` §I53a, §I55 and §I56 first.**
+>
+> ## ▶ NEXT SESSION — START HERE (written 2026-10-22, session 9)
+>
+> **1. ✅ §I53a — THE §G2 BUILD IS CHECKPOINTED AND LOGS PER CALL.** NEW
+> `src/pdf_ingestion/summary_checkpoint.py` + `checkpoint=`/`on_call=` on `summarize_communities` +
+> `--no-resume`/`--progress-every` on `build_community_summaries.py`; `data/summary_cache/` gitignored.
+> The key is the **run** `(document, model, seed, resolutions, prompt budget, prompt digests)` and each
+> entry is reused only on a matching **input digest** — so a re-attempted child invalidates its parent.
+> A community whose calls returned empty is `ok=False` and is **re-attempted**. 18 new tests; **four
+> guards proven to discriminate by mutation**. Suite **599 passed / 4 failed / 6 skipped** — the 4 are
+> the documented pre-existing set. ⚠️ **NOT COMMITTED — the independent verifier has not run.**
+>
+> **2. ✅ §I56 — THE DA LANE IS MEASURED, AND THE ANSWER IS NOT UNIFORM.** First measurement on v2
+> (133 queries, `logs/p1/step10/da_lane_ablation.py`). The lane answers on **every** query (100 hits),
+> adds **+41.5 %** to the pool, and survives into the top-20 on **104/133** — so it is **not inert**.
+> But on the product endpoint it **RESOLVES NEGATIVE**: top-20 R@20 0.4385 → 0.4123, Δ **−0.0262**,
+> CI **[−0.0485, −0.0038]**, W/L/T **5/27/100**. The average hides a sign change: **overview RESOLVES
+> POSITIVE** (+0.0449, CI [+0.0326, +0.0572]) and factual carries −0.0696 (unresolved).
+> ⚠️ The "candidate set" number is **post-MMR**, not the raw union — DA can lower it by displacing
+> dense candidates through MMR. **OWNER DECISION, NOT TAKEN:** keep as-is / gate by `query_type` /
+> turn off. §A2 is now **closed**.
+>
+> **3. ✅ NEW §I55 — THE RERANKER SWALLOWS ITS OWN FAILURES.** `ClusterCrossEncoderReranker.rerank`
+> catches everything, logs `RERANKER DISABLED`, and returns the pool **unranked** — while the eval
+> artifact records `reranker.enabled=true`. Measured: **1/133** v2 queries rejected (500,
+> `gold-004`), **deterministically per query**, and the trigger is **content token-density, not
+> payload size** (a 50,773-char pool rejected while 78,187 passed). Any metric that depends on the
+> reranked **order** carries this silently. **Not fixed** — it is a source change needing its own
+> verifier.
+>
+> **4. ▶ V5 — THE PLAN IS WRITTEN, FOR SIGNOFF.** `.hermes/plans/2026-10-22-p1-g2-v5-ablation-plan.md`.
+> Spine: **equal fixed slot budget** across arms (V3's two-population finding makes any recall race
+> inflatable by construction), **generation metrics primary**, A-vs-B pre-registered with C/D as
+> sensitivity, and a mandatory **A-vs-A negative control**. Four signoff points in its §6 — the level
+> choice, the slot budget, whether C/D run, and confirming the null disposition. **Nothing is built.**
+>
+> **5. ⚠️ §G5/§I2 IS STILL OPEN — §G2 is NOT the last graph work.** `graph_search`'s `hop_distance`
+> is a **constant 0**, so "multihop" is nominal. §G4 (global/local/drift modes) stays a brainstorm
+> item. (An earlier statement in this session that V5 closed all graph work was **wrong**; the §G2
+> plan's own §6 lists §G5 as remaining.)
+>
+> **6. ⚠️ THE COMMITTED §G2 ARTIFACT PREDATES THE CODE THAT MADE IT.**
+> `logs/p1/step10/g2_summaries_2026-10-22.json` carries `prompt_chars_by_level: {}` and the **old**
+> field name `planned_leaf_map_calls` — both changed by the §I54 fix in `84ee66f`. §I53 cites it as
+> evidence. §I44's class; register or regenerate before quoting it.
+>
+> **7. ✅ §I57/§I58 — "IS THE NEW SYSTEM BETTER?" HAS NO VALID ANSWER YET.** The one cross-system pair
+> (`knowledge_base` vs `knowledge_base_v2`, same 133 queries) is confounded **six** ways; scripted in
+> `logs/p1/step10/compare_old_vs_new_index.py`. Paired: R@100/R@20/Hit@20/NDCG@20 **unresolved**,
+> **MRR RESOLVES NEGATIVE (−0.0987)**, Ctx.Prec **+0.0263** and overview R@20 **+0.0283** both
+> **RESOLVE POSITIVE**. ⚠️ **The new index has NEVER had generation metrics** — the only v2 run was
+> retrieval-only. **Phase E is the missing run.**
+> §I58: the gold set needs **no rebuild** — the labels are index-independent and **better served** by
+> the new index (achievable max **0.8806 → 0.9545**). Ceiling-normalised, the old index captures
+> **72.6 %** of its headroom and the new one **65.6 %** — the index improved and the retriever did not
+> capture it. 3 labels re-pointed (see 10).
+>
+> **8. ✅ §I59/§I60/§I62 — THE BASE LANE, DECOMPOSED.** `dense_64 @1000` is the only stage facing the
+> whole corpus. §I59: MRL-64 R@1000 ceiling-norm **0.9224 → 0.8151 (resolved −)**; full-dim **−0.0092
+> (unresolved)**; full-dim **R@20 −0.2026 (resolved −)**. Two effects: a **64d truncation penalty 8.7×
+> worse for Qwen3** (0.1115 vs 0.0128 — clean, measured within each index) and a **full-dim ranking
+> loss that is NOT attributable** (embedder + chunking). §I60: the pool is **saturated at 1000 chunks
+> at EVERY dimension (R@1000 = 1.0000)** → **128d is dead**, the width is irrelevant to coverage.
+> §I62: ⚠️ **the cluster serves Nomic but does NOT apply its task prefixes** — unprefixed gives
+> **cosine 0.949**, prefixed **1.000000**.
+>
+> **9. ▶ NEXT SESSION — THE CROSS-EMBEDDER EXPERIMENT.** Plan written, nothing run:
+> `.hermes/plans/2026-10-22-p1-cross-embedder-experiment-plan.md`. Hold the corpus fixed, swap only the
+> embedder (new corpus × Nomic vs new corpus × Qwen3, both already costed) to separate **"Qwen3 ranks
+> worse"** from **"the re-chunk ranks worse"** — the only thing that can attribute §I59's Effect 2.
+> **Under 10 minutes wall, no LLM, no writes.** Five verifiers, an A-vs-A negative control, and a
+> pre-registered rule. **Everything needed is in the plan's §5 — do not re-derive the timing, the
+> prefix trap, the k-units or the ceiling rule.**
+>
+> **10. ✅ §I58 — THREE LABELS RE-POINTED (re-point, not rebuild).** `gold-003` [30]→[34],
+> `gold-009`/`gold-010` [99]→[98], each by an **exact text match in the re-ingested index**. Lives in
+> `scripts/build_gold_v2.py` as a `_REPOINT` map so it survives a rebuild; a rebuild was verified to
+> reproduce the file with **only** those changes (166 answerable + 34 negatives = 200, unchanged).
+> ⚠️ `gold-003`'s answer is a **TOC line** and §I39 excludes TOC at ingest — the stored `is_content`
+> predates §I39, so it is reachable today and **will die at the next re-ingest**. It should probably be
+> dropped.
+>
+> ⚠️ **STILL UNCOMMITTED AND UNVERIFIED:** the §G2 checkpoint fix (§I53a — `summary_checkpoint.py`,
+> `community_summaries.py`, `build_community_summaries.py`, 18 tests) has **not** had its independent
+> verifier. Suite was clean (**599 pass / 4 pre-existing fail / 6 skip**) but per the standing rule a
+> step with no verifier is not done. The reviewer is on the cluster, reachable while the tunnel is up.
+>
 > **Last updated: 2026-10-22, session 8. ✅ §G2 IS BUILT AND VERIFIED — V1/V2/V4/V6 ALL PASS, V3
 > READ BY EYE. The one thing left in §G2 is **V5, the ablation — its endpoint — and it needs a
 > retrieval path that does not exist yet.** Read `IMPROVEMENTS.md` §I52, §I53 and §I54 first — they

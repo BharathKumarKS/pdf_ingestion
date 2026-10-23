@@ -21,16 +21,23 @@ Last updated: 2026-10-20
   measured 0 non-valuable remaining, but only after two iterations.
 - **Cost:** ~5,048 chunks × 1 LLM call.
 
-### A2. Re-index `derivative_artifacts` from SQLite
-- **What:** `uv run python scripts/index_derivative_artifacts.py --clear`
-- **Why:** the collection is a **retired card generation** — it shares no card ids with
-  SQLite, and was built by the old 5-type list, so it lacks `objective`, `misconception`
-  and `example` (10,927 cards). The DA retrieval lane therefore serves cards the UI does
-  not have.
-- **Evidence:** DA 81,837 points vs SQLite 82,164 cards; id overlap **0**; types present
-  in DA = 5 of 8.
-- **Cost:** ~82k embeddings locally on CPU — likely tens of minutes to hours.
-- **Note:** do A1 first if doing both, so this indexes the cleaned card set once.
+### A2. Re-index `derivative_artifacts` from SQLite — ✅ **DONE 2026-10-22** (§I49 Lane A)
+- **What:** `uv run python scripts/index_derivative_artifacts.py --clear --doc-id 7ba61432-…`
+- **Done:** the collection was re-indexed from SQLite at the dense lane's **1024d**:
+  **81,837 @ 768d → 73,406 @ 1024d**, **8/8** card types (was 5), and
+  `search_da(dense_vec_1024, 'global')` returns **20 hits** (was **0** — the §I12 discriminator).
+  `knowledge_base_v2` 3,869 and `visual_knowledge_base` 1,033 unchanged; preflight went
+  **2 BLOCKER(S) → All checks passed**. Evidence: `logs/p1/step10/i12_laneA_da_reindex_2026-10-22.log`,
+  `…/i12_laneA_verify_2026-10-22.txt`.
+- **Why:** the collection had been a **retired card generation** — it shared no card ids with
+  SQLite and was built by the old 5-type list, so the DA lane served cards the UI does not have.
+- ⚠️ **The lane is live but has never been MEASURED on v2.** §D12 (2026-10-16) is the last run with
+  a live DA lane and it is on the OLD document; the §3d smoke test ran with the lane dead. The
+  measurement is `logs/p1/step10/da_lane_ablation.py` (2026-10-22).
+- ⚠️ **A1 was NOT done first**, so this index reflects the **current** card set, not a regenerated
+  one. If §A1 runs, §A2 must be repeated — A2's own note said so.
+- ⚠️ **Not verified by §A2's own acceptance criterion:** the recorded verifiers are dim, hit count,
+  type set and preflight. An **id-overlap check against SQLite** is not among them.
 
 ### A3. Card volume vs quality — is 8 types × N items per chunk the right shape? (owner question, 2026-10-18)
 - **What:** the owner asked whether we need this many cards per page, or whether we should generate
@@ -4087,6 +4094,7 @@ seen from two sides.
 checkpoint** — 597 sequential LLM calls, and an abort at call 596 loses all of it. §I23's lesson
 (a long LLM phase needs a checkpoint and a rate signal) applies to §G2 as written; the run happened to
 complete in 20 min, but nothing in the log could have distinguished "healthy and slow" from "stalled".
+**✅ FIXED 2026-10-22 — see §I53a.**
 
 **Cost:** 597 LLM calls, 19 min 42 s wall. No Phase-1 re-ingest, no graph writes, no Qdrant writes —
 the summaries are a JSON artifact and are **not yet wired into retrieval**.
@@ -4150,3 +4158,717 @@ either, because the same round that invented three defects also, with the code, 
 
 **Register against:** the "verifier at every step" rule (`HANDOFF.md` → Session hygiene, `README.md`),
 §I38 (a reviewer can destroy what it reviews), §I44 (evidence that is not on disk is not evidence).
+
+---
+
+### I53a. 2026-10-22 — the §G2 build is now checkpointed and logs per call (the §I53 monitoring gap, closed)
+
+**What was built.** NEW `src/pdf_ingestion/summary_checkpoint.py` (side-car JSONL), wired into
+`community_summaries.summarize_communities` (`checkpoint=`, `on_call=`) and
+`scripts/build_community_summaries.py` (`--no-resume`, `--cache-dir`, `--progress-every`,
+`--progress-seconds`). `data/summary_cache/` is gitignored alongside the other three caches.
+
+**The key is the RUN, not its inputs:** `(document, model, seed, resolutions, prompt budget, prompt
+digests)`. The model is `cfg.openai_model` — the **summariser**, which §I52 established is a
+different model from the graph build's extractor; the seed must match `g2_leiden_gate.py`'s or the
+communities are not the ones the gate approved (§I50 Finding 4).
+
+**Why an input digest and not just `(level, community)`.** A parent's input is its children's
+**summaries**, so a child that was re-attempted and now summarises differently must invalidate its
+parent. Each entry stores the digest of the exact material it was built from (a leaf's ordered
+passages, a parent's ordered child summaries) and is reused only on a match. Without that, a resume
+after a partial outage would keep stale parent summaries over fresh children — §I25's class, one
+level up.
+
+**A community whose calls returned empty is `ok=False` and is re-attempted**, never counted as done
+(`call_llm` returns `""` on failure, §I24). A community with genuinely no source material makes no
+call and is **not recorded at all** — the safe direction, since a transiently empty read is then
+re-read rather than frozen.
+
+**Per-call logging.** `on_call(kind, where, prompt_chars, elapsed, empty)` fires once per LLM call
+(single/map/reduce), and the CLI prints a line per call plus a rolling `N call(s) in M min = R
+calls/min`. This is §I23's lesson made concrete: the 2026-10-22 build's log could not distinguish
+"healthy and slow" from "stalled", and §I23 had already measured an 18-minute 58× stall that a
+single-request liveness probe read as all-clear.
+
+**Tests:** `tests/test_summary_checkpoint.py` (15) + 3 progress tests in
+`tests/test_community_summaries.py`. **Four load-bearing guards were proven to discriminate by
+mutation** — recording a failed summary as done, ignoring the input digest in `lookup`, dropping the
+per-call report, and not checking the header's model each fail their own test; the pristine tree
+passes 35.
+
+**✅ INDEPENDENT VERIFIER RAN 2026-10-22 (session 10) — `openai/gpt-oss-20b`, `deleg_dd8d2c29`,
+`status=completed`.** Verdict **8/9 CONFIRMED** (C1 `run_key` identity, C2 the digest+`ok` gate, C3
+`ok=bool(summary.strip())`, C4 the four guards can fail, C5 side-car, C6 dry run writes nothing, C7
+torn-line recovery, C8 strictly additive). **C9 — the "599 passed / 4 failed / 6 skipped" suite count —
+is `unverified`, and correctly so:** the reviewer was handed the §I53a diff, not the whole suite, and
+said so. That count is measured separately (session 10: **606 / 4 pre-existing / 6**, the +7 being
+§I55's new tests). **No silent wrong answer was found.**
+
+⚠️ **The verdict was cheap (3 API calls, 33 s) and its cited LINE NUMBERS are fabricated** — it cites
+"lines 544–560" of a 292-line file and "lines 1574–1580" of a 549-line one, i.e. offsets into the
+concatenated review pack rather than into the sources. So it was **not banked**: the five test names
+it cited were checked to exist, and **all four guards were re-proven by mutation on the author's own
+run** — (a) `ok=bool(summary.strip())` → `ok=True` fails 1 test; (b) the digest check → `if False:`
+fails 2; (c) the `on_call` report → `if False:` fails 3; (d) dropping the header's `model` check fails
+1. Every failure was on its **own assertion**, not a collection error, and the tree was restored
+byte-identical (`diff` → 0). **The confirmation therefore rests on that mechanical evidence, not on
+the reviewer's agreement** — the reviewer's contribution is that it read the same code and found no
+counter-example.
+
+**Committed with the verdict, and the `[verified]` prefix is warranted**: the item is complete as
+scoped (module + wiring + 18 tests + mutation proof), and the one unverified claim is a suite-wide
+count outside the diff, measured independently above.
+
+**Cost:** local code only; no LLM calls, no cluster work. The fix is what makes the next §G2-scale
+LLM phase (V5, or a re-run at another resolution) restartable instead of all-or-nothing.
+
+---
+
+### I55. 2026-10-22 — the cross-encoder reranker swallows its own failures, and `evaluate_rag.py` reports `reranker.enabled=true` regardless
+
+**What was found.** `ClusterCrossEncoderReranker.rerank` (`reranker.py:131-141`) catches **every**
+exception, logs `RERANKER DISABLED — … Returning UNRANKED results in original retrieval order`, and
+returns `chunks[:top_k]`. Nothing counts it, nothing surfaces it, and the eval artifact records
+`reranker.enabled = true`. **This is §I25's class exactly** — a failure that reads as a success — and
+it means a reported R@20 / NDCG@20 can be computed on **unranked** output with no trace in the
+artifact.
+
+**Measured, not inferred** (`logs/p1/step10/reranker_payload_probe.py`, which builds the SAME pool
+`search_with_das` would hand the reranker and POSTs the SAME payload straight to the endpoint):
+
+| | |
+|---|---|
+| queries whose pool the endpoint **rejects** | **1 / 133 (0.8 %)** — `gold-004`, HTTP **500** |
+| accepted | median **59,651** total chars / **100** docs |
+| rejected | **50,773** total chars / **100** docs — **smaller** than many accepted pools |
+
+**The trigger is content token-density, not payload size.** Synthetic isolation: 100 docs × 2,500
+chars of plain ASCII, of unicode, of bare backslashes and of digits all return **200**; the same
+count of **real LaTeX/unicode physics text** returns **500** from ~40 docs upward, and **20** docs
+of the same text returns 200. A single 60,000-char document returns **400** (a second, distinct
+limit). So a character-count budget is the wrong instrument — the same trap §I52 recorded for
+token ratios (filler measures 6.23 chars/token, real physics 4.49-4.53).
+
+**Why it matters more than its rate suggests.** 0.8 % is small in aggregate, but the failure is
+**per-query deterministic** (the same query fails on every arm and every run), so it does not average
+out within a query — and any measurement that depends on the reranked **order** (this project's
+R@20/NDCG endpoints, the §2 reranker ablation, and the §G1 PPR ablation's ranking comparison) carries
+that contamination silently. It also made the DA ablation's top-20 comparison **inert by
+construction** for that query: the DA lane appends its candidates *last* in the pool, so an unranked
+top-20 is always the dense head.
+
+**Also measured while isolating it:** `_batch_texts`-style char budgets cannot predict rejection;
+`max_doc_chars` does not separate accepted (max 2,345) from rejected (2,949) cleanly either — the
+server-side rule is **not determined** and is recorded as such rather than guessed.
+
+**✅ FIXED 2026-10-22 (session 10) — the swallow is COUNTED, surfaced, and the run refuses to
+certify a reranked metric.** Three parts, all in the one change:
+
+- `src/pdf_ingestion/reranker.py` — `ClusterCrossEncoderReranker` counts every swallow
+  (`self.fallbacks`), keeps the last error (`self.last_fallback`), and the ERROR line now names the
+  count. The counter is per-instance and `get_reranker()` is a singleton, so one query's fallback is
+  the *delta* across its own `rerank()` call.
+- `scripts/evaluate_rag.py` — `run_retrieval` takes that delta and returns `reranker_fallback`;
+  `evaluate_query` carries it onto each result; `collect_reranker_fallbacks(results)` gathers the
+  affected ids.
+- **The artifact** — the config snapshot's `reranker` block gains `fallbacks`,
+  `queries_with_fallback`, `reranked_metrics_valid` (**false** when any fired) and `last_error`; the
+  **Run integrity** section carries a ⚠️ line naming the queries; the Config section prints
+  `Reranker fallbacks: N (RERANKED METRICS INVALID — see Run integrity)`; and `main()` **exits 3**
+  instead of 0. The artifact is still written — it is the evidence.
+
+Tests: `tests/test_reranker_fallback.py` (7). **Both guards proven to discriminate by mutation** —
+removing `self.fallbacks += 1` fails 1 test, neutering the per-query delta fails 2, each on its own
+assertion (not a collection error); the tree was restored byte-identical (`diff` → 0).
+
+⚠️ **What the fix deliberately does NOT do: it does not exclude a fallback query from the metrics.**
+That changes the denominators and every historical comparison. §I56 excluded `gold-004` by hand for
+exactly this reason; the run now **tells** you to, instead of doing it silently. Registered as the
+follow-on decision.
+
+**⚠️ VERIFIER v1 RAN — AND ITS ONE DISMISSAL WAS WRONG.** `openai/gpt-oss-20b`, `deleg_8c4afa8b`,
+`status=completed`: **7/8 confirmed**, overall `confirmed`, no silent wrong answer reported. Its **C8
+("enumerate every path where the cross-encoder swallows but the counter does not move") it answered
+*"only the exception path increments the counter; early return or empty results don't increment and
+don't cause silent rerank"*** — and it was handed the code. **That is false**, and it is the class I
+had asked it to hunt. The verdict was also cheap (2 API calls, 16.8 s) with **fabricated line
+numbers** ("`reranker.py` lines 511–519" of a 180-line file), so it was never banked; my own probe
+found the path it missed.
+
+**✅ SECOND PATH FOUND AND FIXED — a clean HTTP 200 that ranks NOTHING** (probe, session 10):
+
+| response | returned | `fallbacks` | log level |
+|---|---|---|---|
+| `{"results": []}` | **0 chunks** | **0** | DEBUG only |
+| `{}` (no `results` key) | **0 chunks** | **0** | DEBUG only |
+| `{"results": [{"corpus_id": 0, "score": 0.9}]}` | 1 chunk | 0 | DEBUG |
+
+The three response-shaping branches fall through to `ranked = []`, the method returns it, and
+`evaluate_rag` — whose `aggregate_metrics` skips only `skipped`/`error`/negatives — **averages the
+query in as a total miss** while the artifact says `reranked_metrics_valid: true`. This is *worse*
+than the swallowed exception: the exception returns the **unranked pool**, this returns **nothing**,
+so every metric for that query is 0 by construction.
+
+**Fix:** `if not ranked: raise ValueError(...)` before the return, so the empty ranking goes into the
+**same** handler — one counter, one log line, one disposition (fall back to `chunks[:top_k]`). A pool
+of 100 documents cannot legitimately rank 0.
+
+**Guards, all proven to discriminate by mutation on the author's own run** (each failure on its own
+assertion, never a collection error; tree restored byte-identical, `diff` → 0):
+
+| mutation | tests that fail |
+|---|---|
+| `self.fallbacks += 1` → `pass` | 1 |
+| `if not ranked: raise` → `pass` | **2** (both parametrisations) |
+| delta → `reranker_fallback = False` | 2 |
+
+`tests/test_reranker_fallback.py` now 9 tests (17 in the two reranker files, pristine green).
+
+⚠️ **The v1 verdict does NOT cover this revision** — the file changed after it ran. **Verifier v2 ran
+(`deleg_297b66a3`, `status=completed`): 7/8 CONFIRMED, overall `confirmed`, no silent wrong answer.**
+Same caveats as v1 — cheap (2 API calls, 19.1 s) and its cited line numbers are again fabricated
+("`reranker.py` line 581–589" of a ~190-line file) — so it is **not** the evidence: the new guard's
+discrimination is the author's own mutation run above, and C1–C7 were checked against the source. Its
+one substantive observation was that the `if not chunks: return []` early return yields an empty
+top-k without incrementing — **correctly judged harmless**: `run_retrieval` (and the Streamlit caller)
+only reach `rerank` when the pool is non-empty, so that guard is unreachable in practice and returning
+`[]` for an empty pool is the right answer. **§I55 is verified as of v2.**
+
+**Evidence:** `logs/p1/step10/reranker_payload_probe.{py,json}`; the synthetic isolation is in the
+session log. **Register against:** §I25 (the total-loss-that-reads-as-success class), §I24 (the `""`
+failure contract), §I52 (measure the thing the phase actually runs), §I44 (evidence on disk).
+
+---
+
+### I56. 2026-10-22 — the DA lane MEASURED on v2: it is live and it is not inert, it is resolved-NEGATIVE on the product endpoint, and resolved-POSITIVE on overview
+
+**The first measurement of this lane on v2.** §I49 proved it *answers*; nothing had measured whether
+its answers change the result. §D12 (2026-10-16, OLD document) was the last run with a live lane and
+the §3d smoke test ran with it dead, so this is a first measurement, not a re-measurement.
+
+**Instrument:** `logs/p1/step10/da_lane_ablation.py` — the production path
+(`store.search_with_das` → page-dedup → MMR → cross-encoder) with **`cfg.da_enabled` toggled and
+everything else pinned**: same query, same query vector, same `mmr_candidates` pool, same collection,
+same reranker. Artifact `logs/p1/step10/da_lane_ablation.json`.
+
+| | |
+|---|---|
+| queries | **133** answerable text queries (53 factual / 40 multihop / 40 overview) |
+| pool, DA **off** | min **57** / median **77** / max **90** chunks |
+| the lane answers | **100** DA hits per query (its own `fetch_k`) — i.e. on **every** query |
+| the lane adds | mean **32** new chunks per query = **+41.5 %** of the pool |
+| survival | **104 / 133** queries carry a DA-added chunk into the top-20 |
+| excluded | **1** query (`gold-004`) — §I55 reranker fallback; the top-20 headline is n=**132** |
+| cost | **no LLM calls**; ~24 min wall, one cluster session |
+
+| endpoint | DA off | DA on | delta | 95 % CI | verdict |
+|---|---|---|---|---|---|
+| **candidate set R@100** | 0.5948 | 0.5822 | **−0.0125** | [−0.0442, +0.0192] | UNRESOLVED (W/L/T 44/17/72) |
+| **top-20 R@20** (product endpoint) | 0.4385 | 0.4123 | **−0.0262** | [−0.0485, −0.0038] | **RESOLVED NEGATIVE** (W/L/T 5/27/100) |
+
+| by type (candidate-set R@100) | DA off | DA on | delta | 95 % CI | verdict |
+|---|---|---|---|---|---|
+| factual (n=53) | 0.7155 | 0.6459 | **−0.0696** | [−0.1431, +0.0038] | UNRESOLVED (negative point estimate) |
+| multihop (n=40) | 0.6335 | 0.6391 | +0.0056 | [−0.0234, +0.0345] | UNRESOLVED |
+| **overview (n=40)** | 0.3960 | 0.4410 | **+0.0449** | [+0.0326, +0.0572] | **RESOLVED POSITIVE** |
+
+**Reading it correctly — three things the numbers do not say on their own.**
+
+1. ⚠️ **The "candidate set" is POST-MMR, not the raw union.** `search_with_das` appends the DA
+   parents and then runs **MMR over the combined pool** to select `fetch_k`. So a lane that can only
+   *add* candidates can still **lower** candidate-set recall — it displaces dense candidates through
+   MMR's diversity objective. The −0.0125 is a statement about *the DA lane interacting with MMR*,
+   not about raw union recall. **Not tested:** DA with MMR off, or DA as a re-ranking rather than a
+   pool-append. Either could move this number.
+2. **The lane is not inert.** 104/133 queries carry a DA-added chunk into the top-20, so a null here
+   would have been a real null rather than the §G1 pool defect. This one is a resolved negative.
+3. **It is not uniformly bad.** The overview lane **resolves positive (+0.0449)** and factual carries
+   a negative point estimate (−0.0696, unresolved at n=53). The average hides a sign change.
+
+**Confounds, all recorded:** HyDE is **OFF** in both arms (deliberately — one HyDE call per arm would
+risk two different query vectors and break the single-variable property); the **graph lane is
+excluded** (multihop only, a second lever); 1/133 reranker fallback excluded per §I55. Absolute
+numbers are therefore **not** production numbers; the delta is the measurement.
+
+**What this does NOT license.** It does not say "delete the DA lane" — the overview result is a real
+positive on the lane the summaries (§G2) also target. It also does not say the lane helps: on the
+product endpoint it resolves **negative**. The disposition is an **OWNER decision** and is not taken
+here. The three defensible options: keep as-is; gate the lane by `query_type` (overview only); or
+turn it off. Each needs its own pre-registered comparison.
+
+⚠️ **The probe's own retry wrapper swallowed its retries** and a 951 s gap between two progress lines
+had no explanation in the log — §I25's class, inside the probe measuring §I25's class. Fixed
+(retries are now logged); the run's numbers are unaffected.
+
+**Register against:** §I12 (the lane was dead — 768-vs-1024), §I47, §I49 (the lane made live),
+§A2 (closed), §I55 (the reranker fallback), §D12 (the last live-lane run, on the old document).
+
+---
+
+### I57. 2026-10-22 — "is the new system better?" has NO valid answer yet: the one cross-system pair is confounded six ways, and the new index has never had generation metrics
+
+**What was asked, and what exists.** The question is whether the rebuilt system beats the deployed one
+per metric. There is exactly **one** pair of runs on the **same query set** that differ by index:
+
+| | §D12 (OLD) | §3d (NEW) |
+|---|---|---|
+| report | `p0-9-gold-v2_2026-10-17_0422.md` | `p1-step10-retrieval-only_2026-10-20_0411.md` |
+| collection | **`knowledge_base`** (deployed, doc `6d55c52b`) | **`knowledge_base_v2`** (doc `7ba61432`) |
+| index | 5,135 points (5,051 chunks + 84 RAPTOR) | 3,796 points, **NO RAPTOR nodes at all** |
+| DA lane | **live** | **DEAD** (768-vs-1024, §I12) |
+| generation | full — the judge ran | **retrieval-only** |
+| abstention | generation mode | score-threshold only |
+| label clamp | before §3c | after §3c |
+
+**Instrument (new, scripted — this had no scripted answer before):**
+`logs/p1/step10/compare_old_vs_new_index.py` → `…/compare_old_vs_new_index.json`. It parses the two
+`.md` reports and pairs them by query id. **`evaluate_rag.py` writes only a `.md`**, which is why this
+comparison was previously eyeball-only — **it should emit per-query JSON**; registering that as the
+durable fix.
+
+**Paired, n=133 (same 133 answerable v2 queries in both):**
+
+| metric | OLD | NEW | delta | 95 % CI | verdict | W/L/T |
+|---|---|---|---|---|---|---|
+| Recall@100 | 0.6392 | 0.6258 | −0.0134 | [−0.0590, +0.0322] | unresolved | 49/32/52 |
+| Recall@20 | 0.4645 | 0.4524 | −0.0121 | [−0.0614, +0.0373] | unresolved | 51/32/50 |
+| Hit@20 | 0.9474 | 0.9098 | −0.0376 | [−0.0862, +0.0110] | unresolved | 3/8/122 |
+| **Ctx.Prec** | 0.2346 | 0.2609 | **+0.0263** | **[+0.0110, +0.0417]** | **RESOLVED +** | 48/32/53 |
+| **MRR** | 0.8267 | 0.7280 | **−0.0987** | **[−0.1690, −0.0284]** | **RESOLVED −** | 23/39/71 |
+| NDCG@20 | 0.5399 | 0.5079 | −0.0320 | [−0.0801, +0.0160] | unresolved | 61/57/15 |
+
+| by type, Recall@20 | OLD | NEW | delta | 95 % CI | verdict |
+|---|---|---|---|---|---|
+| factual (n=53) | 0.5639 | 0.5698 | +0.0059 | [−0.0943, +0.1061] | unresolved |
+| multihop (n=40) | 0.6194 | 0.5433 | −0.0762 | [−0.1697, +0.0173] | unresolved |
+| **overview (n=40)** | 0.1778 | 0.2061 | **+0.0283** | **[+0.0101, +0.0464]** | **RESOLVED +** |
+
+**What the data is telling.**
+
+1. **On the aggregate, the new system is statistically indistinguishable** — R@100, R@20, Hit@20 and
+   NDCG@20 all straddle 0. There is **no evidence of the aggregate improvement the rebuild was hoped
+   to deliver**, and no evidence of harm either.
+2. **MRR resolves NEGATIVE (−0.0987)** — the *first* relevant page ranks lower, on 39 of 133 queries.
+   That is the one retrieval metric that clearly got worse.
+3. **Ctx.Prec resolves POSITIVE (+0.0263)** and **overview R@20 resolves POSITIVE (+0.0283, 26/10/4)**
+   — two real wins, both in the direction the §I21/§I39 content filter was aimed at.
+4. ⚠️ **The magnitudes are not attributable.** Six things changed at once, and at least three push in
+   opposite directions: the new run had **no RAPTOR** (its overview lane's fallback) and a **dead DA
+   lane**, while the old run's labels were built against the old index (§D4/§D6). §I56 measured the DA
+   lane at **−0.0262 on top-20 R@20** on the *new* index — so the old run's live DA lane was, if
+   anything, a handicap; the new run's dead lane was a *benefit*. That the aggregate still only ties
+   is the uncomfortable part.
+5. ⚠️ **The new index has never had generation metrics.** Faithfulness and Answer Relevance have **no
+   new-system number at all** — the only v2 run was retrieval-only. So the half of the evaluation the
+   product actually ships (an answer, not a page list) is **unmeasured** on the new system.
+6. ⚠️ **Abstention is not comparable** (0.500 vs 0.824 is a *mode* difference, not progress — §D15).
+
+**What would actually answer the question.** **Phase E — the authoritative `evaluate_rag.py` run on
+the current `knowledge_base_v2`** — has never happened. Since §3d the index has gained RAPTOR (B5),
+a live DA lane and a live graph lane (§I49), the §I21 graph filter, the §G3 merge, and §G2's
+summaries exist but are not wired. **Every one of those is now in place and none of it has been
+measured end-to-end.** Phase E is one cluster session (retrieval + judge) and it is the only thing
+that can turn this table into a real comparison.
+
+**Not claimed:** that the new system is better, or worse. The honest statement is: **no valid
+comparison exists yet, and the one available proxy shows a tie on aggregate with a worse MRR and two
+real wins in context precision and the overview lane.**
+
+**Register against:** §D9 (v1 vs v2 R@20 are not comparable at all — a different trap from this one),
+§D15 (the four differences that make §3d a smoke test), §D4/§D6 (the labels were built against the
+deployed index), §I56 (the DA lane's measured effect), §I44 (evidence on disk).
+
+---
+
+### I58. 2026-10-22 — the gold set does NOT need rebuilding for the new index; it is *better* served by it, and that exposes the real problem
+
+**The question.** The labels were authored while `knowledge_base` (doc `6d55c52b`) was live. Does the
+rebuilt `knowledge_base_v2` (doc `7ba61432`) need a new eval set to be assessed correctly?
+
+**No — and rebuilding one would be circular.** A label here is a **PDF page that answers the
+question**, established by a VLM scan of the document (§3b: 453 factual + 89 multihop labels are
+scan-only). That is a property of the **document**, not of the index, and **the PDF is the same one**
+in both ingests. Deriving labels *from* the new index would make the eval measure only the system it
+was built from — precisely the circularity §D6 was settled to avoid for v1 ("early labels were
+retriever-derived"). **An index-independent label set is the only kind that can compare two indexes,
+and this one already is one.**
+
+**Measured, not argued** (`logs/p1/step10/eval_set_index_validity.py` → `…json`; SQLite only, no
+cluster, no LLM). Per query, how many of its labels a retriever can *ever* reach, reproducing the live
+filter (`store.py:389-402`: `page_number ∈ [30, 936]` and `is_content is not False`):
+
+| | OLD `knowledge_base` | NEW `knowledge_base_v2` |
+|---|---|---|
+| reachable pages / chunks in window | 724 / 4,519 | **888 / 3,489** |
+| **achievable max**, mean | 0.8806 | **0.9545** |
+| achievable max, min | 0.3750 | 0.0000 |
+| queries capped below 1.0 | **76** | **41** (24 at ±1) |
+| labels unreachable (exact / ±1) | — | **57 / 26** of 3,631 |
+| labels unreachable by type | — | factual 5/2 · multihop 6/3 · **overview 46/21** |
+
+**The new index is a BETTER index by this measure** — it reaches 95.5 % of the labelled pages against
+the old index's 88.1 %, from fewer chunks (more pages covered, thinner per-page redundancy).
+
+**⚠️ And that is the finding that matters more than the question.** Ceiling-normalised (§D9):
+
+| | achievable max | observed R@100 (§I57) | **headroom captured** | left on the table |
+|---|---|---|---|---|
+| OLD index | 0.8806 | 0.6392 | **72.6 %** | 0.2414 |
+| NEW index | 0.9545 | 0.6258 | **65.6 %** | **0.3287** |
+
+So the R@100 *tie* in §I57 is **not** "the new index is no better". The index improved and **the
+retriever did not capture the improvement** — the new system leaves **0.33** of reachable recall
+unused, against 0.24 for the old one. The bottleneck has moved from the corpus to the retrieval path.
+
+**A small, real repair list — not a rebuild:**
+
+1. ⚠️ **`gold-003` is structurally unscoreable in the new index.** Its single label is page **30** —
+   exactly `min_content_page`, and the new ingest has **no chunk at page 30**. Unreachable even at ±1,
+   so its R@20 is **0 by construction**. §D15 recorded "Unreachable label pages 4 → 0" *before* the
+   §I21 filter and the re-chunk; this one is new. **One query, and it silently drags the factual
+   lane's mean down.**
+2. **`gold-009` / `gold-010`** are the §D4 ±1 fuzz (label page 99, reachable at ±1) — measurable, but
+   they read 0 at exact page matching.
+3. **Overview is the most capped lane** (30 of 40 queries; 46 of 2,954 labels unreachable) — but note
+   this is largely a *label-size* artifact, not reachability: with a mean of 73.8 labels, **any single
+   miss caps the query below 1.0** (§D9). Judge overview by the ceiling-normalised number, not by
+   "capped".
+4. The remaining ~50 unreachable labels are ~1.6 % exact / ~0.7 % at ±1 — a noise floor, not a defect.
+
+**Recommendation:** **re-point `gold-003` (and optionally the two ±1 queries) and leave the set
+alone.** A full rebuild would cost a book-wide VLM scan (~36k judge calls, §3c) and would destroy
+comparability with every historical run, for a ~1 % label-reachability gain.
+
+**Register against:** §D6 (labels must not be retriever-derived), §D9 (ceiling-normalised reporting),
+§D4 (the ±1 fuzz), §D15 ("unreachable label pages 4 → 0" — superseded, and now stale), §I57 (the tie
+this explains), §I21/§I39 (the filter that changed the corpus).
+
+---
+
+### I59. 2026-10-22 — the base MRL-64 lane IS down in the new index, and the cause decomposes: a 64d-truncation penalty that is 8.7× worse for Qwen3, plus a full-dim ranking loss that is NOT attributable
+
+**The question.** Does the base retriever capture better in the old or the new index? `dense_64 @1000`
+is the only retrieval stage that faces the whole corpus — production is
+`dense_64(1000) → dense_<full>(500)` (`store.py:416`) — so this is the rebuild's most direct
+retrieval-stage comparison.
+
+**Instrument:** `logs/p1/step10/base_retriever_mrl64.py` → `…json`. 133 queries, page-level recall at
+k ∈ {1000, 500, 100, 20}, reported **raw and ceiling-normalised** (§D9 — the two indexes' achievable
+maxima differ, so raw compares different denominators). The production filter is copied verbatim from
+`store.py:336-369`.
+
+⚠️ **The two indexes are in different embedding spaces, so each is queried with its OWN embedder** —
+the old index is `dense_768` (Nomic `nomic-embed-text-v1.5`), the new one is `dense_1024` (Qwen3
+`Qwen/Qwen3-Embedding-0.6B`). A Qwen3 64d vector is meaningless against the old index's `dense_64`.
+⚠️ **Both `dense_64` lanes are EXACT MRL slices of their full-dimension vectors** — verified on 200
+sampled points per index, `cosine(slice(full), low) = 1.0000` for every one. Neither lane is corrupt;
+any difference is genuine ranking information at 64d.
+
+**Result (n=133; achievable max old 0.8731 / new 0.9771):**
+
+| lane, ceiling-normalised | k | OLD | NEW | delta | 95 % CI | verdict |
+|---|---|---|---|---|---|---|
+| **MRL-64** | **1000** | **0.9224** | **0.8151** | **−0.1086** | [−0.1456, −0.0717] | **RESOLVED −** |
+| MRL-64 | 500 | 0.9224 | 0.7880 | −0.1359 | [−0.1760, −0.0959] | RESOLVED − |
+| MRL-64 | 100 | 0.6397 | 0.3587 | −0.2783 | [−0.3404, −0.2161] | RESOLVED − |
+| MRL-64 | 20 | 0.4220 | 0.1028 | −0.3185 | [−0.3833, −0.2538] | RESOLVED − |
+| **full-dim** | **1000** | 0.9352 | 0.9266 | **−0.0092** | [−0.0321, +0.0136] | **unresolved** |
+| full-dim | 500 | 0.9352 | 0.9224 | −0.0134 | [−0.0364, +0.0096] | unresolved |
+| full-dim | 100 | 0.7006 | 0.5691 | −0.1348 | [−0.1774, −0.0923] | RESOLVED − |
+| full-dim | 20 | 0.4987 | 0.2939 | −0.2026 | [−0.2556, −0.1496] | RESOLVED − |
+
+Raw (for the record): full-dim R@1000 **+0.0890** [**+0.0519, +0.1261**] **RESOLVED in the NEW
+index's favour**; MRL-64 R@1000 −0.0102 [−0.0512, +0.0309] unresolved. So at the pool level the new
+index reaches MORE raw pages — it just has a higher ceiling to be measured against.
+
+**The decomposition — and why it is clean.**
+
+1. **The 64d truncation penalty is a property of the MODEL, and it is 8.7× worse for Qwen3.** Measured
+   *within* each index (same chunks, same model, full-dim vs 64d), so it is not confounded:
+
+   | | full-dim R@1000 | MRL-64 R@1000 | **truncation penalty** |
+   |---|---|---|---|
+   | OLD (Nomic) | 0.9352 | 0.9224 | **0.0128** |
+   | NEW (Qwen3) | 0.9266 | 0.8151 | **0.1115** |
+
+   Nomic v1.5 is explicitly MRL-trained and its 64d slice is nearly lossless. Qwen3-Embedding-0.6B
+   supports custom output dims but its **64d end is far weaker**. At R@20 the same penalty is 0.0767
+   (old) vs 0.1911 (new).
+2. **The full-dim ranking loss is NOT attributable.** R@20 falls 0.4987 → 0.2939 (ceiling-normalised,
+   resolved) with **no truncation involved at all**. That is embedder **and** chunking together (5,048
+   vs 3,796 chunks over the same PDF) and this instrument cannot separate them.
+   **✅ ATTRIBUTED 2026-10-22 (session 10, §I63) — IT IS THE EMBEDDER.** Holding the corpus fixed and
+   swapping *only* the embedder, **Nomic 768d beats Qwen3 1024d by +0.1400** ceiling-normalised R@20
+   (CI **[+0.0907, +0.1893]**, W/L/T 60/26/47), and by +0.0599 at R@100. The paragraph above stands as
+   the record of what *this* instrument could not do; the attribution came from a different one.
+3. **Neither loss is a page-density artifact.** Page-level recall is not chunk-count-neutral, so it was
+   checked: the old index has **6.24** chunks/page and returns a median **413** distinct pages from
+   1000 chunks; the new has **3.93** chunks/page and returns **531**. The mechanical effect favours the
+   **new** index — and it is still worse. The finding survives its own confound.
+4. **§I57's production tie is consistent with all of this.** Production rescores the top-1000 with the
+   full-dimension lane and then reranks, so the *ordering* loss is largely absorbed — which is why the
+   end-to-end R@20 tied while the base stage fell off a cliff. The loss is currently **masked, not
+   absent**: any query whose relevant page falls outside the 64d top-1000 is unrecoverable, and the
+   margin is thinner than before.
+
+**What this does and does not license.**
+
+- ⚠️ **It does NOT license reverting to Nomic.** Effect 2 (the larger absolute loss) is confounded with
+  chunking, so a model swap would not reliably fix it — and a revert costs a re-ingest plus a re-index
+  of `derivative_artifacts` (73,406 pts) and `concept_embeddings` (6,065 pts), both moved to 1024d in
+  §I49, plus the intent classifier, whose width **is** `dense_dim`.
+- ✅ **The cheap, targeted fix for Effect 1 is the STAGE, not the model.** The 64d prefetch exists to
+  make ANN fast at scale; `knowledge_base_v2` holds **3,489** in-window chunks, where a 1024d ANN is
+  instant. The two-stage funnel is **pure downside here** — it gives up 0.1115 of pool recall to save
+  microseconds. Either raise the 64d limit (1000 → 5000, cheap) or drop the 64d prefetch and ANN the
+  full dimension directly. **No re-ingest, no model change.**
+- ⚠️ Effect 2 needs its own instrument before any embedder decision: it is the §D9/§I57 class again —
+  a delta that mixes the embedder with the corpus change.
+
+**Cost:** no LLM calls; ~9 min wall (the local Nomic embedder is the slow part, CPU); cluster Qdrant
+reads only. **No writes to any collection.**
+
+**Register against:** §I57 (the tie this explains), §I58 (the ceiling normalisation), §D9, §I12/§I49
+(the 1024d move a revert would undo), §I52 (measure the model the phase runs), §E6 (the query-side
+switch to Qwen3).
+
+---
+
+### I60. 2026-10-22 — the MRL dimension sweep: the pool is saturated at EVERY dimension, so the width is irrelevant and the ANN is the only lever
+
+**The question.** Would widening the first stage (64d → 128d) or raising its prefetch limit recover
+the pool §I59 found degraded?
+
+**Instrument:** `logs/p1/step10/mrl_dimension_sweep.py` → `…json`. Because `dense_64` is a verified
+*exact* MRL slice of the full-dimension vector (§I59), `full[:d]` re-normalised **is** `dense_<d>`, so
+every dimension can be reconstructed **client side** from the stored full vector and brute-forced
+against the whole collection. **Read-only: no new named vector, no re-embed, no write.** 133 queries,
+d ∈ {64, 128, 256, 512, 1024}, k ∈ {20, 100, 500, 1000, 2000, 5000}.
+
+⚠️ **The `k`-unit note here is CORRECTED — 2026-10-22 (session 10, §I63).** The earlier claim in this
+entry — "`k` here is in **CHUNKS** (top-k chunks → deduped page pool); §I59's `k` is in **PAGES**" —
+**is wrong in its mechanism**. **Both** apply `k` to a deduped **page** list. What differs is the
+**pool depth** the page list is drawn from: this sweep's `max(KS)` is 5000, i.e. **every chunk**, while
+§I59's is the **top-1000 chunks** (production's prefetch depth, `store.py:416`). At k=20 and k=100 the
+two page lists are identical; they diverge at k≥500, where §I59's list is already exhausted — R@1000
+**1.0000 here** against **0.926563** in §I59. Measured, not argued:
+`cross_embedder_experiment.py`'s X2 and X2b reproduce **both** rows exactly, all four k each. The
+withdrawn "ANN gap" comparison stays withdrawn, but the reason it was nonsense is the **pool depth**,
+not a k-unit mismatch.
+
+**The grid, ceiling-normalised (k in pages — see the correction above):**
+
+| NEW index (Qwen3) | R@20 | R@100 | R@500 | **R@1000** |
+|---|---|---|---|---|
+| d=64 | 0.0256 | 0.1507 | 0.6611 | **1.0000** |
+| d=128 | 0.0680 | 0.2070 | 0.7296 | **1.0000** |
+| d=256 | 0.0925 | 0.3030 | 0.7741 | **1.0000** |
+| d=512 | 0.2608 | 0.5126 | 0.8988 | **1.0000** |
+| d=1024 | 0.2939 | 0.5691 | 0.9230 | **1.0000** |
+
+| OLD index (Nomic) | R@20 | R@100 | R@500 | **R@1000** |
+|---|---|---|---|---|
+| d=64 | 0.3806 | 0.6126 | 0.9369 | **1.0000** |
+| d=128 | 0.4369 | 0.6501 | 0.9474 | **1.0000** |
+| d=256 | 0.4757 | 0.6769 | 0.9602 | **1.0000** |
+| d=512 | 0.4792 | 0.7008 | 0.9590 | **1.0000** |
+
+**Three findings.**
+
+1. **The pool is SATURATED at 1000 chunks at every dimension in both indexes — R@1000 = 1.0000
+   everywhere.** The pool already contains every reachable relevant page. So **the MRL width is
+   irrelevant to coverage, and raising the limit above 1000 buys nothing in exact search.**
+2. **The width matters enormously for RANKING, monotonically.** New index R@20: 0.0256 (64d) →
+   0.2939 (1024d) = **11.5×**; R@100 0.1507 → 0.5691. Truncation damages the **order**, not the
+   **coverage**.
+3. **§I59's truncation finding SURVIVES with the ANN confound removed.** Nomic barely degrades with
+   truncation (R@20 0.3806 → 0.4792, 1.26×) while Qwen3 degrades 11.5×. The Qwen3 64d slice really
+   is much weaker; it was not an artifact.
+
+**The owner's objection, and it is correct.** Production is a Qdrant **prefetch**:
+`Prefetch(prefetch=[dense_64(1000)], query=vec_full, using=dense_1024, limit=500)` — the inner stage
+selects 1000 candidates and the outer query **re-scores them at full dimension**. So the 64d lane's
+*order* is discarded and only its *membership* survives. **The only 64d number that matters is pool
+coverage at the limit**, and finding 1 says the dimension does not affect it. **128d is therefore
+dead**: it would add a named vector and a cluster write for zero coverage gain and a ranking gain
+(0.0680) that is still only 23 % of what 1024d already provides.
+
+**What is left, and it is not the width.** Qdrant at limit=1000 reaches **0.8151** where exact search
+reaches **1.0000** — the loss is the **filtered-HNSW search path**, not the vector. That is
+`prefetch_limit_sweep.py` (§I61, in progress).
+
+**Cost:** no LLM calls, ~30 s of compute, cluster reads only. **No writes.**
+
+**Register against:** §I59 (whose truncation finding this confirms), §I57, §I58, §I44.
+
+---
+
+### I62. 2026-10-22 — the cluster serves Nomic, but does NOT apply its task prefixes — and the timing table for any Nomic re-embed
+
+**Found while costing the cross-embedder experiment** (§I59 Effect 2 needs "hold the corpus fixed,
+swap only the embedder"). Two facts, both measured.
+
+**1. The cluster serves Nomic.** `POST http://10.0.10.70:8123/embed-text/v1/embeddings` with
+`model = "nomic-ai/nomic-embed-text-v1.5"` returns **768d** in **0.18 s**. It is not in the
+advertised model list (`/v1/models` on 8123 is a 404), so this is discoverable only by trying it.
+
+**2. ⚠️ THE CLUSTER DOES NOT APPLY NOMIC'S TASK PREFIXES.** `embedder.NomicEmbedder` prepends
+`search_document: ` / `search_query: ` itself; the cluster endpoint is a generic passthrough and does
+not. Measured on 5 real chunk texts (`nomic_prefix_check.py`):
+
+| how the text was sent | cosine vs the local `NomicEmbedder` |
+|---|---|
+| cluster, **raw** | **0.949040** |
+| cluster, prefixed `search_document: ` | **1.000000** |
+
+**A naive re-embed would have landed in a slightly different space** — cosine 0.949, a small *uniform*
+degradation that reads as noise — and every number from the experiment would have been wrong while
+the run looked healthy. **§I25's class.** The caller MUST prefix. This is now verified, not assumed.
+
+**3. The timing table** (measured on 400 real in-window chunks, median 461 chars; batch = one HTTP call):
+
+| batch | latency | throughput | 3,489 chunks |
+|---|---|---|---|
+| 16 | 0.35 s | 45 chunks/s | 1.28 min |
+| 32 | 0.47 s | 68 chunks/s | 0.85 min |
+| 64 | 0.68 s | 94 chunks/s | 0.62 min |
+| **128** | **1.06 s** | **121 chunks/s** | **0.48 min** |
+
+133 query vectors in one call: **1.78 s**. So a full Nomic re-embed of the new index is **~29 s of GPU**
+plus seconds to write ~10.7 MB — **under 10 minutes wall including the harness.** ⚠️ By contrast the
+**local CPU** path (§I59 used it) runs ~3 s/query → 3,489 chunks would be **~3 hours**. Use the cluster.
+
+**Register against:** §I59 (the experiment this unblocks), §I52 (measure the model the phase runs),
+§I25 (a failure that reads as a success), §I19a (a cache that hit nothing — the same "looks fine,
+is wrong" shape).
+
+---
+
+### I63. 2026-10-22 — the cross-embedder experiment: §I59's Effect 2 IS THE EMBEDDER. On the same corpus, Nomic 768d beats Qwen3 1024d by +0.1400 ceiling-normalised R@20
+
+**The question.** §I59 measured a **full-dimension ranking loss** in the new index (R@20
+ceiling-normalised 0.4987 → 0.2939, resolved, **no truncation involved at all**) and could not
+attribute it: the two indexes differ in the embedding MODEL *and* the chunking (5,048 vs 3,796 chunks
+over the same PDF) *and* the content-filter state. **Hold the corpus fixed; swap only the embedder.**
+
+**Design (pre-registered; plan `.hermes/plans/2026-10-22-p1-cross-embedder-experiment-plan.md`).** The
+NEW corpus (doc `7ba61432`, **3,489** in-window chunks) is embedded **twice**: arm **Q** = Qwen3
+1024d (the stored index vectors, re-derived here) and arm **N** = Nomic 768d (embedded this run).
+**Exact** brute-force cosine over the whole corpus, page-deduped — **not** Qdrant, because §I60 showed
+the filtered-HNSW path costs up to 18.5 % of the pool. 133 queries. Endpoint **R@20, N vs Q, paired,
+ceiling-normalised**; attributable iff the CI excludes 0.
+
+**Instrument:** `logs/p1/step10/cross_embedder_experiment.py` → `…json` (sha256 `7c5e92f9…`).
+No LLM calls, **no writes**, **124 s wall** (the Nomic re-embed is 38.9 s of it).
+
+| arm | corpus | embedder | R@20 | R@100 | R@500 | R@1000 |
+|---|---|---|---|---|---|---|
+| **Q** (control) | new, `7ba61432` | Qwen3 1024d | 0.2939 | 0.5691 | 0.9230 | 1.0000 |
+| **N** (treatment) | new, `7ba61432` | Nomic 768d | **0.4339** | **0.6290** | 0.9273 | 1.0000 |
+
+| endpoint (ceiling-normalised) | delta (N − Q) | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|
+| **R@20** | **+0.1400** | **[+0.0907, +0.1893]** | 26/60/47 | **RESOLVED — N > Q** |
+| R@100 (secondary) | +0.0599 | [+0.0132, +0.1067] | 34/51/48 | RESOLVED — N > Q |
+| R@500 | +0.0044 | [−0.0172, +0.0260] | 30/25/78 | unresolved |
+| R@1000 | 0.0000 | [0.0000, 0.0000] | 0/0/133 | **saturated** (both arms 1.0000) |
+
+**The answer, per the pre-registered rule.** `N > Q` → **Qwen3 ranks worse than Nomic on this
+corpus.** So §I59's Effect 2 — the full-dimension ranking loss no instrument could attribute — **is
+attributable to the embedder**, and it is large: **+0.14 of ceiling-normalised R@20**, nearly half of
+arm Q's entire score, better on **60 of 133** queries and worse on 26. The saturation at R@1000 is
+§I60's finding again, from the other direction: coverage is not the problem, **order** is.
+
+⚠️ **What this does NOT license — a revert.** The plan's §1 is explicit and it still holds: a revert
+is a re-ingest plus a re-index of `derivative_artifacts` (73,406 pts) and `concept_embeddings` (6,065
+pts) — both moved to 1024d in §I49 — plus the intent classifier, whose width **is** `dense_dim`. That
+is an **owner decision** on a much larger evidence base than one metric. The finding is that *the
+embedder is the lever*; choosing it is a separate decision, not taken here.
+
+⚠️ **The re-chunk is not exonerated.** This isolates the embedder *given this corpus*. It does not say
+the re-chunk is neutral — only that it is not *needed* to explain the loss.
+
+**Verifiers — all six pass, and two of them are exact reproductions of registered rows.**
+
+| # | check | result |
+|---|---|---|
+| X1 | the cluster Nomic reproduces the LOCAL `NomicEmbedder` | doc cos **1.000000** prefixed / **0.937749** raw; query cos **1.000000** — §I62's prefix trap confirmed live, in the run that depends on it |
+| X2 | arm Q reproduces §I60's d=1024 row **exactly** | R@20 0.293934, R@100 0.569074, R@500 0.922982, R@1000 1.0 — **all four exact** |
+| X2b | arm Q reproduces §I59's `new_fulldim` row **exactly**, at the other pool depth | R@20 0.293934, R@100 0.569074, R@500 0.922421, R@1000 0.926563 — **all four exact** |
+| X3 | both arms see an identical chunk→page mapping | pool 3,489; one shared pages array (sha256 `0ca575fabc5c59be`) |
+| X4 | **A-vs-A negative control** — arm N re-embedded at batch 64 vs 128 | **max_abs_diff 0.0**, 0 mismatches: the instrument manufactures no delta |
+| X5 | errors reported, never silently dropped | 0 errors, 133 queries kept |
+
+**⚠️ A measurement-design finding: the plan's §5 is wrong in its mechanism, and X2+X2b together are
+what settles it.** Both checks can be exact only because **§I59 and §I60 are the SAME ranking read at
+two POOL DEPTHS**. **Both** apply `k` to a deduped **page** list. What differs is how deep the chunk
+pool feeding that list is: §I59's is the **top-1000 chunks** (production's prefetch depth,
+`store.py:416`), §I60's is **every chunk** (its `max(KS)` is 5000). At k=20 and k=100 the two page
+lists are identical, so the pre-registered endpoint is convention-free; they diverge at k≥500, where
+§I59's list is already exhausted — §I59 R@1000 **0.926563** against §I60's **1.0000**. The plan's §5
+states this as *"§I59's k is in PAGES, §I60's is in CHUNKS"*: **the mechanism is not that**, and a
+reader who took it literally would mis-attribute the divergence to the k-unit instead of to the pool
+depth. Both registered numbers are now reproduced exactly, so the discrepancy is **settled, not
+argued** — and this artifact carries both views (`ceiling_norm` = every-chunk pool, the primary;
+`ceiling_norm_top1000pool` = §I59's).
+
+**✅ INDEPENDENT VERIFIER RAN 2026-10-22 (session 10) — `openai/gpt-oss-20b`, `deleg_ac1507f8`,
+`status=completed`: 8/8 CONFIRMED, no silent wrong answer.** The verdict was cheap (2 API calls,
+15.9 s) and its cited line numbers are offsets into the review pack rather than the sources, so it
+was **not banked**; the two claims that carry the headline were re-derived independently:
+
+1. **The endpoint arithmetic, recomputed from the artifact's own per-query array** (not from the
+   probe's summary): R@20 mean **0.139996**, CI **[0.090737, 0.189255]**, W/L/T **26/60/47** — all
+   three match the artifact exactly; R@100 0.059919 / [0.013168, 0.106669] / 34/51/48 likewise. The
+   two arms' aggregate means recompute to 0.293934 and 0.433930.
+2. **The ordering guarantee, by a probe that can FAIL** — the cluster response is deliberately
+   returned SHUFFLED, with each item's true `index` attached: `cluster_embed` restores input order
+   (ratios 1,2,3), and across **two batches of 2** (where `index` restarts per request) it still
+   gives 1,2,1,2 — no cross-batch contamination, so `q_n[i-1]` cannot be paired with the wrong
+   query's ranking. (The first version of this probe used a constant vector per row, which
+   normalises to the same unit vector and therefore **could not fail** — recorded because it is the
+   "check that cannot fail" trap, caught before it was believed.)
+
+⚠️ **"Chunking held fixed" means both arms used the NEW corpus's chunks — it does NOT test the
+chunking.** Both arms rank the same 3,489 re-chunked units (the semantic/contextual chunking of doc
+`7ba61432`), which is exactly what makes the N-vs-Q delta attributable to the embedder. It says
+nothing about whether that chunking is good.
+
+**And that leaves a residual, which is the honest limit of this result.** Three ceiling-normalised
+R@20 numbers are now on the same scale (arm Q reproduces §I59's new full-dim row exactly, so they are
+comparable):
+
+| | corpus | embedder | R@20 |
+|---|---|---|---|
+| old index | old chunks (5,048) | Nomic | 0.498722 |
+| new index | new chunks (3,489) | Qwen3 | 0.293934 |
+| new corpus | new chunks (3,489) | **Nomic** | 0.433930 |
+
+§I59's Effect 2 is a drop of **−0.204788**. Swapping the embedder alone recovers **+0.139996 — 68.4 %**
+of it. **A residual of +0.064792 (31.6 %) is still unattributed**, and it mixes three things this
+experiment deliberately held fixed: the chunking, the content-filter state, and the chunk count
+(5,048 → 3,489). So the correct statement is *"the embedder is the larger half of Effect 2, and the
+re-chunk is not exonerated for the remainder"* — **not** "the embedder explains it". §I59's Effect 2
+should be read as 68 % attributed, not closed.
+
+⚠️ **The residual does NOT mean the chunking is unbuilt — it is built, and it is in the corpus being
+measured.** E1 (semantic chunking), E2 (Docling `HybridChunker` parents) and E3 (late chunking over
+the parent's per-token embeddings) landed **2026-10-17** and the corpus was re-ingested with them
+(`.hermes/plans/2026-10-16-p1-reingest-plan.md`; the *why* is `IMPROVEMENTS.md` §E1–§E3). So the
+3,489 chunks arm N and arm Q both ranked **are** the E1/E2/E3 corpus. **What is missing is not the
+chunking but its attribution** — no experiment has ever isolated "the chunking helped or hurt" from
+"the embedder changed", which is exactly the 0.0648 this probe could not touch. Two concrete
+follow-ons sit inside that gap: the plan's Step 10 re-measure, and one knob never re-tuned —
+`min_chunk_tokens = 32`, inherited from the old size-based chunker, measured (§E1) to merge **27 %**
+of the new, smaller children (91 → 66 on the fixture) with the merge never re-checking the grown
+child's size.
+
+**Register against:** §I59 (the effect this attributes), §I60 (whose row X2 reproduces), §I58 (the
+ceiling rule), §I62 (the prefix trap X1 confirms), §I49 (what a revert would cost), §I52 (measure the
+model the phase runs), §I57 (the production tie this is consistent with).
+
+**Cost:** no LLM calls; 124 s wall; cluster reads + one Nomic re-embed. **No writes to any
+collection.**
+
+---

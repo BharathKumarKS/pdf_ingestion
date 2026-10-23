@@ -1,0 +1,327 @@
+........................................................................ [ 11%]
+........................................................................ [ 23%]
+........................................................................ [ 35%]
+........................................................................ [ 46%]
+....................................................................ssss [ 58%]
+ss...................................................................... [ 70%]
+.F............................F......................................... [ 81%]
+........................................................................ [ 93%]
+.FF.....................................                                 [100%]
+=================================== FAILURES ===================================
+_________________ TestStore.test_hybrid_search_includes_global _________________
+
+self = <tests.test_phase1.TestStore object at 0x11bc03210>
+sample_pdf = PosixPath('/private/var/folders/fd/ht5yx76s3wb0fzzw3rgs45pm0000gn/T/pytest-of-bharathkumar/pytest-149/pdfs0/sample_physics.pdf')
+settings = Settings(app_name='Synapse Learning Worlds', app_version='0.1.0', debug=False, sqlite_url='sqlite:///./data/test_synap...rue, mmr_lambda=0.7, mmr_candidates=100, api_port=8000, phoenix_enabled=True, phoenix_endpoint='http://localhost:6007')
+
+    def test_hybrid_search_includes_global(self, sample_pdf, settings):
+        """Hybrid search must pull from both user and global tenants."""
+        from src.pdf_ingestion.cluster_embedder import get_query_vector
+        from src.pdf_ingestion.store import DocumentStore, ingest_pdf
+    
+        # Ingest as global baseline
+        ingest_pdf(
+            pdf_path=str(sample_pdf),
+            tenant_id="global",
+            source_type="base_textbook",
+            is_global_baseline=True,
+            settings=settings,
+        )
+        # Ingest as user
+        ingest_pdf(
+            pdf_path=str(sample_pdf),
+            tenant_id="user_bob",
+            source_type="user_upload",
+            is_global_baseline=False,
+            settings=settings,
+        )
+    
+        q_vec = get_query_vector("energy conservation", settings)
+        store = DocumentStore(settings)
+    
+        # Hybrid: source_type=None → includes both tenants
+        results = store.search(
+            query_vector=q_vec,
+            tenant_id="user_bob",
+            source_type=None,
+            limit=20,
+        )
+        tenant_ids = {r["tenant_id"] for r in results}
+        # Both user_bob and global should appear (stub vectors are random
+        # but with enough docs both should surface in top-20)
+>       assert len(results) > 0
+E       assert 0 > 0
+E        +  where 0 = len([])
+
+tests/test_phase1.py:346: AssertionError
+----------------------------- Captured stderr call -----------------------------
+2026-10-22 20:51:42.313 | WARNING  | src.pdf_ingestion.cluster_embedder:__init__:104 - StubClusterEmbedder active — embeddings are random vectors
+2026-10-22 20:51:42.319 | INFO     | src.core.database:get_qdrant:218 - Qdrant: in-memory mode (tests)
+2026-10-22 20:51:42.319 | INFO     | src.core.database:_ensure_collection:291 - Created Qdrant collection 'knowledge_base' (dense_64+dense_1024+colbert+sparse)
+2026-10-22 20:51:42.319 | INFO     | src.core.database:_ensure_colpali_collection:331 - Created Qdrant ColPali collection 'visual_knowledge_base'
+2026-10-22 20:51:42.319 | INFO     | src.core.database:_ensure_concept_collection:382 - Created Qdrant concept collection 'concept_embeddings'
+2026-10-22 20:51:42.319 | INFO     | src.core.database:_ensure_da_collection:356 - Created Qdrant DA collection 'derivative_artifacts'
+2026-10-22 20:51:42.321 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/test_synapse.db
+2026-10-22 20:51:42.321 | INFO     | src.pdf_ingestion.parent_chunker:convert:93 - Converting for parent chunks: sample_physics.pdf
+2026-10-22 20:51:42.394 | INFO     | src.pdf_ingestion.parent_chunker:_get_converter:60 - Docling DocumentConverter ready (OCR=False, table structure=True)
+2026-10-22 20:51:44.317 | INFO     | src.pdf_ingestion.parent_chunker:_get_chunker:78 - HybridChunker ready (max_tokens=5000)
+2026-10-22 20:51:44.338 | SUCCESS  | src.pdf_ingestion.parent_chunker:convert:99 - Parent chunks for 'sample_physics.pdf': 6 parents, 6 pages
+2026-10-22 20:51:44.560 | INFO     | src.pdf_ingestion.chunker:_get_chunker:79 - chonkie SemanticChunker ready (threshold=0.8, chunk_size=512)
+2026-10-22 20:51:44.569 | SUCCESS  | src.pdf_ingestion.chunker:chunk_parents:104 - Chunked document 6863aa7a-f3ba-4c38-9199-9b78a0d0eb42 → 12 children from 6 parents
+2026-10-22 20:51:44.569 | INFO     | src.pdf_ingestion.chunking_pipeline:_make_cache:74 - Late-chunk resume cache: data/embed_cache/35f1612eaa665814
+2026-10-22 20:51:44.569 | WARNING  | src.pdf_ingestion.late_chunk_embedder:_get_tokenizer:100 - StubTokenizer active — token offsets are synthetic
+2026-10-22 20:51:44.569 | INFO     | src.pdf_ingestion.late_chunk_embedder:_embed_parents_concurrently:314 - Late-chunking 6 parents with 8 workers
+2026-10-22 20:51:44.573 | INFO     | src.pdf_ingestion.late_chunk_embedder:embed_children:263 - Late-chunk cache: 6 hits / 0 misses / 0 stale / 0 rejected / 0 written (key 35f1612eaa665814)
+2026-10-22 20:51:44.574 | SUCCESS  | src.pdf_ingestion.late_chunk_embedder:embed_children:264 - Enriched 12 children from 6 parents
+2026-10-22 20:51:44.584 | INFO     | src.pdf_ingestion.store:save_document:260 - SQLite: saved doc 6863aa7a-f3ba-4c38-9199-9b78a0d0eb42 with 12 chunks
+2026-10-22 20:51:44.584 | DEBUG    | src.pdf_ingestion.store:save_document:269 - SPLADE: encoded 12 sparse vectors
+2026-10-22 20:51:44.585 | DEBUG    | src.pdf_ingestion.store:save_document:280 - ColBERT: encoded 12 token matrices
+2026-10-22 20:51:44.594 | SUCCESS  | src.pdf_ingestion.store:save_document:315 - Qdrant: upserted 12 points for doc 6863aa7a-f3ba-4c38-9199-9b78a0d0eb42
+2026-10-22 20:51:44.594 | SUCCESS  | src.pdf_ingestion.chunking_pipeline:process_pdf:116 - Ingested 'sample_physics.pdf' → 6 parents → 12 children (6 pages)
+2026-10-22 20:51:44.599 | INFO     | src.pdf_ingestion.parent_chunker:convert:93 - Converting for parent chunks: sample_physics.pdf
+2026-10-22 20:51:44.673 | INFO     | src.pdf_ingestion.parent_chunker:_get_converter:60 - Docling DocumentConverter ready (OCR=False, table structure=True)
+2026-10-22 20:51:47.238 | INFO     | src.pdf_ingestion.parent_chunker:_get_chunker:78 - HybridChunker ready (max_tokens=5000)
+2026-10-22 20:51:47.259 | SUCCESS  | src.pdf_ingestion.parent_chunker:convert:99 - Parent chunks for 'sample_physics.pdf': 6 parents, 6 pages
+2026-10-22 20:51:47.489 | INFO     | src.pdf_ingestion.chunker:_get_chunker:79 - chonkie SemanticChunker ready (threshold=0.8, chunk_size=512)
+2026-10-22 20:51:47.498 | SUCCESS  | src.pdf_ingestion.chunker:chunk_parents:104 - Chunked document e2d0e99f-d329-4f98-a15c-1171ebaf8c82 → 12 children from 6 parents
+2026-10-22 20:51:47.498 | INFO     | src.pdf_ingestion.chunking_pipeline:_make_cache:74 - Late-chunk resume cache: data/embed_cache/35f1612eaa665814
+2026-10-22 20:51:47.498 | WARNING  | src.pdf_ingestion.late_chunk_embedder:_get_tokenizer:100 - StubTokenizer active — token offsets are synthetic
+2026-10-22 20:51:47.498 | INFO     | src.pdf_ingestion.late_chunk_embedder:_embed_parents_concurrently:314 - Late-chunking 6 parents with 8 workers
+2026-10-22 20:51:47.503 | INFO     | src.pdf_ingestion.late_chunk_embedder:embed_children:263 - Late-chunk cache: 6 hits / 0 misses / 0 stale / 0 rejected / 0 written (key 35f1612eaa665814)
+2026-10-22 20:51:47.504 | SUCCESS  | src.pdf_ingestion.late_chunk_embedder:embed_children:264 - Enriched 12 children from 6 parents
+2026-10-22 20:51:47.512 | INFO     | src.pdf_ingestion.store:save_document:260 - SQLite: saved doc e2d0e99f-d329-4f98-a15c-1171ebaf8c82 with 12 chunks
+2026-10-22 20:51:47.513 | DEBUG    | src.pdf_ingestion.store:save_document:269 - SPLADE: encoded 12 sparse vectors
+2026-10-22 20:51:47.513 | DEBUG    | src.pdf_ingestion.store:save_document:280 - ColBERT: encoded 12 token matrices
+2026-10-22 20:51:47.522 | SUCCESS  | src.pdf_ingestion.store:save_document:315 - Qdrant: upserted 12 points for doc e2d0e99f-d329-4f98-a15c-1171ebaf8c82
+2026-10-22 20:51:47.522 | SUCCESS  | src.pdf_ingestion.chunking_pipeline:process_pdf:116 - Ingested 'sample_physics.pdf' → 6 parents → 12 children (6 pages)
+__________ TestPhase1Regression.test_search_still_works_after_phase2 ___________
+
+self = <tests.test_phase2.TestPhase1Regression object at 0x11bc2b410>
+ingested_doc = {'document_id': '61e559ff-5cf0-4352-8cee-dd294d4bbe0d', 'filename': 'physics.pdf', 'page_count': 6, 'parent_count': 6, ...}
+p2_settings = Settings(app_name='Synapse Learning Worlds', app_version='0.1.0', debug=False, sqlite_url='sqlite:////private/var/fold...rue, mmr_lambda=0.7, mmr_candidates=100, api_port=8000, phoenix_enabled=True, phoenix_endpoint='http://localhost:6007')
+
+    def test_search_still_works_after_phase2(self, ingested_doc, p2_settings):
+        from src.pdf_ingestion.store import generate_phase2_artifacts, DocumentStore
+        from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
+        generate_phase2_artifacts(ingested_doc["document_id"], p2_settings)
+        # Query-side dense lane — the collection's own slot (dense_dim), not the legacy 768d.
+        embedder = get_cluster_embedder(p2_settings)
+        q_vec    = embedder.embed_query("Newton's law of motion")
+        results  = DocumentStore(p2_settings).search(
+            query_vector=q_vec,
+            tenant_id="global",
+            source_type="base_textbook",
+        )
+>       assert len(results) > 0
+E       assert 0 > 0
+E        +  where 0 = len([])
+
+tests/test_phase2.py:448: AssertionError
+---------------------------- Captured stdout setup -----------------------------
+Created test PDF: /private/var/folders/fd/ht5yx76s3wb0fzzw3rgs45pm0000gn/T/pytest-of-bharathkumar/pytest-149/test_search_still_works_after_0/physics.pdf  (6.7 KB, 6 pages)
+---------------------------- Captured stderr setup -----------------------------
+2026-10-22 20:52:39.393 | WARNING  | src.pdf_ingestion.cluster_embedder:__init__:104 - StubClusterEmbedder active — embeddings are random vectors
+2026-10-22 20:52:39.399 | INFO     | src.core.database:get_qdrant:218 - Qdrant: in-memory mode (tests)
+2026-10-22 20:52:39.399 | INFO     | src.core.database:_ensure_collection:291 - Created Qdrant collection 'knowledge_base' (dense_64+dense_1024+colbert+sparse)
+2026-10-22 20:52:39.399 | INFO     | src.core.database:_ensure_colpali_collection:331 - Created Qdrant ColPali collection 'visual_knowledge_base'
+2026-10-22 20:52:39.399 | INFO     | src.core.database:_ensure_concept_collection:382 - Created Qdrant concept collection 'concept_embeddings'
+2026-10-22 20:52:39.399 | INFO     | src.core.database:_ensure_da_collection:356 - Created Qdrant DA collection 'derivative_artifacts'
+2026-10-22 20:52:39.416 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:////private/var/folders/fd/ht5yx76s3wb0fzzw3rgs45pm0000gn/T/pytest-of-bharathkumar/pytest-149/test_search_still_works_after_0/phase2.db
+2026-10-22 20:52:39.416 | INFO     | src.pdf_ingestion.parent_chunker:convert:93 - Converting for parent chunks: physics.pdf
+2026-10-22 20:52:39.490 | INFO     | src.pdf_ingestion.parent_chunker:_get_converter:60 - Docling DocumentConverter ready (OCR=False, table structure=True)
+2026-10-22 20:52:41.454 | INFO     | src.pdf_ingestion.parent_chunker:_get_chunker:78 - HybridChunker ready (max_tokens=5000)
+2026-10-22 20:52:41.474 | SUCCESS  | src.pdf_ingestion.parent_chunker:convert:99 - Parent chunks for 'physics.pdf': 6 parents, 6 pages
+2026-10-22 20:52:41.699 | INFO     | src.pdf_ingestion.chunker:_get_chunker:79 - chonkie SemanticChunker ready (threshold=0.8, chunk_size=512)
+2026-10-22 20:52:41.708 | SUCCESS  | src.pdf_ingestion.chunker:chunk_parents:104 - Chunked document 61e559ff-5cf0-4352-8cee-dd294d4bbe0d → 12 children from 6 parents
+2026-10-22 20:52:41.708 | INFO     | src.pdf_ingestion.chunking_pipeline:_make_cache:74 - Late-chunk resume cache: data/embed_cache/932dea9e281795c3
+2026-10-22 20:52:41.708 | WARNING  | src.pdf_ingestion.late_chunk_embedder:_get_tokenizer:100 - StubTokenizer active — token offsets are synthetic
+2026-10-22 20:52:41.708 | INFO     | src.pdf_ingestion.late_chunk_embedder:_embed_parents_concurrently:314 - Late-chunking 6 parents with 8 workers
+2026-10-22 20:52:41.710 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:_content_tokens:134 - Parent 0: endpoint returned no trailing special vector (22 tokens)
+2026-10-22 20:52:41.710 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:214 - Late-chunked parent 0 → 1 children (22 tokens, 22 vectors)
+2026-10-22 20:52:41.711 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:_content_tokens:134 - Parent 1: endpoint returned no trailing special vector (279 tokens)
+2026-10-22 20:52:41.711 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:_content_tokens:134 - Parent 2: endpoint returned no trailing special vector (219 tokens)
+2026-10-22 20:52:41.711 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:_content_tokens:134 - Parent 3: endpoint returned no trailing special vector (258 tokens)
+2026-10-22 20:52:41.711 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:_content_tokens:134 - Parent 4: endpoint returned no trailing special vector (245 tokens)
+2026-10-22 20:52:41.711 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:214 - Late-chunked parent 4 → 1 children (245 tokens, 245 vectors)
+2026-10-22 20:52:41.712 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:214 - Late-chunked parent 1 → 3 children (279 tokens, 279 vectors)
+2026-10-22 20:52:41.712 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:214 - Late-chunked parent 3 → 2 children (258 tokens, 258 vectors)
+2026-10-22 20:52:41.712 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:214 - Late-chunked parent 2 → 2 children (219 tokens, 219 vectors)
+2026-10-22 20:52:41.712 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:_content_tokens:134 - Parent 5: endpoint returned no trailing special vector (312 tokens)
+2026-10-22 20:52:41.713 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:214 - Late-chunked parent 5 → 3 children (312 tokens, 312 vectors)
+2026-10-22 20:52:41.715 | INFO     | src.pdf_ingestion.late_chunk_embedder:embed_children:263 - Late-chunk cache: 0 hits / 6 misses / 0 stale / 0 rejected / 6 written (key 932dea9e281795c3)
+2026-10-22 20:52:41.715 | SUCCESS  | src.pdf_ingestion.late_chunk_embedder:embed_children:264 - Enriched 12 children from 6 parents
+2026-10-22 20:52:41.721 | INFO     | src.pdf_ingestion.store:save_document:260 - SQLite: saved doc 61e559ff-5cf0-4352-8cee-dd294d4bbe0d with 12 chunks
+2026-10-22 20:52:41.721 | DEBUG    | src.pdf_ingestion.store:save_document:269 - SPLADE: encoded 12 sparse vectors
+2026-10-22 20:52:41.722 | DEBUG    | src.pdf_ingestion.store:save_document:280 - ColBERT: encoded 12 token matrices
+2026-10-22 20:52:41.731 | SUCCESS  | src.pdf_ingestion.store:save_document:315 - Qdrant: upserted 12 points for doc 61e559ff-5cf0-4352-8cee-dd294d4bbe0d
+2026-10-22 20:52:41.731 | SUCCESS  | src.pdf_ingestion.chunking_pipeline:process_pdf:116 - Ingested 'physics.pdf' → 6 parents → 12 children (6 pages)
+----------------------------- Captured stderr call -----------------------------
+2026-10-22 20:52:41.749 | INFO     | src.pdf_ingestion.store:save_cards:962 - Saved 96 cards to SQLite
+2026-10-22 20:52:41.749 | INFO     | src.pdf_ingestion.raptor_tree:build_tree:108 - Building RAPTOR tree for doc 61e559ff-5cf0-4352-8cee-dd294d4bbe0d (12 chunks)
+2026-10-22 20:52:41.750 | DEBUG    | src.pdf_ingestion.raptor_tree:_cluster:241 - UMAP unavailable (No module named 'umap'), using raw embeddings
+2026-10-22 20:52:41.962 | SUCCESS  | src.pdf_ingestion.raptor_tree:build_tree:162 - RAPTOR tree built: 7 nodes (levels [1, 2, 3])
+2026-10-22 20:52:41.969 | INFO     | src.pdf_ingestion.store:save_raptor_tree:1184 - Upserted 7 RAPTOR vectors to Qdrant
+2026-10-22 20:52:41.969 | SUCCESS  | src.pdf_ingestion.store:save_raptor_tree:1194 - Saved 7 RAPTOR nodes
+2026-10-22 20:52:41.969 | SUCCESS  | src.pdf_ingestion.store:generate_phase2_artifacts:1651 - Phase 2 complete for 'physics.pdf': 96 cards, 7 RAPTOR nodes
+________ TestHybridIngest.test_ingest_with_splade_creates_named_vectors ________
+
+self = <tests.test_splade.TestHybridIngest object at 0x11bcc5890>
+tmp_path = PosixPath('/private/var/folders/fd/ht5yx76s3wb0fzzw3rgs45pm0000gn/T/pytest-of-bharathkumar/pytest-149/test_ingest_with_splade_create0')
+
+    def test_ingest_with_splade_creates_named_vectors(self, tmp_path):
+        import os
+        from src.core.config import Settings
+        from src.core.database import get_qdrant, reset_singletons
+        from src.pdf_ingestion.splade_embedder import reset_splade_embedder
+        from src.pdf_ingestion.store import ingest_pdf
+    
+        reset_singletons()
+        reset_splade_embedder()
+    
+        db_path = str(tmp_path / "test.db")
+        cfg = Settings(
+            qdrant_in_memory=True,
+            sqlite_url=f"sqlite:///{db_path}",
+            use_stub_embedder=True,
+            use_stub_llm=True,
+            use_stub_splade=True,
+            splade_enabled=True,
+        )
+    
+>       r = ingest_pdf(
+            pdf_path="tests/data/sample_physics.pdf",
+            tenant_id="global",
+            source_type="base_textbook",
+            is_global_baseline=False,
+            settings=cfg,
+        )
+
+tests/test_splade.py:103: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/pdf_ingestion/store.py:1558: in ingest_pdf
+    return ChunkingPipeline(settings=cfg).process_pdf(
+src/pdf_ingestion/chunking_pipeline.py:95: in process_pdf
+    doc, parents = self._parent_chunker.convert(path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <src.pdf_ingestion.parent_chunker.ParentChunker object at 0x15e4b9690>
+pdf_path = PosixPath('tests/data/sample_physics.pdf')
+
+    def convert(self, pdf_path: str | Path) -> tuple[Any, list[ParentChunk]]:
+        """Convert ``pdf_path`` and return ``(DoclingDocument, ParentChunk[])``.
+    
+        The document is returned alongside the parents because the downstream E1/E3 stages
+        need it too (the serialiser and the doc-wide element table live on it).
+        """
+        path = Path(pdf_path)
+        if not path.exists():
+>           raise FileNotFoundError(f"PDF not found: {path}")
+E           FileNotFoundError: PDF not found: tests/data/sample_physics.pdf
+
+src/pdf_ingestion/parent_chunker.py:91: FileNotFoundError
+----------------------------- Captured stderr call -----------------------------
+2026-10-22 20:53:58.789 | WARNING  | src.pdf_ingestion.cluster_embedder:__init__:104 - StubClusterEmbedder active — embeddings are random vectors
+2026-10-22 20:53:58.795 | INFO     | src.core.database:get_qdrant:218 - Qdrant: in-memory mode (tests)
+2026-10-22 20:53:58.795 | INFO     | src.core.database:_ensure_collection:291 - Created Qdrant collection 'knowledge_base' (dense_64+dense_1024+colbert+sparse)
+2026-10-22 20:53:58.795 | INFO     | src.core.database:_ensure_colpali_collection:331 - Created Qdrant ColPali collection 'visual_knowledge_base'
+2026-10-22 20:53:58.795 | INFO     | src.core.database:_ensure_concept_collection:382 - Created Qdrant concept collection 'concept_embeddings'
+2026-10-22 20:53:58.795 | INFO     | src.core.database:_ensure_da_collection:356 - Created Qdrant DA collection 'derivative_artifacts'
+2026-10-22 20:53:58.818 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:////private/var/folders/fd/ht5yx76s3wb0fzzw3rgs45pm0000gn/T/pytest-of-bharathkumar/pytest-149/test_ingest_with_splade_create0/test.db
+_______________ TestHybridIngest.test_search_with_splade_enabled _______________
+
+self = <tests.test_splade.TestHybridIngest object at 0x11bcbdd50>
+tmp_path = PosixPath('/private/var/folders/fd/ht5yx76s3wb0fzzw3rgs45pm0000gn/T/pytest-of-bharathkumar/pytest-149/test_search_with_splade_enable0')
+
+    def test_search_with_splade_enabled(self, tmp_path):
+        import numpy as np
+        from src.core.config import Settings
+        from src.core.database import reset_singletons
+        from src.pdf_ingestion.splade_embedder import reset_splade_embedder
+        from src.pdf_ingestion.store import DocumentStore, ingest_pdf
+    
+        reset_singletons()
+        reset_splade_embedder()
+    
+        db_path = str(tmp_path / "test.db")
+        cfg = Settings(
+            qdrant_in_memory=True,
+            sqlite_url=f"sqlite:///{db_path}",
+            use_stub_embedder=True,
+            use_stub_llm=True,
+            use_stub_splade=True,
+            splade_enabled=True,
+        )
+    
+>       r = ingest_pdf(
+            pdf_path="tests/data/sample_physics.pdf",
+            tenant_id="global",
+            source_type="base_textbook",
+            is_global_baseline=False,
+            settings=cfg,
+        )
+
+tests/test_splade.py:138: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/pdf_ingestion/store.py:1558: in ingest_pdf
+    return ChunkingPipeline(settings=cfg).process_pdf(
+src/pdf_ingestion/chunking_pipeline.py:95: in process_pdf
+    doc, parents = self._parent_chunker.convert(path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <src.pdf_ingestion.parent_chunker.ParentChunker object at 0x15889aa90>
+pdf_path = PosixPath('tests/data/sample_physics.pdf')
+
+    def convert(self, pdf_path: str | Path) -> tuple[Any, list[ParentChunk]]:
+        """Convert ``pdf_path`` and return ``(DoclingDocument, ParentChunk[])``.
+    
+        The document is returned alongside the parents because the downstream E1/E3 stages
+        need it too (the serialiser and the doc-wide element table live on it).
+        """
+        path = Path(pdf_path)
+        if not path.exists():
+>           raise FileNotFoundError(f"PDF not found: {path}")
+E           FileNotFoundError: PDF not found: tests/data/sample_physics.pdf
+
+src/pdf_ingestion/parent_chunker.py:91: FileNotFoundError
+----------------------------- Captured stderr call -----------------------------
+2026-10-22 20:53:58.852 | WARNING  | src.pdf_ingestion.cluster_embedder:__init__:104 - StubClusterEmbedder active — embeddings are random vectors
+2026-10-22 20:53:58.858 | INFO     | src.core.database:get_qdrant:218 - Qdrant: in-memory mode (tests)
+2026-10-22 20:53:58.858 | INFO     | src.core.database:_ensure_collection:291 - Created Qdrant collection 'knowledge_base' (dense_64+dense_1024+colbert+sparse)
+2026-10-22 20:53:58.858 | INFO     | src.core.database:_ensure_colpali_collection:331 - Created Qdrant ColPali collection 'visual_knowledge_base'
+2026-10-22 20:53:58.858 | INFO     | src.core.database:_ensure_concept_collection:382 - Created Qdrant concept collection 'concept_embeddings'
+2026-10-22 20:53:58.858 | INFO     | src.core.database:_ensure_da_collection:356 - Created Qdrant DA collection 'derivative_artifacts'
+2026-10-22 20:53:58.879 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:////private/var/folders/fd/ht5yx76s3wb0fzzw3rgs45pm0000gn/T/pytest-of-bharathkumar/pytest-149/test_search_with_splade_enable0/test.db
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:241
+<frozen importlib._bootstrap>:241
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:241
+<frozen importlib._bootstrap>:241
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:241
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+tests/test_backmatter_gate.py::test_search_excludes_back_matter
+  /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/src/core/database.py:306: UserWarning: Payload indexes have no effect in the local Qdrant. Please use server Qdrant if you need payload indexes.
+    client.create_payload_index(
+
+tests/test_colbert_embedder.py: 2 warnings
+tests/test_phase1.py: 10 warnings
+tests/test_phase2.py: 19 warnings
+tests/test_phase3.py: 11 warnings
+tests/test_visual_index.py: 4 warnings
+  /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/.venv/lib/python3.11/site-packages/docling/pipeline/standard_pdf_pipeline.py:601: DeprecationWarning: This field is deprecated. Use `generate_page_images=True` and call `TableItem.get_image()` to extract table images from page images.
+    or self.pipeline_options.generate_table_images
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_phase1.py::TestStore::test_hybrid_search_includes_global - ...
+FAILED tests/test_phase2.py::TestPhase1Regression::test_search_still_works_after_phase2
+FAILED tests/test_splade.py::TestHybridIngest::test_ingest_with_splade_creates_named_vectors
+FAILED tests/test_splade.py::TestHybridIngest::test_search_with_splade_enabled
+4 failed, 606 passed, 6 skipped, 9 deselected, 52 warnings in 226.70s (0:03:46)
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

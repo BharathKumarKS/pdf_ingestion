@@ -1,0 +1,1987 @@
+{
+  "meta": {
+    "filter_reproduced": "store.py:389-402 \u2014 page_number in [min_content_page, max_content_page] and is_content is not False",
+    "generated_by": "logs/p1/step10/eval_set_index_validity.py",
+    "new_document": "7ba61432",
+    "no_cluster": true,
+    "no_llm_calls": true,
+    "old_document": "6d55c52b",
+    "pm1": "\u00b11 page, tolerating the \u00a7D4 chunk-boundary fuzz",
+    "retrieval_window": [
+      30,
+      936
+    ],
+    "what": "\u00a7I58 \u2014 the gold set's achievable maximum per query, per index. Measures the CEILING the index imposes, not the score."
+  },
+  "queries": [
+    {
+      "id": "gold-003",
+      "n_labels": 1,
+      "new_achievable_max": 0.0,
+      "new_achievable_max_pm1": 0.0,
+      "new_reachable": 0,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [
+        30
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "gold-004",
+      "n_labels": 3,
+      "new_achievable_max": 0.666667,
+      "new_achievable_max_pm1": 0.666667,
+      "new_reachable": 2,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "factual",
+      "unreachable_new_exact": [
+        30
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "gold-005",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-008",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-009",
+      "n_labels": 1,
+      "new_achievable_max": 0.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 0,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [
+        99
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-010",
+      "n_labels": 1,
+      "new_achievable_max": 0.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 0,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [
+        99
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-011",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 0.666667,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 2,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-013",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-014",
+      "n_labels": 4,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 4,
+      "old_achievable_max": 0.75,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-015",
+      "n_labels": 5,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 5,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 5,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-016",
+      "n_labels": 15,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 15,
+      "old_achievable_max": 0.866667,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 13,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-017",
+      "n_labels": 35,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 35,
+      "old_achievable_max": 0.914286,
+      "old_achievable_max_pm1": 0.971429,
+      "old_reachable": 32,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-019",
+      "n_labels": 16,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 16,
+      "old_achievable_max": 0.625,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 10,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-021",
+      "n_labels": 5,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 5,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 5,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-022",
+      "n_labels": 5,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 5,
+      "old_achievable_max": 0.4,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 2,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-023",
+      "n_labels": 2,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 2,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 2,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-024",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-025",
+      "n_labels": 18,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 18,
+      "old_achievable_max": 0.888889,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 16,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-026",
+      "n_labels": 12,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 12,
+      "old_achievable_max": 0.916667,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 11,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-027",
+      "n_labels": 13,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 13,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 13,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-028",
+      "n_labels": 4,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 4,
+      "old_achievable_max": 0.5,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 2,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-029",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-030",
+      "n_labels": 8,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 8,
+      "old_achievable_max": 0.375,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-031",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-032",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-033",
+      "n_labels": 8,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 8,
+      "old_achievable_max": 0.625,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 5,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-034",
+      "n_labels": 2,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 2,
+      "old_achievable_max": 0.5,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-035",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-036",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-037",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-038",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-039",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-040",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-041",
+      "n_labels": 10,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 10,
+      "old_achievable_max": 0.7,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 7,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-042",
+      "n_labels": 10,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 10,
+      "old_achievable_max": 0.8,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 8,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-043",
+      "n_labels": 69,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 69,
+      "old_achievable_max": 0.84058,
+      "old_achievable_max_pm1": 0.985507,
+      "old_reachable": 58,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-044",
+      "n_labels": 134,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 134,
+      "old_achievable_max": 0.873134,
+      "old_achievable_max_pm1": 0.985075,
+      "old_reachable": 117,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-045",
+      "n_labels": 6,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 6,
+      "old_achievable_max": 0.666667,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 4,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-046",
+      "n_labels": 6,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 6,
+      "old_achievable_max": 0.666667,
+      "old_achievable_max_pm1": 0.833333,
+      "old_reachable": 4,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-047",
+      "n_labels": 14,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 14,
+      "old_achievable_max": 0.857143,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 12,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-048",
+      "n_labels": 9,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 9,
+      "old_achievable_max": 0.777778,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 7,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-049",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-050",
+      "n_labels": 4,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 4,
+      "old_achievable_max": 0.75,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-051",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-052",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-053",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 0.666667,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 2,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-054",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-057",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-058",
+      "n_labels": 12,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 12,
+      "old_achievable_max": 0.75,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 9,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-059",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-060",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-061",
+      "n_labels": 10,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 10,
+      "old_achievable_max": 0.7,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 7,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-062",
+      "n_labels": 6,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 6,
+      "old_achievable_max": 0.666667,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 4,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-063",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-064",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-065",
+      "n_labels": 9,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 9,
+      "old_achievable_max": 0.888889,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 8,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-067",
+      "n_labels": 9,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 9,
+      "old_achievable_max": 0.888889,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 8,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-068",
+      "n_labels": 5,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 5,
+      "old_achievable_max": 0.8,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 4,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-069",
+      "n_labels": 9,
+      "new_achievable_max": 0.888889,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 8,
+      "old_achievable_max": 0.888889,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 8,
+      "query_type": "multihop",
+      "unreachable_new_exact": [
+        791
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-070",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-071",
+      "n_labels": 29,
+      "new_achievable_max": 0.965517,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 28,
+      "old_achievable_max": 0.827586,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 24,
+      "query_type": "factual",
+      "unreachable_new_exact": [
+        791
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-072",
+      "n_labels": 13,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 13,
+      "old_achievable_max": 0.923077,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 12,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-073",
+      "n_labels": 21,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 21,
+      "old_achievable_max": 0.714286,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 15,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-074",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-075",
+      "n_labels": 10,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 10,
+      "old_achievable_max": 0.9,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 9,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-076",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-077",
+      "n_labels": 2,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 2,
+      "old_achievable_max": 0.5,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-078",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-079",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "factual",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-080",
+      "n_labels": 1,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 1,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 1,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-081",
+      "n_labels": 4,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 4,
+      "old_achievable_max": 0.75,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-082",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-083",
+      "n_labels": 3,
+      "new_achievable_max": 0.666667,
+      "new_achievable_max_pm1": 0.666667,
+      "new_reachable": 2,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [
+        30
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "gold-084",
+      "n_labels": 3,
+      "new_achievable_max": 0.666667,
+      "new_achievable_max_pm1": 0.666667,
+      "new_reachable": 2,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [
+        30
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "gold-085",
+      "n_labels": 3,
+      "new_achievable_max": 0.666667,
+      "new_achievable_max_pm1": 0.666667,
+      "new_reachable": 2,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [
+        30
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "gold-086",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-087",
+      "n_labels": 2,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 2,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 2,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-088",
+      "n_labels": 2,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 2,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 2,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-089",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-090",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-091",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-092",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-093",
+      "n_labels": 13,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 13,
+      "old_achievable_max": 0.923077,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 12,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-094",
+      "n_labels": 2,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 2,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 2,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-095",
+      "n_labels": 3,
+      "new_achievable_max": 0.666667,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 2,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [
+        673
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-096",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-097",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-098",
+      "n_labels": 3,
+      "new_achievable_max": 0.666667,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 2,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [
+        791
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-099",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-100",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-101",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-102",
+      "n_labels": 10,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 10,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 10,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "gold-103",
+      "n_labels": 3,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 3,
+      "old_achievable_max": 1.0,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 3,
+      "query_type": "multihop",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-001",
+      "n_labels": 115,
+      "new_achievable_max": 0.991304,
+      "new_achievable_max_pm1": 0.991304,
+      "new_reachable": 114,
+      "old_achievable_max": 0.86087,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 99,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        31
+      ],
+      "unreachable_new_pm1": [
+        31
+      ]
+    },
+    {
+      "id": "ovw-002",
+      "n_labels": 51,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 51,
+      "old_achievable_max": 0.803922,
+      "old_achievable_max_pm1": 0.980392,
+      "old_reachable": 41,
+      "query_type": "overview",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-003",
+      "n_labels": 22,
+      "new_achievable_max": 0.954545,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 21,
+      "old_achievable_max": 0.818182,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 18,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        149
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-004",
+      "n_labels": 85,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 85,
+      "old_achievable_max": 0.882353,
+      "old_achievable_max_pm1": 0.988235,
+      "old_reachable": 75,
+      "query_type": "overview",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-005",
+      "n_labels": 44,
+      "new_achievable_max": 0.954545,
+      "new_achievable_max_pm1": 0.977273,
+      "new_reachable": 42,
+      "old_achievable_max": 0.886364,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 39,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30,
+        469
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "ovw-006",
+      "n_labels": 46,
+      "new_achievable_max": 0.956522,
+      "new_achievable_max_pm1": 0.978261,
+      "new_reachable": 44,
+      "old_achievable_max": 0.847826,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 39,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30,
+        469
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "ovw-007",
+      "n_labels": 49,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 49,
+      "old_achievable_max": 0.836735,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 41,
+      "query_type": "overview",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-008",
+      "n_labels": 33,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 33,
+      "old_achievable_max": 0.848485,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 28,
+      "query_type": "overview",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-009",
+      "n_labels": 127,
+      "new_achievable_max": 0.992126,
+      "new_achievable_max_pm1": 0.992126,
+      "new_reachable": 126,
+      "old_achievable_max": 0.818898,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 104,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        31
+      ],
+      "unreachable_new_pm1": [
+        31
+      ]
+    },
+    {
+      "id": "ovw-010",
+      "n_labels": 36,
+      "new_achievable_max": 0.944444,
+      "new_achievable_max_pm1": 0.972222,
+      "new_reachable": 34,
+      "old_achievable_max": 0.833333,
+      "old_achievable_max_pm1": 0.972222,
+      "old_reachable": 30,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        31,
+        32
+      ],
+      "unreachable_new_pm1": [
+        31
+      ]
+    },
+    {
+      "id": "ovw-011",
+      "n_labels": 131,
+      "new_achievable_max": 0.984733,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 129,
+      "old_achievable_max": 0.862595,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 113,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        469,
+        587
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-012",
+      "n_labels": 27,
+      "new_achievable_max": 0.962963,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 26,
+      "old_achievable_max": 0.851852,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 23,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        469
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-013",
+      "n_labels": 157,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 157,
+      "old_achievable_max": 0.802548,
+      "old_achievable_max_pm1": 0.993631,
+      "old_reachable": 126,
+      "query_type": "overview",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-014",
+      "n_labels": 58,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 58,
+      "old_achievable_max": 0.827586,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 48,
+      "query_type": "overview",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-015",
+      "n_labels": 82,
+      "new_achievable_max": 0.987805,
+      "new_achievable_max_pm1": 0.987805,
+      "new_reachable": 81,
+      "old_achievable_max": 0.804878,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 66,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        31
+      ],
+      "unreachable_new_pm1": [
+        31
+      ]
+    },
+    {
+      "id": "ovw-016",
+      "n_labels": 43,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 43,
+      "old_achievable_max": 0.837209,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 36,
+      "query_type": "overview",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-017",
+      "n_labels": 155,
+      "new_achievable_max": 0.974194,
+      "new_achievable_max_pm1": 0.987097,
+      "new_reachable": 151,
+      "old_achievable_max": 0.890323,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 138,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30,
+        31,
+        138,
+        469
+      ],
+      "unreachable_new_pm1": [
+        30,
+        31
+      ]
+    },
+    {
+      "id": "ovw-019",
+      "n_labels": 31,
+      "new_achievable_max": 0.935484,
+      "new_achievable_max_pm1": 0.967742,
+      "new_reachable": 29,
+      "old_achievable_max": 0.903226,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 28,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30,
+        138
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "ovw-020",
+      "n_labels": 33,
+      "new_achievable_max": 0.909091,
+      "new_achievable_max_pm1": 0.969697,
+      "new_reachable": 30,
+      "old_achievable_max": 0.909091,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 30,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30,
+        138,
+        469
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "ovw-024",
+      "n_labels": 36,
+      "new_achievable_max": 0.972222,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 35,
+      "old_achievable_max": 0.861111,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 31,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        377
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-027",
+      "n_labels": 35,
+      "new_achievable_max": 0.971429,
+      "new_achievable_max_pm1": 0.971429,
+      "new_reachable": 34,
+      "old_achievable_max": 0.742857,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 26,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        31
+      ],
+      "unreachable_new_pm1": [
+        31
+      ]
+    },
+    {
+      "id": "ovw-029",
+      "n_labels": 34,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 34,
+      "old_achievable_max": 0.735294,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 25,
+      "query_type": "overview",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-030",
+      "n_labels": 73,
+      "new_achievable_max": 0.986301,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 72,
+      "old_achievable_max": 0.739726,
+      "old_achievable_max_pm1": 0.986301,
+      "old_reachable": 54,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        32
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-031",
+      "n_labels": 76,
+      "new_achievable_max": 0.986842,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 75,
+      "old_achievable_max": 0.789474,
+      "old_achievable_max_pm1": 0.973684,
+      "old_reachable": 60,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        32
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-034",
+      "n_labels": 25,
+      "new_achievable_max": 0.96,
+      "new_achievable_max_pm1": 0.96,
+      "new_reachable": 24,
+      "old_achievable_max": 0.88,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 22,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "ovw-035",
+      "n_labels": 33,
+      "new_achievable_max": 0.969697,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 32,
+      "old_achievable_max": 0.818182,
+      "old_achievable_max_pm1": 0.969697,
+      "old_reachable": 27,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        32
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-036",
+      "n_labels": 70,
+      "new_achievable_max": 0.985714,
+      "new_achievable_max_pm1": 0.985714,
+      "new_reachable": 69,
+      "old_achievable_max": 0.857143,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 60,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        31
+      ],
+      "unreachable_new_pm1": [
+        31
+      ]
+    },
+    {
+      "id": "ovw-037",
+      "n_labels": 94,
+      "new_achievable_max": 0.989362,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 93,
+      "old_achievable_max": 0.87234,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 82,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        469
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-038",
+      "n_labels": 67,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 67,
+      "old_achievable_max": 0.850746,
+      "old_achievable_max_pm1": 0.985075,
+      "old_reachable": 57,
+      "query_type": "overview",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-039",
+      "n_labels": 104,
+      "new_achievable_max": 0.980769,
+      "new_achievable_max_pm1": 0.990385,
+      "new_reachable": 102,
+      "old_achievable_max": 0.826923,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 86,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30,
+        469
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "ovw-040",
+      "n_labels": 92,
+      "new_achievable_max": 0.967391,
+      "new_achievable_max_pm1": 0.978261,
+      "new_reachable": 89,
+      "old_achievable_max": 0.858696,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 79,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30,
+        31,
+        469
+      ],
+      "unreachable_new_pm1": [
+        30,
+        31
+      ]
+    },
+    {
+      "id": "ovw-041",
+      "n_labels": 46,
+      "new_achievable_max": 0.978261,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 45,
+      "old_achievable_max": 0.76087,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 35,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        377
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-042",
+      "n_labels": 100,
+      "new_achievable_max": 0.98,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 98,
+      "old_achievable_max": 0.81,
+      "old_achievable_max_pm1": 0.99,
+      "old_reachable": 81,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        32,
+        469
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-043",
+      "n_labels": 119,
+      "new_achievable_max": 1.0,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 119,
+      "old_achievable_max": 0.831933,
+      "old_achievable_max_pm1": 0.991597,
+      "old_reachable": 99,
+      "query_type": "overview",
+      "unreachable_new_exact": [],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-044",
+      "n_labels": 314,
+      "new_achievable_max": 0.996815,
+      "new_achievable_max_pm1": 1.0,
+      "new_reachable": 313,
+      "old_achievable_max": 0.853503,
+      "old_achievable_max_pm1": 0.996815,
+      "old_reachable": 268,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        469
+      ],
+      "unreachable_new_pm1": []
+    },
+    {
+      "id": "ovw-045",
+      "n_labels": 55,
+      "new_achievable_max": 0.981818,
+      "new_achievable_max_pm1": 0.981818,
+      "new_reachable": 54,
+      "old_achievable_max": 0.854545,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 47,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        31
+      ],
+      "unreachable_new_pm1": [
+        31
+      ]
+    },
+    {
+      "id": "ovw-046",
+      "n_labels": 114,
+      "new_achievable_max": 0.991228,
+      "new_achievable_max_pm1": 0.991228,
+      "new_reachable": 113,
+      "old_achievable_max": 0.815789,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 93,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        31
+      ],
+      "unreachable_new_pm1": [
+        31
+      ]
+    },
+    {
+      "id": "ovw-047",
+      "n_labels": 95,
+      "new_achievable_max": 0.978947,
+      "new_achievable_max_pm1": 0.989474,
+      "new_reachable": 93,
+      "old_achievable_max": 0.873684,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 83,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30,
+        469
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "ovw-048",
+      "n_labels": 24,
+      "new_achievable_max": 0.958333,
+      "new_achievable_max_pm1": 0.958333,
+      "new_reachable": 23,
+      "old_achievable_max": 0.791667,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 19,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    },
+    {
+      "id": "ovw-049",
+      "n_labels": 23,
+      "new_achievable_max": 0.913043,
+      "new_achievable_max_pm1": 0.956522,
+      "new_reachable": 21,
+      "old_achievable_max": 0.826087,
+      "old_achievable_max_pm1": 1.0,
+      "old_reachable": 19,
+      "query_type": "overview",
+      "unreachable_new_exact": [
+        30,
+        469
+      ],
+      "unreachable_new_pm1": [
+        30
+      ]
+    }
+  ],
+  "summary": {
+    "all": {
+      "labels_total": 3631,
+      "labels_unreachable_new": 57,
+      "labels_unreachable_new_pm1": 26,
+      "new_achievable_max": {
+        "max": 1.0,
+        "mean": 0.9545,
+        "median": 1.0,
+        "min": 0.0
+      },
+      "new_achievable_max_pm1_mean": 0.9793,
+      "old_achievable_max": {
+        "max": 1.0,
+        "mean": 0.8806,
+        "median": 0.8889,
+        "min": 0.375
+      },
+      "queries": 133,
+      "queries_capped_new": 41,
+      "queries_capped_new_pm1": 24,
+      "queries_capped_old": 76
+    },
+    "by_type": {
+      "factual": {
+        "labels_total": 506,
+        "labels_unreachable_new": 5,
+        "labels_unreachable_new_pm1": 2,
+        "new_achievable_max": {
+          "max": 1.0,
+          "mean": 0.9365,
+          "median": 1.0,
+          "min": 0.0
+        },
+        "new_achievable_max_pm1_mean": 0.9748,
+        "old_achievable_max": {
+          "max": 1.0,
+          "mean": 0.8562,
+          "median": 0.9167,
+          "min": 0.375
+        },
+        "queries": 53,
+        "queries_capped_new": 5,
+        "queries_capped_new_pm1": 2,
+        "queries_capped_old": 27
+      },
+      "multihop": {
+        "labels_total": 171,
+        "labels_unreachable_new": 6,
+        "labels_unreachable_new_pm1": 3,
+        "new_achievable_max": {
+          "max": 1.0,
+          "mean": 0.9556,
+          "median": 1.0,
+          "min": 0.666667
+        },
+        "new_achievable_max_pm1_mean": 0.975,
+        "old_achievable_max": {
+          "max": 1.0,
+          "mean": 0.9592,
+          "median": 1.0,
+          "min": 0.666667
+        },
+        "queries": 40,
+        "queries_capped_new": 6,
+        "queries_capped_new_pm1": 3,
+        "queries_capped_old": 9
+      },
+      "overview": {
+        "labels_total": 2954,
+        "labels_unreachable_new": 46,
+        "labels_unreachable_new_pm1": 21,
+        "new_achievable_max": {
+          "max": 1.0,
+          "mean": 0.9774,
+          "median": 0.9833,
+          "min": 0.909091
+        },
+        "new_achievable_max_pm1_mean": 0.9897,
+        "old_achievable_max": {
+          "max": 0.909091,
+          "mean": 0.8344,
+          "median": 0.837,
+          "min": 0.735294
+        },
+        "queries": 40,
+        "queries_capped_new": 30,
+        "queries_capped_new_pm1": 19,
+        "queries_capped_old": 40
+      }
+    }
+  }
+}

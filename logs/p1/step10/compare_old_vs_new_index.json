@@ -1,0 +1,1724 @@
+{
+  "by_type": {
+    "factual": {
+      "Ctx.Prec": {
+        "ci95": [
+          -0.000573,
+          0.036422
+        ],
+        "delta": 0.017925,
+        "identical": 25,
+        "losses": 10,
+        "n": 53,
+        "new": 0.148113,
+        "old": 0.130189,
+        "resolved": false,
+        "sd": 0.068707,
+        "wins": 18
+      },
+      "Hit@20": {
+        "ci95": [
+          -0.128611,
+          0.053139
+        ],
+        "delta": -0.037736,
+        "identical": 47,
+        "losses": 4,
+        "n": 53,
+        "new": 0.867925,
+        "old": 0.90566,
+        "resolved": false,
+        "sd": 0.33754,
+        "wins": 2
+      },
+      "MRR": {
+        "ci95": [
+          -0.270428,
+          -0.059799
+        ],
+        "delta": -0.165113,
+        "identical": 33,
+        "losses": 15,
+        "n": 53,
+        "new": 0.703792,
+        "old": 0.868906,
+        "resolved": true,
+        "sd": 0.391173,
+        "wins": 5
+      },
+      "NDCG@20": {
+        "ci95": [
+          -0.142848,
+          0.035036
+        ],
+        "delta": -0.053906,
+        "identical": 8,
+        "losses": 24,
+        "n": 53,
+        "new": 0.447377,
+        "old": 0.501283,
+        "resolved": false,
+        "sd": 0.330361,
+        "wins": 21
+      },
+      "Recall@100": {
+        "ci95": [
+          -0.093318,
+          0.077658
+        ],
+        "delta": -0.00783,
+        "identical": 28,
+        "losses": 8,
+        "n": 53,
+        "new": 0.745774,
+        "old": 0.753604,
+        "resolved": false,
+        "sd": 0.317531,
+        "wins": 17
+      },
+      "Recall@20": {
+        "ci95": [
+          -0.094325,
+          0.106099
+        ],
+        "delta": 0.005887,
+        "identical": 25,
+        "losses": 10,
+        "n": 53,
+        "new": 0.569755,
+        "old": 0.563868,
+        "resolved": false,
+        "sd": 0.372222,
+        "wins": 18
+      }
+    },
+    "multihop": {
+      "Ctx.Prec": {
+        "ci95": [
+          -0.0222,
+          0.0072
+        ],
+        "delta": -0.0075,
+        "identical": 24,
+        "losses": 12,
+        "n": 40,
+        "new": 0.10375,
+        "old": 0.11125,
+        "resolved": false,
+        "sd": 0.047434,
+        "wins": 4
+      },
+      "Hit@20": {
+        "ci95": [
+          -0.183438,
+          0.033438
+        ],
+        "delta": -0.075,
+        "identical": 35,
+        "losses": 4,
+        "n": 40,
+        "new": 0.875,
+        "old": 0.95,
+        "resolved": false,
+        "sd": 0.349908,
+        "wins": 1
+      },
+      "MRR": {
+        "ci95": [
+          -0.351315,
+          -0.120085
+        ],
+        "delta": -0.2357,
+        "identical": 21,
+        "losses": 17,
+        "n": 40,
+        "new": 0.6151,
+        "old": 0.8508,
+        "resolved": true,
+        "sd": 0.373069,
+        "wins": 2
+      },
+      "NDCG@20": {
+        "ci95": [
+          -0.195428,
+          -0.011322
+        ],
+        "delta": -0.103375,
+        "identical": 7,
+        "losses": 20,
+        "n": 40,
+        "new": 0.503625,
+        "old": 0.607,
+        "resolved": true,
+        "sd": 0.297037,
+        "wins": 13
+      },
+      "Recall@100": {
+        "ci95": [
+          -0.169677,
+          0.019227
+        ],
+        "delta": -0.075225,
+        "identical": 21,
+        "losses": 11,
+        "n": 40,
+        "new": 0.6336,
+        "old": 0.708825,
+        "resolved": false,
+        "sd": 0.30478,
+        "wins": 8
+      },
+      "Recall@20": {
+        "ci95": [
+          -0.169659,
+          0.017309
+        ],
+        "delta": -0.076175,
+        "identical": 21,
+        "losses": 12,
+        "n": 40,
+        "new": 0.543275,
+        "old": 0.61945,
+        "resolved": false,
+        "sd": 0.301655,
+        "wins": 7
+      }
+    },
+    "overview": {
+      "Ctx.Prec": {
+        "ci95": [
+          0.032352,
+          0.110148
+        ],
+        "delta": 0.07125,
+        "identical": 4,
+        "losses": 10,
+        "n": 40,
+        "new": 0.5675,
+        "old": 0.49625,
+        "resolved": true,
+        "sd": 0.125518,
+        "wins": 26
+      },
+      "Hit@20": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "delta": 0.0,
+        "identical": 40,
+        "losses": 0,
+        "n": 40,
+        "new": 1.0,
+        "old": 1.0,
+        "resolved": false,
+        "sd": 0.0,
+        "wins": 0
+      },
+      "MRR": {
+        "ci95": [
+          0.002593,
+          0.249957
+        ],
+        "delta": 0.126275,
+        "identical": 17,
+        "losses": 7,
+        "n": 40,
+        "new": 0.8729,
+        "old": 0.746625,
+        "resolved": true,
+        "sd": 0.399099,
+        "wins": 16
+      },
+      "NDCG@20": {
+        "ci95": [
+          0.023464,
+          0.113036
+        ],
+        "delta": 0.06825,
+        "identical": 0,
+        "losses": 13,
+        "n": 40,
+        "new": 0.5923,
+        "old": 0.52405,
+        "resolved": true,
+        "sd": 0.144517,
+        "wins": 27
+      },
+      "Recall@100": {
+        "ci95": [
+          0.011232,
+          0.070868
+        ],
+        "delta": 0.04105,
+        "identical": 3,
+        "losses": 13,
+        "n": 40,
+        "new": 0.459,
+        "old": 0.41795,
+        "resolved": true,
+        "sd": 0.096216,
+        "wins": 24
+      },
+      "Recall@20": {
+        "ci95": [
+          0.010117,
+          0.046433
+        ],
+        "delta": 0.028275,
+        "identical": 4,
+        "losses": 10,
+        "n": 40,
+        "new": 0.2061,
+        "old": 0.177825,
+        "resolved": true,
+        "sd": 0.058593,
+        "wins": 26
+      }
+    }
+  },
+  "meta": {
+    "confounds": [
+      "index composition: 5,135 points (5,051 chunks + 84 RAPTOR) vs 3,796 with NO RAPTOR",
+      "the DA lane was LIVE in the old run and DEAD in the new one (\u00a7I12)",
+      "the old run was full (judge ran); the new one is retrieval-only",
+      "abstention mode differs (generation vs score-threshold) \u2014 not comparable",
+      "\u00a73c's label clamp landed between the two runs",
+      "different documents: the labels were built against the OLD index (\u00a7D4/\u00a7D6)"
+    ],
+    "generated_by": "logs/p1/step10/compare_old_vs_new_index.py",
+    "held_constant": "the 133 answerable v2 queries and the metric definitions",
+    "n_shared": 133,
+    "new_collection": "knowledge_base_v2 (doc 7ba61432)",
+    "new_report": "data/eval_results/p1-step10-retrieval-only_2026-10-20_0411.md",
+    "not_measured": "generation metrics (Faithfulness / Answer Relevance) have NEVER been measured on the new index \u2014 the only v2 run was retrieval-only.",
+    "old_collection": "knowledge_base (deployed, doc 6d55c52b)",
+    "old_report": "data/eval_results/p0-9-gold-v2_2026-10-17_0422.md",
+    "reading": "the DIRECTION is informative; the MAGNITUDE is not attributable to any one change. This is not a controlled comparison and cannot license a claim that the new system is better or worse overall.",
+    "what": "\u00a7I57 \u2014 OLD index vs NEW index, paired per query (the only cross-system comparison)"
+  },
+  "overall": {
+    "Ctx.Prec": {
+      "ci95": [
+        0.010958,
+        0.041674
+      ],
+      "delta": 0.026316,
+      "identical": 53,
+      "losses": 32,
+      "n": 133,
+      "new": 0.260902,
+      "old": 0.234586,
+      "resolved": true,
+      "sd": 0.090365,
+      "wins": 48
+    },
+    "Hit@20": {
+      "ci95": [
+        -0.086234,
+        0.011046
+      ],
+      "delta": -0.037594,
+      "identical": 122,
+      "losses": 8,
+      "n": 133,
+      "new": 0.909774,
+      "old": 0.947368,
+      "resolved": false,
+      "sd": 0.286198,
+      "wins": 3
+    },
+    "MRR": {
+      "ci95": [
+        -0.169039,
+        -0.028375
+      ],
+      "delta": -0.098707,
+      "identical": 71,
+      "losses": 39,
+      "n": 133,
+      "new": 0.727977,
+      "old": 0.826684,
+      "resolved": true,
+      "sd": 0.413832,
+      "wins": 23
+    },
+    "NDCG@20": {
+      "ci95": [
+        -0.08012,
+        0.016029
+      ],
+      "delta": -0.032045,
+      "identical": 15,
+      "losses": 57,
+      "n": 133,
+      "new": 0.50788,
+      "old": 0.539925,
+      "resolved": false,
+      "sd": 0.282869,
+      "wins": 61
+    },
+    "Recall@100": {
+      "ci95": [
+        -0.058992,
+        0.032195
+      ],
+      "delta": -0.013398,
+      "identical": 52,
+      "losses": 32,
+      "n": 133,
+      "new": 0.625789,
+      "old": 0.639188,
+      "resolved": false,
+      "sd": 0.26827,
+      "wins": 49
+    },
+    "Recall@20": {
+      "ci95": [
+        -0.061419,
+        0.037299
+      ],
+      "delta": -0.01206,
+      "identical": 50,
+      "losses": 32,
+      "n": 133,
+      "new": 0.452421,
+      "old": 0.464481,
+      "resolved": false,
+      "sd": 0.290426,
+      "wins": 51
+    }
+  },
+  "queries": [
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": -1.0,
+      "MRR": -1.0,
+      "NDCG@20": -0.5,
+      "Recall@100": -1.0,
+      "Recall@20": -1.0,
+      "id": "gold-003",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -1.0,
+      "NDCG@20": 0.0,
+      "Recall@100": -0.333,
+      "Recall@20": 0.0,
+      "id": "gold-004",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.613,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-005",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.369,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-008",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": -1.0,
+      "MRR": -1.0,
+      "NDCG@20": -1.0,
+      "Recall@100": -1.0,
+      "Recall@20": -1.0,
+      "id": "gold-009",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": -1.0,
+      "MRR": -1.0,
+      "NDCG@20": -0.5,
+      "Recall@100": -1.0,
+      "Recall@20": -1.0,
+      "id": "gold-010",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.985,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-011",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": -1.0,
+      "MRR": -1.0,
+      "NDCG@20": -1.0,
+      "Recall@100": -1.0,
+      "Recall@20": -1.0,
+      "id": "gold-013",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.266,
+      "Recall@100": 0.25,
+      "Recall@20": 0.25,
+      "id": "gold-014",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.309,
+      "Recall@100": 0.0,
+      "Recall@20": 0.4,
+      "id": "gold-015",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.074,
+      "Recall@100": 0.133,
+      "Recall@20": 0.066,
+      "id": "gold-016",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.15,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.183,
+      "Recall@100": 0.086,
+      "Recall@20": 0.086,
+      "id": "gold-017",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.25,
+      "NDCG@20": 0.12,
+      "Recall@100": 0.25,
+      "Recall@20": 0.063,
+      "id": "gold-019",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.113,
+      "Recall@100": 0.0,
+      "Recall@20": -0.2,
+      "id": "gold-021",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": -0.248,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-022",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": 0.0,
+      "Recall@100": -0.5,
+      "Recall@20": 0.0,
+      "id": "gold-023",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-024",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.07,
+      "Recall@100": 0.0,
+      "Recall@20": 0.111,
+      "id": "gold-025",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.059,
+      "Recall@100": 0.083,
+      "Recall@20": 0.084,
+      "id": "gold-026",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.15,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": 0.169,
+      "Recall@100": 0.077,
+      "Recall@20": 0.231,
+      "id": "gold-027",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.023,
+      "Recall@100": 0.5,
+      "Recall@20": 0.5,
+      "id": "gold-028",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.369,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-029",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.15,
+      "Hit@20": 0.0,
+      "MRR": 0.139,
+      "NDCG@20": 0.2,
+      "Recall@100": 0.375,
+      "Recall@20": 0.375,
+      "id": "gold-030",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": -0.744,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-031",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.75,
+      "NDCG@20": -0.73,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-032",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.75,
+      "NDCG@20": -0.137,
+      "Recall@100": 0.125,
+      "Recall@20": 0.0,
+      "id": "gold-033",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.889,
+      "NDCG@20": -0.123,
+      "Recall@100": 0.5,
+      "Recall@20": 0.0,
+      "id": "gold-034",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": -1.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.228,
+      "Recall@100": 0.0,
+      "Recall@20": -1.0,
+      "id": "gold-035",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.017,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-036",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.5,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-037",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-038",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-039",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 1.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.631,
+      "Recall@100": 0.0,
+      "Recall@20": 1.0,
+      "id": "gold-040",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.195,
+      "Recall@100": 0.0,
+      "Recall@20": 0.2,
+      "id": "gold-041",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": -0.091,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-042",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.081,
+      "Recall@100": 0.0,
+      "Recall@20": 0.015,
+      "id": "gold-043",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.3,
+      "Hit@20": 0.0,
+      "MRR": 0.75,
+      "NDCG@20": 0.3,
+      "Recall@100": 0.03,
+      "Recall@20": 0.045,
+      "id": "gold-044",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.299,
+      "Recall@100": 0.333,
+      "Recall@20": -0.167,
+      "id": "gold-045",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.335,
+      "Recall@100": 0.5,
+      "Recall@20": 0.333,
+      "id": "gold-046",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.151,
+      "Recall@100": 0.0,
+      "Recall@20": -0.071,
+      "id": "gold-047",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.098,
+      "Recall@100": -0.111,
+      "Recall@20": -0.112,
+      "id": "gold-048",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-049",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.156,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-050",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.369,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-051",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 1.0,
+      "MRR": -0.001,
+      "NDCG@20": 0.316,
+      "Recall@100": 0.0,
+      "Recall@20": 1.0,
+      "id": "gold-052",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.667,
+      "NDCG@20": -0.173,
+      "Recall@100": 0.333,
+      "Recall@20": 0.0,
+      "id": "gold-053",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.369,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-054",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": 0.019,
+      "Recall@100": -0.334,
+      "Recall@20": 0.0,
+      "id": "gold-057",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.128,
+      "Recall@100": 0.083,
+      "Recall@20": 0.166,
+      "id": "gold-058",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.369,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-059",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-060",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.19,
+      "Recall@100": 0.1,
+      "Recall@20": 0.1,
+      "id": "gold-061",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.087,
+      "Recall@100": 0.333,
+      "Recall@20": -0.167,
+      "id": "gold-062",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.044,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-063",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.315,
+      "NDCG@20": -0.755,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-064",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.058,
+      "Recall@100": 0.111,
+      "Recall@20": -0.111,
+      "id": "gold-065",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": -0.1,
+      "Hit@20": 0.0,
+      "MRR": -0.8,
+      "NDCG@20": -0.321,
+      "Recall@100": -0.445,
+      "Recall@20": -0.222,
+      "id": "gold-067",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.095,
+      "Recall@100": 0.2,
+      "Recall@20": 0.0,
+      "id": "gold-068",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.025,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-069",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-070",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.15,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.09,
+      "Recall@100": 0.104,
+      "Recall@20": -0.103,
+      "id": "gold-071",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.1,
+      "Hit@20": 0.0,
+      "MRR": -0.667,
+      "NDCG@20": -0.249,
+      "Recall@100": -0.384,
+      "Recall@20": -0.154,
+      "id": "gold-072",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.054,
+      "Recall@100": 0.095,
+      "Recall@20": 0.047,
+      "id": "gold-073",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-074",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.021,
+      "Recall@100": -0.1,
+      "Recall@20": -0.1,
+      "id": "gold-075",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.125,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-076",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.533,
+      "Recall@100": 0.5,
+      "Recall@20": 0.5,
+      "id": "gold-077",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": -1.0,
+      "MRR": -1.0,
+      "NDCG@20": -1.0,
+      "Recall@100": -1.0,
+      "Recall@20": -1.0,
+      "id": "gold-078",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.5,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-079",
+      "type": "factual"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.667,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-080",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.14,
+      "Recall@100": 0.35,
+      "Recall@20": 0.1,
+      "id": "gold-081",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": -0.75,
+      "NDCG@20": 0.109,
+      "Recall@100": 0.0,
+      "Recall@20": 0.334,
+      "id": "gold-082",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.75,
+      "NDCG@20": -0.183,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-083",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": -0.667,
+      "NDCG@20": -0.296,
+      "Recall@100": -0.334,
+      "Recall@20": -0.334,
+      "id": "gold-084",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.324,
+      "Recall@100": -0.333,
+      "Recall@20": -0.333,
+      "id": "gold-085",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": -0.1,
+      "Hit@20": -1.0,
+      "MRR": -0.917,
+      "NDCG@20": -0.302,
+      "Recall@100": 0.0,
+      "Recall@20": -0.667,
+      "id": "gold-086",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.144,
+      "Recall@100": 0.667,
+      "Recall@20": 0.167,
+      "id": "gold-087",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-088",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": -1.0,
+      "MRR": -0.007,
+      "NDCG@20": -0.469,
+      "Recall@100": -0.334,
+      "Recall@20": -0.333,
+      "id": "gold-089",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": -0.349,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-090",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": -0.357,
+      "NDCG@20": -0.062,
+      "Recall@100": 0.0,
+      "Recall@20": -0.334,
+      "id": "gold-091",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.0,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-092",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.024,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-093",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.144,
+      "Recall@100": 0.167,
+      "Recall@20": 0.167,
+      "id": "gold-094",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.125,
+      "NDCG@20": -0.033,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-095",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.028,
+      "NDCG@20": -0.114,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-096",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 1.0,
+      "MRR": 0.057,
+      "NDCG@20": 0.315,
+      "Recall@100": -0.333,
+      "Recall@20": 0.667,
+      "id": "gold-097",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": -0.8,
+      "NDCG@20": -0.235,
+      "Recall@100": -0.334,
+      "Recall@20": -0.334,
+      "id": "gold-098",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": 0.308,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-099",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.104,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-100",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.173,
+      "Recall@100": -0.334,
+      "Recall@20": 0.0,
+      "id": "gold-101",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.0,
+      "Recall@100": -0.5,
+      "Recall@20": 0.0,
+      "id": "gold-102",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": 0.078,
+      "Recall@100": 0.0,
+      "Recall@20": 0.0,
+      "id": "gold-103",
+      "type": "multihop"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.667,
+      "NDCG@20": 0.038,
+      "Recall@100": 0.035,
+      "Recall@20": 0.0,
+      "id": "ovw-001",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.154,
+      "Recall@100": 0.0,
+      "Recall@20": 0.02,
+      "id": "ovw-002",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.15,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.147,
+      "Recall@100": 0.273,
+      "Recall@20": 0.136,
+      "id": "ovw-003",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.15,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": 0.082,
+      "Recall@100": 0.071,
+      "Recall@20": 0.035,
+      "id": "ovw-004",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": -0.75,
+      "NDCG@20": -0.186,
+      "Recall@100": -0.091,
+      "Recall@20": -0.023,
+      "id": "ovw-005",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.25,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": 0.325,
+      "Recall@100": 0.044,
+      "Recall@20": 0.109,
+      "id": "ovw-006",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.045,
+      "Recall@100": 0.102,
+      "Recall@20": 0.02,
+      "id": "ovw-007",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.073,
+      "Recall@100": 0.151,
+      "Recall@20": 0.03,
+      "id": "ovw-008",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": -0.083,
+      "Recall@100": -0.032,
+      "Recall@20": -0.007,
+      "id": "ovw-009",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.15,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": 0.176,
+      "Recall@100": -0.084,
+      "Recall@20": 0.083,
+      "id": "ovw-010",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.667,
+      "NDCG@20": -0.022,
+      "Recall@100": 0.084,
+      "Recall@20": 0.0,
+      "id": "ovw-011",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": -0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.003,
+      "Recall@100": -0.075,
+      "Recall@20": -0.074,
+      "id": "ovw-012",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.2,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.283,
+      "Recall@100": 0.064,
+      "Recall@20": 0.026,
+      "id": "ovw-013",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.35,
+      "Hit@20": 0.0,
+      "MRR": 0.667,
+      "NDCG@20": 0.38,
+      "Recall@100": 0.172,
+      "Recall@20": 0.12,
+      "id": "ovw-014",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": -0.15,
+      "Hit@20": 0.0,
+      "MRR": -0.167,
+      "NDCG@20": -0.145,
+      "Recall@100": -0.086,
+      "Recall@20": -0.037,
+      "id": "ovw-015",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": 0.118,
+      "Recall@100": -0.116,
+      "Recall@20": 0.047,
+      "id": "ovw-016",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.006,
+      "Recall@100": 0.058,
+      "Recall@20": 0.006,
+      "id": "ovw-017",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": -0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.095,
+      "Recall@100": 0.033,
+      "Recall@20": -0.064,
+      "id": "ovw-019",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.003,
+      "Recall@100": -0.06,
+      "Recall@20": 0.03,
+      "id": "ovw-020",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": -0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": -0.186,
+      "Recall@100": 0.111,
+      "Recall@20": -0.056,
+      "id": "ovw-024",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.067,
+      "Recall@100": 0.143,
+      "Recall@20": 0.029,
+      "id": "ovw-027",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.2,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": 0.058,
+      "Recall@100": 0.265,
+      "Recall@20": 0.118,
+      "id": "ovw-029",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.25,
+      "Hit@20": 0.0,
+      "MRR": 0.667,
+      "NDCG@20": 0.205,
+      "Recall@100": 0.164,
+      "Recall@20": 0.069,
+      "id": "ovw-030",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": 0.112,
+      "Recall@100": -0.013,
+      "Recall@20": 0.026,
+      "id": "ovw-031",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.068,
+      "Recall@100": -0.08,
+      "Recall@20": 0.08,
+      "id": "ovw-034",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.3,
+      "NDCG@20": 0.107,
+      "Recall@100": 0.0,
+      "Recall@20": 0.031,
+      "id": "ovw-035",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": -0.15,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": 0.045,
+      "Recall@100": -0.086,
+      "Recall@20": -0.042,
+      "id": "ovw-036",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.667,
+      "NDCG@20": -0.05,
+      "Recall@100": 0.01,
+      "Recall@20": 0.0,
+      "id": "ovw-037",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.0,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.019,
+      "Recall@100": 0.089,
+      "Recall@20": 0.0,
+      "id": "ovw-038",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": -0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.197,
+      "Recall@100": 0.0,
+      "Recall@20": -0.019,
+      "id": "ovw-039",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": -0.01,
+      "Recall@100": -0.011,
+      "Recall@20": -0.011,
+      "id": "ovw-040",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.25,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": 0.162,
+      "Recall@100": 0.108,
+      "Recall@20": 0.108,
+      "id": "ovw-041",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.15,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.262,
+      "Recall@100": 0.03,
+      "Recall@20": 0.03,
+      "id": "ovw-042",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.25,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.245,
+      "Recall@100": 0.042,
+      "Recall@20": 0.043,
+      "id": "ovw-043",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": 0.039,
+      "Recall@100": -0.016,
+      "Recall@20": 0.007,
+      "id": "ovw-044",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.5,
+      "NDCG@20": 0.197,
+      "Recall@100": 0.055,
+      "Recall@20": 0.037,
+      "id": "ovw-045",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.1,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": -0.104,
+      "Recall@100": -0.018,
+      "Recall@20": 0.017,
+      "id": "ovw-046",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.2,
+      "Hit@20": 0.0,
+      "MRR": 0.0,
+      "NDCG@20": 0.29,
+      "Recall@100": 0.011,
+      "Recall@20": 0.042,
+      "id": "ovw-047",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": 0.25,
+      "Hit@20": 0.0,
+      "MRR": -0.5,
+      "NDCG@20": 0.205,
+      "Recall@100": 0.208,
+      "Recall@20": 0.208,
+      "id": "ovw-048",
+      "type": "overview"
+    },
+    {
+      "Ctx.Prec": -0.05,
+      "Hit@20": 0.0,
+      "MRR": -0.667,
+      "NDCG@20": -0.062,
+      "Recall@100": 0.087,
+      "Recall@20": -0.043,
+      "id": "ovw-049",
+      "type": "overview"
+    }
+  ]
+}
