@@ -3944,3 +3944,209 @@ decision and was explicitly NOT taken.
 
 **Cost:** ~2 min (≈9,500 Cypher statements + 1,362 Qdrant point deletes). No LLM.
 
+---
+
+### I52. 2026-10-22 — §G2's summariser is a DIFFERENT MODEL from the graph build's extractor, and its prompt budget was sized from the wrong one
+
+**What was found.** `community_summaries._default_llm` calls `src.core.llm.call_llm`, and `call_llm`
+posts **`cfg.openai_model`** — `.env` sets that to **`openai/gpt-oss-20b`**. The Phase 3 graph build's
+concept extraction uses a *different* model (`Qwen/Qwen3-VL-8B-Instruct`, `config.yaml:concept_extraction`).
+The two have very different contexts, and the §G2 pre-flight measured the wrong one:
+
+| model | who runs it | `max_model_len` | 60k chars | 265k chars |
+|---|---|---|---|---|
+| `Qwen/Qwen3-VL-8B-Instruct` | graph build's extractor | **15,000** | 13,814 tok ✓ | **HTTP 400** |
+| `openai/gpt-oss-20b` | **§G2's summariser** (`call_llm`) | **131,072** | 13,359 tok, 3.0 s | **58,530 tok, 9.7 s, `finish_reason=stop`, 964-char answer** |
+
+Both read from `/v1/models`; both tokenise real physics text at **4.49-4.53 chars/token**.
+
+**The consequence, had it not been caught.** The first budget was set at 50,000 chars from the Qwen
+model's 15,000-token context, which triggered a design change (map-reduce batching, owner-approved)
+whose *premise was false*: on the model §G2 actually runs, the largest leaf prompt — **273,470 chars
+≈ 60k tokens** — fits in one call with ~43k tokens to spare. Re-measured and corrected the same
+session; budget is now **400,000 chars** (`DEFAULT_MAX_PROMPT_CHARS`), at which **zero** communities
+of this corpus batch. The map-reduce machinery is kept as the safety net.
+
+**The §G2 leaf prompts are badly skewed** (`g2_prompt_size_probe.py`, 218 leaves, 6,041 nodes):
+
+| threshold | leaves over it | share of leaves | chars in them | share of all chars |
+|---|---|---|---|---|
+| > 10,000 chars | 36 | 16.5 % | 3,084,209 | **95.7 %** |
+| > 60,000 chars | 18 | 8.3 % | 2,455,768 | 76.2 % |
+| > 120,000 chars | 9 | 4.1 % | 1,681,830 | 52.2 % |
+
+**178 of 218 leaves are ≤ 2,000 chars (~1-2 chunks) and hold 4.3 % of the text.** So "one summary per
+leaf community" produces a handful of enormous communities and ~178 micro-summaries. That is a §G2
+result to read V3/V5 against, not a defect of the code — but it means the summary tree's information
+density is concentrated in ~20 nodes.
+
+**Two silent failures were found on the same path, both fixed with discriminating tests:**
+
+1. **A failed LLM call wrote an EMPTY summary and still counted as a call.** `call_llm` returns `""`
+   on failure rather than raising (§I24's contract), and the old code stored that `""` and incremented
+   the cost ledger — so a run in which *every* call failed would report a full ledger, exit 0, and
+   write an artifact of empty summaries. **This is §I25's class exactly** (a total loss that reads as a
+   success). Now counted (`empty_returns`) and the CLI exits non-zero when it is non-zero; the count,
+   not the absence of an exception, is the run's exit criterion.
+2. **The dry run reported 403 parent communities as "skipped (no source material)" — they are
+   PARENTS.** A dry run never generates child summaries, so every parent's body is empty *by
+   construction*, and the old counter folded that into the "no source" bucket. The pre-flight cost
+   report therefore read as though 403 communities would never be summarised, while understating the
+   run by exactly those 403 calls. Now counted separately (`deferred_parents`).
+
+**Also fixed, same path:** the dry run could not estimate the parent levels' cost at all (a parent's
+prompt is built from summaries that do not exist yet) and now says so explicitly; and with batching,
+one community is no longer one call, so the dry run computes and reports the leaf-level map-call
+count it would actually issue (`planned_leaf_map_calls`).
+
+**THE GENERAL TRAP — measure the model THE PHASE RUNS, not the one another phase runs.** A repo with
+per-stage model config (`concept_extraction.model`, `judge_model`, `openai_model`) has several models
+in play at once, and "the extractor is Qwen" is true of one phase and false of the next. Two more
+traps found measuring it:
+
+- **A filler-text token ratio is ~40 % optimistic.** Repeated English filler measured 6.23 chars/token;
+  real physics chunk text measures 4.49-4.53. A budget sized from filler over-runs the context by 40 %.
+- **`/v1/models` lists models the gateway will not serve at the context you assume** — it lists six
+  ids, of which the two the project uses have contexts of 131,072 and 15,000. Read
+  `max_model_len` per id; never carry one model's limit to another.
+
+**Evidence:** `logs/p1/step10/g2_prompt_size_probe.{py,json}`, `g2_summariser_model_probe.{py,json}`,
+`g2_token_ratio_probe.{py,json}`, `g2_dryrun_2026-10-22.{txt,json}`; tests in
+`tests/test_community_summaries.py` (13, each new guard proven to fail when reverted).
+**Register this against:** §I23(c) (which model the extraction phase runs), §I24 (the `""` failure
+contract), §I25 (the total-loss-that-reads-as-success class).
+
+---
+
+### I53. 2026-10-22 — §G2 BUILT AND VERIFIED (V1/V2/V4/V6 PASS), and V3 finds the leaf partition is a two-population mixture, not a topic hierarchy
+
+**Built.** `bash logs/p1/step10/run_g2_summaries.sh` (new harness; asserts the Qdrant override and
+prints the summariser's real identity into the log). Artifact
+`logs/p1/step10/g2_summaries_2026-10-22.json`, log `…/g2_summaries_2026-10-22.log`.
+
+| | |
+|---|---|
+| wall | **19 min 42 s** (16:48:37 → 17:08:19) |
+| LLM calls | **597** — level 0 (res 2.0) **218** · level 1 (res 1.0) **198** · level 2 (res 0.5) **181** |
+| `empty_returns` | **0** (the run's exit criterion, §I52) |
+| batched / truncated | **0 / 0** (budget 400,000 chars; no community exceeded it) |
+| skipped (no source) | **24** (4 + 20 parents with no children) |
+| summaries | **597 non-empty** of 621 entries; lengths min 178 / p50 554 / max 1,555 chars |
+| model | `openai/gpt-oss-20b` (the summariser — NOT the graph build's Qwen extractor, §I52) |
+
+**V1 (gate) PASS** — re-run on the post-§G3 merged graph: res 0.5 Q=0.740124 / res 1.0 **0.687197** /
+res 2.0 0.634980, against rewired nulls 0.506882 / **0.349002** / 0.311354 → surplus **+0.338195**
+(ratio 1.969) at 1.0, n=202, **Leiden connected at every resolution**, Louvain **disconnected** at
+res 1.0 (reproducing §I33 on the merged graph). Nesting 0.8911 (0.5→1.0) / 0.8394 (1.0→2.0).
+Artifact `logs/p1/step10/g2_leiden_gate_2026-10-22_post_merge.json`. ⚠️ The gate's `ONE_SIDED_CAVEAT`
+still claimed the §I21 TOC confound applied — **false since the rebuild**; §I49 flagged it and it is
+now corrected in the script.
+**V1r PASS** — the builder reproduces the gate's Q at all three resolutions and both nesting values
+**exactly** (the §I50 Finding 4 invariant, re-checked after the merge).
+
+**V2 PASS** — every community internally connected at all three resolutions (218 / 202 / 201
+communities, 0 disconnected).
+
+**V4 PASS** — ledger complete and **reproducible**: a re-run with a recording fake LLM issues
+**597** calls, matching the artifact's `total_calls` and its per-level breakdown, with
+`single_calls + map_calls + reduce_calls == total_calls`. 0 empty returns.
+
+**V6 PASS** — 25 sampled leaf prompts are **byte-verbatim** the prompt the builder sent for that
+community, built from the full SQLite text; 2,145 chunks of the corpus are longer than the graph's
+500-char `chunk_text` stub, and every such chunk appears **in full**. So no summary is a summary of a
+stub.
+
+Verifier: `logs/p1/step10/g2_verify_summaries.py` → `…/g2_verify_summaries_2026-10-22.txt`,
+**ALL CHECKS PASSED** (14 checks). It re-reads the graph and re-derives everything with a fake LLM —
+it never reads the artifact's own claims back to itself.
+
+**V3 — the by-eye read (PASS on quality, and it finds the granularity defect).** Sampled largest 5 /
+middle 5 / smallest 5 of the 218 leaves → `…/g2_v3_by_eye_sample_2026-10-22.txt`. **The summaries
+themselves are good**: factual, terse, source-grounded, correct LaTeX, nothing invented. **No phantom
+clusters.** But the *partition* is a two-population mixture:
+
+| leaf concepts | leaves | share | prompt chars held |
+|---|---|---|---|
+| ≤ 5 | **166** | **76.1 %** | ~4 % |
+| > 10 | 41 | 18.8 % | 96 % |
+| > 50 | 34 | 15.6 % | 95 % |
+| > 200 | 8 | 3.7 % | 46 % |
+
+min 2 · p50 **4** · p75 5 · **p90 108** · max 336 concepts per leaf.
+
+So the "finest" resolution (2.0 — fixed by the syllabus spec) does **not** resolve the graph's dense
+core: it yields ~166 micro-communities of one passage each, plus ~34 grab-bags whose summaries read
+as *"most of mechanics"* / *"thermodynamics + kinetic theory + quantum statistics"* / *"waves +
+interference + polarization + Fourier"*. They are accurate but they are not topic units, and several
+overlap heavily. **The community hierarchy therefore has no middle granularity** — which is exactly
+the level GraphRAG's community summaries exist to provide, and it is what V5's ablation must be read
+against. Read V3's finding together with §I52's prompt-size table: the two are the same distribution
+seen from two sides.
+
+**A monitoring gap, registered not fixed:** the build logs **nothing per call** and has **no
+checkpoint** — 597 sequential LLM calls, and an abort at call 596 loses all of it. §I23's lesson
+(a long LLM phase needs a checkpoint and a rate signal) applies to §G2 as written; the run happened to
+complete in 20 min, but nothing in the log could have distinguished "healthy and slow" from "stalled".
+
+**Cost:** 597 LLM calls, 19 min 42 s wall. No Phase-1 re-ingest, no graph writes, no Qdrant writes —
+the summaries are a JSON artifact and are **not yet wired into retrieval**.
+
+---
+
+### I54. 2026-10-22 — the §G2 review: a reviewer without the artifact is no verdict, and it still found a real defect once it had one
+
+**Three dispatches, one verdict.** The standing rule is "a step with no verifier is not done". What it
+does not say, and what cost three rounds here, is that **a reviewer is only as good as what you hand
+it**:
+
+| # | what the prompt contained | result |
+|---|---|---|
+| 1 (`deleg_30f94c21`) | the *description* of the change, not the diff | **UNVERIFIABLE × 10**, 11 s, "no code is provided" |
+| 2 (`deleg_62b487a2`) | the full diff, but **not the C1-C10 claim definitions** | **UNVERIFIABLE × 10**, 25 s, "No description of C1 in the provided context" |
+| 3 (`deleg_1a6fc8cb`) | the claims first, then the diff | **8 verdicts + 6 defects**, 50 s — and one of them is real |
+
+Both failed rounds are the **same defect shape this project keeps finding in code**: a process that
+returns a well-formed result, is green-ish, and tested nothing. The difference is that here the
+process is a reviewer, so the failure is *silent by construction* — "UNVERIFIABLE ×10" is easy to
+skim as a cautious pass. **It is not a pass. It is no verdict, and the step stays uncommitted.**
+
+⚠️ **The rule, now explicit:** embed **both** the artifact under review **and** the list of claims —
+and if the reviewer's answer says it could not see the thing, stop and re-dispatch; do not
+re-interpret its output as a weaker verdict. A second-order tell: a review that takes ~10-25 s on a
+600-line diff has not read it.
+
+**What the real review found — and it was a genuine defect.** `planned_leaf_map_calls` counted the
+leaf level's **prompts** (single-batch communities included) but the test compared it to a real run's
+`map_calls`, which **excludes** them. On the live corpus the plan reads **218** and `map_calls` reads
+**0** (every leaf is single-batch at the 400,000-char budget) — so the assertion passed **only because
+the fixture batched every community**. A fixture-dependent test that would have failed on the data it
+was written for. Fixed: the field is `planned_leaf_prompts`, a real run exposes the matching
+`leaf_prompt_calls`, and two tests pin the semantics in **both** regimes (all-batch and no-batch).
+
+⚠️ **Fixing it exposed a THIRD wrong comparison of the same quantity.** The obvious replacement,
+`calls_by_level[0]`, is also wrong: it **includes the leaf reduce calls** (in the fixture, 14 = 12 map
++ 2 reduce). So the quantity has exactly one right counterpart, and the two wrong ones were both
+tried here. `planned_leaf_prompts == leaf_prompt_calls` is now the assertion, and it holds in both
+regimes because it is level-scoped.
+
+**The reviewer's "blocker" was false — but it pointed at a real guard.** It claimed
+`_summarise_with_batching` can loop forever when a reduce step returns empty for every group. It
+cannot: `merged` empty ⇒ `parts` empty ⇒ `len(parts) > 1` is False ⇒ the loop exits and the community
+is summarised as `""` with every failure counted. **But the guard it doubted — `if len(merged) >=
+len(parts): break` — is load-bearing for a different input:** a reduce that returns a summary at least
+as long as the budget makes `_batch_texts` emit one full-room group per part, so the merge does not
+shrink and `parts = merged` would spin at the same length forever. **Proved mechanically, not argued:**
+removing the guard makes the new termination test **hang** (`timeout 25` → exit 124); restoring it
+passes. So a false finding still bought a real test.
+
+**Three of the five defects volunteered by the code-less second round were FALSE** (checked against
+the source): "reduce appends empty strings" (both MAP and REDUCE filter on `text.strip()`);
+"`prompt_chars` over-reports" (`_call` records the real `len(prompt)`); "calls_by_level is incremented
+for a source-less community" (that branch `continue`s first). Two were real-but-benign (a conservative
+over-count in `_batch_texts` that guarantees the budget is never exceeded; the dry-run-only `planned_*`
+fields). **The general lesson: a reviewer that says it lacked the artifact is no verdict, and any
+findings it volunteers anyway must be checked against the code — not accepted, and not dismissed
+either, because the same round that invented three defects also, with the code, found the real one.**
+
+**Register against:** the "verifier at every step" rule (`HANDOFF.md` → Session hygiene, `README.md`),
+§I38 (a reviewer can destroy what it reviews), §I44 (evidence that is not on disk is not evidence).

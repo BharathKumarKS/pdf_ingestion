@@ -209,6 +209,114 @@ PARENT_PROMPT = (
     "The summaries below cover sub-topics of one broader topic in a physics textbook. Combine "
     "them into a single summary (3-6 sentences) of the broader topic.\n\n---\n\n{body}"
 )
+SEP = "\n\n---\n\n"
+
+# ── the prompt budget, and why it exists ──────────────────────────────────────────────────────
+# MEASURED 2026-10-22 (`logs/p1/step10/g2_prompt_size_probe.py`, `g2_summariser_model_probe.py`,
+# `g2_token_ratio_probe.py`):
+#
+#   * `_default_llm` below calls `src.core.llm.call_llm`, which posts **`cfg.openai_model`** — and
+#     `.env` sets that to **`openai/gpt-oss-20b`**. The graph build's concept extraction uses a
+#     DIFFERENT model (`Qwen/Qwen3-VL-8B-Instruct`, `config.yaml:concept_extraction`), and the two
+#     have very different contexts: gpt-oss-20b is **131,072 tokens**, Qwen3-VL-8B is **15,000**
+#     (both read from `/v1/models`). Measure the model the phase actually runs, not the one another
+#     phase runs — the first version of this budget was derived from Qwen's 15,000 and was wrong.
+#   * REAL physics chunk text tokenises at **4.49-4.53 chars/token** on gpt-oss-20b. (A probe using
+#     repeated English filler reports 6.23 — 40 % optimistic — so never size a budget from filler.)
+#   * the §G2 leaf prompts are badly skewed: 178 of 218 leaf communities are <= 2,000 chars, while
+#     the largest is **273,470 chars (~60k tokens)**.
+#
+# 400,000 chars is ~88,000 tokens at the measured ratio, leaving ~43,000 for the reasoning trace and
+# the answer inside 131,072. At that budget NO community of this corpus batches — one call per leaf
+# community, as the plan specifies. The map-reduce path below is the safety net for a community that
+# ever does exceed it: before it existed, an oversized prompt was simply refused by the server,
+# `call_llm` returned "" (§I24's failure contract) and the community silently ended up with no
+# summary at all.
+DEFAULT_MAX_PROMPT_CHARS = 400_000
+
+
+def _overhead(template: str) -> int:
+    """The characters a rendered prompt adds around its body."""
+    return len(template.format(body=""))
+
+
+def _batch_texts(texts: list[str], budget_chars: int, overhead: int) -> tuple[list[list[str]], int]:
+    """Greedy, order-preserving batches whose RENDERED prompt fits `budget_chars`. Never splits a text.
+
+    Returns ``(batches, n_texts_truncated)``. A single passage that cannot fit a batch on its own is
+    truncated to the budget and **counted** — silently dropping the tail of a passage is the V6
+    failure in miniature (a summary of part of a stub), so it is reported rather than absorbed.
+    """
+    room = max(1, budget_chars - overhead)
+    batches: list[list[str]] = []
+    cur: list[str] = []
+    cur_len = 0
+    truncated = 0
+    for text in texts:
+        if len(text) > room:
+            text = text[:room]
+            truncated += 1
+        if cur and cur_len + len(text) + len(SEP) > room:
+            batches.append(cur)
+            cur, cur_len = [], 0
+        cur.append(text)
+        cur_len += len(text) + len(SEP)
+    if cur:
+        batches.append(cur)
+    return batches, truncated
+
+
+def _call(llm: Callable[[str], str], prompt: str, counters: dict) -> str:
+    """One LLM call, counted. An empty return is counted as a FAILURE, never as a summary (§I25)."""
+    counters["calls"] += 1
+    counters["prompt_chars"] += len(prompt)
+    text = llm(prompt) or ""
+    if not text.strip():
+        counters["empty_returns"] += 1
+    return text
+
+
+def _summarise_with_batching(
+    llm: Callable[[str], str],
+    texts: list[str],
+    map_template: str,
+    budget_chars: int,
+    counters: dict,
+) -> str:
+    """One call if the material fits; otherwise map-reduce. Every call lands in `counters` (V4)."""
+    texts = [t for t in texts if t and t.strip()]
+    if not texts:
+        return ""
+
+    batches, truncated = _batch_texts(texts, budget_chars, _overhead(map_template))
+    counters["truncated_texts"] += truncated
+
+    if len(batches) == 1:
+        counters["single_calls"] += 1
+        return _call(llm, map_template.format(body=SEP.join(batches[0])), counters)
+
+    # MAP — one summary per batch of source material.
+    counters["batched_communities"] += 1
+    parts: list[str] = []
+    for batch in batches:
+        counters["map_calls"] += 1
+        text = _call(llm, map_template.format(body=SEP.join(batch)), counters)
+        if text.strip():
+            parts.append(text)
+
+    # REDUCE — merge the batch summaries, re-batching if they are themselves too many to fit.
+    while len(parts) > 1:
+        groups, _ = _batch_texts(parts, budget_chars, _overhead(PARENT_PROMPT))
+        merged = []
+        for group in groups:
+            counters["reduce_calls"] += 1
+            text = _call(llm, PARENT_PROMPT.format(body=SEP.join(group)), counters)
+            if text.strip():
+                merged.append(text)
+        if len(merged) >= len(parts):     # cannot shrink further — stop rather than loop
+            break
+        parts = merged
+    return parts[0] if parts else ""
 
 
 def _default_llm(prompt: str) -> str:
@@ -224,6 +332,7 @@ def summarize_communities(
     llm: Callable[[str], str] | None = None,
     dry_run: bool = False,
     max_chunks_per_community: int | None = None,
+    max_prompt_chars: int = DEFAULT_MAX_PROMPT_CHARS,
 ) -> dict:
     """Summarise every community bottom-up: leaves from full passages, parents from child summaries.
 
@@ -231,8 +340,32 @@ def summarize_communities(
 
     * ``summaries`` — ``(level, community_id) -> text`` (``""`` for a skipped or dry-run entry);
     * ``calls_by_level`` / ``total_calls`` — the V4 cost ledger;
-    * ``prompt_chars_by_level`` — computed even on a dry run, so the spend is visible first;
-    * ``skipped_empty`` — communities with no source material (never sent to the model).
+    * ``prompt_chars_by_level`` — computed even on a dry run, so the spend is visible first.
+      ⚠️ On a **dry run this covers the leaf level only**: a parent's prompt is built from its
+      children's *summaries*, which do not exist until the run happens, so the parent levels' cost
+      is not estimable before the spend. The number of parent calls is (it is
+      ``len(communities)`` per level, less any with no children).
+    * ``skipped_empty`` — communities with no source material (never sent to the model). On a real
+      run this is a leaf with no chunks or a parent whose children all produced nothing.
+    * ``deferred_parents`` — **dry run only**: parents that HAVE children and so have source
+      material, but whose body is empty because the dry run never generated the child summaries it
+      merges. They are counted here rather than as ``skipped_empty`` so the pre-flight report does
+      not claim 403 communities of the live graph are source-less when they are not.
+    * ``empty_returns`` — calls the model answered with nothing. `call_llm` returns ``""`` on
+      failure rather than raising (§I24), so this is the run's real failure count and **the exit
+      criterion for a real run** — never the absence of an exception (§I25).
+    * ``map_calls`` / ``reduce_calls`` / ``batched_communities`` / ``truncated_texts`` — the batching
+      ledger. A community whose material does not fit ``max_prompt_chars`` is summarised map-reduce.
+      ⚠️ The budget is derived from the **summariser's** context — `cfg.openai_model`, which is a
+      DIFFERENT model from the graph build's extractor; see the comment on
+      ``DEFAULT_MAX_PROMPT_CHARS`` before changing it.
+    * ``planned_leaf_prompts`` / ``planned_leaf_batched_communities`` — what a real run WOULD do at
+      the leaf level, computed on a dry run from the input text alone (so the pre-flight cost report
+      stays honest now that one community is no longer one call). ``planned_leaf_prompts`` is the
+      number of leaf PROMPTS — single-batch communities included, reduce calls excluded — and the
+      exact quantity to compare it to on a real run is ``leaf_prompt_calls``. ⚠️ Not ``map_calls``
+      (excludes single-batch communities) and not ``calls_by_level[0]`` (includes the leaf reduce
+      calls); both comparisons were made here and both were wrong.
 
     ``get_chunk_texts`` receives a list of chunk ids and must return their FULL text (V6); the
     caller wires it to SQLite/Qdrant. A community whose passages are empty is SKIPPED, not
@@ -248,6 +381,14 @@ def summarize_communities(
     calls_by_level: dict[int, int] = {}
     prompt_chars_by_level: dict[int, int] = {}
     skipped_empty = 0
+    deferred_parents = 0
+    counters = {
+        "calls": 0, "empty_returns": 0, "single_calls": 0, "map_calls": 0, "reduce_calls": 0,
+        "batched_communities": 0, "truncated_texts": 0, "prompt_chars": 0,
+    }
+    planned_leaf_prompts = 0          # dry run: leaf prompts a real run would issue (single + map)
+    planned_leaf_batched_communities = 0
+    leaf_prompt_calls = 0             # real run: the same quantity, actually issued
 
     for level, lvl in enumerate(hierarchy.levels):
         for cid, members in enumerate(lvl.communities):
@@ -257,24 +398,73 @@ def summarize_communities(
                 })
                 if max_chunks_per_community is not None:
                     ids = ids[:max_chunks_per_community]
-                body = "\n\n---\n\n".join(get_chunk_texts(ids)) if ids else ""
-                prompt = LEAF_PROMPT.format(body=body)
-            else:
-                kids = sorted(children.get((level, cid), []))
-                body = "\n\n---\n\n".join(summaries[k] for k in kids if summaries.get(k))
-                prompt = PARENT_PROMPT.format(body=body)
-
-            if not body.strip():
-                summaries[(level, cid)] = ""
-                skipped_empty += 1
+                texts = [t for t in get_chunk_texts(ids) if t and t.strip()] if ids else []
+                if not texts:
+                    summaries[(level, cid)] = ""
+                    skipped_empty += 1
+                    continue
+                if dry_run:
+                    # Measure the SAME batching a real run would do, so the dry run's call count and
+                    # prompt sizes reflect the map-reduce rather than one call per community.
+                    # ⚠️ This counts the leaf level's PROMPTS — single-batch communities included,
+                    # reduce calls excluded. An earlier version named it `planned_leaf_map_calls` and
+                    # a test compared it to a real run's `map_calls`; that passed only because the
+                    # fixture batched every community, and on the live corpus the plan is 218 while
+                    # `map_calls` is 0 (all single-batch). Comparing it to `calls_by_level[0]` is also
+                    # wrong — that includes the leaf REDUCE calls. Compare it to `leaf_prompt_calls`.
+                    batches, _ = _batch_texts(texts, max_prompt_chars, _overhead(LEAF_PROMPT))
+                    planned_leaf_prompts += len(batches)
+                    if len(batches) > 1:
+                        planned_leaf_batched_communities += 1
+                    for batch in batches:
+                        prompt_chars_by_level[level] = (
+                            prompt_chars_by_level.get(level, 0)
+                            + len(LEAF_PROMPT.format(body=SEP.join(batch)))
+                        )
+                    summaries[(level, cid)] = ""
+                    continue
+                before = counters["calls"]
+                before_chars = counters["prompt_chars"]
+                before_prompts = counters["single_calls"] + counters["map_calls"]
+                summaries[(level, cid)] = _summarise_with_batching(
+                    llm, texts, LEAF_PROMPT, max_prompt_chars, counters
+                )
+                leaf_prompt_calls += (
+                    counters["single_calls"] + counters["map_calls"] - before_prompts
+                )
+                calls_by_level[level] = calls_by_level.get(level, 0) + (counters["calls"] - before)
+                prompt_chars_by_level[level] = (
+                    prompt_chars_by_level.get(level, 0)
+                    + counters["prompt_chars"] - before_chars
+                )
                 continue
 
-            prompt_chars_by_level[level] = prompt_chars_by_level.get(level, 0) + len(prompt)
+            # ── parent levels: merge child summaries ──────────────────────────────────────────
+            kids = sorted(children.get((level, cid), []))
+            parts = [summaries[k] for k in kids if summaries.get(k) and summaries[k].strip()]
+            if not parts:
+                summaries[(level, cid)] = ""
+                # A parent with children has source material — it is only empty because a DRY RUN
+                # never generated the child summaries it merges. Counting it as "no source" (the
+                # old behaviour) reported 403 parents of the live graph as source-less, which is
+                # false and hides the fact that the dry run cannot estimate the parent levels' cost.
+                if dry_run and kids:
+                    deferred_parents += 1
+                else:
+                    skipped_empty += 1
+                continue
             if dry_run:
                 summaries[(level, cid)] = ""
                 continue
-            summaries[(level, cid)] = llm(prompt)
-            calls_by_level[level] = calls_by_level.get(level, 0) + 1
+            before = counters["calls"]
+            before_chars = counters["prompt_chars"]
+            summaries[(level, cid)] = _summarise_with_batching(
+                llm, parts, PARENT_PROMPT, max_prompt_chars, counters
+            )
+            calls_by_level[level] = calls_by_level.get(level, 0) + (counters["calls"] - before)
+            prompt_chars_by_level[level] = (
+                prompt_chars_by_level.get(level, 0) + counters["prompt_chars"] - before_chars
+            )
 
     return {
         "summaries": summaries,
@@ -282,4 +472,15 @@ def summarize_communities(
         "total_calls": sum(calls_by_level.values()),
         "prompt_chars_by_level": prompt_chars_by_level,
         "skipped_empty": skipped_empty,
+        "deferred_parents": deferred_parents,
+        "empty_returns": counters["empty_returns"],
+        "single_calls": counters["single_calls"],
+        "map_calls": counters["map_calls"],
+        "reduce_calls": counters["reduce_calls"],
+        "batched_communities": counters["batched_communities"],
+        "truncated_texts": counters["truncated_texts"],
+        "prompt_chars_total": counters["prompt_chars"],
+        "planned_leaf_prompts": planned_leaf_prompts,
+        "leaf_prompt_calls": leaf_prompt_calls,
+        "planned_leaf_batched_communities": planned_leaf_batched_communities,
     }

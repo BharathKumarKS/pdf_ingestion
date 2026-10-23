@@ -1,0 +1,14 @@
+# cmd: QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2 uv run python \
+#        scripts/build_community_summaries.py --doc-id 7ba61432-c5e0-416d-aecf-25a232523481 --yes --out logs/p1/step10/g2_summaries_2026-10-22.json
+# started: 2026-10-22T23:48:37Z  (local: Thu Oct 22 16:48:37 PDT 2026)
+# repo: /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion
+# summariser: cfg.openai_model from .env = OPENAI_MODEL=openai/gpt-oss-20b            
+# extractor (NOT used here):   model: Qwen/Qwen3-VL-8B-Instruct
+
+2026-10-22 16:48:38.699 | INFO     | src.core.database:get_memgraph:417 - Memgraph: connected at bolt://localhost:7687
+concepts=6041 edges=21670 isolated_dropped=24 levels=[2.0, 1.0, 0.5] q=[0.635, 0.6872, 0.7401] nesting={0: 0.8394, 1: 0.8911}
+2026-10-22 16:48:40.064 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+SUMMARISED: 597 LLM call(s) (by level {0: 218, 1: 198, 2: 181}); prompt chars by level {}; skipped (no source) 24; deferred parents 0; empty returns 0
+batching: budget 400000 chars; single calls 597, map calls 0, reduce calls 0, communities summarised map-reduce 0, passages truncated to fit 0
+artifact: logs/p1/step10/g2_summaries_2026-10-22.json
+# exit: 0  finished: 2026-10-23T00:08:19Z

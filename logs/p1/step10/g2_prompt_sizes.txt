@@ -1,0 +1,1891 @@
+2026-10-22 16:24:39.274 | INFO     | src.core.database:get_memgraph:417 - Memgraph: connected at bolt://localhost:7687
+2026-10-22 16:24:40.530 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+{
+  "document": "7ba61432-c5e0-416d-aecf-25a232523481",
+  "seed": 20261020,
+  "nodes": 6041,
+  "edges": 21670,
+  "leaf_communities": 218,
+  "leaves_with_source": 218,
+  "leaves_without_source": 0,
+  "chunk_ids_not_in_sqlite": 0,
+  "prompt_chars": {
+    "total": 3224051,
+    "min": 288,
+    "p50": 682,
+    "p90": 45937,
+    "p95": 95697,
+    "p99": 203019,
+    "max": 273470,
+    "mean": 14789.2
+  },
+  "approx_tokens_chars_per_token": 4.0,
+  "approx_tokens_max_prompt": 68368,
+  "top10_largest_leaves": [
+    {
+      "community": 2,
+      "concepts": 286,
+      "chunks": 542,
+      "chunks_found": 542,
+      "body_chars": 273311,
+      "prompt_chars": 273470
+    },
+    {
+      "community": 0,
+      "concepts": 336,
+      "chunks": 434,
+      "chunks_found": 434,
+      "body_chars": 250429,
+      "prompt_chars": 250588
+    },
+    {
+      "community": 1,
+      "concepts": 322,
+      "chunks": 356,
+      "chunks_found": 356,
+      "body_chars": 202860,
+      "prompt_chars": 203019
+    },
+    {
+      "community": 4,
+      "concepts": 270,
+      "chunks": 352,
+      "chunks_found": 352,
+      "body_chars": 196208,
+      "prompt_chars": 196367
+    },
+    {
+      "community": 3,
+      "concepts": 278,
+      "chunks": 323,
+      "chunks_found": 323,
+      "body_chars": 187684,
+      "prompt_chars": 187843
+    },
+    {
+      "community": 6,
+      "concepts": 227,
+      "chunks": 314,
+      "chunks_found": 314,
+      "body_chars": 159150,
+      "prompt_chars": 159309
+    },
+    {
+      "community": 8,
+      "concepts": 190,
+      "chunks": 249,
+      "chunks_found": 249,
+      "body_chars": 146057,
+      "prompt_chars": 146216
+    },
+    {
+      "community": 11,
+      "concepts": 157,
+      "chunks": 233,
+      "chunks_found": 233,
+      "body_chars": 140416,
+      "prompt_chars": 140575
+    },
+    {
+      "community": 5,
+      "concepts": 262,
+      "chunks": 215,
+      "chunks_found": 215,
+      "body_chars": 124284,
+      "prompt_chars": 124443
+    },
+    {
+      "community": 14,
+      "concepts": 148,
+      "chunks": 183,
+      "chunks_found": 183,
+      "body_chars": 101987,
+      "prompt_chars": 102146
+    }
+  ],
+  "over_budget": {
+    "10000": {
+      "leaves": 36,
+      "share_of_leaves": 0.1651,
+      "chars_in_them": 3084209,
+      "share_of_all_chars": 0.9566
+    },
+    "20000": {
+      "leaves": 33,
+      "share_of_leaves": 0.1514,
+      "chars_in_them": 3042939,
+      "share_of_all_chars": 0.9438
+    },
+    "40000": {
+      "leaves": 26,
+      "share_of_leaves": 0.1193,
+      "chars_in_them": 2836390,
+      "share_of_all_chars": 0.8798
+    },
+    "60000": {
+      "leaves": 18,
+      "share_of_leaves": 0.0826,
+      "chars_in_them": 2455768,
+      "share_of_all_chars": 0.7617
+    },
+    "90000": {
+      "leaves": 13,
+      "share_of_leaves": 0.0596,
+      "chars_in_them": 2067531,
+      "share_of_all_chars": 0.6413
+    },
+    "120000": {
+      "leaves": 9,
+      "share_of_leaves": 0.0413,
+      "chars_in_them": 1681830,
+      "share_of_all_chars": 0.5217
+    }
+  },
+  "leaves": [
+    {
+      "community": 2,
+      "concepts": 286,
+      "chunks": 542,
+      "chunks_found": 542,
+      "body_chars": 273311,
+      "prompt_chars": 273470
+    },
+    {
+      "community": 0,
+      "concepts": 336,
+      "chunks": 434,
+      "chunks_found": 434,
+      "body_chars": 250429,
+      "prompt_chars": 250588
+    },
+    {
+      "community": 1,
+      "concepts": 322,
+      "chunks": 356,
+      "chunks_found": 356,
+      "body_chars": 202860,
+      "prompt_chars": 203019
+    },
+    {
+      "community": 4,
+      "concepts": 270,
+      "chunks": 352,
+      "chunks_found": 352,
+      "body_chars": 196208,
+      "prompt_chars": 196367
+    },
+    {
+      "community": 3,
+      "concepts": 278,
+      "chunks": 323,
+      "chunks_found": 323,
+      "body_chars": 187684,
+      "prompt_chars": 187843
+    },
+    {
+      "community": 6,
+      "concepts": 227,
+      "chunks": 314,
+      "chunks_found": 314,
+      "body_chars": 159150,
+      "prompt_chars": 159309
+    },
+    {
+      "community": 8,
+      "concepts": 190,
+      "chunks": 249,
+      "chunks_found": 249,
+      "body_chars": 146057,
+      "prompt_chars": 146216
+    },
+    {
+      "community": 11,
+      "concepts": 157,
+      "chunks": 233,
+      "chunks_found": 233,
+      "body_chars": 140416,
+      "prompt_chars": 140575
+    },
+    {
+      "community": 5,
+      "concepts": 262,
+      "chunks": 215,
+      "chunks_found": 215,
+      "body_chars": 124284,
+      "prompt_chars": 124443
+    },
+    {
+      "community": 14,
+      "concepts": 148,
+      "chunks": 183,
+      "chunks_found": 183,
+      "body_chars": 101987,
+      "prompt_chars": 102146
+    },
+    {
+      "community": 17,
+      "concepts": 133,
+      "chunks": 159,
+      "chunks_found": 159,
+      "body_chars": 95721,
+      "prompt_chars": 95880
+    },
+    {
+      "community": 9,
+      "concepts": 178,
+      "chunks": 158,
+      "chunks_found": 158,
+      "body_chars": 95538,
+      "prompt_chars": 95697
+    },
+    {
+      "community": 7,
+      "concepts": 218,
+      "chunks": 173,
+      "chunks_found": 173,
+      "body_chars": 91819,
+      "prompt_chars": 91978
+    },
+    {
+      "community": 12,
+      "concepts": 155,
+      "chunks": 160,
+      "chunks_found": 160,
+      "body_chars": 89550,
+      "prompt_chars": 89709
+    },
+    {
+      "community": 13,
+      "concepts": 153,
+      "chunks": 157,
+      "chunks_found": 157,
+      "body_chars": 85564,
+      "prompt_chars": 85723
+    },
+    {
+      "community": 22,
+      "concepts": 107,
+      "chunks": 147,
+      "chunks_found": 147,
+      "body_chars": 85256,
+      "prompt_chars": 85415
+    },
+    {
+      "community": 18,
+      "concepts": 132,
+      "chunks": 114,
+      "chunks_found": 114,
+      "body_chars": 63561,
+      "prompt_chars": 63720
+    },
+    {
+      "community": 25,
+      "concepts": 96,
+      "chunks": 106,
+      "chunks_found": 106,
+      "body_chars": 63511,
+      "prompt_chars": 63670
+    },
+    {
+      "community": 20,
+      "concepts": 116,
+      "chunks": 88,
+      "chunks_found": 88,
+      "body_chars": 55330,
+      "prompt_chars": 55489
+    },
+    {
+      "community": 10,
+      "concepts": 158,
+      "chunks": 99,
+      "chunks_found": 99,
+      "body_chars": 50013,
+      "prompt_chars": 50172
+    },
+    {
+      "community": 16,
+      "concepts": 135,
+      "chunks": 79,
+      "chunks_found": 79,
+      "body_chars": 49602,
+      "prompt_chars": 49761
+    },
+    {
+      "community": 26,
+      "concepts": 91,
+      "chunks": 84,
+      "chunks_found": 84,
+      "body_chars": 47666,
+      "prompt_chars": 47825
+    },
+    {
+      "community": 27,
+      "concepts": 91,
+      "chunks": 83,
+      "chunks_found": 83,
+      "body_chars": 45778,
+      "prompt_chars": 45937
+    },
+    {
+      "community": 23,
+      "concepts": 98,
+      "chunks": 87,
+      "chunks_found": 87,
+      "body_chars": 44975,
+      "prompt_chars": 45134
+    },
+    {
+      "community": 15,
+      "concepts": 146,
+      "chunks": 76,
+      "chunks_found": 76,
+      "body_chars": 44376,
+      "prompt_chars": 44535
+    },
+    {
+      "community": 21,
+      "concepts": 108,
+      "chunks": 70,
+      "chunks_found": 70,
+      "body_chars": 41610,
+      "prompt_chars": 41769
+    },
+    {
+      "community": 19,
+      "concepts": 126,
+      "chunks": 71,
+      "chunks_found": 71,
+      "body_chars": 38672,
+      "prompt_chars": 38831
+    },
+    {
+      "community": 24,
+      "concepts": 98,
+      "chunks": 66,
+      "chunks_found": 66,
+      "body_chars": 38090,
+      "prompt_chars": 38249
+    },
+    {
+      "community": 31,
+      "concepts": 69,
+      "chunks": 52,
+      "chunks_found": 52,
+      "body_chars": 29693,
+      "prompt_chars": 29852
+    },
+    {
+      "community": 28,
+      "concepts": 90,
+      "chunks": 56,
+      "chunks_found": 56,
+      "body_chars": 28952,
+      "prompt_chars": 29111
+    },
+    {
+      "community": 30,
+      "concepts": 69,
+      "chunks": 42,
+      "chunks_found": 42,
+      "body_chars": 25347,
+      "prompt_chars": 25506
+    },
+    {
+      "community": 33,
+      "concepts": 55,
+      "chunks": 38,
+      "chunks_found": 38,
+      "body_chars": 23406,
+      "prompt_chars": 23565
+    },
+    {
+      "community": 29,
+      "concepts": 84,
+      "chunks": 32,
+      "chunks_found": 32,
+      "body_chars": 21276,
+      "prompt_chars": 21435
+    },
+    {
+      "community": 32,
+      "concepts": 60,
+      "chunks": 29,
+      "chunks_found": 29,
+      "body_chars": 18246,
+      "prompt_chars": 18405
+    },
+    {
+      "community": 36,
+      "concepts": 33,
+      "chunks": 17,
+      "chunks_found": 17,
+      "body_chars": 11279,
+      "prompt_chars": 11438
+    },
+    {
+      "community": 34,
+      "concepts": 37,
+      "chunks": 23,
+      "chunks_found": 23,
+      "body_chars": 11268,
+      "prompt_chars": 11427
+    },
+    {
+      "community": 35,
+      "concepts": 34,
+      "chunks": 17,
+      "chunks_found": 17,
+      "body_chars": 8587,
+      "prompt_chars": 8746
+    },
+    {
+      "community": 37,
+      "concepts": 12,
+      "chunks": 5,
+      "chunks_found": 5,
+      "body_chars": 3509,
+      "prompt_chars": 3668
+    },
+    {
+      "community": 93,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 2284,
+      "prompt_chars": 2443
+    },
+    {
+      "community": 38,
+      "concepts": 11,
+      "chunks": 4,
+      "chunks_found": 4,
+      "body_chars": 2056,
+      "prompt_chars": 2215
+    },
+    {
+      "community": 48,
+      "concepts": 6,
+      "chunks": 3,
+      "chunks_found": 3,
+      "body_chars": 1796,
+      "prompt_chars": 1955
+    },
+    {
+      "community": 49,
+      "concepts": 6,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 1706,
+      "prompt_chars": 1865
+    },
+    {
+      "community": 65,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 1673,
+      "prompt_chars": 1832
+    },
+    {
+      "community": 39,
+      "concepts": 11,
+      "chunks": 4,
+      "chunks_found": 4,
+      "body_chars": 1652,
+      "prompt_chars": 1811
+    },
+    {
+      "community": 40,
+      "concepts": 11,
+      "chunks": 3,
+      "chunks_found": 3,
+      "body_chars": 1635,
+      "prompt_chars": 1794
+    },
+    {
+      "community": 41,
+      "concepts": 8,
+      "chunks": 3,
+      "chunks_found": 3,
+      "body_chars": 1574,
+      "prompt_chars": 1733
+    },
+    {
+      "community": 61,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 1492,
+      "prompt_chars": 1651
+    },
+    {
+      "community": 70,
+      "concepts": 5,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 1339,
+      "prompt_chars": 1498
+    },
+    {
+      "community": 63,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 1321,
+      "prompt_chars": 1480
+    },
+    {
+      "community": 43,
+      "concepts": 7,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 1289,
+      "prompt_chars": 1448
+    },
+    {
+      "community": 76,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 1177,
+      "prompt_chars": 1336
+    },
+    {
+      "community": 73,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 1099,
+      "prompt_chars": 1258
+    },
+    {
+      "community": 42,
+      "concepts": 7,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 1097,
+      "prompt_chars": 1256
+    },
+    {
+      "community": 44,
+      "concepts": 7,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 1060,
+      "prompt_chars": 1219
+    },
+    {
+      "community": 67,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 1059,
+      "prompt_chars": 1218
+    },
+    {
+      "community": 104,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 1044,
+      "prompt_chars": 1203
+    },
+    {
+      "community": 114,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 994,
+      "prompt_chars": 1153
+    },
+    {
+      "community": 156,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 992,
+      "prompt_chars": 1151
+    },
+    {
+      "community": 50,
+      "concepts": 6,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 936,
+      "prompt_chars": 1095
+    },
+    {
+      "community": 69,
+      "concepts": 5,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 883,
+      "prompt_chars": 1042
+    },
+    {
+      "community": 105,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 882,
+      "prompt_chars": 1041
+    },
+    {
+      "community": 54,
+      "concepts": 5,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 862,
+      "prompt_chars": 1021
+    },
+    {
+      "community": 46,
+      "concepts": 6,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 854,
+      "prompt_chars": 1013
+    },
+    {
+      "community": 55,
+      "concepts": 5,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 839,
+      "prompt_chars": 998
+    },
+    {
+      "community": 91,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 837,
+      "prompt_chars": 996
+    },
+    {
+      "community": 68,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 822,
+      "prompt_chars": 981
+    },
+    {
+      "community": 124,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 820,
+      "prompt_chars": 979
+    },
+    {
+      "community": 183,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 819,
+      "prompt_chars": 978
+    },
+    {
+      "community": 78,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 816,
+      "prompt_chars": 975
+    },
+    {
+      "community": 115,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 811,
+      "prompt_chars": 970
+    },
+    {
+      "community": 145,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 809,
+      "prompt_chars": 968
+    },
+    {
+      "community": 149,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 779,
+      "prompt_chars": 938
+    },
+    {
+      "community": 123,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 761,
+      "prompt_chars": 920
+    },
+    {
+      "community": 60,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 756,
+      "prompt_chars": 915
+    },
+    {
+      "community": 52,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 750,
+      "prompt_chars": 909
+    },
+    {
+      "community": 103,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 750,
+      "prompt_chars": 909
+    },
+    {
+      "community": 173,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 744,
+      "prompt_chars": 903
+    },
+    {
+      "community": 88,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 738,
+      "prompt_chars": 897
+    },
+    {
+      "community": 143,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 713,
+      "prompt_chars": 872
+    },
+    {
+      "community": 53,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 711,
+      "prompt_chars": 870
+    },
+    {
+      "community": 153,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 701,
+      "prompt_chars": 860
+    },
+    {
+      "community": 97,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 691,
+      "prompt_chars": 850
+    },
+    {
+      "community": 92,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 688,
+      "prompt_chars": 847
+    },
+    {
+      "community": 157,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 668,
+      "prompt_chars": 827
+    },
+    {
+      "community": 47,
+      "concepts": 6,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 662,
+      "prompt_chars": 821
+    },
+    {
+      "community": 66,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 653,
+      "prompt_chars": 812
+    },
+    {
+      "community": 164,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 647,
+      "prompt_chars": 806
+    },
+    {
+      "community": 193,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 645,
+      "prompt_chars": 804
+    },
+    {
+      "community": 99,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 634,
+      "prompt_chars": 793
+    },
+    {
+      "community": 148,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 632,
+      "prompt_chars": 791
+    },
+    {
+      "community": 177,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 628,
+      "prompt_chars": 787
+    },
+    {
+      "community": 146,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 622,
+      "prompt_chars": 781
+    },
+    {
+      "community": 71,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 616,
+      "prompt_chars": 775
+    },
+    {
+      "community": 81,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 606,
+      "prompt_chars": 765
+    },
+    {
+      "community": 205,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 604,
+      "prompt_chars": 763
+    },
+    {
+      "community": 45,
+      "concepts": 6,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 593,
+      "prompt_chars": 752
+    },
+    {
+      "community": 125,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 586,
+      "prompt_chars": 745
+    },
+    {
+      "community": 209,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 579,
+      "prompt_chars": 738
+    },
+    {
+      "community": 165,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 578,
+      "prompt_chars": 737
+    },
+    {
+      "community": 119,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 565,
+      "prompt_chars": 724
+    },
+    {
+      "community": 113,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 559,
+      "prompt_chars": 718
+    },
+    {
+      "community": 166,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 557,
+      "prompt_chars": 716
+    },
+    {
+      "community": 111,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 556,
+      "prompt_chars": 715
+    },
+    {
+      "community": 202,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 556,
+      "prompt_chars": 715
+    },
+    {
+      "community": 168,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 546,
+      "prompt_chars": 705
+    },
+    {
+      "community": 147,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 544,
+      "prompt_chars": 703
+    },
+    {
+      "community": 170,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 540,
+      "prompt_chars": 699
+    },
+    {
+      "community": 58,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 535,
+      "prompt_chars": 694
+    },
+    {
+      "community": 186,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 531,
+      "prompt_chars": 690
+    },
+    {
+      "community": 122,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 523,
+      "prompt_chars": 682
+    },
+    {
+      "community": 59,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 522,
+      "prompt_chars": 681
+    },
+    {
+      "community": 127,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 522,
+      "prompt_chars": 681
+    },
+    {
+      "community": 90,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 516,
+      "prompt_chars": 675
+    },
+    {
+      "community": 80,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 515,
+      "prompt_chars": 674
+    },
+    {
+      "community": 82,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 509,
+      "prompt_chars": 668
+    },
+    {
+      "community": 77,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 508,
+      "prompt_chars": 667
+    },
+    {
+      "community": 108,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 507,
+      "prompt_chars": 666
+    },
+    {
+      "community": 87,
+      "concepts": 4,
+      "chunks": 2,
+      "chunks_found": 2,
+      "body_chars": 501,
+      "prompt_chars": 660
+    },
+    {
+      "community": 204,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 499,
+      "prompt_chars": 658
+    },
+    {
+      "community": 72,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 495,
+      "prompt_chars": 654
+    },
+    {
+      "community": 109,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 487,
+      "prompt_chars": 646
+    },
+    {
+      "community": 107,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 486,
+      "prompt_chars": 645
+    },
+    {
+      "community": 62,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 482,
+      "prompt_chars": 641
+    },
+    {
+      "community": 184,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 477,
+      "prompt_chars": 636
+    },
+    {
+      "community": 64,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 468,
+      "prompt_chars": 627
+    },
+    {
+      "community": 134,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 465,
+      "prompt_chars": 624
+    },
+    {
+      "community": 141,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 464,
+      "prompt_chars": 623
+    },
+    {
+      "community": 75,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 463,
+      "prompt_chars": 622
+    },
+    {
+      "community": 96,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 456,
+      "prompt_chars": 615
+    },
+    {
+      "community": 112,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 453,
+      "prompt_chars": 612
+    },
+    {
+      "community": 196,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 452,
+      "prompt_chars": 611
+    },
+    {
+      "community": 57,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 447,
+      "prompt_chars": 606
+    },
+    {
+      "community": 94,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 441,
+      "prompt_chars": 600
+    },
+    {
+      "community": 167,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 441,
+      "prompt_chars": 600
+    },
+    {
+      "community": 86,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 439,
+      "prompt_chars": 598
+    },
+    {
+      "community": 98,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 439,
+      "prompt_chars": 598
+    },
+    {
+      "community": 203,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 439,
+      "prompt_chars": 598
+    },
+    {
+      "community": 89,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 429,
+      "prompt_chars": 588
+    },
+    {
+      "community": 106,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 421,
+      "prompt_chars": 580
+    },
+    {
+      "community": 83,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 418,
+      "prompt_chars": 577
+    },
+    {
+      "community": 161,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 418,
+      "prompt_chars": 577
+    },
+    {
+      "community": 152,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 415,
+      "prompt_chars": 574
+    },
+    {
+      "community": 117,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 414,
+      "prompt_chars": 573
+    },
+    {
+      "community": 174,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 411,
+      "prompt_chars": 570
+    },
+    {
+      "community": 102,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 406,
+      "prompt_chars": 565
+    },
+    {
+      "community": 79,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 381,
+      "prompt_chars": 540
+    },
+    {
+      "community": 142,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 378,
+      "prompt_chars": 537
+    },
+    {
+      "community": 129,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 376,
+      "prompt_chars": 535
+    },
+    {
+      "community": 100,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 357,
+      "prompt_chars": 516
+    },
+    {
+      "community": 84,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 352,
+      "prompt_chars": 511
+    },
+    {
+      "community": 162,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 349,
+      "prompt_chars": 508
+    },
+    {
+      "community": 140,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 339,
+      "prompt_chars": 498
+    },
+    {
+      "community": 176,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 334,
+      "prompt_chars": 493
+    },
+    {
+      "community": 189,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 322,
+      "prompt_chars": 481
+    },
+    {
+      "community": 121,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 321,
+      "prompt_chars": 480
+    },
+    {
+      "community": 155,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 314,
+      "prompt_chars": 473
+    },
+    {
+      "community": 159,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 314,
+      "prompt_chars": 473
+    },
+    {
+      "community": 85,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 313,
+      "prompt_chars": 472
+    },
+    {
+      "community": 137,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 313,
+      "prompt_chars": 472
+    },
+    {
+      "community": 51,
+      "concepts": 6,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 312,
+      "prompt_chars": 471
+    },
+    {
+      "community": 56,
+      "concepts": 5,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 306,
+      "prompt_chars": 465
+    },
+    {
+      "community": 136,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 305,
+      "prompt_chars": 464
+    },
+    {
+      "community": 132,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 301,
+      "prompt_chars": 460
+    },
+    {
+      "community": 169,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 298,
+      "prompt_chars": 457
+    },
+    {
+      "community": 101,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 294,
+      "prompt_chars": 453
+    },
+    {
+      "community": 120,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 292,
+      "prompt_chars": 451
+    },
+    {
+      "community": 187,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 289,
+      "prompt_chars": 448
+    },
+    {
+      "community": 213,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 289,
+      "prompt_chars": 448
+    },
+    {
+      "community": 138,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 288,
+      "prompt_chars": 447
+    },
+    {
+      "community": 191,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 288,
+      "prompt_chars": 447
+    },
+    {
+      "community": 197,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 287,
+      "prompt_chars": 446
+    },
+    {
+      "community": 200,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 287,
+      "prompt_chars": 446
+    },
+    {
+      "community": 135,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 279,
+      "prompt_chars": 438
+    },
+    {
+      "community": 158,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 278,
+      "prompt_chars": 437
+    },
+    {
+      "community": 126,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 275,
+      "prompt_chars": 434
+    },
+    {
+      "community": 175,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 267,
+      "prompt_chars": 426
+    },
+    {
+      "community": 198,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 266,
+      "prompt_chars": 425
+    },
+    {
+      "community": 128,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 263,
+      "prompt_chars": 422
+    },
+    {
+      "community": 74,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 261,
+      "prompt_chars": 420
+    },
+    {
+      "community": 211,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 258,
+      "prompt_chars": 417
+    },
+    {
+      "community": 133,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 256,
+      "prompt_chars": 415
+    },
+    {
+      "community": 208,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 256,
+      "prompt_chars": 415
+    },
+    {
+      "community": 160,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 255,
+      "prompt_chars": 414
+    },
+    {
+      "community": 95,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 246,
+      "prompt_chars": 405
+    },
+    {
+      "community": 181,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 246,
+      "prompt_chars": 405
+    },
+    {
+      "community": 110,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 240,
+      "prompt_chars": 399
+    },
+    {
+      "community": 188,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 235,
+      "prompt_chars": 394
+    },
+    {
+      "community": 194,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 235,
+      "prompt_chars": 394
+    },
+    {
+      "community": 207,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 235,
+      "prompt_chars": 394
+    },
+    {
+      "community": 118,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 234,
+      "prompt_chars": 393
+    },
+    {
+      "community": 150,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 228,
+      "prompt_chars": 387
+    },
+    {
+      "community": 192,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 227,
+      "prompt_chars": 386
+    },
+    {
+      "community": 144,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 225,
+      "prompt_chars": 384
+    },
+    {
+      "community": 172,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 225,
+      "prompt_chars": 384
+    },
+    {
+      "community": 163,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 223,
+      "prompt_chars": 382
+    },
+    {
+      "community": 178,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 215,
+      "prompt_chars": 374
+    },
+    {
+      "community": 210,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 215,
+      "prompt_chars": 374
+    },
+    {
+      "community": 154,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 213,
+      "prompt_chars": 372
+    },
+    {
+      "community": 171,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 213,
+      "prompt_chars": 372
+    },
+    {
+      "community": 201,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 210,
+      "prompt_chars": 369
+    },
+    {
+      "community": 130,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 198,
+      "prompt_chars": 357
+    },
+    {
+      "community": 182,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 198,
+      "prompt_chars": 357
+    },
+    {
+      "community": 212,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 194,
+      "prompt_chars": 353
+    },
+    {
+      "community": 116,
+      "concepts": 4,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 193,
+      "prompt_chars": 352
+    },
+    {
+      "community": 217,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 191,
+      "prompt_chars": 350
+    },
+    {
+      "community": 190,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 189,
+      "prompt_chars": 348
+    },
+    {
+      "community": 214,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 186,
+      "prompt_chars": 345
+    },
+    {
+      "community": 216,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 183,
+      "prompt_chars": 342
+    },
+    {
+      "community": 131,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 179,
+      "prompt_chars": 338
+    },
+    {
+      "community": 151,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 173,
+      "prompt_chars": 332
+    },
+    {
+      "community": 199,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 172,
+      "prompt_chars": 331
+    },
+    {
+      "community": 215,
+      "concepts": 2,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 170,
+      "prompt_chars": 329
+    },
+    {
+      "community": 206,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 169,
+      "prompt_chars": 328
+    },
+    {
+      "community": 139,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 161,
+      "prompt_chars": 320
+    },
+    {
+      "community": 180,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 151,
+      "prompt_chars": 310
+    },
+    {
+      "community": 179,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 148,
+      "prompt_chars": 307
+    },
+    {
+      "community": 185,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 145,
+      "prompt_chars": 304
+    },
+    {
+      "community": 195,
+      "concepts": 3,
+      "chunks": 1,
+      "chunks_found": 1,
+      "body_chars": 129,
+      "prompt_chars": 288
+    }
+  ]
+}
+wrote logs/p1/step10/g2_prompt_sizes.json

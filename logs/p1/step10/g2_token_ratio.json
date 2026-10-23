@@ -1,0 +1,38 @@
+{
+  "model": "Qwen/Qwen3-VL-8B-Instruct",
+  "endpoint": "http://10.0.10.70:8000",
+  "max_model_len": 15000,
+  "measured": [
+    {
+      "target_body_chars": 20000,
+      "prompt_chars": 20159,
+      "status": 200,
+      "seconds": 4.2,
+      "prompt_tokens": 4642,
+      "chars_per_token": 4.343,
+      "completion_tokens": 199
+    },
+    {
+      "target_body_chars": 40000,
+      "prompt_chars": 40159,
+      "status": 200,
+      "seconds": 3.9,
+      "prompt_tokens": 8778,
+      "chars_per_token": 4.575,
+      "completion_tokens": 173
+    },
+    {
+      "target_body_chars": 60000,
+      "prompt_chars": 60159,
+      "status": 200,
+      "seconds": 4.4,
+      "prompt_tokens": 13814,
+      "chars_per_token": 4.355,
+      "completion_tokens": 182
+    }
+  ],
+  "chars_per_token_min": 4.343,
+  "chars_per_token_max": 4.575,
+  "conservative_chars_per_token_for_budgeting": 4.343,
+  "note": "the batch budget uses the WORST (smallest) measured ratio, so a batch sized to fit fits for every sample measured"
+}

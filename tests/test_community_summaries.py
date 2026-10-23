@@ -9,6 +9,7 @@ instead of Leiden and V2 can fail.
 from __future__ import annotations
 
 from src.pdf_ingestion.community_summaries import (
+    PARENT_PROMPT,
     build_hierarchy,
     read_concept_chunks,
     read_concept_graph,
@@ -167,6 +168,218 @@ def test_communities_with_no_source_material_are_skipped_not_summarised():
     out = summarize_communities(h, {}, _provider({}), llm=llm, dry_run=False)
     assert out["total_calls"] == 0
     assert out["skipped_empty"] > 0
+
+
+def test_dry_run_does_not_report_parents_as_source_less():
+    """A dry run's parents are empty because the CHILDREN were never generated, not for want of source.
+
+    Measured 2026-10-22 on the live graph: the old counter reported **403** parents as "skipped (no
+    source material)" — every community above the leaf level — when in fact every one of them has
+    source material (its children). The pre-flight cost report therefore understated the run by 403
+    calls while reading as though those communities would never be summarised. Reverting the
+    `dry_run and children.get(...)` branch fails this test.
+    """
+    h, concept_chunks = _hierarchy_and_chunks()
+    provider = _provider({f"chunk-{n}": "passage text" for n in
+                          [f"{g}{i}" for g in "ab" for i in range(6)]})
+    out = summarize_communities(h, concept_chunks, provider, llm=FakeLLM(), dry_run=True)
+
+    assert out["skipped_empty"] == 0          # every leaf has source material
+    assert out["deferred_parents"] > 0        # parents exist; they were not generated, not empty
+    # ...and a REAL run counts the same communities as calls, not as skipped
+    real = summarize_communities(h, concept_chunks, provider, llm=FakeLLM(), dry_run=False)
+    assert real["deferred_parents"] == 0
+    assert real["skipped_empty"] == 0
+    assert real["total_calls"] == out["deferred_parents"] + len(h.levels[0].communities)
+
+
+def test_a_failed_llm_call_is_counted_not_silently_an_empty_summary():
+    """`call_llm` returns "" on failure, so an all-failed run must not read as a successful build.
+
+    The §I25 class: without this counter, a run in which EVERY call failed reports a full cost
+    ledger (`total_calls` = N) and writes an artifact whose summaries are all "" — a total loss that
+    looks exactly like a build. Reverting `if not text.strip(): empty_returns += 1` fails this test.
+    """
+    h, concept_chunks = _hierarchy_and_chunks()
+    provider = _provider({f"chunk-{n}": "passage text" for n in
+                          [f"{g}{i}" for g in "ab" for i in range(6)]})
+    failed = summarize_communities(h, concept_chunks, provider, llm=lambda p: "", dry_run=False)
+    assert failed["total_calls"] > 0
+    assert failed["empty_returns"] == failed["total_calls"]     # counted, not swallowed
+    assert all(v == "" for v in failed["summaries"].values())
+
+    healthy = summarize_communities(h, concept_chunks, provider, llm=FakeLLM(), dry_run=False)
+    assert healthy["empty_returns"] == 0
+
+
+# ── the prompt budget: a community that does not fit is summarised map-reduce ────────────────
+
+def _long_text_hierarchy(chars_per_chunk=1600):
+    names, edges = _two_cliques()
+    concept_chunks = {n: [f"chunk-{n}"] for n in names}
+    texts = {f"chunk-{n}": ("physics " * (chars_per_chunk // 8)) for n in names}
+    g = read_concept_graph(FakeSession(names, edges), "doc1")
+    h = build_hierarchy(g, resolutions=(0.5, 1.0, 2.0))
+    return h, concept_chunks, texts
+
+
+def test_a_community_that_does_not_fit_is_summarised_map_reduce_without_dropping_source():
+    """A community whose material exceeds the prompt budget is summarised map-reduce, losslessly.
+
+    Measured 2026-10-22: the §G2 leaf prompts run to 273,470 chars while the *graph build's* extractor
+    has a 15,000-token context — and the summariser is a different model with a different one. The
+    budget is therefore a parameter, and the code must handle a community that does not fit rather
+    than send a prompt the server refuses (`call_llm` would return "" and the community would end up
+    with no summary). Reverting `_summarise_with_batching` to a single `llm(prompt)` fails this test
+    (the whole body goes in one prompt, over the budget).
+    """
+    h, concept_chunks, texts = _long_text_hierarchy()
+    llm = FakeLLM()
+    out = summarize_communities(h, concept_chunks, _provider(texts), llm=llm,
+                                dry_run=False, max_prompt_chars=3000)
+
+    assert out["batched_communities"] > 0
+    assert out["map_calls"] > 0 and out["reduce_calls"] > 0
+    # the ledger is COMPLETE: every call is classified as single, map or reduce
+    assert out["total_calls"] == len(llm.prompts)
+    assert out["total_calls"] == out["single_calls"] + out["map_calls"] + out["reduce_calls"]
+    assert out["truncated_texts"] == 0
+    # no source dropped — every passage is in some prompt
+    joined = "\n".join(llm.prompts)
+    for text in texts.values():
+        assert text in joined
+    # and no prompt exceeded the budget
+    assert max(len(p) for p in llm.prompts) <= 3000
+
+
+def test_a_passage_larger_than_the_whole_budget_is_truncated_and_counted():
+    """A single passage that cannot fit any batch is truncated — and the truncation is REPORTED.
+
+    Silently dropping the tail of a passage is the V6 failure in miniature. Removing the
+    `truncated += 1` fails this test.
+    """
+    names = ["a0", "a1"]
+    edges = [("a0", "a1", 1.0)]
+    g = read_concept_graph(FakeSession(names, edges), "doc1")
+    h = build_hierarchy(g, resolutions=(0.5, 1.0, 2.0))
+    huge = "y" * 5000
+    llm = FakeLLM()
+    out = summarize_communities(h, {"a0": ["c0"], "a1": []}, _provider({"c0": huge}), llm=llm,
+                                dry_run=False, max_prompt_chars=2000)
+    assert out["truncated_texts"] == 1
+    assert max(len(p) for p in llm.prompts) <= 2000
+
+
+def test_a_real_run_records_prompt_chars_per_level_too():
+    """The cost ledger must record the prompt characters on a REAL run, not only on a dry one.
+
+    Measured 2026-10-22: after the batching rewrite the live §G2 build wrote
+    `prompt_chars_by_level: {}` — the ledger recorded the calls but not what they cost. Reverting
+    the `prompt_chars_by_level[...] + counters["prompt_chars"] - before_chars` accumulation fails
+    this test.
+    """
+    h, concept_chunks, texts = _long_text_hierarchy()
+    out = summarize_communities(h, concept_chunks, _provider(texts), llm=FakeLLM(), dry_run=False)
+    assert out["total_calls"] > 0
+    assert sum(out["prompt_chars_by_level"].values()) == out["prompt_chars_total"] > 0
+    assert set(out["prompt_chars_by_level"]) == set(out["calls_by_level"])
+
+
+def test_dry_run_plans_the_calls_a_real_run_performs():
+    """The pre-flight report must count the prompts the run will actually issue at the leaf level (V4).
+
+    ⚠️ The quantity is leaf PROMPTS — `single_calls + map_calls` at the leaf level, excluding the leaf
+    reduce calls — and `leaf_prompt_calls` is its real-run counterpart. Two wrong comparisons were
+    made here before it: against `map_calls` (which excludes single-batch communities, so it reads 0
+    on the live corpus while the plan reads 218) and against `calls_by_level[0]` (which *includes*
+    the leaf reduce calls). Both passed or failed depending on the fixture, which is the defect. The
+    independent reviewer found the first of the two, 2026-10-22.
+    """
+    h, concept_chunks, texts = _long_text_hierarchy()
+    provider = _provider(texts)
+    dry = summarize_communities(h, concept_chunks, provider, llm=FakeLLM(),
+                                dry_run=True, max_prompt_chars=3000)
+    real = summarize_communities(h, concept_chunks, provider, llm=FakeLLM(),
+                                 dry_run=False, max_prompt_chars=3000)
+
+    assert dry["total_calls"] == 0                      # still no spend on a dry run
+    assert dry["planned_leaf_batched_communities"] == real["batched_communities"]
+    # the exact quantity: leaf PROMPTS (single + map), excluding the leaf reduce calls
+    assert dry["planned_leaf_prompts"] == real["leaf_prompt_calls"]
+    assert dry["planned_leaf_prompts"] > len(h.levels[0].communities) // 2
+
+
+def test_planned_leaf_prompts_counts_single_call_communities_too():
+    """The plan is the leaf level's PROMPT count, so it must include communities that do NOT batch.
+
+    This is the case the old name (`planned_leaf_map_calls`) and the old test both missed: with a
+    budget large enough for every community to fit in one call, the plan must equal the number of
+    leaves that have source material, while a real run records **zero** map calls.
+    """
+    h, concept_chunks, texts = _long_text_hierarchy()
+    provider = _provider(texts)
+    dry = summarize_communities(h, concept_chunks, provider, llm=FakeLLM(),
+                                dry_run=True, max_prompt_chars=400_000)
+    real = summarize_communities(h, concept_chunks, provider, llm=FakeLLM(),
+                                 dry_run=False, max_prompt_chars=400_000)
+
+    assert dry["planned_leaf_batched_communities"] == 0     # nothing batches at this budget
+    assert real["map_calls"] == 0 and real["reduce_calls"] == 0
+    assert dry["planned_leaf_prompts"] == real["leaf_prompt_calls"] == len(h.levels[0].communities)
+    # ...and the OLD comparison would have failed here, which is why it was wrong
+    assert dry["planned_leaf_prompts"] != real["map_calls"]
+
+
+def test_reduce_terminates_when_summaries_do_not_shrink():
+    """The `len(merged) >= len(parts): break` guard is load-bearing — this is the case it exists for.
+
+    If a reduce returns a summary at least as long as the budget, `_batch_texts` puts one per group
+    (a full-room text cannot share a batch), so the merge does NOT shrink the list. Without the guard
+    `parts = merged` would leave the loop at the same length with the same content, forever. The
+    independent reviewer read this as a reachable infinite loop; it is reachable only with the guard
+    removed, which is what this test pins. Removing the guard makes this test hang.
+    """
+    h, concept_chunks, texts = _long_text_hierarchy()
+
+    def llm(_prompt):
+        return "z" * 3000          # >= the budget, so every merge yields one full-room group
+
+    out = summarize_communities(h, concept_chunks, _provider(texts), llm=llm,
+                                dry_run=False, max_prompt_chars=3000)
+
+    assert out["map_calls"] > 0 and out["reduce_calls"] > 0
+    assert out["empty_returns"] == 0
+    assert out["total_calls"] == out["single_calls"] + out["map_calls"] + out["reduce_calls"]
+
+
+def test_reduce_that_always_fails_terminates_and_reports_empty():
+    """Disproves the reviewer's 'blocker: the reduce loop can cycle forever'.
+
+    When every reduce call returns "", `merged` is empty, `parts` becomes empty, and `len(parts) > 1`
+    is False — so the loop exits and the community's summary is "" with every failure counted. If
+    this ever hung, the test would time out.
+    """
+    h, concept_chunks, texts = _long_text_hierarchy()
+
+    class ReduceAlwaysFails:
+        """Non-empty for the MAP prompts (so batching starts), empty for every REDUCE prompt."""
+
+        def __init__(self):
+            self.prompts = []
+
+        def __call__(self, prompt):
+            self.prompts.append(prompt)
+            return "" if prompt.startswith(PARENT_PROMPT.split("{body}")[0]) else "a batch summary"
+
+    llm = ReduceAlwaysFails()
+    out = summarize_communities(h, concept_chunks, _provider(texts), llm=llm,
+                                dry_run=False, max_prompt_chars=3000)
+
+    assert out["batched_communities"] > 0 and out["map_calls"] > 0 and out["reduce_calls"] > 0
+    assert out["empty_returns"] == out["reduce_calls"]     # every reduce call failed and is counted
+    assert out["total_calls"] == out["single_calls"] + out["map_calls"] + out["reduce_calls"]
+    # every community that batched ended with NO summary, and nothing raised or hung
+    assert sum(1 for v in out["summaries"].values() if not (v or "").strip()) >= out["batched_communities"]
 
 
 # ── V6: the FULL passage, not the graph's 500-char stub ───────────────────────────────────────

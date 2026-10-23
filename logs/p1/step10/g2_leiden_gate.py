@@ -55,11 +55,13 @@ RESOLUTIONS = (0.5, 1.0, 2.0)
 PRIMARY_RESOLUTION = 1.0
 
 ONE_SIDED_CAVEAT = (
-    "ONE-SIDED RESULT — do not read a FAIL as evidence of no community structure. The graph "
-    "carries TOC concepts because the Phase 3 build does not apply the E5 content filter (§I21), "
-    "and the §G plan states §I21 'is a prerequisite for good communities, since TOC concepts are "
-    "exactly the noise that fragments them'. So a PASS (Q beats the rewired null) is trustworthy "
-    "even under that noise, while a FAIL is CONFOUNDED. Do not let a FAIL kill G2."
+    "ONE-SIDED RESULT — do not read a FAIL as evidence of no community structure. "
+    "⚠️ UPDATED 2026-10-22 (this string was FALSE as written and §I49 flagged it): the §I21 "
+    "confound it describes is DISCHARGED. The 2026-10-21 graph rebuild applies the E5 content "
+    "filter (§I21 confirmed live IN the build: 3,533 chunk nodes, not 3,796), so the TOC concepts "
+    "that fragmented communities are absent from this graph. The graph has since also been through "
+    "§G3 entity resolution (7,427 -> 6,065 concepts, §I51), so the node set the ladder partitions is "
+    "the merged one. A FAIL here is therefore NO LONGER explained away by §I21 — read it as a result."
 )
 
 

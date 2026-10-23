@@ -1,0 +1,8 @@
+2026-10-22 17:19:42.689 | INFO     | src.core.database:get_memgraph:417 - Memgraph: connected at bolt://localhost:7687
+concepts=6041 edges=21670 isolated_dropped=24 levels=[2.0, 1.0, 0.5] q=[0.635, 0.6872, 0.7401] nesting={0: 0.8394, 1: 0.8911}
+2026-10-22 17:19:44.140 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+DRY RUN: 0 LLM call(s) (by level {}); prompt chars by level {0: 3224051}; skipped (no source) 21; deferred parents 382; empty returns 0
+batching: budget 400000 chars; single calls 0, map calls 0, reduce calls 0, communities summarised map-reduce 0, passages truncated to fit 0
+planned leaf level: 218 prompt(s) (single+map), of which 0 community(ies) need map-reduce (>=1 reduce call each). The prompt chars above cover the LEAF level only — a parent's prompt is built from its children's summaries, which do not exist until the run happens, so the parent levels' spend is NOT estimable from a dry run. Parent calls will be 382 at most (one per parent that has children).
+artifact: logs/p1/step10/g2_dryrun_2026-10-22.json
+EXIT=0

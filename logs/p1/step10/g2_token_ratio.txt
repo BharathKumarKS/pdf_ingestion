@@ -1,0 +1,15 @@
+2026-10-22 16:31:38.294 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+real physics chunk text: 400 chunks, 176163 chars
+    20159 prompt chars ->   4642 tokens = 4.34 chars/token (4.2s)
+    40159 prompt chars ->   8778 tokens = 4.58 chars/token (3.9s)
+    60159 prompt chars ->  13814 tokens = 4.36 chars/token (4.4s)
+{
+  "model": "Qwen/Qwen3-VL-8B-Instruct",
+  "endpoint": "http://10.0.10.70:8000",
+  "max_model_len": 15000,
+  "chars_per_token_min": 4.343,
+  "chars_per_token_max": 4.575,
+  "conservative_chars_per_token_for_budgeting": 4.343,
+  "note": "the batch budget uses the WORST (smallest) measured ratio, so a batch sized to fit fits for every sample measured"
+}
+wrote logs/p1/step10/g2_token_ratio.json

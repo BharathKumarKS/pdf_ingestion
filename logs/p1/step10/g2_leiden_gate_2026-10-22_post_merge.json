@@ -1,0 +1,603 @@
+{
+  "comparison_primary": {
+    "leiden": {
+      "n_communities": 202,
+      "null_q": 0.349002,
+      "q": 0.687197,
+      "ratio": 1.969,
+      "surplus": 0.338195
+    },
+    "louvain": {
+      "n_communities": 207,
+      "null_q": 0.342858,
+      "q": 0.678102,
+      "ratio": 1.9778,
+      "surplus": 0.335244
+    },
+    "resolution": 1.0,
+    "verdict": "PASS (one-sided)"
+  },
+  "connectedness": {
+    "leiden_all_connected_at_every_resolution": true,
+    "louvain_all_connected_at_every_resolution": false,
+    "louvain_disconnected_communities": {
+      "1.0": [
+        {
+          "index": 43,
+          "members": [
+            "1/r variation of electric field",
+            "Adams",
+            "Arithmetic",
+            "Astronomical Unit",
+            "Astronomical measurement",
+            "Big Bang Theory",
+            "Chess analogy for physics",
+            "Cluster of Galaxies",
+            "Color-Brightness Relationship",
+            "Copernicus"
+          ],
+          "size": 116
+        }
+      ]
+    }
+  },
+  "graph": {
+    "components": 173,
+    "density": 0.001188,
+    "directed_edges": 21670,
+    "isolates": 0,
+    "max_degree": 263,
+    "nodes": 6041,
+    "self_loops_dropped": 0,
+    "undirected_edges": 21670
+  },
+  "hierarchy_nesting": {
+    "0.5->1.0": {
+      "fraction_nested": 0.8911,
+      "n_coarse": 201,
+      "n_fine": 202,
+      "n_fine_wholly_inside_one_coarse": 180
+    },
+    "1.0->2.0": {
+      "fraction_nested": 0.8394,
+      "n_coarse": 202,
+      "n_fine": 218,
+      "n_fine_wholly_inside_one_coarse": 183
+    }
+  },
+  "ladder": {
+    "0.5": {
+      "leiden": {
+        "communities_sha256": "9957898b25cfcd1157c8cc3f149f542f0011aa67af08ec43912130e58c409db6",
+        "community_sizes": [
+          1589,
+          1129,
+          1066,
+          410,
+          328,
+          253,
+          228,
+          78,
+          72,
+          47,
+          45,
+          29,
+          21,
+          17,
+          11,
+          11,
+          10,
+          9,
+          9,
+          8
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 1589,
+          "n_communities": 201,
+          "n_multi_member": 201,
+          "n_singletons": 0
+        },
+        "n_communities": 201,
+        "null_q": 0.506882,
+        "null_q_observed_partition_on_null_graph": 0.0973,
+        "q": 0.740124,
+        "ratio": 1.4602,
+        "surplus": 0.233242
+      },
+      "leiden_weighted": {
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 1336,
+          "n_communities": 194,
+          "n_multi_member": 194,
+          "n_singletons": 0
+        },
+        "n_communities": 194,
+        "q": 0.750105
+      },
+      "louvain": {
+        "communities_sha256": "f75b5101ad613d545f968ad86c4ee49b0113c4d0714b1e567e10dff1a3c90d4d",
+        "community_sizes": [
+          1354,
+          1161,
+          1160,
+          562,
+          292,
+          231,
+          216,
+          161,
+          83,
+          51,
+          45,
+          21,
+          14,
+          12,
+          11,
+          11,
+          11,
+          9,
+          8,
+          8
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 1354,
+          "n_communities": 192,
+          "n_multi_member": 192,
+          "n_singletons": 0
+        },
+        "n_communities": 192,
+        "null_q": 0.506551,
+        "null_q_observed_partition_on_null_graph": 0.090693,
+        "q": 0.741732,
+        "ratio": 1.4643,
+        "surplus": 0.235181
+      }
+    },
+    "1.0": {
+      "leiden": {
+        "communities_sha256": "a91dd6d7718b6f808dd7a39f2edf54d3b5d50def48568c7ec134440d6b949684",
+        "community_sizes": [
+          679,
+          554,
+          445,
+          393,
+          351,
+          311,
+          306,
+          265,
+          256,
+          245,
+          213,
+          183,
+          159,
+          139,
+          133,
+          127,
+          123,
+          120,
+          107,
+          85
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 679,
+          "n_communities": 202,
+          "n_multi_member": 202,
+          "n_singletons": 0
+        },
+        "n_communities": 202,
+        "null_q": 0.349002,
+        "null_q_observed_partition_on_null_graph": -2e-05,
+        "q": 0.687197,
+        "ratio": 1.969,
+        "surplus": 0.338195
+      },
+      "leiden_weighted": {
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 795,
+          "n_communities": 204,
+          "n_multi_member": 204,
+          "n_singletons": 0
+        },
+        "n_communities": 204,
+        "q": 0.691492
+      },
+      "louvain": {
+        "communities_sha256": "21219a31608b42d39c66fb8cc0300c2daeb55ee8c9c3af814e99a6d465af577b",
+        "community_sizes": [
+          811,
+          789,
+          624,
+          453,
+          406,
+          302,
+          277,
+          242,
+          234,
+          167,
+          132,
+          116,
+          109,
+          86,
+          84,
+          84,
+          80,
+          79,
+          74,
+          71
+        ],
+        "connectivity": {
+          "all_connected": false,
+          "disconnected": [
+            {
+              "index": 43,
+              "members": [
+                "1/r variation of electric field",
+                "Adams",
+                "Arithmetic",
+                "Astronomical Unit",
+                "Astronomical measurement",
+                "Big Bang Theory",
+                "Chess analogy for physics",
+                "Cluster of Galaxies",
+                "Color-Brightness Relationship",
+                "Copernicus"
+              ],
+              "size": 116
+            }
+          ],
+          "largest": 811,
+          "n_communities": 207,
+          "n_multi_member": 207,
+          "n_singletons": 0
+        },
+        "n_communities": 207,
+        "null_q": 0.342858,
+        "null_q_observed_partition_on_null_graph": 0.001591,
+        "q": 0.678102,
+        "ratio": 1.9778,
+        "surplus": 0.335244
+      }
+    },
+    "2.0": {
+      "leiden": {
+        "communities_sha256": "9614f4d88c3e792870afdd0f2f5b086054ac1682b611129c1778815eb3cef7ef",
+        "community_sizes": [
+          336,
+          322,
+          286,
+          278,
+          270,
+          262,
+          227,
+          218,
+          190,
+          178,
+          158,
+          157,
+          155,
+          153,
+          148,
+          146,
+          135,
+          133,
+          132,
+          126
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 336,
+          "n_communities": 218,
+          "n_multi_member": 218,
+          "n_singletons": 0
+        },
+        "n_communities": 218,
+        "null_q": 0.311354,
+        "null_q_observed_partition_on_null_graph": -0.037286,
+        "q": 0.63498,
+        "ratio": 2.0394,
+        "surplus": 0.323626
+      },
+      "leiden_weighted": {
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 398,
+          "n_communities": 218,
+          "n_multi_member": 218,
+          "n_singletons": 0
+        },
+        "n_communities": 218,
+        "q": 0.632814
+      },
+      "louvain": {
+        "communities_sha256": "12d075f81005abd29d420483a641aaf819a8449b2a8a3df5a02120e6f1f0a63c",
+        "community_sizes": [
+          365,
+          295,
+          272,
+          272,
+          269,
+          225,
+          216,
+          213,
+          208,
+          208,
+          179,
+          172,
+          165,
+          163,
+          162,
+          133,
+          127,
+          123,
+          116,
+          114
+        ],
+        "connectivity": {
+          "all_connected": true,
+          "disconnected": [],
+          "largest": 365,
+          "n_communities": 219,
+          "n_multi_member": 219,
+          "n_singletons": 0
+        },
+        "n_communities": 219,
+        "null_q": 0.303673,
+        "null_q_observed_partition_on_null_graph": -0.037718,
+        "q": 0.626749,
+        "ratio": 2.0639,
+        "surplus": 0.323076
+      }
+    }
+  },
+  "meta": {
+    "before_arm_reference": {
+      "artifact": "logs/p1/step10/g2_modularity_gate.json",
+      "note": "superseded — quote THIS artifact from now on",
+      "partitioner": "louvain (leiden unavailable then, §I33)",
+      "q_observed": 0.589597,
+      "q_rewired_null": 0.28033
+    },
+    "generated_by": "logs/p1/step10/g2_leiden_gate.py",
+    "graph_document_ids": [
+      "7ba61432-c5e0-416d-aecf-25a232523481"
+    ],
+    "graph_source": "memgraph localhost:7687 RELATES_TO",
+    "leiden_backend": "leidenalg + python-igraph (added 2026-10-21)",
+    "modularity_scorer": "networkx.community.modularity (same as the §I33 before arm)",
+    "no_llm_calls": true,
+    "no_reingest": true,
+    "nswap_factor": 10,
+    "partitioners": [
+      "leiden (leidenalg on igraph)",
+      "louvain (networkx, comparison arm)"
+    ],
+    "resolution": 1.0,
+    "resolutions_run": [
+      0.5,
+      1.0,
+      2.0
+    ],
+    "seed": 20261020,
+    "weight_primary": null,
+    "weight_secondary": "weight",
+    "what": "§G2 modularity gate on LEIDEN (owner decision 2026-10-21), re-running §I33"
+  },
+  "null_rewired": {
+    "degree_sequence_preserved": true,
+    "nswap_factor": 10
+  },
+  "one_sided_caveat": "ONE-SIDED RESULT — do not read a FAIL as evidence of no community structure. ⚠️ UPDATED 2026-10-22 (this string was FALSE as written and §I49 flagged it): the §I21 confound it describes is DISCHARGED. The 2026-10-21 graph rebuild applies the E5 content filter (§I21 confirmed live IN the build: 3,533 chunk nodes, not 3,796), so the TOC concepts that fragmented communities are absent from this graph. The graph has since also been through §G3 entity resolution (7,427 -> 6,065 concepts, §I51), so the node set the ladder partitions is the merged one. A FAIL here is therefore NO LONGER explained away by §I21 — read it as a result.",
+  "top_communities_leiden_res_1": [
+    {
+      "sample_members": [
+        "1/2 kT Theorem",
+        "Absolute Entropy",
+        "Absolute Zero",
+        "Adiabatic Equation for Ideal Gas",
+        "Adiabatic Equation of State",
+        "Adiabatic Process",
+        "Air Trough Experiment",
+        "Approximate analysis",
+        "Atmospheric Pressure Gradient",
+        "Atmospheric density",
+        "Atmospheric density gradient",
+        "Atomic Collisions",
+        "Atomic Partners",
+        "Atomic Spectroscopy",
+        "Average current"
+      ],
+      "size": 679
+    },
+    {
+      "sample_members": [
+        "Acceleration Components",
+        "Acceleration as a Function of Time",
+        "Adams",
+        "Air Resistance",
+        "Air Track Experiment",
+        "Amalgamation in Physics",
+        "Analytical Differentiation",
+        "Analytical Integration",
+        "Angle between Force and Axis",
+        "Archimedes' Principle",
+        "Atom",
+        "Average Force",
+        "Buoyancy",
+        "Cartesian coordinate system",
+        "Cartesian coordinates"
+      ],
+      "size": 554
+    },
+    {
+      "sample_members": [
+        "A = -B",
+        "A = B",
+        "Air pressure variation over time",
+        "Amplitude reduction in oscillations",
+        "Applied Frequency",
+        "Arctangent function",
+        "Average Power",
+        "Average of a function",
+        "Beat phenomenon",
+        "Beats phenomenon",
+        "Boundary Condition for Fixed Ends",
+        "Calculus definition of derivative",
+        "Chaos",
+        "Charge Density",
+        "Cherenkov radiation"
+      ],
+      "size": 445
+    },
+    {
+      "sample_members": [
+        "Absolute Rotation",
+        "Action at a Distance",
+        "Affective Future",
+        "Annihilation of Electron and Positron",
+        "Average Pressure",
+        "Avogadro",
+        "Avogadro's Law",
+        "Binomial Theorem",
+        "Causality",
+        "Collision of Billiard Balls",
+        "Compton effect",
+        "Concept of Space",
+        "Concept of Time",
+        "Conservation of Momentum",
+        "Decompression"
+      ],
+      "size": 393
+    },
+    {
+      "sample_members": [
+        "Absorption index",
+        "Amplitude Addition Formula",
+        "Angle of First Minimum",
+        "Angle of Scattering",
+        "Approximate Theory",
+        "Approximation of field behavior",
+        "Atmospheric Tides",
+        "Average Frequency",
+        "Average Phase",
+        "Averaging Out",
+        "Beam of light",
+        "Beating Phenomenon",
+        "Beats",
+        "Blue light",
+        "Bragg's Law"
+      ],
+      "size": 351
+    },
+    {
+      "sample_members": [
+        "Accelerating Coordinate System",
+        "Additivity of Moment of Inertia",
+        "Additivity of torques",
+        "Albert Einstein",
+        "Angle between Vectors",
+        "Angular Momentum",
+        "Angular Momentum Alignment",
+        "Angular Momentum Conservation",
+        "Angular Motion",
+        "Angular velocity vector",
+        "Anticommutative Property of Cross Product",
+        "Area Swept by a Curve",
+        "Area of a Circle",
+        "Axis of Symmetry",
+        "Bearings"
+      ],
+      "size": 311
+    },
+    {
+      "sample_members": [
+        "Accelerating Charge",
+        "Air",
+        "Altitude",
+        "Amplitude of Electromagnetic Wave",
+        "Amplitude of electromagnetic field",
+        "Amplitude of wave",
+        "Angle of Incidence",
+        "Angle of Reflection",
+        "Angle of Refraction",
+        "Apparent Depth",
+        "Apparent Position of the Sun",
+        "Apparent Wave Velocity",
+        "Atomic properties",
+        "Base",
+        "Brewster"
+      ],
+      "size": 306
+    },
+    {
+      "sample_members": [
+        "Absolute square of a complex number",
+        "Acceleration of Electrons",
+        "Addition of probabilities",
+        "Anderson's experiment",
+        "Annihilation Process",
+        "Antimatter",
+        "Atomic Scattering",
+        "Atomic Size",
+        "Bernoulli's Principle",
+        "Bohr's atomic energy levels",
+        "Boltzmann",
+        "Born rule",
+        "Bremsstrahlung",
+        "CPT symmetry",
+        "Circular Motion of Charged Particles in Magnetic Fields"
+      ],
+      "size": 265
+    },
+    {
+      "sample_members": [
+        "Alternating Current",
+        "Ampere",
+        "Analogous Substitution in Physics",
+        "Apparent Direction of Charge",
+        "Capacitance",
+        "Capacitor Formula for Electric Field",
+        "Capacitor Plate Area",
+        "Capacitor Plate Spacing",
+        "Capacitor Plates",
+        "Charge",
+        "Charge Carrier Density",
+        "Charge Conservation",
+        "Charge Interaction",
+        "Circuit Simplification",
+        "Complex Impedance"
+      ],
+      "size": 256
+    },
+    {
+      "sample_members": [
+        "Absorption Characteristics",
+        "Additive Color Mixing",
+        "After-images",
+        "Apparent visual effect",
+        "Bee Visual Perception",
+        "Boundary Curve",
+        "Chromaticity Diagram",
+        "Color Addition",
+        "Color Coefficients",
+        "Color Constancy",
+        "Color Constancy in Light Mixing",
+        "Color Equality",
+        "Color Intensity",
+        "Color Intensity Scaling",
+        "Color Matching"
+      ],
+      "size": 245
+    }
+  ]
+}

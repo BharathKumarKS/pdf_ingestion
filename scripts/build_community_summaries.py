@@ -23,6 +23,7 @@ from datetime import datetime
 from pathlib import Path
 
 from src.pdf_ingestion.community_summaries import (
+    DEFAULT_MAX_PROMPT_CHARS,
     build_hierarchy,
     read_concept_chunks,
     read_concept_graph,
@@ -54,6 +55,10 @@ def main(argv=None) -> int:
     parser.add_argument("--out", type=Path, default=None, help="artifact path for the summaries")
     parser.add_argument("--max-chunks", type=int, default=None,
                         help="cap chunks per leaf community (cost control)")
+    parser.add_argument("--max-prompt-chars", type=int, default=DEFAULT_MAX_PROMPT_CHARS,
+                        help=f"prompt budget in chars; a community that does not fit is summarised "
+                             f"map-reduce (default {DEFAULT_MAX_PROMPT_CHARS} = the SUMMARISER's "
+                             f"131,072-token context at the measured 4.5 chars/token, less output room)")
     parser.add_argument("--seed", type=int, default=20261020,
                         help="Leiden seed — MUST match g2_leiden_gate.py's SEED (20261020) or the "
                              "communities summarised are not the communities the gate approved")
@@ -101,6 +106,7 @@ def main(argv=None) -> int:
     out = summarize_communities(
         hierarchy, concept_chunks, get_texts, dry_run=not args.yes,
         max_chunks_per_community=args.max_chunks,
+        max_prompt_chars=args.max_prompt_chars,
     )
 
     verb = "SUMMARISED" if args.yes else "DRY RUN"
@@ -108,8 +114,26 @@ def main(argv=None) -> int:
         f"{verb}: {out['total_calls']} LLM call(s) "
         f"(by level {out['calls_by_level']}); "
         f"prompt chars by level {out['prompt_chars_by_level']}; "
-        f"skipped (no source) {out['skipped_empty']}"
+        f"skipped (no source) {out['skipped_empty']}; "
+        f"deferred parents {out['deferred_parents']}; "
+        f"empty returns {out['empty_returns']}"
     )
+    print(
+        f"batching: budget {args.max_prompt_chars} chars; "
+        f"single calls {out['single_calls']}, map calls {out['map_calls']}, "
+        f"reduce calls {out['reduce_calls']}, "
+        f"communities summarised map-reduce {out['batched_communities']}, "
+        f"passages truncated to fit {out['truncated_texts']}"
+    )
+    if not args.yes:
+        print(
+            f"planned leaf level: {out['planned_leaf_prompts']} prompt(s) (single+map), of which "
+            f"{out['planned_leaf_batched_communities']} community(ies) need map-reduce (>=1 reduce "
+            f"call each). The prompt chars above cover the LEAF level only — a parent's prompt is "
+            f"built from its children's summaries, which do not exist until the run happens, so the "
+            f"parent levels' spend is NOT estimable from a dry run. Parent calls will be "
+            f"{out['deferred_parents']} at most (one per parent that has children)."
+        )
 
     artifact = {
         "document": args.doc_id,
@@ -120,6 +144,20 @@ def main(argv=None) -> int:
             "total_calls": out["total_calls"],
             "calls_by_level": out["calls_by_level"],
             "prompt_chars_by_level": out["prompt_chars_by_level"],
+            "skipped_empty": out["skipped_empty"],
+            "deferred_parents": out["deferred_parents"],
+            "empty_returns": out["empty_returns"],
+            "single_calls": out["single_calls"],
+            "map_calls": out["map_calls"],
+            "reduce_calls": out["reduce_calls"],
+            "batched_communities": out["batched_communities"],
+            "truncated_texts": out["truncated_texts"],
+            "prompt_chars_total": out["prompt_chars_total"],
+            "planned_leaf_prompts": out["planned_leaf_prompts"],
+            "leaf_prompt_calls": out["leaf_prompt_calls"],
+            "planned_leaf_batched_communities": out["planned_leaf_batched_communities"],
+            "max_prompt_chars": args.max_prompt_chars,
+            "prompt_chars_cover": "leaf level only on a dry run; parents depend on generated summaries",
         },
         "summaries": {f"{lvl}-{cid}": text for (lvl, cid), text in out["summaries"].items()},
     }
@@ -127,6 +165,17 @@ def main(argv=None) -> int:
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(artifact, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"artifact: {dest}")
+
+    # The exit criterion is the COUNT, not the absence of an exception (§I25): `call_llm` returns
+    # "" on failure, so a run in which every call failed otherwise exits 0 with a full ledger.
+    if args.yes and out["empty_returns"]:
+        print(
+            f"ERROR: {out['empty_returns']} of {out['total_calls']} summarisation call(s) returned "
+            f"EMPTY — those communities have no summary. The artifact is written as evidence; do "
+            f"NOT treat this run as a build.",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

@@ -1,0 +1,59 @@
+{
+  "resolved_model": "openai/gpt-oss-20b",
+  "openai_api_base": "http://10.0.10.70:8000",
+  "max_model_len": 131072,
+  "measured": [
+    {
+      "target_body_chars": 20000,
+      "prompt_chars": 20159,
+      "status": 200,
+      "seconds": 3.0,
+      "usage": {
+        "prompt_tokens": 4490,
+        "total_tokens": 4971,
+        "completion_tokens": 481,
+        "prompt_tokens_details": null
+      },
+      "finish_reason": "stop",
+      "content_chars": 915,
+      "content_head": "The passages describe the legacy of Richard Feynman and the evolution of his classic introductory physics text, the *Feynman Lectures on Physics*.  They highlight Feynman’s pioneering work in quantum ",
+      "prompt_tokens": 4490,
+      "chars_per_token": 4.49
+    },
+    {
+      "target_body_chars": 60000,
+      "prompt_chars": 60159,
+      "status": 200,
+      "seconds": 3.0,
+      "usage": {
+        "prompt_tokens": 13359,
+        "total_tokens": 13710,
+        "completion_tokens": 351,
+        "prompt_tokens_details": null
+      },
+      "finish_reason": "stop",
+      "content_chars": 746,
+      "content_head": "The Feynman Lectures on Physics present a comprehensive two‑year introductory physics course, covering the fundamental concepts of modern physics. The volumes begin with the structure and behavior of ",
+      "prompt_tokens": 13359,
+      "chars_per_token": 4.503
+    },
+    {
+      "target_body_chars": 273000,
+      "prompt_chars": 265046,
+      "status": 200,
+      "seconds": 9.7,
+      "usage": {
+        "prompt_tokens": 58530,
+        "total_tokens": 58853,
+        "completion_tokens": 323,
+        "prompt_tokens_details": null
+      },
+      "finish_reason": "stop",
+      "content_chars": 964,
+      "content_head": "The textbook presents a comprehensive survey of modern physics, beginning with the classical foundations of mechanics, electromagnetism, and thermodynamics, and then moving through the revolutionary d",
+      "prompt_tokens": 58530,
+      "chars_per_token": 4.528
+    }
+  ],
+  "chars_per_token_min": 4.49
+}

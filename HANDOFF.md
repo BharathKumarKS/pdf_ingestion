@@ -4,58 +4,88 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-22, session 7. ✅ §G3 IS EXECUTED — the merge is LIVE and structurally
-> verified. §G2 IS BUILT, VERIFIED, AND REPRODUCES THE GATE EXACTLY. Read `IMPROVEMENTS.md` §I50 and
-> §I51 first — they carry the whole session.**
+> **Last updated: 2026-10-22, session 8. ✅ §G2 IS BUILT AND VERIFIED — V1/V2/V4/V6 ALL PASS, V3
+> READ BY EYE. The one thing left in §G2 is **V5, the ablation — its endpoint — and it needs a
+> retrieval path that does not exist yet.** Read `IMPROVEMENTS.md` §I52, §I53 and §I54 first — they
+> carry the whole session.**
 >
-> ## ▶ NEXT SESSION — START HERE (written 2026-10-22, session 7)
+> ## ▶ NEXT SESSION — START HERE (written 2026-10-22, session 8)
 >
-> **WHERE THE GRAPH IS NOW (counted from Bolt, 2026-10-22):** 1 Document / 3,533 Chunk / 907 Page /
-> **6,065 Concept** / 14,405 MENTIONS / 21,670 RELATES_TO / 3,161 PREREQUISITE_OF. The §G3 merge is
-> **applied** (7,427 → 6,065 concepts; 1,362 aliases folded in) and **V1/V2/V4/V6 all PASS**.
-> Journal `logs/p1/step10/g3_merge_journal_2026-10-22.jsonl`; revert with
-> `entity_resolution.revert_merges(session, journal_path)`. `concept_embeddings` is **6,065 @ 1024d**
-> and in sync with the graph (V6: 0 orphans, 0 missing canonicals). Before-state:
-> `logs/p1/step10/g3_state_before.json`.
+> **WHERE §G2 IS NOW.** The summary tree is built: `logs/p1/step10/g2_summaries_2026-10-22.json`
+> (**597 non-empty summaries**, 19 min 42 s wall, **597 LLM calls**, **0 empty returns**, 0 batched,
+> 24 skipped). Harness `logs/p1/step10/run_g2_summaries.sh`; verifier
+> `logs/p1/step10/g2_verify_summaries.py` → **ALL CHECKS PASSED** (14 checks, re-derived from the
+> graph with a fake LLM, never read back off the artifact). The gate was re-run on the **post-§G3
+> merged graph** and **PASSES**: res 1.0 Q=**0.687197** vs rewired null **0.349002**, surplus
+> **+0.338195** (ratio 1.969), n=202, **Leiden connected at every resolution**, Louvain disconnected
+> at 1.0; nesting 0.8911 / 0.8394. The builder reproduces the gate's Q and nesting **exactly**.
 >
-> **1. §G2 — BUILD THE SUMMARIES. This is the next action.** The code is written, verified and
-> committed, and the gate reproduces **exactly** (Q 0.7412 / 0.7833 / 0.8344; nesting 0.8779 / 0.9349
-> — §I50 Finding 4). The dry run is clean: **0 LLM calls**, 2,761,845 prompt chars at the leaf level,
-> 664 communities skipped for having no source material.
-> ```
-> QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2 uv run python \
->   scripts/build_community_summaries.py --doc-id 7ba61432-c5e0-416d-aecf-25a232523481 \
->   --yes --out logs/p1/step10/g2_summaries_2026-10-22.json
-> ```
-> ⚠️ **Summarization spends cluster LLM budget and must be SERIAL against other LLM-heavy work** —
-> §I23 measured shared-GPU contention collapsing a build's throughput ~8×. Then **V5, the ablation**
-> (community summaries vs the RAPTOR-only lane on overview queries) is §G2's endpoint; a null is a
-> recorded result, not a failure.
+> **1. ▶ V5 — THE ABLATION. This is the next action, and it is §G2's ENDPOINT.** The plan's
+> pre-registered rule (`2026-10-22-p1-g2-community-summaries-plan.md` §4): *G2 is built iff V1 passes
+> **and** V2 holds **and** V5 shows a positive contribution on overview queries; if V5 is null or
+> negative, G2 is recorded as measured-and-negative and the summaries are **not** wired into
+> retrieval* — the disposition §G1 received. **The summaries are NOT wired into anything yet** — the
+> artifact is a JSON file and no code reads it. So V5 is a BUILD (a retrieval path) plus a
+> measurement, and it wants its own plan + owner signoff before it is written.
 >
-> **2. §G3's endpoint is NULL and the endpoint is INERT — an open OWNER decision.** The
-> pre-registered median of the retrieved top-5 did NOT move (1.0 → 1.0) — but it **cannot** move:
-> >100 of 200 queries would need a median ≥ 2 and **14** do. What did move: chunks matching ≥2
-> concepts **138 → 158** (share 0.0634 → 0.0641); queries at top-5 median 2: **11 → 14**; the
-> candidate pool 2,176 → 2,464. **Do not read this as "entity resolution does not help retrieval" —
-> it is a null about a metric with no headroom.** Re-pre-registering a sensitive endpoint is an owner
-> decision, NOT taken. Owner disposition 2026-10-22: keep the merge, record as measured-and-null.
+> ⚠️ **READ V3'S FINDING BEFORE DESIGNING V5 — it changes what a positive would mean.** The leaf
+> partition is a **two-population mixture**: **166 of 218 leaves have ≤ 5 concepts** (76 %, ~4 % of the
+> text — one passage each), while **34 have > 50 concepts** and **8 have > 200** (p90 = 108, max 336),
+> holding 95 % of the text. The summaries themselves are good — factual, source-grounded, no phantom
+> clusters — but the large ones read as *"most of mechanics"* / *"thermodynamics + kinetic theory +
+> quantum statistics"*: accurate grab-bags, not topic units, and several overlap heavily. **The
+> hierarchy has no middle granularity** (chapter/topic level), which is exactly the level community
+> summaries exist to supply. So a naive page-level recall ablation would be **misleading**: a single
+> 542-chunk summary covers hundreds of pages and would "win" on coverage alone — the §G1 ablation's
+> equal-pool defect, in the other direction. Design the arms with a **fixed slot budget** and prefer
+> the **generation** metrics (the judge's Faithfulness / Answer Relevance, which step 4 already
+> measures) over a recall number the summaries can inflate by construction.
+>
+> **2. §G3's endpoint is NULL and the endpoint is INERT — recorded, not pending.** Owner disposition
+> 2026-10-22: keep the merge, record as measured-and-null. The pre-registered median did not move
+> (1.0 → 1.0) and **could not**: >100 of 200 queries would need a top-5 median ≥ 2 and **14** do.
+> **Do not read this as "entity resolution does not help retrieval".** Re-pre-registering a sensitive
+> endpoint is an owner decision, NOT taken.
 >
 > **3. Everything on the cluster needs the tunnel UP** (`10.0.10.65` Qdrant, `10.0.10.70`
 > embed/LLM) — it was up this session (`utun4`).
 >
 > ⚠️ **Every §G3/§G2 command needs `QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v2`.**
 > `.env` leaves `QDRANT_HOST` blank, so the default is the **LOCAL embedded** store — a run without
-> the override silently targets the wrong store (§I49 Finding 1).
+> the override silently targets the wrong store (§I49 Finding 1). `run_g2_summaries.sh` now asserts it.
 >
-> ⚠️ **Session 7 also fixed four defects that only running things exposed** (§I50): the T1 formula
-> detector counted the hyphen as a formula (40 of 46 flagged groups were typography; 349 hyphen-only
-> names, none a formula); the §G2 CLI dry run reported 0 prompt chars; the V3 probe was still on the
-> retired **768d** lane and would have written an all-zeros artifact; and §G2 was partitioning a
-> **different graph** than the gate — 29 isolated concepts, then node INSERTION ORDER (igraph indexes
-> vertices by insertion order, so the same graph read two ways gives different partitions).
+> ⚠️ **§I52 — THE §G2 SUMMARISER IS NOT THE GRAPH BUILD'S EXTRACTOR.** `community_summaries._default_llm`
+> → `call_llm` → **`cfg.openai_model` = `openai/gpt-oss-20b` (131,072-token context)**. The graph
+> build's concept extraction runs **`Qwen/Qwen3-VL-8B-Instruct` (15,000)**. The first pre-flight
+> measured the wrong one and a design decision was made on a false premise before it was caught. Both
+> contexts are in `/v1/models`; real physics text is **4.49-4.53 chars/token** (filler text measures
+> 6.23 — 40 % optimistic). **Measure the model the phase runs, not the one another phase runs.**
 >
-> **Earlier in the file:** the session-6 rebuild block, and session 3's "START HERE" list below it —
-> all superseded by the above. `IMPROVEMENTS.md` §I49–§I51 are the authoritative record.
+> ⚠️ **§I52 — TWO SILENT FAILURES WERE FOUND ON THIS PATH AND FIXED.** A failed LLM call wrote an
+> **empty summary that still counted as a call** (§I25's class: a total loss that reads as a success) —
+> now counted and the CLI exits non-zero; and the dry run reported **403 parent communities as "no
+> source material"** when they are parents the dry run cannot generate. Both fixed with tests proven
+> to discriminate (14 tests in `tests/test_community_summaries.py`).
+>
+> ⚠️ **REGISTERED, NOT FIXED — the §G2 build has no checkpoint and logs nothing per call.** 597
+> sequential LLM calls; an abort at call 596 loses all of it, and nothing in the log could distinguish
+> "healthy and slow" from "stalled" (§I23's lesson). It completed in 20 min, so it was not paid this
+> time. Fix it before the next §G2-scale LLM phase.
+>
+> ⚠️ **§I54 — THE INDEPENDENT REVIEW FOUND A REAL DEFECT, AND THE FIRST TWO ATTEMPTS AT IT WERE
+> WORTHLESS.** The §G2 diff was reviewed by `openai/gpt-oss-20b` (pin re-checked live). The defect:
+> `planned_leaf_map_calls` counted leaf *prompts* but was compared to a real run's `map_calls` — which
+> on the live corpus is **0** against a plan of **218** — so the test passed only because its fixture
+> batched every community. Fixed (`planned_leaf_prompts` vs a level-scoped `leaf_prompt_calls`), and
+> fixing it exposed a third wrong comparison of the same number. The reviewer's "infinite reduce
+> loop" is **false as the code stands** (proved: the guard is load-bearing only when summaries do not
+> shrink, and removing it hangs the new test). Two earlier dispatches returned UNVERIFIABLE ×10
+> because the prompt lacked the artifact / the claims — **that is no verdict, never a pass**, and the
+> rule for embedding them is now in Session hygiene.
+>
+> **Earlier in the file:** the session-7 §G3 block, the session-6 rebuild block, and session 3's
+> "START HERE" list below it — all superseded by the above. `IMPROVEMENTS.md` §I49–§I54 are the
+> authoritative record.
 >
 > **Last updated: 2026-10-21, session 6. ✅ THE GRAPH REBUILD IS DONE AND VERIFIED — item 3 is closed.**
 > The document-keyed graph clear it needed is built, verified and **applied** (`f007f85`; the graph read
@@ -1105,6 +1135,16 @@ truncated `.log`. Measured 2026-10-21: the §G1 review's transcript exposed only
 claims before cutting off at `…(+1044 chars)`, and a later reviewer that trusted the transcript
 reported a false mismatch against this file. Wait for the consolidated result before judging what
 a reviewer did or did not check.
+
+**⚠️ EMBED THE ARTIFACT UNDER REVIEW *AND* THE CLAIMS — a reviewer without them is no verdict
+(§I54, 2026-10-22).** Two dispatches for the §G2 diff came back **UNVERIFIABLE × 10**: the first
+carried a *description* of the change instead of the diff, the second carried the diff but not the
+claim list. Both looked like cautious verdicts and were worth nothing. So: (i) paste the diff/source
+and the numbered claims into `context` — never a summary of either; (ii) if the answer says it could
+not see the thing, **re-dispatch — do not re-interpret it as a weaker verdict**; (iii) a review of a
+600-line diff that returns in 10–25 s has not read it; (iv) a reviewer's *volunteered* findings must
+be checked against the source, not accepted — the code-less round invented three defects, and the
+round that had the code found a real one.
 
 **Independent verification is a step, not a nicety.** Run `requesting-code-review`'s Step 5 on
 every commit that changes source. `delegate_task` already runs on a different model

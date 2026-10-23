@@ -1,0 +1,23 @@
+=== V2 / V4 / V6 / V1-reproduction ===
+artifact: logs/p1/step10/g2_summaries_2026-10-22.json
+  document=7ba61432-c5e0-416d-aecf-25a232523481  resolutions=[2.0, 1.0, 0.5]
+2026-10-22 17:11:25.284 | INFO     | src.core.database:get_memgraph:417 - Memgraph: connected at bolt://localhost:7687
+  graph: 6041 nodes, 21670 edges; vocabulary 6065 (isolated 24)
+  [PASS] V2 level 0 (res 2.0) all communities connected — 218 communities, disconnected=[]
+  [PASS] V2 level 1 (res 1.0) all communities connected — 202 communities, disconnected=[]
+  [PASS] V2 level 2 (res 0.5) all communities connected — 201 communities, disconnected=[]
+  [PASS] V1r res 2.0: builder Q reproduces the gate — builder=0.634980 gate=0.63498
+  [PASS] V1r res 1.0: builder Q reproduces the gate — builder=0.687197 gate=0.687197
+  [PASS] V1r res 0.5: builder Q reproduces the gate — builder=0.740124 gate=0.740124
+  [PASS] V1r nesting reproduces the gate — builder={0: 0.8394, 1: 0.8911} gate={'0.5->1.0': 0.8911, '1.0->2.0': 0.8394}
+2026-10-22 17:11:26.644 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+  [PASS] V4 total_calls is non-zero and every call is classified — artifact total=597, rerun total=597, prompts=597
+  [PASS] V4 the artifact's ledger reproduces on a re-run — artifact=597 ({'0': 218, '1': 198, '2': 181}) vs rerun=597 ({0: 218, 1: 198, 2: 181})
+  [PASS] V4 no call returned empty (the run's exit criterion) — artifact empty_returns=0
+  [PASS] V4 no community was summarised map-reduce at this budget — batched=0 truncated=0
+  [PASS] V6 all 25 sampled leaf prompts carried the FULL text verbatim — prompts not found verbatim=0, long chunks missing in full=0
+  [PASS] V6 the corpus really does have chunks longer than the 500-char stub — 2145 chunks > 500 chars
+  [PASS] artifact: one non-empty summary per call — 597 non-empty of 621 entries; rerun issued 597 calls
+
+ALL CHECKS PASSED
+EXIT=0
