@@ -72,6 +72,13 @@ class Settings(BaseSettings):
     dense_model: str = "Qwen/Qwen3-Embedding-0.6B"
     dense_dim: int = 1024                # native dim of dense_model; also the intent classifier's width
     dense_dim_low: int = 64              # MRL truncation for the fast ANN first stage
+    # The 64d lane's prefetch depth in the dense funnel (`store._qdrant_search`):
+    # [dense_64(prefetch) -> dense_dim(rescore, 500)]. §I61 measured that the *filtered* HNSW
+    # search path, not the MRL width, is what loses pool coverage — at 1000 the new index's 64d
+    # lane covers 0.804 of its reachable pool against 0.932 for the full-dimension lane, and
+    # raising this recovers it (1500 -> 0.904, 2000 -> 0.972, every in-window chunk -> 1.0000).
+    # Kept a setting so the raise is a one-variable A/B (and revert) rather than a code edit.
+    dense_prefetch_limit: int = 1000     # 64d prefetch depth before the full-dim re-score
     # Qwen3 is instruction-aware: the model card measures a ~1-5% retrieval drop without a
     # query-side instruction. Documents need none. The query path must match the index, so this
     # is applied in store.search / evaluate_rag / funnel_boundary_recall alike.

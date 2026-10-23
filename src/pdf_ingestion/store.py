@@ -448,7 +448,8 @@ class DocumentStore:
         vec_64 /= np.linalg.norm(vec_64) + 1e-9
 
         dense_prefetch = Prefetch(
-            prefetch=[Prefetch(query=vec_64.tolist(), using="dense_64", limit=1000)],
+            prefetch=[Prefetch(query=vec_64.tolist(), using="dense_64",
+                               limit=cfg.dense_prefetch_limit)],
             query=query_vector.tolist(),
             using=dense_name,
             limit=500,
