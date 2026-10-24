@@ -7,6 +7,122 @@
 > **Last updated: 2026-10-23, session 12. ✅ §I61'S PRE-REGISTERED A/B RAN — THE LEVER IS A NULL, AND
 > THE LOSS IS THE 100-SLOT FUSION, NOT THE PREFETCH. Read `IMPROVEMENTS.md` §I65 and §I66 first.**
 >
+> **Last updated: 2026-10-24, session 13. ✅ THE DOWNSTREAM WIDTHS ARE MEASURED — **BOTH LEVERS ARE
+> NULLS** at the product endpoint (the fusion width W, and the re-score cut L), at ample power. The
+> chain §I65 → §I66 → this is closed. Read `IMPROVEMENTS.md` §I67 (VOID → re-registration → result),
+> §I68 (a product defect), §I69 (a harness float leak) first.**
+>
+> ## ▶ SESSION 13 — WHAT HAPPENED, AND WHAT IS NEXT
+>
+> **1. ✅ THE RESULT — BOTH DOWNSTREAM WIDTHS ARE NULLS.** Task 1 from session 12, built, run, re-run
+> and verified. Paired Δ **R@20 ceiling-normalised** (§I58), n=133, on the product path:
+>
+> | contrast | what it moves | result |
+> |---|---|---|
+> | **W1 − C** (width, PRIMARY) | W 100 → 300 | Δ **+0.0032**, CI [−0.0164, +0.0227] **UNRESOLVED** |
+> | **W2 − C** (width, sensitivity) | W 100 → 500 | Δ **+0.0027**, CI [−0.0171, +0.0224] **UNRESOLVED** |
+> | **L1 − W2** (cut, PRIMARY) | L 500 → 1000 | Δ **+0.0025**, CI [−0.0024, +0.0074] **UNRESOLVED** |
+> | **L2 − W2** (cut, sensitivity) | L 500 → 2000 | Δ **+0.0029**, CI [−0.0021, +0.0078] **UNRESOLVED** |
+>
+> **Per the pre-registered rule NEITHER ships** — both recorded **measured-and-unresolved**. Power was
+> ample, not the limit: SD_d(W1) 0.115 → required n for δ=0.05 is **21**; SD_d(L1) 0.0289 → **2**. The
+> effect is ~15× below δ. Secondary (readable, but not the endpoint): **MRR RESOLVES POSITIVE** for the
+> width (+0.0935, CI [+0.0559, +0.1311]) while **context_precision RESOLVES NEGATIVE** (−0.0075 /
+> −0.0083) — a wider pool reorders the pool, not the product. **This closes the chain: §I65 (the
+> prefetch is a null) → §I66 (the fusion output is the binding constraint) → a raised ceiling is still
+> not recall.** ⚠️ Not production numbers (HyDE off, prefetch pinned at 2000) — quote the delta.
+>
+> **2. ⚠️ §I67 — THE FIRST RUN WAS VOID, AND WHY.** It failed its own load-bearing guard E4 (the
+> negative control must be bit-exact): 1,064 comparisons, 2 mismatches, **max_abs_diff 0.0** — on
+> `ovw-041` arm C's pool was 95 and arm N's 94. **Every metric was bit-exact; only a pool size
+> differed**, and it reproduced (six identical C-config repeats gave 95/95/95/94/94/95). ⚠️ **The first
+> attribution was WRONG and is corrected here:** it was NOT the ANN — every lane (`dense_64`, `sparse`,
+> `colbert`) is deterministic 6/6, and `exact=True` / `hnsw_ef=512` changed nothing. **See §I68.**
+> **Disposition:** re-registered with **E4′ (metrics-only; diagnostics reported, not voiding)** —
+> a disambiguation of the original wording ("every METRIC"), justified by a **measured** floor (30
+> queries × 4 repeats → R@20 c-norm spread **0.000000**), **not** a relaxation. The re-run **PASSED
+> E4′** (0 metric mismatches, max_abs_diff 0.0). The VOID artifact is preserved as
+> `logs/p1/step10/downstream_widths_ab_firstrun_VOID.json`.
+>
+> **3. ⚠️ §I68 — QDRANT'S SERVER-SIDE RRF FUSION IS NON-DETERMINISTIC (a product defect, registered not
+> fixed).** Identical inputs, identical lane results, different fused output: `gold-052` returned **6
+> distinct candidate sets in 6 runs**, `gold-004` 5/6, `gold-078` 3/6. It is **sparse** downstream
+> (30 queries × 4 repeats → 0 metric spread; the VOID run's only trace was one pool size) but it **is**
+> the root cause of §I67 and it makes **any** A/B on this path depend on a tolerance. **The fix already
+> exists in-repo:** `store._rrf_merge` is a *client-side* RRF — moving the funnel off Qdrant's
+> `FusionQuery` onto it would make the funnel deterministic. ⚠️ That is a change to the product path
+> (ties may reorder), so it needs its own before/after and its own entry — **not** a silent swap.
+> ⚠️ **Do NOT reach for `exact=True`:** the ANN is already deterministic.
+>
+> **4. ⚠️ §I69 — A HARNESS FLOAT LEAK, FOUND BY E5.** `compute_retrieval_metrics` returns **`ndcg` as
+> `np.float64`** (all other metrics are plain `float`); `np.float64` IS a subclass of `float`, so
+> `json.dumps` writes it silently and the type is **lost on read**. numpy's and CPython's tie rounding
+> differ, so the artifact's summary is **not re-derivable from its own per-query array** at 3 tie keys
+> (1e-6, one secondary metric, **no endpoint affected** — `all_queries` re-derives byte-identically).
+> **Fixed at the point of record** (`_f()` coercion in the harness). ⚠️ **The fix needs a re-run to give
+> a fully clean artifact**; the conclusion does not depend on it.
+>
+> **5. ▶ NEXT SESSION — READ THE NEW PLAN FIRST: `.hermes/plans/2026-10-24-p1-embedder-screen-hyde-cache-and-finetune-plan.md`.**
+> It carries the doctrine, the embedder screen spec, the HyDE cache spec, the fine-tune stage, and what
+> is explicitly OUT of scope. The short version:
+>
+> - ⚠️ **DOCTRINE (§0) — explore cheap, confirm powered.** The widths work burned three ~1-hour runs
+>   confirming a null a 40-query screen had already indicated. **The resolution floor at n=133 is
+>   ~0.020** (`1.96·0.115/√133`), so **any knob with a plausible effect < ~0.02 is out of scope for this
+>   gold set** — record it, do not re-test it. And **not every finding is an effect size**: §I47/§I49/§I68
+>   are bugs needing a fix, not a power analysis.
+> - **§1 THE EMBEDDER SCREEN (~15 min, do first).** §I63's exact-cosine oracle, 133 queries, HyDE OFF.
+>   Four models, each at its OWN smallest MRL slot **and** full dim: Qwen3-1024 (incumbent) ·
+>   Nomic-768 (§I63's known-best, +0.1400) · embeddinggemma-300m (MRL 512/256/128 — **no 64d**) ·
+>   mpnet-base-nli-matryoshka (has 64d, NLI not retrieval). Rule: a candidate must beat **BOTH**
+>   Qwen3-1024 AND Nomic-768 before a re-ingest is costed. It is an **oracle** screen, not the product.
+> - **§2 THE HYDE CACHE (parallel, small build).** There is **no cache today** (`evaluate_rag.py:190`).
+>   Cache the **TEXT keyed by query id, not the vector** — it is embedder-independent, so one cache
+>   serves every candidate and the re-ingest. Freeze model + prompt; loud on a miss (§I25). Do **not**
+>   wire it into the screen.
+> - **§3 AFTER A WINNER:** cost the re-ingest (58.6 min ingest + 8.9 h cards + 1 h 6 m graph + all
+>   derived collections), then **ONE** pre-registered product-endpoint run (HyDE on and frozen) plus the
+>   **§I66 stage decomposition** (base → funnel → cross-encoder → generator) to show whether the
+>   embedder fixed the full-dim ranking lane or just moved the loss.
+> - **§4 THE DOMAIN FINE-TUNE (stage 3, a BUILD).** Owner's point, and it is measured: generic
+>   embedders lose here. **The training set already exists** — 29,321 `question` cards each paired with
+>   its source chunk (~29k synthetic (query, passage) pairs in physics). Validate on the SAME §I63
+>   instrument; expect leakage (card questions are generated from the passages); compare against the
+>   §1 **winner**, not the incumbent. GPU job — hours, not minutes.
+> - ⚠️ **OUT OF SCOPE (§5):** sub-0.02 knobs; **the widths (§I67 closed them — do not re-test, including
+>   "more candidates from DA/graph/overview pooled at the fusion lane")**; an **all-lanes-at-once**
+>   matrix (§I56's unattributability defect); the **graph lane** (Memgraph is DOWN — 7687 refused — and
+>   `hop_distance` is a constant 0); the visual lane (needs ColPali data for the new doc).
+> - **Also carried forward:** the §I68 client-side-RRF fix (own plan; also removes the instrument
+>   nondeterminism); §I56's DA lane (one-variable test); §G2's V5 build (signed off, not built); §I55's
+>   exclude-from-metrics follow-on; §I58's `gold-003` caveat; §I53 item 6 (the stale §G2 artifact); and
+>   **whether to commit session 13's work (currently uncommitted)** and whether to re-run once more so
+>   the artifact is self-consistent (§I69's 3 tie keys — the conclusion does not depend on it).
+>
+> **6. ✅ BUILT AND VERIFIED IN THIS SESSION (not committed).** NEW `dense_rescore_limit` (500) and
+> `da_fetch_k` (100) settings, both defaulting to the shipped value; the fusion width **W** is
+> `mmr_candidates` **and** `reranker_fetch_k` moving together (§I66's binding constraint — raising
+> either alone does NOT widen the fusion). `tests/test_downstream_widths.py` (17 tests, mutation-proven:
+> hardcoding the cut fails 2; recoupling the DA lane fails 1). Harness `logs/p1/step10/downstream_widths_ab.py`,
+> verifier `…_verifier.py` (E2–E9, `--extract` for the reviewer pack), run script
+> `run_downstream_widths_ab.sh`. Artifacts: **`downstream_widths_ab.json` (the re-run — the result)**
+> and **`downstream_widths_ab_firstrun_VOID.json` (preserved as evidence of the VOID)**. Plan
+> `.hermes/plans/2026-10-23-p1-downstream-widths-and-embedder-screen-plan.md` §1 updated;
+> pre-registration `.hermes/plans/2026-10-23-p1-downstream-widths-ab-preregistration.md` and
+> **re-registration `.hermes/plans/2026-10-24-p1-downstream-widths-ab-reregistration.md` (E4′)**.
+> **Suite 636 passed / 4 failed / 6 skipped** — the 4 are the documented pre-existing set.
+> ⚠️ The pre-registration was committed WITH the results (owner decision), not alone first — §I67.7.
+>
+> **7. ⚠️ A DESIGN FINDING THAT SURVIVES THE VOID.** The re-score cut is **inert by construction** at
+> the shipped **W=100** (smoke test: Δ exactly 0.0000, W/L/T 0/0/3 identical) — the fusion emits only
+> 100 candidates, so raising L just reshuffles candidates far below the cut. The cut arms were
+> re-registered (before the run) to run at **W=500** and be read against **W2**. **A knob downstream of
+> a saturated cut is inert (§G1's defect); testing it requires the upstream width to admit it.**
+>
+> **8. ⚠️ STILL OPEN, UNCHANGED:** §I56's DA lane (one-variable test); the **embedder screen** (deferred
+> by the owner); §G2's V5 build (signed off, not built); §G5/§I2 (`hop_distance` constant 0); §I55's
+> exclude-from-metrics follow-on; §I58's `gold-003` caveat; §I53 item 6 (the stale §G2 artifact).
+>
 > ## ▶ SESSION 12 — WHAT HAPPENED, AND WHAT IS NEXT
 >
 > **1. ✅ §I61's PRE-REGISTERED A/B RAN AND THE LEVER IS A NULL — `IMPROVEMENTS.md` §I65.** The

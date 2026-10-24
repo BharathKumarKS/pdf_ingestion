@@ -376,6 +376,117 @@ it?"* are different questions; only the second one mattered here.
 > time for one operation. Concurrency often improves throughput while making latency *worse* — and if
 > the service is shared, the cost lands on other people.
 
+### 6.3 Confirming a null three times: the screen came before the exam, and nobody took the screen
+
+**What happened.** A lever (the depth of a candidate-prefetch stage) was screened on a **40-query
+subsample**, which found the mechanism and said the product endpoint probably would not move. A
+full 133-query pre-registered A/B was then run: **null**. A second lever (two downstream widths) was
+then built into a *second* full pre-registered A/B: **also null**. That is three ~1-hour runs, two of
+them spent confirming what the screening pass had already indicated.
+
+**Why it was possible.** Pre-registration — writing down what a run will measure and how its result
+may be read, *before* running it — is the house discipline, and it *feels* like rigour. So "build the
+next pre-registered A/B" became the default move, and nothing in the process ever asked whether the
+question was worth an A/B at all. Pre-registration protects you from interpreting a result after the
+fact; it does nothing about choosing a question that cannot produce one.
+
+**What would have caught it.** Two rules, and the first is the one that was missing:
+
+1. **Explore cheap and dirty first.** A screening subsample, an *oracle* instrument (a slow, exact
+   reference implementation that is easy to trust), no pre-registration, no negative control. Look for
+   signal. Only if the screen says there is something to confirm do you build the powered,
+   pre-registered run.
+2. **Confirm powered and pre-registered only when the exploration found something.** One confirmation
+   per question — not one per configuration of the same question.
+
+> **Resolution floor / minimum detectable effect (MDE).** The smallest difference a study can
+> reliably detect, set by the spread of the data and the sample size: roughly `1.96 × SD / √n`. A
+> result below it is not "no effect", it is "unmeasurable here" — and re-running the same experiment
+> with a new knob does not lower the floor.
+
+**Compute the floor *before* choosing what to test, not after.** On this project's gold set the
+sample is fixed at **n = 133** (every labelled query; more means hand-labelling new data), and the
+per-query spread on the endpoint is ~0.115. So the floor is `1.96 × 0.115 / √133 ≈ 0.020`. The two
+width levers measured **+0.0032 and +0.0025 — about 6× below the floor**, and resolving an effect that
+size would need roughly **5,000 queries**. The honest conclusion is not "these levers are bad", it is
+**"these levers are out of scope for this ruler"** — and that should have been said before building
+either A/B, then recorded so nobody re-tests them.
+
+**Corollary — not every finding is an effect size.** Power analysis is the right lens for a
+*ranking-quality* claim ("does this model rank better?"). It is the wrong lens for a *correctness*
+finding: a retrieval lane that returns nothing because two halves of the system disagree on a vector
+width, a graph traversal whose hop counter is a constant zero, a fusion step that is not
+reproducible. Those are bugs. They need a fix, and running them through the statistics lens is what
+makes a session feel like it is circling.
+
+### 6.4 A non-deterministic instrument — and a guard defined over the wrong thing
+
+**What happened.** The first full A/B was declared **VOID by its own negative control** (the same
+configuration run twice must produce identical numbers). The failure was tiny: on **one** query of
+133, the candidate pool held **95 items in one run and 94 in the other**. But it was reproducible, so
+it was not a blip. Root cause, found by probing one stage at a time: the vector database's
+**server-side rank fusion** — the step that merges several ranked candidate lists into one — returns a
+**different fused set on identical inputs**. Measured: one query produced **6 different fused outputs
+in 6 runs**; another, 5 in 6. Every individual candidate list was perfectly deterministic, and forcing
+exact (non-approximate) search changed nothing.
+
+**Why it was possible.** "Same inputs, same outputs" is assumed everywhere, not checked. And the
+control had been defined over *everything the artifact records* — including bookkeeping fields like
+pool size — rather than over the **metrics** the study is about.
+
+**What would have caught it.** Three things, all cheap:
+
+1. **Probe determinism stage by stage, and do not assume which stage is guilty.** The first guess here
+   was the approximate nearest-neighbour index. It was wrong — the index was exact and deterministic.
+   Probing each lane separately located the real culprit in about ten minutes.
+2. **Define the negative control on the METRIC, not on diagnostics.** The metrics were **bit-identical
+   across both runs** (max difference 0.0); only a bookkeeping count differed. A pool size that wobbles
+   while every metric holds still is a **finding about the instrument**, not a reason to void the
+   study. Write which one the guard compares, in the pre-registration, before running it.
+3. **Measure the noise floor with repeated runs of one configuration before designing any control.**
+   Thirty queries × four repeats here gave a spread of **exactly 0.000000** on the endpoint metric —
+   which is what licensed reading the run at all.
+
+### 6.5 A number that is not a function of its own artifact
+
+**What happened.** The corrected re-run passed its control. Then the **re-derivability guard** — "can
+every summary number be recomputed from the per-query rows the artifact itself stores?" — failed on
+**3 values**, by 1e-6. Cause: one metric is returned as a **numpy scalar** rather than a plain Python
+float, and a numpy scalar *is* a subclass of `float`, so the JSON writer accepted it silently and the
+type was **lost on read**. Re-derivation then used plain floats, and numpy's and Python's rounding
+disagree at a decimal tie. Net effect: the artifact's summary was not a function of the file it lived
+in.
+
+**Why it was possible.** A subclass passes every type check, so nothing errors; and the difference
+only surfaces at a rounding tie, so it looks like noise.
+
+**What would have caught it.** **Coerce scalars to native types at the point of recording** — not at
+the point of writing, and never "try the strict path first". The guard is what caught it, which is the
+point: the guard was written before it was needed, and it fired on a 1e-6 discrepancy that no human
+review would have found.
+
+> **Why this matters beyond one number.** A measurement artifact exists so that someone else can
+> recompute your conclusion from the raw rows. If the summary cannot be reproduced from the rows, the
+> artifact is a *claim* rather than evidence — and the failure is invisible, because both versions
+> print a plausible number.
+
+### 6.6 The record of a failure is worth as much as the record of a success
+
+**What happened.** Three separate things in this stretch were written down *as defects, with the
+mechanism measured, and deliberately not fixed in the same session*: the non-reproducible fusion
+(6.4), the scalar type leak (6.5), and the fact that a `768`-dimension collection was being queried
+with a `1024`-dimension vector. Each got its own register entry, its own reproduction, and a stated
+disposition — rather than being silently patched while a measurement was in flight.
+
+**Why it was possible to do well here.** Because the artifacts were on disk: the failing run was
+*preserved* under a distinct filename rather than overwritten by the re-run, so the evidence of the
+void survived the fix. **A run whose output is overwritten by the next run leaves no evidence it
+happened.**
+
+**What to keep.** Name the artifact for the run that produced it, and never let a re-run take the
+first run's filename. An unexplained failure that gets overwritten is worse than one that gets
+explained.
+
 ---
 
 ## 7. An opening system prompt for the next project
@@ -465,8 +576,12 @@ HOW TO TALK TO ME
 - [ ] Non-goals written down
 - [ ] The measuring instrument (labelled evaluation set) built from a source the system cannot see
 - [ ] Sample size computed from measured noise, before collecting
+- [ ] Minimum detectable effect computed from that noise — any lever whose plausible effect sits below
+      it is recorded as out of scope, **not tested** (§6.3)
 - [ ] Decision pre-registered: what result changes our mind
 - [ ] Sources of randomness pinned; harness reproducibility measured
+- [ ] The pre-registration says whether the negative control compares **metrics** or everything
+      recorded (§6.4)
 
 **Before every long run**
 - [ ] Resolved configuration printed and asserted
@@ -481,9 +596,11 @@ HOW TO TALK TO ME
 
 **Before believing a result**
 - [ ] The harness itself has been verified
+- [ ] Every summary number re-derives from the artifact's own per-item rows (§6.5)
 - [ ] Tests exercise the production shape, and regression tests have been seen to fail
 - [ ] Independent review treated as a filter; its claims adjudicated against the code
 - [ ] Findings registered in the living documents, each as its own entry
+- [ ] A failed run's artifact preserved under its own name, never overwritten by the re-run (§6.6)
 
 ---
 
@@ -505,3 +622,17 @@ The failures above are worth reading next to the things that repeatedly saved th
   measurement first. This is the discipline that keeps a change reviewable.
 - **Measuring the cost of a probe's blind spot.** §6.1 was found by re-reading a *previous* probe
   and asking what regime it had actually tested. That habit is worth institutionalising.
+- **Guards written before they were needed.** The re-derivability check (§6.5) and the negative control
+  (§6.4) both fired on discrepancies far too small for a human review to notice — 1e-6 on one number,
+  and one item of 133. A guard is worth its cost precisely when it fails on something you would
+  otherwise have waved through.
+- **Overturning a hypothesis by elimination, cheaply.** The first explanation for the non-reproducible
+  run was the approximate search index. Probing each stage separately — four short scripts, minutes
+  each — replaced it with the right one and *proved* the first was innocent, instead of arguing about
+  it. When two stages could both be guilty, measure them one at a time rather than reasoning.
+- **Preserving the evidence of a failure.** The void run's artifact was copied aside under a distinct
+  name before the corrected re-run took the canonical filename, so the thing that documented the
+  failure stayed checkable afterwards. Failures that get overwritten cannot be learned from.
+- **Registering a defect instead of quietly fixing it.** Three findings in this stretch were written up
+  with their mechanism measured and deliberately left unfixed, because a measurement was in flight and
+  a silent patch would have changed the instrument mid-experiment.

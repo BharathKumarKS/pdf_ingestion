@@ -5368,3 +5368,213 @@ re-dispatch brief now demands the three counts separately rather than a single r
 **Register against:** §I65 (the A/B whose null this explains, and whose hypothesis it refutes), §I61
 (the mechanism), §I60 (the ANN loss excluded here by construction), §I58 (the ceiling rule), §I56 (the
 DA lane enters the same fusion stage), §I25 (a hypothesis that reads as a finding unless measured).
+
+---
+
+### I67. 2026-10-23 — the downstream-widths A/B is **VOID**: the server Qdrant's filtered ANN is NON-DETERMINISTIC, so the bit-exact negative control is unachievable
+
+**Found by the pre-registered A/B itself, and it is the A/B's own guard that caught it.** The
+pre-registration `.hermes/plans/2026-10-23-p1-downstream-widths-ab-preregistration.md` fixed **E4 —
+the negative control must be bit-exact — as load-bearing: "if it does not, the instrument is noisy, the
+A/B is VOID, and no endpoint is read."** E4 **failed**, so **no endpoint from this run may be read.**
+
+**1. What the run did.** 133 answerable text queries, six arm-configurations, on the product retrieval
+path (`store.search_with_das` + the shipped cross-encoder + `evaluate_rag.compute_retrieval_metrics`),
+`knowledge_base_v2`, HyDE off, prefetch pinned at 2000, `da_fetch_k` pinned at 100. Two new settings
+(`dense_rescore_limit` = the re-score cut L; `da_fetch_k` = the DA lane's depth, decoupled from
+`fetch_k`) and the fusion width **W** = `mmr_candidates` **and** `reranker_fetch_k` moving together
+(§I66's binding constraint — raising either alone does not widen the fusion; pinned by
+`tests/test_downstream_widths.py`, 17 tests, mutation-proven: hardcoding the cut fails 2, recoupling
+the DA lane fails 1). Harness `logs/p1/step10/downstream_widths_ab.py`, verifier
+`…_verifier.py`, artifact `logs/p1/step10/downstream_widths_ab.json`, log
+`…_run_2026-10-23_2138.txt`. **~65 min wall** (not the ~45 estimated), with one transient ~24-min
+cluster stall (60→70 queries) that recovered.
+
+**2. ⚠️ E4 FAILED — and it is REPRODUCIBLE, not a blip.** 1,064 metrics compared, **2 mismatches,
+max_abs_diff 0.0**: on `ovw-041` arm C's pool is **95** and arm N's is **94** (one chunk). **Every
+metric is bit-exact** — only the pool *size/pages* differ. The diagnosis:
+
+| probe | result |
+|---|---|
+| the C config, `search_with_das`, `ovw-041`, **6 identical repeats** | pools **95, 95, 95, 94, 94, 95** — two distinct chunk sets |
+| `search_da` alone, 6 repeats | **6/6 identical** — the DA lane is deterministic |
+| `search()` (the dense funnel) alone, 6 repeats | **1 of 6 differed** — the funnel is the non-deterministic part |
+| SPLADE encode ×6 · ColBERT encode ×6 · dense encode ×6 | **6/6 identical each** — all three cluster encoders are deterministic |
+
+So the query-side vectors are stable and the DA lane is stable; the wobble is on the **Qdrant side**:
+the **filtered ANN prefetch** (`dense_64` → `dense_1024`, with the `is_content` payload filter) returns a
+marginally different candidate set run-to-run. That is the server's HNSW/segment behaviour, outside our
+code — and §I60 already measured up to **18.5 % HNSW loss** on this collection, so a marginal
+candidate-set wobble is the same mechanism, one order smaller.
+
+**3. ⚠️ The consequence is general, not local to this A/B.** A bit-exact negative control **cannot be
+guaranteed on this cluster** while the ANN is non-deterministic. §I65's identical structure **passed**
+bit-exact at 133 queries — so that pass was **not a property of the instrument**, and any future A/B
+that relies on it inherits this risk. **This is the §I44 class in the measurement layer: a guard that
+passed once is not a guard that holds.**
+
+**4. The endpoints are recorded but MUST NOT be read** (pre-registration §6). For the record only, so
+the next reader does not re-derive them and mistake them for findings — the shape is *two nulls*:
+Δ R@20 ceiling-normalised **W1−C +0.0032** CI [−0.0164, +0.0227] UNRESOLVED; **W2−C +0.0027**
+[−0.0171, +0.0224] UNRESOLVED; **L1−W2 +0.0029** [−0.0021, +0.0078] UNRESOLVED; **L2−W2** identical to
+L1 (the cut saturates). Power was ample, not the limit (SD_d 0.115 → required n for δ=0.05 is **21**;
+the effect is ~15× below δ). Secondary, and equally unread: **MRR RESOLVES POSITIVE** for the width
+(+0.0935 [+0.0559, +0.1311]) while **context_precision RESOLVES NEGATIVE** (−0.0075 / −0.0083) — the
+same "a wider pool reorders the pool, not the product" shape §I65 warned about. ⚠️ **None of this is a
+result**; it is what a VOID run's numbers look like, quoted so they are not quoted as findings.
+
+**5. ⚠️ A design finding that survives the VOID: the cut is INERT at the shipped width.** A smoke test
+measured Δ **exactly 0.0000**, W/L/T **0/0/3 identical**, when the cut arms ran at the shipped
+**W=100** — because the fusion emits only 100 candidates, so raising L merely reshuffles candidates far
+below the cut. The cut was therefore re-registered (before the run) to run at **W=500** and be read
+against **W2**, where it can express; the pool then moved (W2 325 → L1 325 chunks but the **page set**
+changed, E7 `cut_moves_pages: True`). **The measurement lesson stands independent of the VOID: a knob
+downstream of a saturated cut is inert by construction (§G1's defect), and testing it requires the
+upstream width to admit it.**
+
+**6. Two transient cluster faults, both survived** (recorded, not defects): a
+`_collection_vectors` inspection **timeout** at 22:02 (schema assumed, run unaffected), and one
+**`RERANKER DISABLED` ReadTimeout** at 22:22 (§I55) — **rescued by the harness's one-shot identity
+retry**, so the artifact's fallback counts are **0 in every arm**. ⚠️ That retry is a deliberate
+difference from §I65's harness (which flagged any fallback): here a *transient* fallback that succeeds
+on retry is not flagged, so "0 fallbacks" means "no query was left unranked", not "no fallback fired".
+
+**7. ⚠️ A PROCESS DEVIATION, recorded because it cannot be inferred from git.** The pre-registration was
+committed **together with the results** (owner decision), **not alone before the run** as §I65's was.
+Git therefore does **not** prove the file predated the numbers; the file's content and the plan's §1.3
+are unchanged since before the run, and this note is the record of the ordering.
+
+**8. Disposition: VOID, and the next move is a RE-REGISTRATION, not a re-run of this one.** The A/B as
+pre-registered cannot pass E4 on this cluster, so re-running it unchanged would reproduce the failure.
+Two honest options, both requiring a NEW pre-registration: (a) define E4 against a **measured noise
+floor** — the negative control repeated *k* times to establish the instrument's own spread, with the
+endpoint compared to that floor; or (b) run the A/B with the ANN forced to **exact search** so the
+control is deterministic, **declared as a change to the retrieval path** (it is then not the product
+path). ⚠️ **Do not relax E4 after the fact** — that is exactly the post-hoc interpretation §D1's rule
+exists to prevent, and the reason the endpoints above are quoted as unread.
+
+**Register against:** §I66 (the lever this A/B was built to test, and the binding constraint it named),
+§I65 (the identical harness that passed E4 — and why that pass was not a guarantee), §I60 (the measured
+HNSW loss, the same mechanism), §I58 (the ceiling rule), §I56 (the DA lane — decoupled here), §I55 (the
+reranker fallback, rescued and counted), §I44 (an artifact/guard that passed once), §D1 (pre-registration).
+
+---
+
+### I68. 2026-10-24 — ⚠️ **Qdrant's server-side RRF fusion is NON-DETERMINISTIC** — the same query returns a different candidate set on consecutive calls (a product defect, and the root cause of §I67's VOID)
+
+**Found while root-causing §I67** (the downstream-widths A/B that failed its bit-exact negative control).
+It is recorded separately because it is **not a property of that A/B** — it is a property of the
+retrieval funnel the product ships, and it stands on its own.
+
+**1. The measurement — lane by lane, 6 identical repeats each, same query vector:**
+
+| query | `dense_64` ANN | `sparse` ANN | `colbert` ANN | **server-side RRF (all three fused)** |
+|---|---|---|---|---|
+| `ovw-041` | 1/6 distinct | 1/6 | 1/6 | 1/6 |
+| `gold-004` | 1/6 | 1/6 | 1/6 | **5/6** |
+| `gold-078` | 1/6 | 1/6 | 1/6 | **3/6** |
+| `gold-052` | 1/6 | 1/6 | 1/6 | **6/6** |
+
+**Every individual lane is perfectly deterministic** — including under `search_params=SearchParams(exact=True)`
+and `hnsw_ef=512`, which changed nothing. **The non-determinism is in `FusionQuery(fusion=Fusion.RRF)`
+itself**: identical inputs, identical lane results, and `gold-052` returned **six different fused
+candidate sets in six runs**. The query-side vectors are not the cause either — SPLADE, ColBERT and the
+dense encoder each hashed **6/6 identical** on the same text.
+
+**2. How far it reaches downstream — measured, and it is usually absorbed.** The fusion feeds page
+dedup → MMR → the cross-encoder, and most of the wobble dies there:
+
+| probe | result |
+|---|---|
+| 30 queries × **4 repeats** of the shipped config, `search_with_das` + rerank + metrics | **R@20 ceiling-normalised spread max 0.000000**, pool-size spread **0** — 0/30 queries differed |
+| the §I67 run's 1,064 arm-C-vs-arm-N comparisons | **0 metric mismatches**, max_abs_diff **0.0**; only `n_pool`/`n_pages` differed, on **1** query (`ovw-041`: 95 vs 94) |
+
+So the defect is **sparse** — it bites a minority of queries, and on the endpoint it usually leaves no
+trace. **But it is not always absorbed** (`ovw-041` moved the pool by a chunk), and **it made a
+pre-registered A/B unreadable** (§I67). ⚠️ **The lesson: a retrieval path that is not reproducible
+cannot support a bit-exact control, and "the metrics happened to match" is not the same as "the
+instrument is deterministic".**
+
+**3. Why it is a PRODUCT finding, not just an eval one.** The same query, issued twice, can retrieve a
+different candidate set. On this corpus the effect is small and usually invisible at top-20, but it is
+**unbounded in principle** (nothing in the code bounds it), it makes **any** A/B on this path depend on
+a tolerance rather than an equality, and it is the kind of thing a reviewer of a "hybrid RAG platform"
+will ask about. It is not caused by our code and cannot be fixed by a setting we control.
+
+**4. The in-repo fix path — and it already exists.** `store._rrf_merge` (client-side reciprocal rank
+fusion, `store.py`) is present and used elsewhere. **Moving the dense funnel off Qdrant's server-side
+`FusionQuery` and onto the client-side merge would make the funnel deterministic** — the lanes are
+already deterministic, so fusing them in Python removes the only non-deterministic step. ⚠️ That is a
+**change to the product path** (the ranking may differ slightly at ties), so it needs its own
+before/after comparison and its own register entry — **not** a silent swap to make an A/B pass.
+⚠️ **Do not** reach for `exact=True` as the fix: the probe above shows the ANN is already deterministic,
+so it changes nothing about this defect.
+
+**5. Disposition.** Registered, **not fixed**. The §I67 re-run proceeds with **E4′ (metrics-only)** —
+which is a *disambiguation* of the original pre-registration's wording, justified by the measured
+zero metric-floor, **not** a fix for this defect. This entry is the standing record that the funnel is
+non-deterministic until the client-side merge lands.
+
+**Register against:** §I67 (the VOID it caused, and the A/B it blocked), §I60 (the measured HNSW loss —
+a *different* mechanism, and the reason "exact search" was the wrong first guess), §I66 (the fusion
+stage), §I44 (a guard that passed once is not a guard that holds), §D1 (pre-registration).
+
+---
+
+### I69. 2026-10-24 — ⚠️ `ndcg` comes back as **`np.float64`**, and numpy scalars do not survive JSON — so an eval artifact's summary is NOT re-derivable from its own per-query array at rounding ties
+
+**Found by the E5 guard of the §I67 re-run, which FAILED** while every endpoint re-derived exactly. It
+is the §I57/§I44 class — an artifact whose summary cannot be reconstructed from its own data — and the
+cause is a type leak, not a wrong number.
+
+**1. The symptom.** `downstream_widths_ab.py --recheck` re-derives the whole summary from the
+artifact's own per-query array and compares it byte-for-byte. It reported `DIFFERS` on **`by_type`**,
+on **3 keys**:
+
+| key | stored (the run) | re-derived (from the artifact's array) |
+|---|---|---|
+| `by_type[multihop].ndcg_at_top_k__C` | 0.496002 | 0.496003 |
+| `by_type[multihop].ndcg_at_top_k__N` | 0.496002 | 0.496003 |
+| `by_type[overview].ndcg_at_top_k__L2` | 0.461548 | 0.461547 |
+
+**Every `all_queries` aggregate — i.e. every endpoint — re-derived byte-identically.** Only this one
+secondary metric, only in the per-`query_type` cut, differed, by **1e-6**.
+
+**2. The cause, measured.** Both means sit **exactly on a 6th-decimal tie** (`repr(mean) == 0.4960025`
+and `0.4615475`), and the two sides round it **oppositely**:
+
+```
+mean over np.float64  -> round(x, 6) = 0.496002      <- what the RUN stored
+mean over python float -> round(x, 6) = 0.496003     <- what re-derivation gets
+```
+
+`evaluate_rag.compute_retrieval_metrics` returns **`ndcg` as `np.float64`** — it sums
+`g / np.log2(i + 2)` — while **every other metric is a plain Python `float`** (verified: `ndcg_at_20`
+→ `float64`, all others → `float`). ⚠️ **`np.float64` IS a subclass of `float`**, so `json.dumps`
+serializes it **silently** and the type is **lost on read**; re-derivation therefore aggregates plain
+floats, and numpy's `round(np.float64, 6)` and CPython's `round(float, 6)` disagree at a decimal tie.
+The run's summary was computed over `np.float64`; the re-derivation over `float`. **Same numbers, two
+rounding conventions.**
+
+**3. Why it matters beyond this artifact.** Any eval artifact that stores a `ndcg`-derived aggregate
+inherits this: **the summary is not a function of the file.** A reviewer who re-derives from the
+per-query array — which is exactly what E5 and §I57 exist to enable — gets a different number at any
+tie, with no way to tell a tie from a real discrepancy. It also means `json.dumps` **silently accepts
+numpy scalars**, so a type leak like this cannot surface as an error anywhere. ⚠️ **It is benign for
+conclusions here** (1e-6, one secondary metric, no endpoint affected) — but it is exactly the kind of
+"the artifact is not what it claims" defect §I44 records, and it made a guard fail.
+
+**4. Fixed at the point of record.** `downstream_widths_ab.py` gains `_f()` — `float(x) if x is not
+None else None` — applied to **every** metric as it is recorded, so the per-query values and the summary
+are both plain Python floats and the artifact is self-consistent. ⚠️ **The fix requires a RE-RUN to
+produce a clean artifact**: the existing artifact's summary was written by the old path, so its 3 tie
+values remain numpy-rounded and will still not re-derive. The *conclusion* (both levers are nulls, §I67)
+does not depend on them — it rests on `all_queries`, which re-derives byte-identically.
+
+**5. The general rule.** **Coerce numpy scalars to Python floats at the point of record, in any eval
+harness.** `np.float64` passes `isinstance(x, float)`, so nothing will stop it; and the failure mode is
+silent, tie-only, and breaks the artifact's self-consistency rather than any single number.
+
+**Register against:** §I57 (the per-query-JSON twin, whose whole purpose is re-derivability), §I44 (an
+artifact that is not what it claims), §I67 (the re-run whose E5 caught it), §I25 (a silent failure that
+reads as success).

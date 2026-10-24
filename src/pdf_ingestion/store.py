@@ -452,7 +452,7 @@ class DocumentStore:
                                limit=cfg.dense_prefetch_limit)],
             query=query_vector.tolist(),
             using=dense_name,
-            limit=500,
+            limit=cfg.dense_rescore_limit,
         )
         prefetches = [dense_prefetch]
 
@@ -728,8 +728,11 @@ class DocumentStore:
         # so DA candidates compete fairly through all downstream filtering stages.
         da_added = 0
         if self._cfg.da_enabled:
-            with telemetry.span("retrieval.da_lane", {"fetch_k": fetch_k}) as da_span:
-                da_hits    = self.search_da(query_vector, tenant_id=tenant_id, limit=fetch_k)
+            with telemetry.span("retrieval.da_lane", {"fetch_k": self._cfg.da_fetch_k}) as da_span:
+                # DA lane depth is its OWN setting (`da_fetch_k`), not `fetch_k`: `fetch_k` is the
+                # fusion-output width, and coupling them meant a width A/B moved this stage too.
+                da_hits    = self.search_da(query_vector, tenant_id=tenant_id,
+                                            limit=self._cfg.da_fetch_k)
                 da_parents = self._resolve_da_parents(da_hits)
                 existing   = {c.get("chunk_id") for c in dense_hits}
                 for p in da_parents:

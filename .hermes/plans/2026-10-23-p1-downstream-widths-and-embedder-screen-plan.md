@@ -34,39 +34,76 @@ So there are two hardcoded widths left, and both sit inside the loss:
 | width | where | value | ceiling if raised (§I66, exact prefetch) |
 |---|---|---|---|
 | **L** — the full-dim re-score cut | `store._qdrant_search`, the outer `Prefetch(limit=500)` | **500** | L=1000 → 0.9266 · L=2000 → 0.9773 · L=all → 1.0000 |
-| **`fetch_k` / MMR** — the fusion's output width | `search_with_das` (`fetch_k`, `mmr_candidates`) | **100** | not yet measured |
+| **W** — the fusion's output width | **two** fields, both at 100: `mmr_candidates` (the funnel output, `store.py:513`) **and** `reranker_fetch_k` (the truncation, `store.py:761`) — see §1.2 | **100 / 100** | not yet measured |
 
 ### 1.2 The change under test
 
-Make both settings, exactly as `dense_prefetch_limit` was made one (§I65): a field on `Settings` whose
-default **is the shipped value**, read at the single site, with a test that pins (a) the value is read
-from config, (b) the other funnel stages do not move with it. **Config-only. No re-ingest, no model
-change, no Qdrant write.** The §I65 test (`tests/test_dense_prefetch_limit.py`) is the template.
+**Config-only. No re-ingest, no model change, no Qdrant write.** Each new/changed field defaults to the
+shipped value, so the default path is byte-identical to production; the §I65 test
+(`tests/test_dense_prefetch_limit.py`) is the template.
 
-⚠️ `fetch_k` is threaded in two places with two meanings — `search_with_das(fetch_k=...)` sets the DA
-lane's limit *and* the MMR target, while `mmr_candidates` sets the funnel's outer limit. **Read the
-call path before naming the knob**, and say in the pre-registration which one moved.
+**L — the full-dim re-score cut.** NEW `dense_rescore_limit: int = 500` (was hardcoded at
+`store.py:455`), read at the outer `Prefetch(limit=...)` in `store._qdrant_search`.
+
+**W — the fusion's output width. This is TWO fields that must move TOGETHER**, and that is the
+correction to the earlier framing (which named `fetch_k` alone):
+
+  * `mmr_candidates` (100) — the dense funnel's **output** width: `search_with_das` calls
+    `search(limit=pool)` (`store.py:720`) → `_qdrant_search(limit=pool)` (`store.py:384`) → the final
+    `query_points(limit=...)` (`store.py:513`). This IS the RRF fusion's output width.
+  * `reranker_fetch_k` (100) — the pool **truncation** (`store.py:761`) and the MMR `top_k`
+    (`store.py:758`).
+
+⚠️ **Raising `mmr_candidates` alone does NOT widen the fusion** — `reranker_fetch_k` truncates the
+pool back to its own value. Raising `reranker_fetch_k` alone cannot exceed what the feed offered. Both
+must be set to W. Pinned by `tests/test_downstream_widths.py` (`test_pool_is_clipped_*`,
+`test_both_width_knobs_together_widen_the_pool`).
+
+**DA-lane decoupling.** NEW `da_fetch_k: int = 100` — the DA lane's own depth, `search_da(limit=...)`
+(was `limit=fetch_k`, `store.py:732`). Required so a W-sweep holds the DA lane **fixed**: `fetch_k`
+used to set the DA lane's limit too, so any width A/B moved that stage as well, and §I56 measured the
+DA lane *in this exact stage* (−0.0262). Default = the value it had while coupled → production
+unchanged.
+
+**Tests:** `tests/test_downstream_widths.py` — 17 tests, mutation-proven: hardcoding the re-score cut
+back to 500 fails 2; recoupling the DA lane to `fetch_k` fails 1.
 
 ### 1.3 Pre-registration to write (BEFORE the run)
 
-- **Arms, one variable each, everything else pinned.** Recommended split into two sub-experiments so
-  each is single-variable:
-  - **L-arms**: L ∈ {500 control, 1000, 2000} with the prefetch pinned at **2000** (so the lane is not
-    the cap — §I66 shows N=1000 caps L's benefit at 0.8151).
-  - **width-arms**: `fetch_k`/MMR ∈ {100 control, 200} with L and N pinned at their chosen values.
-- **Primary endpoint**: paired Δ **R@20** on the product retrieval path, 133 queries, CI = mean ±
-  1.96·SD/√n. Secondary: R@100, Hit@20, NDCG@20, MRR, ctx-precision, per `query_type`.
+**Two single-variable sub-experiments in one run. Each treatment differs from the control in exactly
+ONE field.**
+
+  * **W-arms**: W ∈ {**100** control, **300** primary, **500** sensitivity}, read against **C**;
+    L pinned **500**, prefetch pinned **2000**, `da_fetch_k` pinned **100**.
+  * **L-arms**: L ∈ {**1000** primary, **2000** sensitivity}, read against **W2** (the widest fusion);
+    W pinned **500**, prefetch pinned **2000**, `da_fetch_k` pinned **100**.
+    ⚠️ **The cut is tested at W=500, not the shipped W=100** — a smoke test measured the cut **inert
+    by construction** at W=100 (Δ exactly 0.0000, W/L/T 0/0/3 identical): the fusion emits only 100
+    candidates, so raising L merely reshuffles candidates far below the cut. L's extra candidates can
+    only reach the output if the fusion admits them. Each contrast is still single-variable.
+  * **N** negative control = the control config (`W=100, L=500, prefetch=2000, da=100`) re-run.
+  * **prefetch pinned at 2000 in every arm** — §I66: at N=1000 the lane caps L's benefit at 0.8151, so
+    the lane must not be the cap. (Consequence: the absolute numbers are not the shipped config's.)
+
+- **Primary endpoint**: paired Δ **R@20 ceiling-normalised** (§I58) on the product retrieval path, 133
+  queries, CI = mean ± 1.96·SD/√n. **Primary contrasts: W1 − C, and L1 − W2.**
+  Sensitivity: W2 − C, L2 − W2. Secondary: R@100, Hit@20, NDCG@20, MRR, ctx-precision, per `query_type`.
 - **Decision rule**: ship iff the CI excludes 0 **and** the point estimate > 0. Unresolved ⇒ recorded
   and not shipped.
 - **Guards** (each must be able to fail):
-  1. the negative control (control arm re-run) is **bit-exact** — else the A/B is VOID (§I65's E4);
-  2. the resolved settings gate asserts the collection, the host, **and that the control arm still
-     resolves to the shipped values**;
-  3. §I55 reranker fallbacks counted and named, headline reported both ways;
+  1. the negative control is **bit-exact** — else the A/B is VOID (§I65's E4);
+  2. the resolved-settings gate asserts the collection, the host, **and that the control arm resolves
+     to the shipped values** (W=100, L=500, da=100);
+  3. §I55 reranker fallbacks counted and named **per arm** — at W=500 the fallback risk rises, so a
+     higher fallback count makes that arm **uninformative, not a result**;
   4. every aggregate re-derives from the per-query array (§I57);
-  5. the cut must be able to move — report each arm's pool size against the top-20 cut.
+  5. the cut must be able to move — report each arm's pool size against the top-20 cut;
+  6. **NEW — `R@100` is reported as POOL WIDTH, not as a result**: it is `recall_at_reranker_fetch_k`,
+     which moves with W by construction, so it cannot be read as evidence for or against the width;
+  7. **NEW — the DA lane is asserted pinned** (`da_fetch_k=100` in every arm) and its hit count
+     reported, so a width effect is not a DA effect.
 - **Record as deliberate confounds**: HyDE off (arms share one query vector; absolute numbers are not
-  production numbers), the graph lane excluded, negatives/visual excluded.
+  production numbers), the graph lane excluded, negatives/visual excluded, **prefetch pinned at 2000**.
 - ⚠️ **Do not assume the §I66 ceiling becomes recall.** §I65 is exactly the case where a real ceiling
   gain (+0.185 on the lane's coverage) produced nothing at the endpoint. A raised ceiling is a
   *hypothesis*, not a result.
@@ -75,12 +112,13 @@ call path before naming the knob**, and say in the pre-registration which one mo
 ### 1.4 What would make this uninformative
 
 If the control arm's pool is already ≤ the top-20 cut, the metric is inert by construction (§G1's
-defect). §I65 measured pool min 63 / median 100, so the cut bites — re-confirm it per arm.
+defect). §I65 measured pool min 63 / median 100, so the cut bites — re-confirm it per arm. **AND**: if
+W=500 trips the §I55 reranker fallback, that arm is uninformative (guard 3).
 
 ### 1.5 Cost
 
-No LLM calls (HyDE off), no writes. §I65's four-arm run took **31 min** for 133 queries; a three-arm
-run should be ~25 min. Cluster reads only.
+No LLM calls (HyDE off), no writes. §I65's four-arm run took **31 min** for 133 queries; this is six
+arm-configurations (W×3 + L×2 + N) → **~45 min**. Cluster reads only.
 
 ---
 

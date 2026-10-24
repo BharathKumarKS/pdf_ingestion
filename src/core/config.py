@@ -79,6 +79,13 @@ class Settings(BaseSettings):
     # raising this recovers it (1500 -> 0.904, 2000 -> 0.972, every in-window chunk -> 1.0000).
     # Kept a setting so the raise is a one-variable A/B (and revert) rather than a code edit.
     dense_prefetch_limit: int = 1000     # 64d prefetch depth before the full-dim re-score
+    # The full-dimension re-score cut in the same funnel: the OUTER `Prefetch(limit=...)` in
+    # `store._qdrant_search`, which re-scores the 64d-prefetched candidates in full dimension and
+    # keeps this many. §I66 measured it as a large *ceiling* lever at exact prefetch (L=1000
+    # +0.0980, L=2000 +0.1486, L=all +0.1714 on the reachable-pool coverage, all resolved) — but a
+    # raised ceiling is not recall, so it is a hypothesis, not a shipped change. Kept a setting so
+    # the raise is a one-variable A/B (and revert) rather than a code edit.
+    dense_rescore_limit: int = 500       # full-dim re-score cut (the outer prefetch's limit)
     # Qwen3 is instruction-aware: the model card measures a ~1-5% retrieval drop without a
     # query-side instruction. Documents need none. The query path must match the index, so this
     # is applied in store.search / evaluate_rag / funnel_boundary_recall alike.
@@ -254,7 +261,19 @@ class Settings(BaseSettings):
     # Phase A — MMR reranking (applied after RRF, before cross-encoder)
     mmr_enabled: bool = True
     mmr_lambda: float = 0.7              # 1.0 = pure relevance, 0.0 = pure diversity
-    mmr_candidates: int = 100           # pool size fed into MMR (ColBERT MaxSim fetch)
+    # The dense funnel's OUTPUT width (`store._qdrant_search`'s final `query_points(limit=...)`),
+    # i.e. how many RRF-fused candidates reach page dedup + MMR. §I66 fingered this — not the
+    # prefetch and not the re-score cut — as the binding constraint: at exact prefetch the fusion's
+    # own loss GROWS (0.143 -> 0.222) because feeding it more candidates does not grow its output.
+    # ⚠️ Raising this alone does NOT widen the fusion: `reranker_fetch_k` below truncates the pool
+    # back to its own value, so the two must move together to test a wider fusion output.
+    mmr_candidates: int = 100           # dense funnel output width = the RRF fusion's output width
+    # The DA (derivative-artifact) lane's own pool depth, `store.search_with_das` ->
+    # `search_da(limit=...)`. It used to be `reranker_fetch_k`, which coupled the DA lane to the
+    # fusion-output width: any width A/B would then move two stages at once (§I56 measured the DA
+    # lane in this exact stage, -0.0262). Split out so the width can be swept with the DA lane
+    # held fixed. Default = the value it had while coupled, so production is unchanged.
+    da_fetch_k: int = 100               # DA lane pool depth, independent of the fusion width
 
     api_port: int = 8000
 
