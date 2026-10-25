@@ -1,0 +1,18 @@
+{
+  "stage": "candidate-probe",
+  "model": "nomic-ai/nomic-embed-text-v1.5",
+  "dim": 768,
+  "tokenizer_model_max_length": 8192,
+  "longest_parent": {
+    "parent_id": 30,
+    "chars": 18082,
+    "tokens_nomic": 3877,
+    "tokens_with_special": 3879
+  },
+  "endpoint": {
+    "n_vectors": 3879,
+    "dim": 768,
+    "alignment_delta": 2,
+    "truncated": false
+  }
+}

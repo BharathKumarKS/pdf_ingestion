@@ -6498,6 +6498,35 @@ measured gains (+0.029248 vs nomic, +0.186476 vs the incumbent) are **unaffected
 **Cost:** 20 cluster calls (~1 min) + an offline tokenizer pass over 341 parents. **No writes, no LLM
 calls, no re-parse.** Probe + artifacts: `logs/p1/step10/c0_late_chunk_timing.{py,json}` (the failure,
 `status: FAILED`, 20/20) and `c0_gemma_alignment_and_truncation.{py,json}` (the quantification).
+
+**⚠️ ADDENDUM 2026-10-25 — the two defects were then measured against the DECLINED alternative,
+because that is what decides whether §I77 is a reason to revisit the embedder choice.** Same corpus,
+same cluster, tokenizer-only (`logs/p1/step10/nomic_window_and_alignment.{py,json}`):
+
+| | **gemma** (window 2048) | **nomic** (window 8192) |
+|---|---|---|
+| max parent tokens in corpus | 5,880 | 4,712 |
+| parents over the window | **71 / 341 (20.8 %)** | **0 / 341 (0.0 %)** |
+| children living in a truncated parent | **1,415 / 3,796 (37.3 %)** | **0 (0.0 %)** |
+| children losing vectors (beyond + straddling) | **351 (9.2 %)** | **0** |
+| **alignment delta** (`n_api − n_local`) | **+2** | **+2** |
+
+**⇒ The WINDOW defect is gemma-specific. The ALIGNMENT defect is NOT.** nomic's endpoint appends the
+same two special tokens (`n_api == n_local + 2`; measured 3,879 vs 3,877 on the corpus's longest
+parent) — so the alignment fix is **shared machinery, required whichever candidate is adopted, and it
+is therefore not a reason to prefer either.** The window is the only axis where the candidates
+genuinely differ, and there the difference is total: **37.3 % of children sit in a truncated parent
+under gemma and 0 % under nomic.**
+
+⚠️ **And one correction to the 9.2 %, which makes it worse than "a fallback":** of the 351 damaged
+children, **281 overlap no token at all** and take `_pool`'s **parent-mean fallback — which WARNS** —
+but **70 STRADDLE the 2048 cutoff and would be pooled from a truncated token set with NO warning.**
+That is the §I25/§I47 class (a silently wrong answer, presented as a normal one), and it means any
+window fix must cover the **straddle** case explicitly, not only the empty-span case. Count it.
+
+⚠️ **This is new evidence about the COST side of a decision that was recorded as a cost decision**
+(*"nomic was declined as a COST decision, not a data finding"*). Re-opening it on new measurement is
+legitimate; restating it as *"nomic was worse"* still is not — the measured gain favours gemma.
 **Register against:** §I47 (a loud guard where a bare 400 or a silent shift would have hidden this),
 §E3 (late chunking's design and its own control), §I70/§I72/§I74 (**what** was measured, and that it
 was pooled), §I13/§I76 (the gemma adoption's other shape changes), §I44 (a fact that now exists on
