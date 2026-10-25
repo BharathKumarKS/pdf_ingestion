@@ -6531,3 +6531,111 @@ legitimate; restating it as *"nomic was worse"* still is not — the measured ga
 §E3 (late chunking's design and its own control), §I70/§I72/§I74 (**what** was measured, and that it
 was pooled), §I13/§I76 (the gemma adoption's other shape changes), §I44 (a fact that now exists on
 disk because a probe wrote it there).
+
+---
+
+### I78. 2026-10-25 — S1 (nomic Stage A2 + A2b) is finished and GREEN: the document-side prefix, the span shift and the model-aware special-token layout are built, guarded and mutation-proven. ⚠️ The session's finding: the layout was resolved from a **GLOBAL flag**, not the embedder in use
+
+**State on entry — the plan said "the next session starts S1", and S1 was already half-done,
+uncommitted and RED.** Session 17's end left the Stage A2/A2b code in the working tree with **no
+register entry, no HANDOFF block, and a suite at `20 failed / 661 passed`.** The documented baseline
+is **4 pre-existing failures** (`test_phase1::test_hybrid_search_includes_global`,
+`test_phase2::test_search_still_works_after_phase2`, `test_splade` ×2), so the tree carried **16 NEW
+failures**: 9 in `test_late_chunk_embedder.py`, 5 in `test_embed_cache.py`, 1 in
+`test_chunking_pipeline.py`, 1 in `test_phase1.py`.
+
+**⚠️ Root cause of 14 of the 16 — a GLOBAL flag deciding a per-embedder contract.**
+`LateChunkEmbedder.__init__` resolved the endpoint's special-token layout from `cfg.use_stub_embedder`
+(True for the whole test suite) instead of from the embedder **actually in use**. Under the suite it
+therefore assumed `(0, 0)` while the tests' mock endpoint returned `n_local + 1` vectors, and
+`_content_tokens` **raised** on every parent. The fix keys on the instance:
+`isinstance(self._embedder, StubClusterEmbedder)`. ⚠️ **Behaviour-preserving in production** — the
+factory returns a `StubClusterEmbedder` exactly when `use_stub_embedder` is True — so it is a
+**correctness fix to the contract** (the layout is a property of the embedder, not of the process),
+**not** a test accommodation. It is also why the mistake never surfaced as a product bug: only a test
+that pairs a real embedder with the global stub flag can see it.
+
+**The other 2 — the lane rename left stale assertions.** `dense_dim_low` 128 → 64 and the lane
+`dense_128` → `dense_64` (Stage A2) were not carried into `tests/test_chunking_pipeline.py:223` and
+`tests/test_phase1.py:63`, which still asserted `dense_128`. Updated.
+
+**⚠️ The build was MISSING its two load-bearing guards.** S1's definition of done requires the
+span-invariance guard (trap 2) and the prefix-sent guard (trap 1); the previous session built the
+mechanism but **neither guard**. Added:
+
+* `test_a_document_prefix_does_not_shift_a_childs_pooling_window` — a child's pooled
+  `dense_1024`/`dense_64` must be **unchanged** by adding a document prefix, and its `token_span`
+  must move by exactly the prefix's token count. ⚠️ The test helper `_token_vector` was made
+  **position-independent** first: with a position-aware vector a correct implementation and a
+  mis-shifted one differ for the **wrong reason**, so the guard would have been unfalsifiable in the
+  way that matters.
+* `test_document_prefix_is_sent_on_both_passage_paths` — the request payload carries the prefix on
+  **both** passage paths (pooled `embed_documents` and per-token `embed_documents_tokens`), and the
+  query side carries only `cfg.query_instruction`.
+* plus `_DECLARED_SPECIALS` model-awareness (`nomic (0,2)`, `Qwen3 (0,1)`, unknown ⇒ raise).
+
+**✅ The alignment rule is probed, not assumed (trap 3).** `logs/p1/step10/probe_nomic_alignment.json`
+puts nomic at **0 leading + 2 trailing** with a **7.87×** margin over the runner-up, and Qwen3 at
+**0 + 1**; `_DECLARED_SPECIALS` declares both and `declared_specials` raises for an undeclared model.
+The BERT-style `[CLS] … [SEP]` guess `(1, 1)` was **wrong** and would have pooled every child one
+token off, **silently**.
+
+**✅ Mutation-proven.** 6 of 7 mutations make their guard fail: the span shift, `ClusterDenseEmbedder._prefixed`
+as a no-op, `LateChunkEmbedder` tokenizing RAW text, the wrong nomic layout, `_content_tokens`
+ignoring the leading slice, and the specials keyed on the global flag again. ⚠️ The one that did
+**not** (**M5**) is a **no-op mutation** — for the `(1,1)` case the guard exercises, `n_api - trailing`
+equals the correct `end`, so the mutation changed nothing — and it was **replaced by M5b**, which
+discriminates. Log: `logs/p1/step10/s1_a2b_mutation_log.txt`. Both source files restored
+byte-identical.
+
+**Suite after: `4 failed / 683 passed / 6 skipped`** — the 4 are the documented pre-existing set,
+**proved** pre-existing by stashing the changed `src/` files and re-running (same 4).
+
+**⚠️ Reviewers — three dispatches, and only the mechanical evidence is banked.** (a) The multi-turn
+reviewer **DIED on this gateway** (`unexpected tokens remaining in message header:
+Some("to=functions.read_file")`) — **no verdict, not a pass**; a second child with a mis-scoped pack
+answered all-UNVERIFIED with five fabricated risks (SPLADE env flags, Memgraph threads, `CardType`
+docs — none touched by this diff). (b) The compact **single-turn** reviewer (`openai/gpt-oss-20b`,
+read-only) returned **8/8 CONFIRMED, no refutations** — but it was **cheap (10 calls / 25 s)** and its
+risk list is generic, so it is a **weak corroboration, NOT banked**. (c) The mutation-check reviewer
+returned **5 CONFIRMED / 1 REFUTED (M5)** — the refutation was **VALID**, which is why the log was
+reconciled rather than defended; its *stated mechanism* for M5 ("the guard's defaults use
+`leading = 0`") is **wrong** and is not recorded as the reason.
+
+**Register against:** §I77 (the alignment defect that made a model-aware rule necessary, and the
+trap-3 precedent), §I62 (the prefix trap, the same class on the query side), §I76 (the lane
+inventory), §I13 (a lane named for a width it does not have), §I28 (a mechanism wired into some
+callers and not others), §I25/§I47 (a silent shift presented as a normal result).
+
+---
+
+### I79. 2026-10-25 — ⚠️ SIGNOFF 4 (the MRL truncation convention) IS MEASURED AND IS A NULL: KEEP the project's plain slice + re-normalise
+
+**The open question (plan §1 trap 4, plan §7 signoff 4).** `mrl_slice` / `NomicEmbedder._truncate`
+do a **plain slice + re-normalise**; Nomic's model card prescribes **`layer_norm` over the full 768
+dims BEFORE the slice**. Under nomic the 64d lane **is** the funnel's first stage, so the convention
+decides every 64d number — and the plan recorded that **moving it means re-measuring §I59's rows.**
+Signoff 4 was **OPEN and gated S3**.
+
+**Measured** (`logs/p1/step10/mrl_convention_ab.{py,json}`, pre-registered then re-registered, **all
+6 guards pass**, exit 0): arm A = plain slice, arm B = `layer_norm`-then-slice, ceiling-normalised
+paired R@20/R@100/R@500/R@1000 over the 133 gold queries on the shipped pool (3,489 chunks), nomic@64.
+
+| metric | A | B | Δ (B−A) | 95 % CI |
+|---|---|---|---|---|
+| cR@20 | 0.3643 | 0.3647 | **+0.000314** | [−0.0035, +0.0042] |
+| cR@100 | 0.5691 | 0.5690 | −0.0000 | [−0.0002, +0.0002] |
+
+Primary Δ **+0.000314**, CI **straddles 0**, and **below the run's own resolution floor (0.003853)**
+⇒ per the pre-registered rule, **ADOPT LAYER NORM = False.** **Verdict: KEEP the project's plain
+slice.** The convention does not move the 64d lane's ranking on this corpus by more than the run's
+floor — a **RESULT**, not an unresolved one. **§I59's rows stand; no re-measurement.** Two anchors
+reproduce §I70 exactly (nomic@64 every-chunk **0.364342**; top-1000 pool **0.364342**).
+
+⚠️ **Recorded, not independently reviewed** — the run's own guards pass and it reproduces §I70's
+rows, but no reviewer was dispatched against it in the session that produced it. Treat the
+*mechanical* half as sound and the *disposition* (accept the measurement) as an **owner call that is
+still open.**
+
+**Register against:** §I70 item 4 (where the convention was first registered), §I59 (the rows that
+would need re-measuring), §I78 (S1, the same session).

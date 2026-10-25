@@ -4,8 +4,59 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-25, session 17 (the plan is SETTLED for NOMIC; the next session starts the
-> re-ingest).**
+> **Last updated: 2026-10-25, session 18 (S1 is GREEN and mutation-proven; signoff 4 is MEASURED —
+> keep the plain slice; the next session is S2).**
+>
+> ## ▶ SESSION 18 — WHAT HAPPENED, AND WHAT IS NEXT
+>
+> **1. ✅ S1 (Stage A2 + A2b) IS FINISHED AND GREEN — but session 17's end left it UNCOMMITTED and RED,
+> and neither the handoff nor `IMPROVEMENTS.md` recorded it.** Full entry: `IMPROVEMENTS.md` **§I78**.
+> One line: the code for the document-side prefix, the span shift and the model-aware special-token
+> layout was in the tree; the suite was RED — **20 failed / 661 passed**, i.e. **16 NEW failures** on
+> top of the 4 documented pre-existing ones; nothing was committed.
+>
+> **2. ⚠️ THE FINDING THAT MATTERS — the special-token layout was resolved from a GLOBAL flag, not the
+> embedder in use.** `LateChunkEmbedder` read `cfg.use_stub_embedder` (True across the whole test
+> suite) to decide the endpoint's layout, so it assumed `(0, 0)` while the tests' mock endpoint
+> returned `n_local + 1` vectors — a count mismatch that raised in **14 tests**. Fixed to
+> `isinstance(self._embedder, StubClusterEmbedder)`; **behaviour-preserving in production** (the
+> factory returns a stub exactly when the flag is True), so it is a contract fix, not a test
+> accommodation. The other 2 new failures were the `dense_128 → dense_64` rename in stale tests.
+>
+> **3. ✅ THE TWO A2b GUARDS THE BUILD WAS MISSING ARE NOW BUILT** (S1's definition of done requires
+> them): **span invariance** (trap 2 — a prefix must not move a child's pooled tokens) and
+> **prefix-on-payload for BOTH passage paths** (trap 1), plus model-aware `_DECLARED_SPECIALS` tests.
+> ⚠️ The test helper `_token_vector` was made **position-independent** first, or the span guard would
+> have failed for the wrong reason.
+>
+> **4. ✅ THE ALIGNMENT RULE IS PROBED, NOT ASSUMED (trap 3).** `probe_nomic_alignment.json`: nomic =
+> **0 leading + 2 trailing** (margin **7.87×**), Qwen3 = **0 + 1**. Declared in `_DECLARED_SPECIALS`;
+> `declared_specials` RAISES for an unknown model. The BERT-style `(1,1)` guess was **wrong**.
+>
+> **5. ✅ SIGNOFF 4 (the MRL convention) IS MEASURED — a NULL: KEEP the project's plain slice.**
+> `mrl_convention_ab` (all 6 guards pass): `layer_norm`-then-slice vs plain slice, Δ **+0.000314**, CI
+> [−0.0035, +0.0042] straddles 0 and sits **below the run's floor (0.003853)** ⇒ **§I59's rows stand,
+> no re-measurement.** ⚠️ It was OPEN and gated S3; it no longer does — **owner to accept the
+> measurement.** Entry: §I79.
+>
+> **6. ✅ MUTATION-PROVEN.** 6 of 7 mutations make their guard fail; the one that does not (**M5**) is a
+> **no-op mutation**, replaced by M5b which discriminates — recorded in
+> `logs/p1/step10/s1_a2b_mutation_log.txt`, and **caught independently** by a read-only reviewer. Both
+> source files restored byte-identical. Suite after: **4 failed / 683 passed / 6 skipped** (the 4 are
+> the documented pre-existing set, **proved** by stashing the src changes and re-running).
+>
+> **7. ⚠️ REVIEWERS: three dispatches, and only the mechanical evidence is banked.** (a) the multi-turn
+> reviewer **DIED on this gateway** (`unexpected tokens remaining in message header:
+> Some("to=functions.read_file")`) — **no verdict, not a pass**; a mis-scoped child answered
+> all-UNVERIFIED with fabricated risks. (b) the compact single-turn reviewer returned **8/8 CONFIRMED,
+> no refutations — cheap (10 calls / 25 s), NOT banked**. (c) the mutation-check reviewer returned
+> **5 CONFIRMED / 1 REFUTED (M5)** — the refutation was **VALID** and is why the log was reconciled.
+>
+> **8. ▶ NEXT — S2.** (a) **owner accepts signoff 4**; (b) **commit S1** (still uncommitted) **before**
+> S2; (c) **S2**: drop the gemma-shaped v3, create it with the §2 schema (`dense_64` 64 + `dense_full`
+> 768 + `colbert` + `sparse`), read it back LIVE, then run **C0 on ~20 PARENTS** and record
+> seconds/parent; owner re-confirms signoff 3 (Shape B). ⚠️ `knowledge_base_v3` still holds the gemma
+> shape; **v2 untouched (3,869)**; the re-ingest is **0 %**.
 >
 > ## ▶ SESSION 17b — THE EMBEDDER DECISION, AND THE NEXT SESSION'S OPENING PROMPT
 >
