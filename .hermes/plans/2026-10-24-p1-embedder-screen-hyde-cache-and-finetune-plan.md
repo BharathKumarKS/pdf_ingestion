@@ -47,6 +47,16 @@ result: it says the lever is dead and tuning stops. That is what §I67 now is.
 
 ## §1 — THE EMBEDDER SCREEN (do this first; ~15 min total)
 
+> ✅ **RAN 2026-10-24 (session 14) — THE SCREEN HAS A WINNER. See `IMPROVEMENTS.md` §I70.**
+> `google/embeddinggemma-300m` @768 is the only arm that beats **both** baselines on the pre-registered
+> endpoint: **+0.1865 vs Qwen3-1024** and **+0.0465 vs Nomic-768**, both CIs excluding 0. Probe
+> `logs/p1/step10/embedder_screen.py`, artifact `…/embedder_screen.json` (sha256 `990e400f…`), 12/12
+> verifiers pass (four of them exact reproductions of registered rows). ⚠️ **Adoption cost is the 64d
+> lane**: gemma's smallest MRL slot is **128**, not 64, and at 128 it does not beat nomic@768. ⚠️ It
+> licenses **costing the re-ingest** and **ONE** product-endpoint run — **owner decisions, not taken**.
+> ✅ Independent verdict in (`deleg_1dd4aa6a`, 10/10) — but cheap, so not banked; its one finding (V1
+> skips the incumbent's query prefix) was real and is fixed as **V12**. ⚠️ Nothing committed yet.
+
 **Instrument: §I63's cross-embedder experiment, unchanged.** Hold the corpus fixed, swap only the
 embedder, **exact brute-force cosine** (not Qdrant — §I60 measured up to 18.5 % HNSW loss), 133
 queries, ceiling-normalised paired R@20 (§I58). **124 s wall, no LLM calls, no writes.**

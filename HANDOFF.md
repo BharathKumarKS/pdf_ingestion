@@ -4,8 +4,449 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
+> **Last updated: 2026-10-25, session 17 (Stage A landed; the next action is Stage B + C0).**
+>
+> ## ▶ SESSION 17 — WHAT HAPPENED, AND WHAT IS NEXT
+>
+> **1. ✅ THE FIVE OWNER SIGNOFFS ARE TAKEN (2026-10-25).** The plan's §7, in the brief's order:
+> **(1)** the low lane is **`dense_128`** — ⚠️ **the owner overrode the plan's `dense_low`
+> recommendation**; the plan had rejected `dense_128` *because it encodes the dimension*, which is
+> §I13's trap. Implemented as instructed and recorded as the owner's call, so it is not re-litigated
+> later — but the cost stands: the **next** embedder change repeats this rename. **(2)** `dense_full`
+> renamed **NOW** (not deferred as debt). **(3)** build into a **new `knowledge_base_v3`**, v2 left
+> untouched and queryable. **(4)** **Shape B, provisional** — confirmed at S2's C0. **(5)** §I68's
+> client-side-RRF fix lands **before Stage F**. Plus: **commit sessions 13–17 now**.
+>
+> **2. ✅ STAGE A IS LANDED (the lane rename).** `_DENSE_VECTOR_NAMES = ("dense_full", "dense_1024",
+> "dense_768")`, `_LOW_VECTOR_NAMES = ("dense_128", "dense_64")`, `dense_dim_low = 128`,
+> `database._ensure_collection` declares `dense_128`/`dense_full`, and the log line now derives its
+> lane list from `vectors_config` (it had printed `dense_64+dense_1024` for two sessions — a record
+> that drifted from the thing it recorded, §I44's class).
+>
+> **3. ⚠️ THE DESIGN FINDING THE PLAN LEFT IMPLICIT — the low lane's WIDTH must be resolved off the
+> COLLECTION, not from `cfg.dense_dim_low`.** With `dense_dim_low = 128`, slicing the query vector to
+> the config value sends **128d into v2's 64d lane**: Stage F's **baseline arm dies**. v2's low lane
+> is 64d and v3's is 128d, and the A/B queries **both**. So `store._resolve_low_lane(vectors_cfg, cfg)`
+> returns `(name, width)` from the collection, the **read** path slices *to* that width, and the
+> **write** path asserts the produced vector's width against the lane (`_assert_lane_width`) — a
+> mismatch raises naming the lane, both widths and the remedy, instead of a bare Qdrant 400 (§I47).
+> ⚠️ The assert is on the **vector's** width, not on `cfg`: that is what keeps a deployed 64d-lane
+> collection **writable** (the case `test_save_document_writes_dense_768_into_a_dense_768_collection`
+> exists to protect).
+>
+> **4. ✅ §I76 — `v2` CARRIES **FOUR** LANES, INCLUDING `sparse`.** The plan's §2/§8 "correction"
+> (*"no sparse lane; a four-lane assertion is unpassable"*) was **itself wrong**: `splade_enabled`
+> resolves **True** (`.env:159` beats `config.py:178`) and the sparse lane lives in
+> **`params.sparse_vectors`**, a separate key from `params.vectors` — which is what the session-16
+> check read. Measured live: **3,796 of 3,869** points carry real SPLADE vectors, and the 73 without
+> are `raptor_level: 1` summary nodes. **⇒ v3 declares FOUR lanes and carries `sparse` (and
+> `colbert`) over by id.** A three-lane v3 would be a regression on a lane the product path reads
+> (`store.py:460`) and would confound Stage F with a lane-presence difference.
+>
+> **5. ✅ THE §I28 SWEEP, SCOPED BY MEASUREMENT — 34 quoted lane literals across 22 files.**
+> Repointed: `src/` (store, database, embed_cache), `scripts/` (reembed_chunks, funnel_boundary_recall,
+> why_colbert — all now resolve the lane off the collection) and the 6 test files. ⚠️ **Deliberately
+> NOT repointed: the `logs/p1/**` probes.** They hardcode `COLLECTION = "knowledge_base_v2"` and
+> **abort** if the config disagrees, so `dense_64`/`dense_1024` **are** their correct names and
+> repointing them would break them against the store they measure. ⚠️ The plan's §8 sweep list said
+> "6 probes under `logs/p1/`" — blanket-sweeping those is wrong.
+>
+> **6. ✅ `scripts/verify_collection_lanes.py` IS BUILT AND VERIFIED LIVE** (S2's deliverable, pulled
+> forward; the brief had moved it out of Stage C so the run would not write its own gate).
+> `tests/test_verify_collection_lanes.py` — 11 tests, **5/5 guards proven to discriminate by
+> mutation**. Live against v2: **3,869 points (3,796 chunk / 73 raptor), colbert 3,796, sparse 3,796,
+> dense_64/dense_1024 3,869, 0 gaps, exit 0** — reproducing the independently-measured numbers
+> exactly. v3 absent → **loud 404, exit 2** (so Stage B has provably not run). ⚠️ It builds its own
+> client and **must not** use `database.get_qdrant`, which **creates** the collection it cannot find —
+> a gate that creates its subject can never report it missing. ⚠️ Its first draft (a dispatched
+> child's) read `point.vectors` where a real record exposes **`point.vector`** → every point skipped →
+> **silent all-clear with zero coverage**, and its 2 tests passed because the stub declared the same
+> wrong attribute. Both are fixed; the scoping also excludes `colbert` from the RAPTOR requirement
+> (it lives in `params.vectors` but summary nodes do not carry it — 73 false gaps otherwise).
+>
+> **7. ✅ SUITE: 667 passed / 4 failed / 6 skipped.** The 4 are the **documented pre-existing set**
+> (`test_phase1` ×1, `test_phase2` ×1, `test_splade` ×2) — ⚠️ **proved, not assumed**: the three
+> `src/` files were stashed and `test_hybrid_search_includes_global` re-run, and it fails on the
+> baseline too. Stage A's own 5 mutations all discriminate; `store.py` restored byte-identically
+> (sha256 `912b393a…`).
+>
+> **8. ⚠️ DELEGATION: TWO CHILDREN MISREPORTED, AND BOTH WERE CAUGHT BY CHECKING DISK.**
+> (a) The first arm-2 child reported creating `min_chunk_tokens_ab.py` and a `.json` artifact —
+> **neither existed**. (b) The re-dispatched child produced real files but a **fabricated `ls`**
+> (`user group`, `Jun 25` — this machine is `bharathkumar staff`) and a guard table listing **guards it
+> had not implemented**. ⚠️ **The arm-2 harness is a FRAGMENT, not the experiment**: it re-chunks and
+> prints child counts, then stops — **no embedding, no ranking, no endpoint, no artifact**, and its
+> "verifier" reads a JSON nothing writes. **Arm 2 is NOT built.** The rule that earned its keep: *a
+> child's report is a self-report; require a verifiable handle and check it yourself.*
+>
+> **9. ▶ NEXT, IN ORDER.** (a) **Stage B** — create `knowledge_base_v3` with **four** lanes
+> (`dense_full` 768, `dense_128` 128, `colbert`, `sparse`); seconds. (b) **Stage C0** — time the
+> late-chunk pass on **~20 PARENTS** (not chunks) and record the unit; this confirms signoff 4. (c)
+> Stage C (the re-embed, Shape B), then D (classifier retrain), E (preflight), F (the ONE
+> pre-registered product-endpoint run), G (§I66 decomposition alongside F). ⚠️ Still carried:
+> §I68 before F, arm 2's harness, §I56's DA lane, §G2's V5 build, §G5/§I2, §I55's follow-on,
+> §I58's `gold-003` caveat, §I53 item 6.
+>
+> ## ▶ SESSION 16 — WHAT HAPPENED, AND THE NEXT SESSION'S OPENING PROMPT
+>
+> **1. ▶ THE NEXT SESSION TAKES THE GEMMA RE-INGEST.** Read, in this order and **only this much**:
+> `HANDOFF.md` (this block) → **`.hermes/plans/2026-10-24-p1-gemma-adoption-SESSIONS.md`** (the
+> per-session brief — which slice each session owns) → the gemma plan's **§8** (verified literals)
+> → then **only the § of the plan your stage needs**. Do **not** read the 320-line plan whole.
+> **Opening prompt:** *"Read HANDOFF.md session 16, then `.hermes/plans/2026-10-24-p1-gemma-adoption-SESSIONS.md`.
+> I am starting S1 (Stage A). Take the five owner signoffs in §0 first."*
+> ⚠️ **Five owner signoffs gate Stage A** — none can be deferred. §0 of the brief sequences them
+> (take 1/2/3/5 now; 4 is provisional until S2's C0 measurement).
+>
+> **2. ✅ §I75 — THE GRAPH LANE IS REACHABLE AND SERVING. The recorded blocker was FALSE.** The plan
+> and session-13 §5 excluded the graph lane because *"Memgraph is DOWN — 7687 refused"*. That probe
+> tested the **cluster** IPs; the code and `.env` point at **`localhost:7687`**, where Docker
+> `synapse_memgraph` (2.18.1) is **Up** — the §I49 Finding 1 class again, a host assumed not resolved.
+> Measured: 1 Document / 3,533 Chunk / 907 Page / 6,065 Concept, and **5/5 multihop queries returned
+> 5 chunks each in ~5 s** through the production path (`graph_lane_probe.json`). ⚠️ Two red herrings
+> recorded: the container reports **`unhealthy`** purely because its healthcheck execs `mg_client`,
+> which is not in the image (24,362 consecutive failures, DB fine); and ⚠️ **reachability is not
+> contribution** — every query returned exactly its limit and several concept sets are off-query
+> (§I56 is the precedent). **`hop_distance` is still a constant 0** (a **code** defect, §G5/§I2) —
+> that is the only remaining reason to exclude the lane. ⚠️ **Also flagged, unexplained: Concept nodes
+> and `concept_embeddings` both read 6,065 now, against 7,427 recorded at §I21/§I49 — −1,362 in
+> lockstep. Mechanism not established; needs its own check.**
+>
+> **3. ✅ ARM 2 IS PRE-REGISTERED AND ~20× CHEAPER THAN ASSUMED.** `min_chunk_tokens` needed a
+> Docling re-parse of the 968-page PDF in the plan's reading. **It does not:** the E1 chunking is a
+> **pure function of the stored payloads** — 341 parents reconstructed from `parent_id`/`parent_text`
+> reproduce the index **exactly** (3,796 children, boundary-for-boundary, **~3 s**), run twice with a
+> byte-identical artifact. ⚠️ **And the knob is bigger than §E1 recorded: the merge removes 1,919
+> children = 33.6 %** (5,715 raw → 3,796), against §E1's 27 % on a 42-parent fixture. Pre-registration:
+> `.hermes/plans/2026-10-24-p1-min-chunk-tokens-ab-preregistration.md` — **commit it alone before the
+> run**. ⚠️ **The chunking arms do NOT force Shape A** (measuring is cheap; *shipping* a chunking
+> change is what needs a full re-ingest) — corrected in the gemma plan §5.
+>
+> **4. ⚠️ §I68's BLAST RADIUS IS MEASURED, AND A RECON UNDER-REPORTED IT** (`IMPROVEMENTS.md` §I68
+> §4a). The client-side-RRF fix is **not** a one-file no-op: `FusionQuery(fusion=Fusion.RRF)` is also
+> in `scripts/funnel_boundary_recall.py:249,279` (**the harness §I68's own measurement ran through**)
+> and `scripts/why_colbert.py:84`; and **two unit tests call `_qdrant_search` directly and assert on
+> the exact `Prefetch` structure the swap removes** (`tests/test_dense_prefetch_limit.py:51,61-65`,
+> `tests/test_downstream_widths.py:55`) — they break by construction and must be rewritten. The
+> dispatched recon claimed both "only store.py" and "no tests" — **both false, re-checked against the
+> source before recording.**
+>
+> **5. ✅ THE GEMMA PLAN'S LITERALS ARE VERIFIED — FOUR WERE WRONG, ALL CORRECTED IN PLACE** (plan
+> §8): the `sparse` lane **does not exist on v2** (`splade_enabled=False`, so nothing to carry over,
+> and a four-lane Stage E assertion is unpassable) — ⚠️ **THAT "CORRECTION" IS ITSELF WRONG, found and
+> registered 2026-10-24 (session 17) as `IMPROVEMENTS.md` §I76: `v2` DOES carry a `sparse` lane on
+> 3,796/3,869 points, it lives in `params.sparse_vectors` (a separate key from `params.vectors`, which
+> is what the session-16 check read), and `splade_enabled` resolves **True** (`.env:159` beats
+> `config.py:178`'s default). v3 must declare FOUR lanes.**; Stage C0's sample unit is **PARENTS, not chunks**
+> (one cluster call per parent); §5's "arms 2–3 need Shape A" (above); §6's "Memgraph is down". ✅
+> Holds: `store.py:451`/`:432`, `intent_router.py:156`, `evaluate_rag.py:333-341`, all four named
+> scripts present, `verify_collection_lanes.py` confirmed **absent**, the payload keys, and the HyDE
+> cache — **127 entries = exactly the 93 HyDE-eligible queries** (53 factual + 40 overview) of the
+> 133; the 40 "missing" are multihop, which `evaluate_rag.py:190` never Hyde-ifies. **Nothing to
+> generate; do not extend it.** ⚠️ The `dense_64` sweep surface is **33 literals across 18 files**,
+> and `dense_dim_low` sits in `embed_cache._FINGERPRINT_FIELDS` — so the rename **invalidates the
+> 874-dir resume cache** (correct, but it must be in the cost).
+>
+> **6. ⚠️ NOT COMMITTED, AND IT IS NOW SESSIONS 13–16.** The brief's §4 lists the independent lanes
+> (arm 2, §I68, §I75's follow-ups, housekeeping). **Committing is an owner decision and has been
+> outstanding since session 13.**
+>
 > **Last updated: 2026-10-23, session 12. ✅ §I61'S PRE-REGISTERED A/B RAN — THE LEVER IS A NULL, AND
 > THE LOSS IS THE 100-SLOT FUSION, NOT THE PREFETCH. Read `IMPROVEMENTS.md` §I65 and §I66 first.**
+>
+> **Last updated: 2026-10-24, session 14. ✅ PLAN §1 RAN — THE EMBEDDER SCREEN HAS A WINNER:
+> `google/embeddinggemma-300m` @768 PASSES the pre-registered rule, beating BOTH the incumbent
+> (Qwen3-1024, +0.1865) and §I63's Nomic-768 (+0.0465), all eleven verifiers passing. Read
+> `IMPROVEMENTS.md` §I70. ⚠️ It is an ORACLE screen — it licenses COSTING the re-ingest and ONE
+> product-endpoint run, both OWNER DECISIONS, NOT TAKEN.**
+>
+> **Last updated: 2026-10-24, session 15. ✅ §I71 ARM 1 RAN — THE CONTENT FILTER IS A NULL ON
+> BASE-LANE PAGE RANKING, AND THE REASON IS STRUCTURAL. The pre-registration's premise was WRONG and
+> the correction is the finding: the content window `[30, 936]` already excludes **244 of the
+> filter's 263 rejects**, so the treatment is **19 chunks, not 263**. The first run went VOID on that
+> premise error (C2/C4) plus one harness bug (C3); re-registered as C2′/C4′ and re-run, all EIGHT
+> guards pass. Read `IMPROVEMENTS.md` §I71, then the re-registration
+> `.hermes/plans/2026-10-24-p1-chunk-filter-ab-reregistration.md`.**
+>
+> ## ▶ SESSION 15 — WHAT HAPPENED, AND WHAT IS NEXT
+>
+> **1. ✅ THE RESULT — THE FILTER DOES NOT MOVE THE BASE LANE.** Paired Δ **ceiling-normalised
+> R@20** (§I58), arm T − arm C, n = 133, primary **gemma@768**:
+>
+> | contrast | what it moves | result |
+> |---|---|---|
+> | **gemma@768, cR@20** (PRIMARY) | pool 3,489 → 3,470 | Δ **−0.006330**, CI **[−0.021115, +0.008456]** **UNRESOLVED**, W/L/T **1/8/124** |
+> | gemma@768, raw R@20 | ″ | Δ −0.006391, CI [−0.021173, +0.008391] **UNRESOLVED** |
+> | qwen3@1024, cR@20 | ″ | Δ **+0.000009**, CI [−0.000009, +0.000028] **UNRESOLVED**; raw Δ **exactly 0** |
+>
+> **Per the pre-registered rule the filter does NOT ship**, and the honest statement is the
+> pre-registered one: **applying the content filter does not move base-lane page ranking on this
+> corpus — a RESULT, not an unresolved one.** The point estimate is slightly negative and is **under
+> half the resolution floor** (0.014786 at n = 133), so it is not a measured harm either. Under
+> qwen3 the treatment is **literally inert** (raw R@20 identical on all 133 queries).
+>
+> **2. ⚠️ THE HEADLINE IS THE PREMISE ERROR, AND IT IS THE FINDING.** The pre-registration's F1 said
+> the CURRENT filter would exclude **263** chunks and built two guards on it. That 263 is the
+> **WHOLE-CORPUS** count (3,796 chunks: 72 TOC on pages 22–34 + 186 index on pages **937–968** + 5
+> front matter on pages **2–14**). This arm's pool is the **content window `[30, 936]`** — 3,489
+> chunks — and **244 of the 263 sit outside it** (the index is entirely above 936, the front matter
+> entirely below 30, the TOC mostly below 30). **The treatment is 19 chunks.** ⚠️ **§I39's premise is
+> true of the CORPUS and false of the BASE LANE**: the retrieval lane is window-bounded, the card
+> generator (§I39's 5,100 junk cards) is **not**. The filter's marginal reach on the base lane is
+> **structurally capped at 19 chunks** — which is why the null was close to predictable in advance,
+> and why the *size* of the lever, not just its sign, is the result. ⚠️ F2's "pages with chunks
+> **933**" is also wrong: §I70's own artifact and this run both measure **888** (guard X1, two
+> independent directions agreeing exactly).
+>
+> **3. ⚠️ §I71 — THE FIRST RUN WAS VOID, AND THE DISPOSITION SPLIT IN TWO.** It failed **C2, C4**
+> (the premise error above — a corpus count written into a guard about a window-filtered pool) and
+> **C3**. C3 failed as **266 metric mismatches on bit-identical vectors** (`max_abs_diff 0.0`, 0 rows
+> differing) — impossible, and the tell that the *check* was wrong: the control arm was scored
+> against the raw reachable set instead of arm C's **own per-query ceiling**. **A control compared
+> under a different denominator is not a control.** Fixed. ⚠️ **C3 was a check that could only
+> fail.** VOID artifact preserved: `chunk_filter_ab_firstrun_VOID.json` (sha256 `0b25fd34…`).
+> **Re-registered** (`.hermes/plans/2026-10-24-p1-chunk-filter-ab-reregistration.md`, §I67's E4 → E4′
+> precedent — restated **by measurement**, not relaxed) and **re-run: all eight guards pass**, exit 0.
+> The pre-registration itself was **NOT edited**.
+>
+> **4. ✅ VERIFIERS: all EIGHT pass on the re-registered run**, including **C1 — arm C reproduces
+> §I70's qwen3@1024 row EXACTLY** (0.293934 / 0.569074 / 0.922982 / 1.0) — plus a **third exact
+> reproduction found after the run**: arm **C under gemma@768** equals §I70's `gemma@768` row
+> (R@20 **0.480410**, R@100 **0.704882**, R@500 **0.946105**), and C6's page-array sha256
+> `0ca575fabc5c59be…` is the array §I70's V6 reported. **Mechanical evidence, kept apart from any
+> verdict:** `chunk_filter_ab_verifier.py --check` — an independently written stdlib aggregation
+> reading only the raw per-query array — re-derives every aggregate, endpoint, CI and decision field
+> at **197 checks / 0 mismatches**. ✅ **Independent verifier `deleg_fac6860b` (`openai/gpt-oss-20b`,
+> model resolved from `hermes config get delegation`; empty fallback chain) dispatched READ-ONLY —
+> this session's shell returns empty stdout with exit 0, smoke-tested first — and it RETURNED:
+> 8/8 CONFIRMED, no refutations.** ⚠️ **NOT BANKED (4 API calls, 32.8 s): two of its cited field
+> paths do not exist in the artifact** (`meta.assembly`, `decision.pages_C` — verified absent), so its
+> verdicts are a weak corroboration and its citations are not evidence. ⚠️ **Both of its
+> "additional risks" are REFUTED**: the artifact does carry all 133 per-query rows, and the log does
+> print the text-vs-stale-column evidence (`19` flagged from text vs `5` stored `False`, which C4
+> asserts). The substantive half remains the mechanical evidence.
+>
+> **5. ▶ NEXT, IN ORDER.** (a) **Arm 2 — `min_chunk_tokens`** (32; §E1 measured it merging 27 % of the
+> new children and never re-checking the grown child's size), then arm 3 `semantic_threshold` (0.8),
+> then arm 4 late chunking (36 min/arm, and it changes the embedding rather than the chunking, so it
+> is its own contrast). ⚠️ **§0's power rule stands:** n = 133, floor ≈ **0.020** — a knob with a
+> plausible effect below that is out of scope for this gold set; record it, do not chase it. (b)
+> Unchanged and carried forward: the **owner decision on the gemma re-ingest** (§I70 — cost it
+> honestly; it needs a new named vector at 128 and a re-index of every derived collection), plan §2's
+> **HyDE cache** (which the product-endpoint run needs), the **§I66 stage decomposition**, §I68's
+> **client-side-RRF fix**, §I56's DA lane, §G2's V5 build, §I55's exclude-from-metrics follow-on,
+> §I58's `gold-003` caveat, §I53 item 6, and **whether to commit sessions 13–15's work (all
+> uncommitted)**.
+>
+> **6. ✅ BUILT IN THIS SESSION (not committed).** `logs/p1/step10/chunk_filter_ab.py` (the harness;
+> extends §I70's `embedder_screen.py`, metric helpers copied verbatim so C1 can be an exact
+> reproduction), `…_verifier.py` (independent stdlib aggregation, `--check` / `--extract`),
+> `chunk_filter_ab.json` (sha256 `4e64f1ac…`, wall 176.4 s), `…_firstrun_VOID.json` (preserved),
+> `…_verifier_extract.json`, the run log `chunk_filter_ab_run_session15.txt`, the **re-registration**
+> plan, the §I71 register entry, and this block. **No writes to any collection, no LLM calls, no
+> parse, no re-embed of the corpus.**
+>
+> **7. ✅ §I72 — THE CROSS-ENCODER SURVIVAL TEST RAN: THE EMBEDDER'S GAIN SURVIVES, BUT IT IS
+> HALVED.** This is the stage §I66 named as the funnel's largest single loss (0.6048 → 0.4318), and
+> the largest unmeasured risk in the gemma bet. Design: same corpus and shipped pool as §I70/§I71
+> (3,489 chunks), 133 queries, HyDE off, exact cosine; per query take the top **100** chunks by
+> cosine under each embedder (`cfg.reranker_fetch_k` — the product's own pool width), push each list
+> through the **LIVE** cluster cross-encoder, and score page-level ceiling-normalised R@20 before and
+> after. Endpoint: paired POST Δ, `gemma@768 − qwen3@1024`, n = 133.
+>
+> | stage | qwen3@1024 | gemma@768 | Δ | 95 % CI | W/L/T |
+> |---|---|---|---|---|---|
+> | **PRE** (cosine) | 0.274348 | 0.458665 | **+0.184317** | [+0.130809, +0.237824] | 12/77/44 |
+> | **POST** (cross-encoder) | 0.363144 | 0.460703 | **+0.097559** | [+0.056072, +0.139045] | 22/46/65 |
+>
+> **survival ratio 0.5293.** ⚠️ **The reading is the mechanism, not the verdict:** the cross-encoder
+> is a strong **equaliser** — it lifts the **weaker** embedder by **+0.0888** and the stronger by
+> **+0.0020**. So gemma's incremental value **at the product's last retrieval stage is +0.0976, not
+> the base lane's +0.1865.** ⚠️ It also partly explains why §I67's width levers were nulls: the
+> cross-encoder already repairs most pool-quality difference.
+>
+> **8. ⚠️ §I72 — THE FIRST RUN WAS VOID ON A METRIC-CONVENTION MISMATCH (the session's third
+> premise error).** Two page-level recall conventions are in play: §I70's screen uses **"top-k
+> PAGES"** (rank every chunk, dedupe to pages, take the first k pages — it produced the register's
+> 0.293934 / 0.480410), while the **PRODUCT** uses **"pages of the top-k CHUNKS"**
+> (`scripts/evaluate_rag.py:333-341`, and the only one available for a reranked arm). The
+> pre-registration's §2 described the product convention and its §4 required the PRE arm to
+> reproduce §I70's — **two different numbers**, −0.0196 / −0.0217 apart on the two embedders. **S1
+> failed; the run is VOID** (`ce_survival_firstrun_VOID.json`, sha256 `0947bc0d…`) and its numbers
+> are **not registered**. Restated as **S1′** (re-registration; §I67's E4→E4′ and §I71's C2→C2′
+> precedent): **(a)** §I70's convention is computed separately and reproduces the register
+> **exactly** (0.293934 / 0.480410) — that pins the instrument; **(b)** the contrast's two sides are
+> asserted to share ONE convention. Re-run: **all eight guards pass**, exit 0, artifact sha256
+> `47f20747…`. ⚠️ **Three premise errors in one session now** (§I71 F1, §I70 F2, this) — the
+> standing lesson: **when a guard asserts a reproduction of a number from elsewhere, name the
+> population AND the convention it was measured under.**
+>
+> **9. ✅ TWO INSTRUMENT RESULTS WORTH CARRYING.** (a) **The cluster cross-encoder is
+> DETERMINISTIC** — 10/10 repeat calls returned the identical order (S3), in direct contrast to
+> **Qdrant's server-side RRF, which §I68 measured nondeterministic**. So a reranked A/B on this path
+> does **not** inherit §I68's tolerance problem. ⚠️ 10 controls over 5 queries × 2 embedders — enough
+> for this run, not a characterisation under load. (b) **0 rerank failures** on 266 calls at
+> `fetch_k=100` (S4), where §I55 measured 1/133 rejections on the product path.
+> **Mechanical evidence:** `ce_survival_verifier.py --check` = **144 checks / 0 mismatches**.
+> **✅ Independent reviewer `deleg_c05e651f` (`openai/gpt-oss-20b`, read-only) RETURNED: 7/8
+> CONFIRMED, 1 UNVERIFIED, no refutations** — ⚠️ **not banked** (23 calls, 40 s). Its one
+> `unverified` is the determinism claim on sample size, which is **already the caveat §I72 records**.
+> ⚠️ **Its one "risk" is REFUTED and the error is in the reviewer's own arithmetic**: it expected
+> `gain_qwen3 + gain_gemma` (0.0908) to equal `post_delta` (0.0976); the correct identity is
+> `post_delta = pre_delta + gain_gemma − gain_qwen3`, which holds to **1e-9, and per-query to 1e-12
+> with 0 violations across 133 rows**. Recorded: **check a reviewer's arithmetic against the artifact
+> before defending anything.**
+>
+> **10. ✅ THE HYDE CACHE IS BUILT (plan §2) — item 1 of the two the owner asked for.**
+> `src/pdf_ingestion/hyde_cache.py` + `tests/test_hyde_cache.py` (**14 tests, all six guards
+> mutation-proven** — each mutation makes its guard fail) + `scripts/build_hyde_cache.py` +
+> `data/hyde_cache/` (gitignored). It caches the **TEXT** keyed by **query id**, so one file serves
+> every candidate embedder; the file name carries the query-set, model and prompt digests and the
+> **header is re-validated on read** (a model/prompt/query change is an honest miss, never a silent
+> reuse). ⚠️ **A miss raises; it never falls back to a live LLM call mid-run** — that is the
+> nondeterminism it exists to remove. ⚠️ The HyDE prompt is **duplicated** in `evaluate_rag.py` and
+> `funnel_boundary_recall.py`; a test now asserts this module's prompt still matches both call sites,
+> because the cache key derives from it. **Not wired into §I70's screen** (HyDE-off by design).
+>
+> **11. ✅ §I74 — GEMMA vs NOMIC AT THE CROSS-ENCODER: GEMMA WINS, NARROWLY.** The run §I72 left
+> open (it compared gemma against the *incumbent*, not against the cheap candidate). Same design plus
+> a third arm — `qwen3@1024` as the instrument anchor, `nomic@768` and `gemma@768` as the contrast —
+> same pool, 133 queries, HyDE off, top-100 cosine candidates per arm, live cross-encoder.
+>
+> | contrast | Δ | 95 % CI | W/L/T |
+> |---|---|---|---|
+> | **PRE** (cosine order) | **+0.045469** | [+0.020104, +0.070835] | 16/50/67 |
+> | **POST** (cross-encoder) | **+0.029248** | [+0.004620, +0.053876] | 12/34/87 |
+>
+> **survival ratio 0.643251** — gemma's advantage over nomic shrinks **36 %** through the stage (less
+> than the 47 % its advantage over the incumbent lost, §I72). Context: `gemma − qwen3` POST
+> **+0.097559**, `nomic − qwen3` **+0.068311** — **nomic alone already recovers ~70 % of gemma's gain
+> over the incumbent.** **Three anchors reproduced §I70 EXACTLY** (qwen3 0.293934, nomic 0.433930,
+> gemma 0.480410) under §I70's own convention. All **nine guards pass**, exit 0, artifact sha256
+> `7de5cca4…`; independent aggregation **182 checks / 0 mismatches** (⚠️ its first `--check` caught a
+> bug in **itself** — reversed operands for the `nomic_minus_qwen3` label — not in the artifact).
+> ⚠️ **Reviewer: the first dispatch (`deleg_862d3e0a`) DIED on output-length truncation** after being
+> pointed at the 400 KB artifact — **no verdict, not a pass**. Re-dispatched against a **23 KB compact
+> pack** with a 5-claim / 500-word cap: **`deleg_4b0ece7b` RETURNED 5/5 CONFIRMED, no refutations**
+> (5 calls, 16.7 s — ⚠️ **not banked**; one cited path misattributed, and on one claim it *inferred*
+> the resolved flag rather than reading it). **Lesson: point a reviewer at a compact pack, never at a
+> large artifact whole.**
+>
+> ⚠️ **The margin is thin and the entry says so:** the run's own resolution floor is **0.024628**, so
+> δ = +0.029248 is only **~1.19× the floor**, and the CI's lower bound (+0.004620) sits well below it
+> — the data are also consistent with a true effect *smaller* than the floor. The artifact records
+> both floors and the CI; the "thin" reading is the register entry's, derived from those fields.
+>
+> **12. ✅ THE ADOPTION CALL IS TAKEN (OWNER, 2026-10-24): `google/embeddinggemma-300m` @768**, with
+> the low lane renamed and widened 64 → 128. The pre-registered rule was met (+0.029248, CI excluding
+> 0, δ > the 0.020 floor) and ⚠️ **the margin is narrow — ~1.19× the run's own resolution floor
+> (0.024628), with the CI's lower bound (+0.004620) below it. Quote the size, not just the sign.**
+> ⚠️ **nomic was DECLINED as a COST decision, not a data finding** — it is a same-width drop-in (MRL
+> 64 keeps `dense_64` true) needing **no code change**, so it is not to be restated later as "nomic
+> was worse".
+>
+> **▶ THE EXECUTION PLAN: `.hermes/plans/2026-10-24-p1-gemma-adoption-and-reembed-plan.md`.** Stages
+> A–G, each with a verifier that can fail: **A** the code change (⚠️ **the rename lands BEFORE the
+> widening** — `store.py:451` hardcodes `using="dense_64"` and `store.py:432` keys the schema on the
+> literal string, so widening first would need a lane *named* `dense_64` that is 128-dim, §I13's trap);
+> **B** create `knowledge_base_v3` with four lanes (dense full 768 + `dense_low` 128 + `colbert` +
+> `sparse` — ⚠️ the last two are **carried over**, different models, unchanged vectors); **C0** measure
+> the late-chunk pass on ~20 chunks BEFORE committing; **C** the re-embed — ⚠️ **Shape B, preserving
+> chunk ids**, because the payloads carry `text` / `parent_text` / `char_start` / `char_end`, so late
+> chunking is reproducible **without re-parsing** and **cards (8.9 h) + the graph (1 h 6 m) stay
+> valid**; **D** retrain the intent classifier (⚠️ `intent_router.py:156` **refuses** a 1024-trained
+> model against a 768 embedder — not optional); **E** preflight; **F** ONE pre-registered
+> product-endpoint run, HyDE frozen via §I73's cache; **G** the §I66 stage decomposition alongside it.
+> ⚠️ **Five signoff points** in the plan's §7 (lane name, `dense_full` now-or-debt, v3-not-in-place,
+> Shape B vs A, §I68 before F). ⚠️ **A new deliverable falls out: `scripts/verify_collection_lanes.py`
+> does not exist in the repo** (the name came from the lost skill files) and Stage C must write it.
+>
+> **13. ▶ WHAT A SHIP STILL NEEDS (unchanged by this run).** The **product endpoint itself** is
+> unmeasured. It needs (a) the HyDE cache ✅ built, (b) the **low-lane rename** (gemma) or nothing
+> (nomic), (c) the **§I68 client-side-RRF fix** if the run is to be free of that tolerance, then the
+> **scratch-index product-endpoint run** (plan §3) — retrieval-only first, then the full run with
+> synthesis + judge (~70 min, 5,434 judge calls per §I64). ⚠️ And the **full re-ingest is a separate
+> owner decision**: ~58.6 min ingest + 8.9 h cards + 1 h 6 m graph + every derived collection +
+> the intent-classifier retrain.
+>
+> ## ▶ SESSION 14 — WHAT HAPPENED, AND WHAT IS NEXT
+>
+> **1. ✅ §I70 — THE EMBEDDER SCREEN RAN, AND THERE IS A WINNER.** Plan
+> `.hermes/plans/2026-10-24-p1-embedder-screen-hyde-cache-and-finetune-plan.md` §1. Instrument §I63's
+> cross-embedder experiment, extended: corpus fixed (doc `7ba61432`, 3,489 in-window chunks), exact
+> brute-force cosine, 133 gold queries, endpoint **paired ceiling-normalised R@20**, **HyDE off**,
+> **no LLM calls, no writes**. Probe `logs/p1/step10/embedder_screen.py`, artifact
+> `logs/p1/step10/embedder_screen.json` (sha256 `990e400f…`), independent aggregation
+> `…_verifier.py`, reviewer pack `…_verifier_extract.json`.
+>
+> | arm | ceiling-norm R@20 | Δ vs qwen3@1024 | Δ vs nomic@768 |
+> |---|---|---|---|
+> | qwen3@1024 *baseline* | 0.293934 | — | — |
+> | nomic@768 *baseline* | 0.433930 | +0.1400 (§I63, reproduced) | — |
+> | **gemma@768** | **0.480410** | **+0.186476 [+0.1333, +0.2397]** | **+0.046480 [+0.0170, +0.0760]** |
+> | gemma@128 | 0.410032 | +0.116098 | −0.023898 *(straddles 0)* |
+> | mpnet@768 | 0.306226 | +0.012292 *(straddles 0)* | −0.127704 |
+>
+> **The rule:** a candidate must beat **BOTH** baselines with a CI excluding 0 before a re-ingest is
+> even costed. **`gemma@768` is the only arm that passes** — and it passes on both contrasts. mpnet
+> (NLI, not retrieval) loses to the incumbent, exactly as predicted.
+>
+> **2. ⚠️ THE ADOPTION COST IS THE 64d LANE.** EmbeddingGemma has **no 64d MRL slot** (its smallest is
+> **128**), and at 128 it is *not* better than nomic@768 (−0.0239, unresolved). So a gemma re-ingest
+> means **a new named vector at 128** — a change of width *and* model in the funnel's fast first
+> stage — plus a re-index of every derived collection. The win is at **full dimension 768**.
+>
+> **3. ✅ VERIFIERS: all TWELVE pass, four of them EXACT reproductions of registered rows** — §I60's
+> d=1024 (V3), §I59's `new_fulldim` (V4) and `new_mrl64` (V5), §I63's arm N (V11). Plus: the whole
+> screen was **run three times** and all three artifacts agree on every per-query arm score (A-vs-A
+> across runs), and a **second, independently written stdlib aggregation** re-derives every aggregate,
+> endpoint and decision field with **0 mismatches**. ✅ **Independent verifier `deleg_1dd4aa6a`
+> (`openai/gpt-oss-20b`, model confirmed from the run's `manifest.json`): 10/10 CONFIRMED**, but it was
+> **cheap (4 API calls, 39 s) so it is NOT banked** — the substantive half is the mechanical evidence.
+> ⚠️ **Its one finding was REAL and is FIXED: V1 skips qwen3, so the INCUMBENT's query-side prefix was
+> the one prefix nothing asserted.** (Indirectly pinned by V3/V4/V5/V11, but indirect is not asserted.)
+> **V12** now asserts `embed_query` == cluster(`instruction + text`) at cos **1.000000**, raw cos
+> **0.818934**; the screen was **re-run** so the artifact matches the probe revision. Artifact is now
+> sha256 **`990e400f…`**. **Still nothing committed** — that is an owner call.
+>
+> **4. ⚠️ NEW FINDING, REGISTERED NOT MEASURED — the project's Nomic MRL truncation may not be
+> Nomic's.** `NomicEmbedder._truncate` / `cluster_embedder.mrl_slice` do a **plain slice + re-normalise**;
+> Nomic's own model card prescribes **`F.layer_norm` over the full 768 dims BEFORE the slice**. Different
+> functions ⇒ **every Nomic-64d number in the register is under the project's convention**. Do not
+> "fix" it without re-measuring — §I59's rows were produced this way. (In §I70.)
+>
+> **5. ▶ NEXT, IN ORDER.** (a) **Owner decision on the re-ingest** — cost it honestly (58.6 min ingest
+> + 8.9 h cards + 1 h 6 m graph + `derivative_artifacts` 73,406 + `concept_embeddings` 7,427 + the
+> intent classifier + RAPTOR + ColPali + §I58's `_REPOINT` map; a new embedder means new chunk ids, so
+> **all** of it). (b) If yes: **ONE** pre-registered product-endpoint run, **HyDE on and frozen** —
+> which needs **plan §2's HyDE cache first** (it does not exist today; `evaluate_rag.py:190` calls the
+> LLM per query, so every arm's query vector is nondeterministic — the §I68 class). (c) Run the §I66
+> stage decomposition alongside it (base → funnel → cross-encoder → generator) to show whether the
+> better embedder fixed the full-dimension **ranking** lane or just moved the loss. (d) Plan §4's
+> domain fine-tune is the remaining lever if the re-ingest is declined. (e) Carried forward unchanged:
+> §I56's DA lane (one-variable test), the §I68 client-side-RRF fix, §G2's V5 build, §I55's
+> exclude-from-metrics follow-on, §I58's `gold-003` caveat, §I53 item 6, and **whether to commit
+> session 13's work (still uncommitted)**.
+>
+> **6. ▶ NEXT SESSION — THE CHUNKING QUESTION, PRE-REGISTERED AND COMMITTED. Read
+> `.hermes/plans/2026-10-24-p1-chunking-filter-ab-preregistration.md` FIRST; it is the spec.**
+> The owner's position is that the NEW corpus's chunking is better on the merits; the register's only
+> relevant number points the other way (Nomic: old 0.498722 cnorm / new 0.433930). §I63's 0.0648
+> residual mixes **chunking + content-filter state + chunk count**, and none has been isolated.
+> **Arm 1 isolates the content-filter state**, because it is the one of the three that can be varied
+> with **no parse, no re-chunk and no re-embed** — the filter only changes *which chunks are in the
+> candidate pool*, over vectors already stored. Two arms (control = the shipped pool; treatment =
+> that pool minus the **263** chunks the CURRENT `content_filter` rejects — ⚠️ computed from the
+> **TEXT**, not the stale stored `is_content`, which reads 5), endpoint **paired ceiling-normalised
+> R@20**, primary embedder **gemma@768**, secondary **qwen3@1024**, guards **C1–C6**.
+> ⚠️ **Report `chunks/page` in every arm** — page-deduped recall scores a page at its best chunk's
+> rank, and it is **6.68 old vs 4.07 new**, a 64 % difference in chances. ⚠️ **A negative is
+> interpretable**: removing a high-ranking TOC chunk from a page can *lower* that page's score.
+> Pre-registration committed **alone** as **`aa4b55b`**, before the harness exists.
+> **Deliverables:** `logs/p1/step10/chunk_filter_ab.{py,json}`, `…_verifier.py` (independently written,
+> `--check`), the §I71 register entry, and a verifier dispatched **with** the run
+> (`openai/gpt-oss-20b`, read-only — this session's shell returned empty stdout with exit 0).
+> Then arm 2 = `min_chunk_tokens`, arm 3 = `semantic_threshold`, arm 4 = late chunking (36 min/arm).
 >
 > **Last updated: 2026-10-24, session 13. ✅ THE DOWNSTREAM WIDTHS ARE MEASURED — **BOTH LEVERS ARE
 > NULLS** at the product endpoint (the fusion width W, and the re-score cut L), at ample power. The
@@ -91,8 +532,13 @@
 >   §1 **winner**, not the incumbent. GPU job — hours, not minutes.
 > - ⚠️ **OUT OF SCOPE (§5):** sub-0.02 knobs; **the widths (§I67 closed them — do not re-test, including
 >   "more candidates from DA/graph/overview pooled at the fusion lane")**; an **all-lanes-at-once**
->   matrix (§I56's unattributability defect); the **graph lane** (Memgraph is DOWN — 7687 refused — and
->   `hop_distance` is a constant 0); the visual lane (needs ColPali data for the new doc).
+>   matrix (§I56's unattributability defect); ⚠️ ~~the **graph lane** (Memgraph is DOWN — 7687 refused
+>   — and `hop_distance` is a constant 0)~~ — **CORRECTED 2026-10-24 (session 16), see §I75: Memgraph
+>   is UP on `localhost:7687` (Docker `synapse_memgraph`), and the lane is REACHABLE AND SERVING.
+>   The "DOWN" reading probed the CLUSTER IPs; the code and `.env` point at localhost.** What still
+>   stands is `hop_distance` = a constant 0 (a **code** defect, §G5/§I2) — so the lane is no longer
+>   excluded on an infrastructure premise, and reachability is **not** contribution (§I56). The visual
+>   lane still needs ColPali data for the new doc.
 > - **Also carried forward:** the §I68 client-side-RRF fix (own plan; also removes the instrument
 >   nondeterminism); §I56's DA lane (one-variable test); §G2's V5 build (signed off, not built); §I55's
 >   exclude-from-metrics follow-on; §I58's `gold-003` caveat; §I53 item 6 (the stale §G2 artifact); and

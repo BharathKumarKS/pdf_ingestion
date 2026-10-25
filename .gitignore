@@ -96,6 +96,11 @@ data/intent_classifier/
 # committing it would only pin one machine's corpus state.
 data/embed_cache/
 data/card_cache/
+# The HyDE hypothetical cache (plan §2): derived and re-derivable, but it is the FROZEN TEXT that
+# makes an A/B comparable — without it every arm embeds a different hypothetical for the same
+# query. Machine-local like the two above; the file name carries the query-set, model and prompt
+# digests, so a stale file cannot be mistaken for a current one.
+data/hyde_cache/
 # The Phase 3 concept-extraction checkpoint (IMPROVEMENTS.md §I23): same class as the two above —
 # derived, re-derivable, keyed on (document, model, prompt digest), and it exists so an aborted
 # multi-hour build can resume. Machine-local by nature.

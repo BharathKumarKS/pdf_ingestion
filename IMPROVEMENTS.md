@@ -1212,6 +1212,19 @@ embedding.** The middle and back of that pipeline are missing.
   most of them are front-matter or objective lists, which is exactly what chunk-level `is_content`
   is for. Still a measurement to settle after the re-ingest (funnel candidate counts), not a code
   change now.
+- ⚠️ **RE-MEASURED ON THE REAL CORPUS 2026-10-24 (session 16) — the merge is BIGGER than the fixture
+  said: 33.6 %, not 27 %.** The numbers above are a **42-parent fixture** (`test_book.pdf`). On the
+  live document `7ba61432` the raw chonkie segmentation yields **5,715 children** and the shipped
+  `min_chunk_tokens=32` merge leaves **3,796** — so the merge removes **1,919 children (33.6 %)**.
+  ⚠️ **This is a scope correction, not a disproof** — the fixture figure was right for the fixture.
+  Also measured in the same probe, and load-bearing for the arm that settles this knob:
+  **the E1 chunking is EXACTLY reproducible from the stored payloads** (341 parents reconstructed
+  from `parent_id`/`parent_text`; re-cutting reproduces all 3,796 children boundary-for-boundary and
+  text-for-text, in ~3 s) — so testing `min_chunk_tokens` needs **no Docling re-parse**; and the
+  **embed cache cannot help such an arm** (`embed_cache.CachedParent.rebuild` validates against the
+  live children's text and char spans, so a different cut is an honest miss).
+  Evidence: `logs/p1/step10/rechunk_from_payload_probe.{py,json}` (sha256 `1c47e3bcbb203295…`).
+  The arm is pre-registered: `.hermes/plans/2026-10-24-p1-min-chunk-tokens-ab-preregistration.md`.
 
 ### E2. Parent/child hierarchy (hierarchical markdown → parent chunks) ⚠️ requires re-ingest
 - **What:** use Docling's markdown heading structure to define **parent** chunks
@@ -5510,6 +5523,33 @@ before/after comparison and its own register entry — **not** a silent swap to 
 ⚠️ **Do not** reach for `exact=True` as the fix: the probe above shows the ANN is already deterministic,
 so it changes nothing about this defect.
 
+**4a. THE BLAST RADIUS — MEASURED 2026-10-24 (session 16). It is NOT a one-file no-op, and two
+"obvious" readings of it are wrong.** An independent read-only reconnaissance was dispatched for this
+fix; ⚠️ **it under-reported the blast radius in both directions below, and its claims were re-checked
+against the source before being recorded here** (the standing rule: a delegated check is a self-report).
+
+* ⚠️ **Server-side RRF is NOT only in `store.py`.** `FusionQuery(fusion=Fusion.RRF)` is also called by
+  `scripts/funnel_boundary_recall.py:249` and `:279`, and by `scripts/why_colbert.py:84`.
+  `funnel_boundary_recall.py` is **the harness §I68's own 23-query pinned-HyDE measurement ran
+  through** — so the instrument that measured the nondeterminism **shares it**, and an A/B of this fix
+  must decide explicitly whether the harness moves with the product or is pinned as a before-arm.
+* ⚠️ **There ARE unit tests on this path — the recon reported there were none.** Both
+  `tests/test_dense_prefetch_limit.py:51` and `tests/test_downstream_widths.py:55` call
+  `store._qdrant_search(...)` **directly** and assert on the very `Prefetch` structure the swap removes
+  (`test_dense_prefetch_limit.py:61-65` asserts `prefetch[0].prefetch`). So the fix **breaks them by
+  construction** — and they are precisely the tests that pin §I61's `dense_prefetch_limit` and §I67's
+  downstream widths. They must be **rewritten to assert the new call shape**, not deleted.
+  `tests/test_backmatter_gate.py:114,146` also monkeypatches `_qdrant_search` (signature-level only).
+* ✅ `_rrf_merge` itself is a pure, deterministic `@staticmethod` (`store.py:635-656`) with **four
+  existing tests** (`tests/test_phase_a.py:16-53`) and **no production caller** — so wiring it in is a
+  genuine change of behaviour, not a call to something already exercised.
+* ⚠️ **A semantic difference to check before the swap, not yet measured:** `_rrf_merge` keeps each
+  chunk's **best raw `score` across lanes** (`store.py:649`). Raw scores from different lanes are **not
+  comparable** (dense cosine vs ColBERT MaxSim vs sparse dot product), whereas Qdrant's server-side RRF
+  never surfaces that comparison. Downstream, `_mmr_select` consumes `rrf_score` **or** `score`
+  (`store.py:666`). What MMR actually receives after the swap is a question the before/after must
+  answer — recorded as **to check**, not as a proven defect.
+
 **5. Disposition.** Registered, **not fixed**. The §I67 re-run proceeds with **E4′ (metrics-only)** —
 which is a *disambiguation* of the original pre-registration's wording, justified by the measured
 zero metric-floor, **not** a fix for this defect. This entry is the standing record that the funnel is
@@ -5578,3 +5618,825 @@ silent, tie-only, and breaks the artifact's self-consistency rather than any sin
 **Register against:** §I57 (the per-query-JSON twin, whose whole purpose is re-derivability), §I44 (an
 artifact that is not what it claims), §I67 (the re-run whose E5 caught it), §I25 (a silent failure that
 reads as success).
+
+---
+
+### I70. 2026-10-24 — the EMBEDDER SCREEN: `google/embeddinggemma-300m` PASSES the pre-registered rule. It beats BOTH the incumbent (Qwen3-1024) and §I63's Nomic-768 — on an ORACLE instrument, so this licenses a re-ingest decision, not a ship
+
+**The question.** §I63 showed the embedder is the larger half of §I59's full-dimension ranking loss
+(Nomic-768 beat Qwen3-1024 by **+0.1400** ceiling-normalised R@20 on this corpus). The plan's §1 turns
+that into a decision: **screen the candidate embedders cheaply, on an oracle, before costing a
+re-ingest.** Instrument: §I63's cross-embedder experiment, extended — hold the corpus fixed (new doc
+`7ba61432`, **3,489** in-window chunks), swap only the embedder, **exact brute-force cosine** over the
+whole corpus (page-deduped; **not** Qdrant, because §I60 measured up to **18.5 %** of the pool lost to
+the filtered-HNSW path), 133 gold queries, endpoint **paired ceiling-normalised R@20** (§I58).
+**HyDE OFF** — raw query vectors, so the comparison is not confounded by the generator. No LLM calls,
+no writes.
+
+**Artifacts.** Probe `logs/p1/step10/embedder_screen.py` (**sha256 `13f90fae…`**); artifact
+`logs/p1/step10/embedder_screen.json` (**sha256 `990e400f…`**, wall **252 s** on the final run);
+independent aggregation `logs/p1/step10/embedder_screen_verifier.py`; reviewer pack
+`logs/p1/step10/embedder_screen_verifier_extract.json`.
+⚠️ **The run is throughput-dependent, not broken:** the gemma re-embed of the same 3,489 chunks took
+**66 s**, then **1,074 s** (cluster contended), then **73 s** — a **16×** swing on identical work.
+`meta.embed_seconds` records which. The measured numbers were identical across all three runs.
+
+**Candidates — each at ITS OWN smallest trained MRL slot AND at full dim** (owner decision 2026-10-23:
+do not force a fixed 64d), plus the incumbent's 64d lane as a reference arm:
+
+| arm | model | native / low slot | ceiling-norm R@20 | R@100 | R@500 |
+|---|---|---|---|---|---|
+| `qwen3@1024` *baseline* | `Qwen/Qwen3-Embedding-0.6B` (incumbent) | 1024 / 32 | 0.293934 | 0.569074 | 0.922982 |
+| `qwen3@64` (reference) | ″ | — / 64 | 0.102763 | 0.358682 | 0.788671 |
+| `qwen3@32` | ″ | — / 32 | 0.075134 | 0.251154 | 0.757741 |
+| `nomic@768` *baseline* | `nomic-ai/nomic-embed-text-v1.5` | 768 / 64 | 0.433930 | 0.628993 | 0.927347 |
+| `nomic@64` | ″ | — / 64 | 0.364342 | 0.569055 | 0.916027 |
+| **`gemma@768`** | **`google/embeddinggemma-300m`** | **768 / 128** | **0.480410** | **0.704882** | **0.946105** |
+| `gemma@128` | ″ | — / 128 | 0.410032 | 0.615558 | 0.913470 |
+| `mpnet@768` | `tomaarsen/mpnet-base-nli-matryoshka` | 768 / 64 | 0.306226 | 0.497232 | 0.859879 |
+| `mpnet@64` | ″ | — / 64 | 0.253096 | 0.422891 | 0.796950 |
+
+**The pre-registered rule, applied mechanically** (a candidate must beat **BOTH** baselines on paired
+ceiling-normalised R@20 with a CI excluding 0 — nomic is in the comparison because it already beats the
+incumbent, so losing to nomic is not an improvement):
+
+| arm | Δ vs `qwen3@1024` | Δ vs `nomic@768` | beats both? |
+|---|---|---|---|
+| **`gemma@768`** | **+0.186476 [+0.133280, +0.239672]** W/L/T **78/12/43** | **+0.046480 [+0.016960, +0.076000]** W/L/T **52/19/62** | **✅ PASSES** |
+| `gemma@128` | +0.116098 [+0.066087, +0.166109] | −0.023898 [−0.053772, +0.005976] *straddles 0* | ❌ |
+| `nomic@64` | +0.070408 [+0.018394, +0.122421] | −0.069588 [−0.098859, −0.040317] | ❌ |
+| `mpnet@768` | +0.012292 [−0.043602, +0.068187] *straddles 0* | −0.127704 [−0.164277, −0.091130] | ❌ |
+| `mpnet@64` | −0.040831 [−0.098377, +0.016715] | −0.180830 [−0.226113, −0.135547] | ❌ |
+| `qwen3@64` | −0.191171 [−0.244010, −0.138332] | −0.331167 [−0.391207, −0.271127] | ❌ |
+| `qwen3@32` | −0.218800 [−0.271065, −0.166535] | −0.358796 [−0.419999, −0.297593] | ❌ |
+
+**`gemma@768` is the only arm that passes, and it passes on both contrasts with room.** It is
+**+0.0465 over the best known embedder on this corpus**, and that delta is **~2.3× the §0 resolution
+floor** (~0.020), so it is not a rounding-scale result — it is 52 queries better against 19 worse.
+**`mpnet` behaves exactly as predicted** (NLI-trained, not retrieval): it does not beat the incumbent,
+and its own-slot variant is worse still.
+
+⚠️ **What this does NOT license — a ship.** It is an **oracle**: exact cosine over the whole corpus,
+not the funnel. Per the plan §3 it licenses exactly two things: (a) **costing the re-ingest**
+(58.6 min ingest + 8.9 h cards + 1 h 6 m graph + `derivative_artifacts` 73,406 + `concept_embeddings`
+7,427 + the intent classifier + RAPTOR + ColPali + §I58's `_REPOINT` map — a new embedder means new
+chunk ids, so **all** of it), and (b) **ONE** pre-registered product-endpoint run with HyDE on and
+frozen. Both are **owner decisions, not taken here**.
+
+⚠️ **The 64d problem is the adoption cost, and it is real.** EmbeddingGemma has **no 64d slot** — its
+smallest trained MRL dim is **128**. The funnel's fast first stage is `dense_dim_low = 64`, so adopting
+gemma means **a new named vector at 128 and a re-index of every collection** — and at 128 the model is
+**not** better than nomic at 768 (−0.0239, unresolved). So the win is at **full dimension (768)**;
+the low lane would have to change width as well as model. `qwen3@32` (the incumbent's own smallest
+trained slot) is **much worse** than its 64d lane (0.0751 vs 0.1028) — the plan's "do not force a fixed
+64d" decision cuts both ways.
+
+⚠️ **One asymmetry, recorded not hidden.** The incumbent arm ranks the vectors **stored in Qdrant**,
+which the production ingest produced **with late chunking** (the per-token mean over the parent
+context); every other arm embeds the chunk text directly, **without** late chunking. So the comparison
+is **conservative for the candidates** — gemma beats a late-chunked incumbent while not having late
+chunking itself. ⚠️ It cuts the other way for a candidate that *loses*: it may be losing to late
+chunking, not to the model. §I63 carried the same asymmetry for nomic. **Not measured here:** whether
+late chunking helps or hurts each of these models.
+
+⚠️ **A truncation check, because gemma has a 2048-token window.** Measured on the corpus
+(`meta.chunk_char_stats`): median **457** chars, p90 **959**, max **2,949** ⇒ **max ≈ 655 estimated
+tokens** (chars / 4.5, §I52's measured chars-per-token on real physics text) and
+**0 of 3,489 chunks** over gemma's window. Truncation is not a confound here.
+
+⚠️ **A REGISTERED FINDING, not measured by this screen — the project's Nomic MRL truncation may not be
+Nomic's.** `embedder.NomicEmbedder._truncate` (and `cluster_embedder.mrl_slice`) is a **plain slice to
+the first `dim` coordinates + re-normalise**. Nomic's own model card for `nomic-embed-text-v1.5`
+prescribes **`F.layer_norm(x, (768,))` over the FULL 768 dims first, then the slice, then
+`F.normalize`** — i.e. a layer-norm before truncation. Those are different functions, so **every
+Nomic-64d number in the register (§I59's `new_mrl64` / `old_mrl64`, and `nomic@64` here) is measured
+under the project's convention, not Nomic's.** It is stated as a discrepancy between two sources, not
+as a measured effect: the layer-norm variant would need the **un-normalised** pooled vectors, which the
+cluster does return but this probe discards. **Do not "fix" `_truncate` without re-measuring** — §I59's
+registered rows were produced with the current convention.
+
+**Verifiers — all eleven pass, and four of them are EXACT reproductions of rows registered by earlier,
+separate experiments.** That is what makes the baselines comparable rather than merely plausible.
+
+| # | check | result |
+|---|---|---|
+| V1 | the cluster is a generic passthrough: the prefix changes the vector for every prefixed model, vectors depend on the text, and nomic reproduces the **local** `NomicEmbedder` | doc cos **1.000000** / query cos **1.000000** (raw 0.937749) — §I62's prefix trap, confirmed live in the run that depends on it |
+| V2 | **A-vs-A negative control** — nomic re-embedded at batch 128 vs 64 | **max_abs_diff 0.0**, 0 mismatches |
+| V3 | `qwen3@1024` reproduces §I60's d=1024 row exactly (every-chunk pool) | R@20 0.293934 · R@100 0.569074 · R@500 0.922982 · R@1000 1.0 — all exact |
+| V4 | `qwen3@1024` reproduces §I59's `new_fulldim` exactly (top-1000 pool) | R@20 0.293934 · R@100 0.569074 · R@500 0.922421 · R@1000 0.926563 — all exact |
+| V5 | `qwen3@64` reproduces §I59's `new_mrl64` exactly | R@20 0.102763 · R@100 0.358682 · R@500 0.788044 · R@1000 0.815136 — all exact |
+| V6 | every arm ranks one shared `pages` array; n_relevant identical across all 9 arms | pool 3,489; pages sha256 `0ca575fabc5c59be` (the same array §I63 used) |
+| V7 | errors reported, never silently dropped | 0 errors, 133 queries kept |
+| V8 | slice sanity — each low-dim vector is unit-norm and the exact truncation of its full vector | max norm error 4.8e-12; `is_exact_truncation` true for all 5 |
+| V9 | the endpoint ignores `dimensions` | asked 128, got the native dim on all four models |
+| V10 | all four models served at their expected native dims | qwen3 1024 · nomic 768 · gemma 768 · mpnet 768 |
+| V11 | `nomic@768` reproduces §I63's arm N exactly | R@20 0.433930 · R@100 0.628993 · R@500 0.927347 — all exact |
+| V12 | **the INCUMBENT's** query path applies `cfg.query_instruction` — the one prefix nothing else asserted (V1 skips qwen3) | production path == `instruction + text` at cos **1.000000**; raw (no instruction) cos **0.818934**, so the instruction is load-bearing |
+
+**Two further pieces of mechanical evidence, kept separate from any verdict** (the author checking the
+author, per the standing rule):
+1. **The whole screen was run THREE times and all three artifacts agree exactly** — `arms`,
+   `endpoints`, `decision` and all 133 per-query `arms` blocks are identical across every run. That is
+   an A-vs-A across runs, and it extends V2's batch-invariance to the gemma arm (which V2 does not
+   cover, since V2's control is nomic). ⚠️ The **wall time varied 5×** across those runs on identical
+   work (see the artifacts note above) — which is exactly why the throughput is recorded and the
+   numbers, not the clock, are the evidence.
+2. **The artifact's summary re-derives from its own raw per-query array, 0 mismatches.**
+   `embedder_screen_verifier.py --check` is a **second, independently written** aggregation — stdlib
+   only, no numpy, different code shape, reading only the raw array — and it reproduces every
+   aggregate, every endpoint and every decision field. ⚠️ §I69's float leak does not apply here: the
+   probe records through `round(..., 6)` on Python floats only.
+
+**✅ INDEPENDENT VERIFIER RAN 2026-10-24 — `openai/gpt-oss-20b`, `deleg_1dd4aa6a`,
+`status=completed`: 10/10 CONFIRMED, and its one finding is REAL.** ⚠️ **But it was cheap — 4 API
+calls, 39 s** — so per the standing rule it is **not banked**: the substantive half is the mechanical
+evidence above (three identical runs, the independently written aggregation at 0 mismatches, four exact
+reproductions of registered rows), and the reviewer's citations were checked before its verdict was
+used. Every identifier it cited resolves (`V1_cluster_is_a_passthrough`, `V2_A_vs_A_control`,
+`V3`/`V4`/`V5`/`V11`, `rank_pages`, `scroll_pool`, and the verifier's `recompute` / `diff_report`), and
+its model is read from the run's `manifest.json`, not from a note.
+
+**Its finding, adjudicated as ACCEPTED AND FIXED — V1 skips qwen3, so the INCUMBENT's query-side
+prefix was the one prefix no guard asserted directly.** V1 deliberately skips qwen3 (its *document*
+vectors are the stored index vectors, not a cluster call), and that left `cfg.query_instruction` on the
+query side of the baseline everything is compared against unasserted: a silent change there would have
+moved the baseline with no guard failing. ⚠️ It was in fact pinned **indirectly** — V3/V4/V5/V11
+reproduce four rows produced by *other* scripts through that same `embed_query` path, so a change would
+break all four — but **indirect is not asserted**, so the fix is a direct one: **V12** asserts
+`embed_query(text)` equals the cluster embedding of `instruction + text` (cos **1.000000**) and that
+the instruction is load-bearing (raw cos **0.818934**). The screen was re-run so the artifact is
+self-consistent with the probe revision that produced it.
+
+**Cost:** no LLM calls, **no writes** to any collection; 252 s wall on the final run, of which the
+gemma re-embed was 73 s — ⚠️ but that same step took 1,074 s under cluster contention, so the cost is
+throughput-dependent and `meta.embed_seconds` records which run it was.
+
+**Register against:** §I63 (the instrument and the +0.1400 this supersedes as the best-known), §I59/§I60
+(the rows V3/V4/V5 reproduce), §I58 (the ceiling rule), §I62 (the prefix trap V1 confirms), §I52 (the
+chars-per-token constant used for the truncation check, and the "measure the model the phase runs"
+rule), §I67/§I68 (the widths chain this is the successor to), §0 of the plan (explore cheap, confirm
+powered), §I69 (the float leak that does not apply here).
+
+### I71. 2026-10-24 — the CONTENT FILTER is a NULL on base-lane page ranking, and the reason is structural: the content window already excludes 244 of the filter's 263 rejects. The first run went VOID on a PRE-REGISTRATION PREMISE ERROR (a corpus count written into a guard about a window-filtered pool)
+
+**The question.** §I63's 0.0648 residual (Nomic, old corpus → new corpus) mixes **three** things —
+the chunking, the content-filter state, and the chunk count — and none had been isolated. This is
+**arm 1**, and it isolates the **content-filter state**, because that is the one of the three that can
+be varied with **no parse, no re-chunk and no re-embed**: the §I39 filter changes *which chunks are in
+the candidate pool*, over vectors already stored.
+
+**Pre-registration:** `.hermes/plans/2026-10-24-p1-chunking-filter-ab-preregistration.md`, committed
+**alone** as `aa4b55b` before the harness existed. **Re-registration:**
+`.hermes/plans/2026-10-24-p1-chunk-filter-ab-reregistration.md` (written after the first run, before
+the second — §I67's E4 → E4′ precedent). The pre-registration was **not edited**; editing it after the
+run started would have voided the run by its own terms.
+
+**The design.** Two arms over the SAME stored vectors, the SAME 133 gold queries and the SAME metric
+code — the pool filter is the only variable:
+
+| arm | pool |
+|---|---|
+| **C** (control) | the shipped filter: `is_content is not False` **and** page inside the content window `[30, 936]` — §I70's pool, **3,489** chunks |
+| **T** (treatment) | `C` **minus** every chunk the **CURRENT** `content_filter.is_content()` rejects **when run over the chunk TEXT** — **19** chunks |
+
+⚠️ **The treatment is computed from the TEXT, not from the stored `is_content` column** (guard C4):
+the stored column is **STALE** — it is written at ingest and the §I39 extension landed after both
+ingests — and reading it would have produced a **5-chunk** treatment and a near-null.
+
+Endpoint: **paired, ceiling-normalised R@20, arm T − arm C, n = 133** (§I58's rule), primary embedder
+**gemma@768** (the §I70 winner), secondary **qwen3@1024** (free — the stored vectors). HyDE OFF, no LLM
+calls, no writes. Rule, fixed before the run: **attributable iff the 95 % CI excludes 0**; otherwise
+the honest statement is a **RESULT** of no movement, not an unresolved one.
+
+**Artifacts.** Harness `logs/p1/step10/chunk_filter_ab.py`; artifact
+`logs/p1/step10/chunk_filter_ab.json` (**sha256 `4e64f1ac07dbfda7ad4ce8485c9fad45fe180ed90248232aa578a28072607de2`**,
+wall **176.4 s**; gemma embed 61.7 s + control 72.4 s); independent aggregation
+`logs/p1/step10/chunk_filter_ab_verifier.py`; reviewer pack
+`logs/p1/step10/chunk_filter_ab_verifier_extract.json`; run log
+`logs/p1/step10/chunk_filter_ab_run_session15.txt`. **The VOID first run is preserved** as
+`logs/p1/step10/chunk_filter_ab_firstrun_VOID.json` (sha256 `0b25fd3467d68c8244efc38c1406f64f9554c81836ad67a067829da4bc584916`).
+
+#### THE HEADLINE — the pre-registration's premise was wrong, and the correction IS the finding
+
+The pre-registration's **F1** recorded *"the CURRENT filter would exclude 263 (6.9 %)"* for the new
+corpus and built guards on it. Measured over the collection's **3,796 chunks**, that 263 is right —
+but it is a **WHOLE-CORPUS** count, and this arm's pool is the **content window**:
+
+| band | chunks | pages | in the pool (pages 30–936)? |
+|---|---|---|---|
+| TOC | 72 | 22–34 | **19** (pages 30–34 only) |
+| index | 186 | **937–968** | **0** — entirely above the window's 936 |
+| front matter | 5 | **2–14** | **0** — entirely below the window's 30 |
+| **total** | **263** | | **19 in, 244 out** |
+
+So the treatment is **19 chunks, not 263** — **the window bounds already exclude 93 % of what the
+filter would have removed from the base lane.** ⚠️ **§I39's premise is true of the CORPUS and false of
+the BASE LANE.** The ~5,100 junk *cards* §I39 measured come from the **card generator**, which does
+**not** apply the window bounds — the retrieval lane does. The filter's marginal reach on the base
+lane is therefore **structurally capped at 19 chunks**, which is why a null here was close to
+predictable in advance and why the *size* of the lever, not just its sign, is the result.
+
+⚠️ **F2's "pages with chunks 933" is also wrong:** §I70's own artifact records `reachable_pages: 888`,
+and this run measures **888** from two independent directions that agree exactly (guard **X1** — the
+distinct pages present in the Qdrant pool, and §I58's `reachable_pages()` over SQLite).
+
+#### THE FIRST RUN WAS VOID (C2, C4, C3)
+
+| guard | registered | measured | verdict |
+|---|---|---|---|
+| **C1** | arm C reproduces §I70's qwen3@1024 row exactly | R@20 0.293934 · R@100 0.569074 · R@500 0.922982 · R@1000 1.0 | ✅ PASS |
+| **C2** | treatment pool == C − flagged; flagged == **263**; bands 72/186/5 | flagged **19**; bands **19/0/0** | ❌ **FAIL** |
+| **C3** | A-vs-A: arm C byte-identical on a re-embed | vectors **bit-identical** (`max_abs_diff 0.0`, 0 rows differing) but **266 metric mismatches** | ❌ **FAIL** |
+| **C4** | built from the TEXT, not the column — 263, not 5 | in-pool **19**; stored `False` **5** | ❌ **FAIL** |
+| C5 / C6 / X1 / X2 | empty ceilings reported / one shared page map / pool pages == §I58 / remote store | 0 empty; sha256 `0ca575fa…`; 888 == 888; `10.0.10.65` | ✅ PASS |
+
+**Two of the three failures were PRE-REGISTRATION PREMISE ERRORS and one was a HARNESS BUG** — and the
+distinction is the point:
+
+* **C2/C4** failed because the pre-registration measured 263 over the **corpus** and wrote it into a
+  guard about a **window-filtered pool**. The arm's *definition* was faithful throughout (**T = C minus
+  the filter's rejects**); only the registered **size** was wrong. Restated as **C2′/C4′** — in-pool
+  flagged **19**, whole-corpus **263** = 72/186/5 with **244 out of window** — **justified by the
+  measurement in the table above, not by relaxing a check the data failed.**
+* **C3** failed for a reason that indicts the *check*, not the endpoint: **266 metric mismatches on
+  bit-identical vectors** is impossible, and the tell is exactly that shape. Cause: the control arm was
+  scored against the raw reachable set (`reach_C`, 888 pages) while arm C itself is scored against
+  **its own per-query ceiling** (`relevant ∩ reach_C`). **A control compared under a different
+  denominator is not a control.** Fixed; the vector half of the guard (**C3(a)**, `max_abs_diff 0.0`)
+  passed on the first run and is unchanged. ⚠️ C3 was **a check that could only fail**, and it was
+  caught by that shape — record it so the fix is not read as a relaxation.
+
+#### THE RESULT (the re-registered run — all eight guards PASS)
+
+| arm | embedder | ceiling-norm R@20 | R@100 | raw R@20 | raw R@100 |
+|---|---|---|---|---|---|
+| **C** | gemma@768 | **0.480410** | 0.704882 | 0.469155 | 0.688542 |
+| **T** | gemma@768 | **0.474080** | 0.697513 | 0.462764 | 0.681137 |
+| **C** | qwen3@1024 | 0.293934 | 0.569074 | 0.289340 | 0.559740 |
+| **T** | qwen3@1024 | 0.293934 | 0.569074 | 0.289340 | 0.559740 |
+
+| contrast (paired, T − C) | Δ | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|
+| **gemma@768, ceiling-norm R@20 — PRIMARY** | **−0.006330** | **[−0.021115, +0.008456]** | 1/8/124 | **UNRESOLVED** |
+| gemma@768, raw R@20 | −0.006391 | [−0.021173, +0.008391] | 1/7/125 | UNRESOLVED |
+| qwen3@1024, ceiling-norm R@20 | +0.000009 | [−0.000009, +0.000028] | 0/1/132 | UNRESOLVED |
+| qwen3@1024, raw R@20 | **+0.000000** | [0.000000, 0.000000] | 0/0/133 | UNRESOLVED |
+
+**Per the pre-registered rule the filter does NOT ship on this evidence**, and the honest statement is
+the pre-registered one: **applying the content filter does not move base-lane page ranking on this
+corpus — a RESULT, not an unresolved one.** ⚠️ The point estimate is **slightly negative** (8 queries
+better, 1 worse, 124 tied), and it is **under half the resolution floor** (0.014786 at n = 133), so it
+is not a measured harm either. Under qwen3 the treatment is **literally inert** (raw R@20 identical on
+all 133 queries; ceiling-normalised differs on exactly one) — the 19 TOC chunks never enter the
+top-20 there.
+
+**Reported alongside, always (pre-reg §3):** pages covered **C 888 / T 887** — removing the 19 chunks
+drops **exactly one page** from the ceiling; `chunks/page` **C 3.9291 / T 3.9121** (⚠️ the confound
+that makes page-deduped recall favour a corpus with more chunks per page — §I70 measured 6.68 old vs
+4.07 new).
+
+⚠️ **One extra EXACT reproduction, found after the run and worth recording:** arm **C under gemma@768**
+reproduces **§I70's `gemma@768` row exactly** — R@20 **0.480410**, R@100 **0.704882**, R@500
+**0.946105**. That is a **third** registered row this harness reproduces (with C1's qwen3 row and
+C6's page-array sha256 `0ca575fabc5c59be…`, the same array §I70's V6 reported), and it is the
+strongest evidence available that the new model's arm is on the same instrument as the register.
+
+#### VERIFIERS — all eight pass (the re-registered run), and the arithmetic has an independent re-derivation
+
+| # | check | result |
+|---|---|---|
+| C1 | arm C reproduces §I70's qwen3@1024 row **exactly** | all four k exact |
+| C2′ | pool partition + bands, in-pool and corpus | 3,489 − 19 = 3,470; corpus 72/186/5; 244 out of window |
+| C3 | A-vs-A — arm C re-run on a re-embed at batch 64 vs 128 | vectors `max_abs_diff 0.0`; **0 metric mismatches** |
+| C4′ | built from the TEXT, not the stored column | 19 ≠ 5; corpus 263 reproduces §I39 |
+| C5 | empty-ceiling queries reported, never dropped | 0 occurred; 133/133 in both arms; none dropped |
+| C6 | one shared chunk→page mapping | sha256 `0ca575fabc5c59bee67faab710bb753fdc8c9141763898fa68bced6d1e6d9944` |
+| X1 | pool pages == §I58 `reachable_pages()` | **888 == 888**, pool-only 0, sqlite-only 0 |
+| X2 | the resolved config names the remote store (§I49) | `10.0.10.65` / `knowledge_base_v2` |
+
+**Mechanical evidence (the author checking the author, kept separate from any verdict):**
+`chunk_filter_ab_verifier.py --check` is a **second, independently written stdlib aggregation** — no
+numpy, different code shape, reading only the raw per-query array — and it **re-derives every
+aggregate, every endpoint, every CI and every decision field with 197 checks / 0 mismatches.** The
+artifact's summary block is never used as ground truth by it.
+
+**Independent verifier dispatched 2026-10-24 (`openai/gpt-oss-20b`, `deleg_fac6860b`, model resolved
+from `hermes config get delegation` — provider `custom` @ `10.0.10.70:8000`, **empty fallback chain**,
+so it cannot silently degrade to the author's family).** ⚠️ Dispatched **read-only** (`read_file` /
+`search_files` only, `terminal` named and forbidden) because **this session's shell returns empty
+stdout with exit 0** — smoke-tested with an `echo` first, per the pre-registration's own instruction.
+
+**✅ VERDICT — `deleg_fac6860b`, `status=completed`: 8/8 CONFIRMED, no refutations.** ⚠️ **But it is
+NOT BANKED: 4 API calls, 32.8 s** — a cheap verdict, and its citation quality confirms why. **Two of
+its cited field paths DO NOT EXIST in the artifact** (`meta.assembly`, `decision.pages_C`; verified
+absent — the real paths are `meta` and `meta.chunk_stats.pages_C`), and its line-number citations do
+not resolve. Every citation that *does* resolve is real (`meta.chunk_stats` 3,489/3,470/888/887,
+`meta.first_run_void.reasons`, `decision.endpoint`, `meta.preregistration`,
+`arms.C.qwen3.ceiling_norm.R@20 = 0.293934`), so its **verdicts stand as a weak corroboration** while
+its **citations do not** — the substantive half remains the mechanical evidence above.
+
+**Its two "additional risks", adjudicated — BOTH REFUTED:**
+1. *"The artifact does not include per-query outputs, so per-query anomalies cannot be spotted."*
+   **False** — the artifact carries all **133** rows under `queries[]`, each with both arms × both
+   embedders × four cuts, plus `n_reachable` per arm. The reviewer appears to have read only the
+   summary blocks it cited.
+2. *"The run log is tiny; it does not validate that the pool used the text-based filter rather than
+   the stale `is_content` flag."* **False, and it is the guard's whole job** — the log prints
+   `IN-POOL flagged …: 19`, `CORPUS flagged: 263`, `stored is_content values: {'True': 3791,
+   'False': 5}`, and **C4** asserts `19 ≠ 5` (a 5-chunk treatment would have been the stale-column
+   failure). `meta.first_run_void.reasons` records the same distinction.
+⚠️ **What the review did NOT test, and could not:** the arithmetic (LLM reviewers cannot add 133
+numbers — that is the verifier's 197 checks), and the one thing a read-only reviewer is structurally
+unable to reach — whether the *endpoint* measures what the brief says it does.
+
+#### WHAT THIS ARM DOES NOT DO, AND WHAT COMES NEXT
+
+* **It does not test the chunking.** It isolates the content-filter state, one of the three things in
+  §I63's residual. The null is **not** evidence that the chunking is fine.
+* **It does not touch the product path.** The base lane is a **ceiling**, not the endpoint: §I66
+  measured the loss as the 100-slot fusion and the cross-encoder (0.7478 → 0.6048 → 0.4318), and §I65
+  is the case where a measured ceiling did not become recall.
+* **It does not measure the ingest-time side effects** of the filter (new chunk ids, card
+  regeneration, graph rebuild) — that is a build, not an arm.
+* **▶ NEXT ARMS, in the pre-registered order** (pre-reg §5): **`min_chunk_tokens`** (32; §E1 measured
+  it merging 27 % of the new children and never re-checking the grown child's size), then
+  **`semantic_threshold`** (0.8), then **late chunking** (36 min/arm — and it changes the embedding,
+  not the chunking, so it is its own contrast).
+* ⚠️ **§0's power rule still applies:** n = 133, resolution floor ≈ **0.020**. Any knob with a
+  plausible effect below that is out of scope for this gold set — record it, do not chase it.
+
+**Register against:** §I39 (the filter and its measured hit rates — whose corpus-level counts are
+**correct** and whose applicability to the base lane this entry corrects), §I21 (the filter in the
+graph path — the graph holds 3,533 = 3,796 − 263, i.e. it *does* see the whole corpus), §I58 (the
+ceiling rule), §I63 (the 0.0648 residual this arm was meant to move), §I70 (the embedder screen — the
+instrument, the gemma row this run reproduces, and the 888/933 figure this entry corrects), §I67 (the
+VOID → re-registration precedent), §I49 Finding 1 (the resolved-store trap, guard X2), §I69 (the float
+leak), §I36/§I44 (**the plan-premise-error class** this entry joins: a measured number carried into a
+context it was not measured in).
+
+### I72. 2026-10-24 — the embedder's base-lane gain SURVIVES the cross-encoder, but it is HALVED: the cross-encoder is a strong equaliser, lifting the WEAKER embedder ~44× more than the stronger. The first run went VOID on a METRIC-CONVENTION mismatch in a guard — the session's third instance of the plan-premise-error class
+
+**The question.** §I70 screened the candidate embedders on an **oracle** and found
+`google/embeddinggemma-300m` @768 the only arm that passes the pre-registered rule: **+0.186476**
+ceiling-normalised R@20 over the incumbent `Qwen/Qwen3-Embedding-0.6B` @1024, **+0.046480** over
+`nomic-ai/nomic-embed-text-v1.5` @768. That is a **base-lane** (dense ranking) result. The product
+path runs four more stages, and §I66 measured the **cross-encoder as the largest single loss**
+(0.6048 → 0.4318). With §I65/§I66/§I67 as three consecutive precedents of a measured retrieval-side
+ceiling that did not become recall, the largest unmeasured risk in adopting gemma is that the
+cross-encoder re-orders both pools toward the same answer. **That is cheap to test without a
+re-ingest** — the question is whether the *ranking signal* survives a stage, not what the index
+stores.
+
+**Design.** Same corpus and pool as §I70/§I71 (doc `7ba61432`, the shipped pool, **3,489** chunks),
+same **133** queries, **HyDE off**, exact cosine (no ANN). Per query: take the top **100** chunks by
+cosine under each embedder (`cfg.reranker_fetch_k` — the product's own pool width, asserted at run
+time), push each list through the **live** cluster cross-encoder (`cfg.sv_rerank_url`,
+`BAAI/bge-reranker-v2-m3`, `top_k=20`), and compute page-level ceiling-normalised R@20 **before**
+(PRE) and **after** (POST). Endpoint: paired ceiling-normalised R@20 POST, `gemma@768 − qwen3@1024`,
+n = 133. **Rule, fixed before the run: the bet SURVIVES iff the POST delta is > 0 with a 95 % CI
+excluding 0.**
+
+**Artifacts.** Harness `logs/p1/step10/ce_survival.py`; artifact `logs/p1/step10/ce_survival.json`
+(**sha256 `47f207477035a273b41fcd722b91c9d0a0244c8836a9e9e6c00c61be49d8c326`**); independent
+aggregation `…_verifier.py`; reviewer pack `…_verifier_extract.json`; run log
+`…_run_session15.txt`. **The VOID first run is preserved** as `ce_survival_firstrun_VOID.json`
+(sha256 `0947bc0d6c541b52f332815030c1dc80ba497753fc24a7ce83414cfe6112f5dd`). Pre-registration
+`.hermes/plans/2026-10-24-p1-cross-encoder-survival-preregistration.md`, re-registration
+`…-reregistration.md`. **No LLM calls, no writes to any collection.**
+
+#### THE RESULT (re-registered run — all eight guards pass, exit 0)
+
+| stage | qwen3@1024 | gemma@768 | Δ (gemma − qwen3) | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|---|---|
+| **PRE** (cosine order) | 0.274348 | 0.458665 | **+0.184317** | [+0.130809, +0.237824] | 12/77/44 | RESOLVED |
+| **POST** (cross-encoder) | 0.363144 | 0.460703 | **+0.097559** | [+0.056072, +0.139045] | 22/46/65 | RESOLVED |
+
+**survival ratio (post / pre) = 0.5293.**
+
+⚠️ **The headline is not "it survives" — it is HOW it survives.** The cross-encoder is a strong
+**equaliser**: it lifts the *weaker* embedder by **+0.0888** (qwen3 0.274348 → 0.363144) and the
+stronger by **+0.0020** (gemma 0.458665 → 0.460703). So it roughly **halves** the embedder gap while
+**reversing nothing**. Two consequences worth carrying into the adoption decision:
+
+* The incremental value of gemma **at the product's last retrieval stage** is **+0.0976**, not the
+  base lane's +0.1865 — the embedder's advantage is real but a cross-encoder recovers more than half
+  of it from the weaker model.
+* ⚠️ **It also explains part of why §I67's width levers were nulls**: the cross-encoder already
+  repairs a great deal of pool-quality difference, so widening the pool has little left to repair.
+
+#### THE FIRST RUN WAS VOID — AND THE REASON IS THE SESSION'S THIRD PREMISE ERROR
+
+**Two page-level recall conventions are in play, and the pre-registration used one in its §2 and the
+other in its §4:**
+
+| convention | what it does | where it comes from |
+|---|---|---|
+| **"top-k PAGES"** | rank *every* chunk, dedupe to pages, take the first `k` **pages** | §I70's screen — this produced the register's **0.293934** / **0.480410** |
+| **"pages of the top-k CHUNKS"** | dedupe the top-k **chunks** to pages | the **PRODUCT**'s eval, `scripts/evaluate_rag.py:333-341`; and the only one available for a reranked arm, since the cross-encoder returns chunks |
+
+The pre-registration's §2 correctly described the **product** convention (product-faithful, and the
+only option for the POST arm); its §4 then required the PRE arm to reproduce **§I70's** rows, which
+are in the **other** convention. **They are not the same number**, and the gap is consistent across
+both embedders — **−0.0196** (qwen3) and **−0.0217** (gemma) — which is what made the diagnosis
+mechanical rather than a guess. So **S1 failed, the run was VOID**, and its numbers are not
+registered.
+
+**Restated as S1′** (re-registration; §I67's E4→E4′ and §I71's C2→C2′ precedent, justified **by
+measurement, not relaxation**):
+
+* **S1′(a)** — the harness computes §I70's convention **separately** and asserts it reproduces
+  **0.293934** / **0.480410** **exactly**: ✅ both exact. That is what pins this harness to the
+  register, and it keeps the original guard's whole purpose.
+* **S1′(b)** — the PRE and POST arms of the *contrast* both use the **product** convention, asserted
+  to be the same function on both sides. Both conventions are now reported side by side forever, and
+  the artifact names which one each row is in.
+
+⚠️ **This is the third instance of one class in a single session** — §I71's F1 (a corpus count used
+as a pool count), §I70's F2 (a page count that contradicted its own artifact), and now a *metric
+convention* asserted across two files. The tell was available before the run in all three cases. The
+standing lesson: **when a guard asserts a reproduction of a number from elsewhere, state the
+population AND the convention that number was produced under, and assert the two sides of your own
+contrast share one.**
+
+#### GUARDS — all eight pass
+
+| # | check | result |
+|---|---|---|
+| S0 | the resolved config is the one the spec names | collection, rerank URL, model, `fetch_k=100`, `top_k=20` |
+| **S1′** | (a) §I70's convention reproduces the register exactly; (b) the contrast is single-convention | **0.293934 / 0.480410 exact**; both sides `pages_of_chunk_idxs` |
+| S2 | the rerank service is **live and reordering** | **266 of 266** lists changed order |
+| **S3** | negative control — the same list reranked twice is identical | **10/10 identical** |
+| S4 | failures counted and reported, n stated | **0** failures; no arm missing without a record |
+| S5 | A-vs-A — gemma re-embedded at a different batch is bit-identical | `max_abs_diff 0.0`, 0 rows differing |
+| S6 | one shared chunk→page map; ceiling 888; documents in cosine rank order | all aligned; sha256 recorded |
+
+⚠️ **S3 is a real instrument result, not a formality: the cluster cross-encoder is DETERMINISTIC**
+(10/10 repeat calls, byte-identical order) — in direct contrast to **Qdrant's server-side RRF
+fusion, which §I68 measured nondeterministic**. That is worth knowing: it means a reranked A/B on
+this path does *not* inherit §I68's tolerance problem, and it makes the reranker a legitimate
+instrument to build on. ⚠️ Caveat: 10 controls over the first 5 queries × 2 embedders — enough to
+license the claim for this run, not a characterisation of the service under load.
+
+**Mechanical evidence (the author checking the author, kept apart from any verdict):**
+`ce_survival_verifier.py --check` — an independently written stdlib aggregation reading only the raw
+per-query array — re-derives every aggregate, contrast, CI, survival ratio and decision field at
+**144 checks / 0 mismatches**.
+
+**✅ INDEPENDENT VERIFIER RAN — `openai/gpt-oss-20b`, `deleg_c05e651f`, `status=completed`:
+7/8 CONFIRMED, 1 UNVERIFIED, no refutations.** ⚠️ **Not banked** (23 API calls, 40 s, and its
+citations are pack-relative line numbers); the substantive half remains the mechanical evidence. Its
+field names all resolve in the artifact.
+
+**Its findings, adjudicated:**
+
+1. **C6 `unverified` — the determinism claim, on sample size.** *"10 controls over 5 queries may not
+   be statistically robust enough to prove machine-wide determinism."* ✅ **Accepted, and it is
+   already the recorded caveat** — §I72 states exactly that limitation (10 controls over 5 queries ×
+   2 embedders; enough to license the claim for this run, not a characterisation under load). The
+   claim is **not** upgraded: the cross-encoder was deterministic across 10 repeat calls, and that is
+   all that is asserted.
+2. ⚠️ **Its "rounding mismatch" risk is REFUTED — the error is in the reviewer's own arithmetic.**
+   It claimed `gain_qwen3 + gain_gemma` (0.0888 + 0.0020 = 0.0908) should equal `post_delta`
+   (0.0976) and "could conceal a minor error in aggregation". **It should not**, and the correct
+   identity holds exactly: `post_delta = pre_delta + gain_gemma − gain_qwen3` →
+   `0.184317 + 0.002038 − 0.088796 = 0.097559` ✅ (checked to 1e-9), and **per-query to 1e-12 with 0
+   violations across all 133 rows** — where rounding cannot hide anything. The reviewer added two
+   quantities that the algebra subtracts. ⚠️ Recorded because a plausible-sounding internal-consistency
+   doubt is exactly the kind that gets acted on: **check the reviewer's arithmetic against the
+   artifact before defending anything.**
+3. *"`metric_conventions` is only in `meta`, so if those strings were altered the document would not
+   reflect the true conventions."* ⚠️ Generic, and covered: the artifact's **sha256 is registered**
+   and the conventions are asserted by guard S1′ from the **data**, not from the prose — the
+   §I70-convention row reproduces 0.293934 / 0.480410 exactly, which no altered string could fake.
+4. *"Determinism is confirmed for gemma and qwen3 only; other embeddings are not tested."* ⚠️
+   **Conflates two things** — S3's control tests the **reranker service**, not the embeddings
+   (whose determinism is S5's A-vs-A re-embed, `max_abs_diff 0.0`). Not a gap in this run.
+
+#### WHAT THIS DOES AND DOES NOT LICENSE
+
+* ✅ **It licenses the next step, not a ship.** A SURVIVES verdict means the base-lane ranking signal
+  reaches the product's last retrieval stage, so the scratch-index **product-endpoint run** (plan §3)
+  is worth its cost.
+* ⚠️ **It is NOT the product endpoint.** The cross-encoder here is applied to a **cosine-ordered**
+  pool. The product reranks a pool that has been through Qdrant's RRF, page dedup and MMR — and
+  §I68's nondeterminism is why that stage is excluded rather than simulated. No SPLADE lane, no
+  DA/graph/RAPTOR/visual lane, no intent router, no generator.
+* ⚠️ **It does not measure late chunking** — the incumbent's stored vectors were produced with it,
+  the gemma arm embeds raw chunk text without it (§I70's asymmetry, conservative for the candidate).
+* ⚠️ **It says nothing about the corpus.** §I71 left §I63's residual attributed to the chunking
+  proper; this entry does not touch it.
+
+**Register against:** §I70 (the oracle screen this tests the propagation of), §I66 (the stage
+decomposition — this is the cross-encoder stage measured directly), §I65/§I67 (the two nulls that
+make this test necessary), §I68 (the nondeterministic fusion this run deliberately excludes, and the
+contrast that makes S3's result informative), §I55 (the reranker's swallow class, which S4 counts),
+§I58 (the ceiling rule), §I71 (§I39's filter, a null — so the shipped pool is the right control),
+§I36/§I44 (**the plan-premise-error class**, here a metric convention rather than a count).
+
+### I73. 2026-10-24 — the HyDE cache is BUILT: one frozen hypothetical per query id, so an A/B stops embedding a different query vector per arm
+
+**The defect it removes.** `evaluate_rag.py` generated a HyDE hypothetical with an LLM **per query,
+per run**, whenever `hyde_enabled` and the query is `factual`/`overview` — **there was no cache**.
+So two arms of the same A/B embedded **different text** for the same query, and the *instrument*
+moved the number instead of the treatment. Same class as §I68 (the nondeterministic fusion). It is
+the prerequisite for the product-endpoint comparison in the plan's §3.
+
+**Design (plan §2).** Cache the **TEXT**, not the vector: the hypothetical string is
+**embedder-independent**, so ONE file serves every candidate embedder in §I70's screen and the
+eventual re-ingest. Keyed by **query id**.
+
+**Artifacts.**
+`src/pdf_ingestion/hyde_cache.py` · `tests/test_hyde_cache.py` (**14 tests**) ·
+`scripts/build_hyde_cache.py` · `data/hyde_cache/<queries-digest>__<model>__<prompt-digest>.json`
+(gitignored) · the generated cache: `18ece9b9404688c8__openai_gpt-oss-20b__ab681b8e43855a46.json`
+— **127 entries, 0 failed, 314.3 s** (24 calls/min).
+
+**Four properties, each with a mutation-proven guard** (all six mutations make their guard FAIL —
+recorded):
+
+1. **A miss is LOUD and never generates.** `get()` raises `HydeCacheMiss` naming the query id;
+   generation happens only in `build()`, explicitly. ⚠️ A silent live LLM call mid-run would
+   reintroduce exactly the nondeterminism the cache exists to remove (§I25's class).
+2. **The header is validated ON READ, not just the filename.** Model, prompt digest, queries digest
+   and schema version must all match, or the file is refused — a model, prompt or query-set change
+   is an honest miss, never a silent reuse. The prompt digest covers the **system message** as well
+   as the template, because both go to the model.
+3. **An empty model return is a FAILURE, not a cached value** — counted, not cached, and the build
+   exits non-zero listing the ids (§I25/§I52's class: a total loss that reads as a success).
+4. **A rebuild reuses what exists.** A cache that re-pays the full LLM pass every run is the defect
+   it was written to avoid.
+
+⚠️ **The prompt is DUPLICATED in the repo** — `scripts/evaluate_rag.py` and
+`scripts/funnel_boundary_recall.py` each carry a verbatim copy, and the cache key derives from this
+module's copy. A test asserts all four prompt fragments still appear in **both** call sites, so a
+fork is caught rather than silently keying the cache on text nothing sends (§I28's sweep, applied to
+a constant). ⚠️ `funnel_boundary_recall.py` also carries its **own** ad-hoc `--hyde-cache` file
+(`{qid: hyp}`, path chosen by the caller) — a second, unvalidated cache with no header check. It is
+**not** consolidated here; recorded so the next reader knows there are two.
+
+⚠️ **Not wired into §I70's screen** — the screen is HyDE-off by design. It is for the product-path
+run in the plan's §3.
+
+**Register against:** §I68 (the nondeterminism class), §I25/§I52 (a silent empty return, and "measure
+the model the phase runs" — the cache freezes `cfg.openai_model`), §I28 (a duplicated constant and
+its consumers), §I23 (per-call logging plus a rolling rate line, so a stalled build is
+distinguishable from a slow one), §I70/§I72 (the screens it will serve).
+
+### I74. 2026-10-24 — gemma@768 vs nomic@768 AT THE CROSS-ENCODER: gemma wins, but narrowly. Its advantage shrinks 36 % through the stage (+0.0455 → +0.0292, both resolved) — the disposition is GEMMA by the pre-registered rule, and the margin is ~1.2× the instrument's own resolution floor
+
+**The question.** §I70 ranked the candidates on the **base lane**: `gemma@768` **0.480410** >
+`nomic@768` **0.433930** > `qwen3@1024` **0.293934** (ceiling-normalised R@20). §I72 then found the
+cross-encoder a strong **equaliser** against the incumbent (+0.184317 → +0.097559). ⚠️ But §I72
+measured gemma against the **incumbent**, not against **nomic** — and nomic is the cheap candidate.
+This run closes that gap, because the two have different adoption costs:
+
+| | low lane (the funnel's fast first stage) | extra work |
+|---|---|---|
+| **nomic@768** | MRL **64** exists ⇒ lane stays **64-wide**, name `dense_64` stays **true** | the shared re-ingest only |
+| **gemma@768** | smallest slot **128** ⇒ lane **widens 64 → 128** | ⚠️ **plus a code change**: `store.py:451` hardcodes `using="dense_64"` while the slice is `query_vector[:cfg.dense_dim_low]`, and the schema check keys on the literal `"dense_64"` (§I13) |
+
+**Design.** §I72's, plus a third arm. Same corpus and shipped pool (`7ba61432`, **3,489** chunks),
+same **133** queries, HyDE off, exact cosine; per query the top **100** chunks by cosine per arm
+(`cfg.reranker_fetch_k`, the product's own pool width, asserted at run time), pushed through the
+**live** cluster cross-encoder (`top_k=20`, raw query). **Three arms, two of them the contrast**:
+`qwen3@1024` is the **instrument anchor** (stored vectors), `nomic@768` and `gemma@768` the
+candidates. Endpoint: paired ceiling-normalised R@20 POST, `gemma − nomic`, n = 133. ⚠️ The
+**contrast** uses the **product's** convention (pages of the top-k *chunks*,
+`evaluate_rag.py:333-341`); the **anchor** rows use **§I70's** (top-k *pages*) — §I72's correction,
+which is why both are computed.
+
+**Artifacts.** Harness `logs/p1/step10/ce_gvn.py`; artifact `logs/p1/step10/ce_gvn.json`
+(**sha256 `7de5cca46c2b48f1cb4915302ee5c0398e872942bc336272d9a5c4e923b0d6a1`**); independent
+aggregation `…_verifier.py`; reviewer pack `…_verifier_extract.json`; run log
+`…_run_session15.txt`; pre-registration
+`.hermes/plans/2026-10-24-p1-gemma-vs-nomic-at-the-cross-encoder-preregistration.md`.
+⚠️ `ce_survival.py` was **not edited** — its artifact is registered against that revision. **No LLM
+calls, no writes.**
+
+#### THE RESULT (all nine guards pass, exit 0)
+
+**Three anchors, all EXACT** under §I70's convention — this harness is §I70's instrument:
+
+| anchor | this run | §I70 |
+|---|---|---|
+| `qwen3@1024` R@20 | **0.293934** | 0.293934 |
+| `nomic@768` R@20 | **0.433930** | 0.433930 |
+| `gemma@768` R@20 | **0.480410** | 0.480410 |
+
+**The primary contrast** (product convention; R@20 per arm PRE → POST: qwen3 0.274348 → 0.363144,
+nomic 0.413195 → 0.431455, gemma 0.458665 → 0.460703):
+
+| contrast | Δ | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|
+| **PRE** (cosine order) | **+0.045469** | [+0.020104, +0.070835] | 16/50/67 | RESOLVED |
+| **POST** (cross-encoder) | **+0.029248** | [+0.004620, +0.053876] | 12/34/87 | RESOLVED |
+
+**survival ratio = 0.643251.** So gemma's advantage over nomic **shrinks 36 %** through the stage —
+less than the 47 % its advantage over the incumbent lost (§I72), i.e. the equaliser compresses a
+close pair less than a distant one. Context contrasts POST: `gemma − qwen3` **+0.097559**,
+`nomic − qwen3` **+0.068311** — so **nomic alone already recovers ~70 % of gemma's gain over the
+incumbent.**
+
+**THE DISPOSITION: `GEMMA`**, by the pre-registered rule — δ = +0.029248 > the pre-registered floor
+0.020 **and** the CI excludes 0.
+
+⚠️ **The margin is thin, and the fields that say so are in the artifact; the reading is this entry's.**
+`decision.resolution_floor_this_run` = **0.024628** (1.96·SD_d/√n for this contrast) and
+`decision.post_ci` = **[+0.004620, +0.053876]**. So the point estimate is only **~1.19× the
+instrument's own floor**, and the CI's lower bound sits **well below** it — the data are also
+consistent with a true effect smaller than the floor. ⚠️ **The artifact records both floors and the
+CI; it does not itself label the margin "thin" — that judgement is derived here from those three
+fields and should be quoted as such.** A narrow win is a win under a rule fixed in advance, and
+softening it on cost grounds is exactly what the rule exists to prevent; but the next reader is
+entitled to know it is narrow.
+
+#### GUARDS — all nine pass
+
+| # | check | result |
+|---|---|---|
+| G0 | the resolved config is the one the spec names | `fetch_k=100`, `top_k=20`, remote store |
+| **G1** | anchor: §I70 convention reproduces `qwen3@1024` **0.293934** exactly | exact |
+| **G2** | anchor: §I70 convention reproduces `nomic@768` **0.433930** exactly | exact — ⚠️ the stronger of the two: it pins the **candidate's own** cluster embedding path, prefixes included |
+| G3 | the rerank service is live and reordering | **399 of 399** lists changed order |
+| G4 | negative control — the same list reranked twice is identical | **15/15 identical** |
+| G5 | failures counted and reported, n stated | **0** failures |
+| **G6** | A-vs-A for **both** candidates, bit-identical | gemma `max_abs_diff 0.0` · nomic `0.0` |
+| G7 | one shared chunk→page map; ceiling 888; documents in cosine rank order | all aligned |
+
+**Mechanical evidence (the author checking the author):** `ce_gvn_verifier.py --check` re-derives
+every aggregate, contrast, CI, survival ratio and decision field from the raw per-query array at
+**182 checks / 0 mismatches**. ⚠️ **Its first `--check` run reported ONE mismatch — and the bug was
+in the verifier, not the artifact**: its context-contrast loop had the operand order backwards for
+the `nomic_minus_qwen3` label, so it recomputed `qwen3 − nomic` (−0.068311) against the artifact's
+`nomic − qwen3` (+0.068311). That is the verifier doing its job on the one input it could still
+catch, and it is recorded rather than quietly fixed.
+
+**⚠️ THE INDEPENDENT VERIFIER — FIRST DISPATCH FAILED, RE-DISPATCHED SMALLER.** `deleg_862d3e0a`
+(`openai/gpt-oss-20b`, read-only, 5 API calls, 17 s) **died on output-length truncation** — the
+model's reply was cut off before it finished, so **nothing was checked and that is NO VERDICT, not a
+pass** (§I70's rule: a truncated reply is no verdict). The likely cause is the pack size: it was
+pointed at the **400 KB** artifact, which is the §I70 failure signature (a reviewer truncated after
+reading a large artifact whole). **Recovery, per the standing recipe:** a **23 KB compact pack**
+(`~/.hermes/cache/scratch/ce_gvn_compact_pack.json` — meta, verifiers, arms, endpoints, decision and
+4 sample rows, with the 133-row array deliberately excluded, since its arithmetic already has an
+independent re-derivation) and a brief capped at **5 claims / under 500 words**, dispatched as
+`deleg_4b0ece7b`. ⚠️ **§I74 is NOT `[verified]` until that returns**, and a second truncation would
+leave it to the human rather than to a third attempt.
+
+**✅ THE RE-DISPATCH RETURNED — `deleg_4b0ece7b`, `status=completed`: 5/5 CONFIRMED, no refutations,
+"Additional risks: none".** It read the 23 KB pack only, in **5 API calls / 16.7 s** — i.e. the
+smaller pack and the 500-word cap fixed the truncation outright. ⚠️ **Still NOT banked** (very cheap,
+and the substantive half remains the 182-check mechanical re-derivation). Its citations were checked
+rather than assumed: `meta.i70_rows_for_the_anchors`, `arms_i70_convention`, `metric_conventions`,
+`decision.post_delta`, `decision.post_ci`, `decision.post_n`, `decision.post_wlt`,
+`decision.resolution_floor_this_run` and `decision.scope` **all resolve in the pack**; ⚠️ **one
+citation is misattributed** — it places the rule at `decision.rule.decision_rule`, whereas the pack
+carries it at top-level `rule.decision_rule`. ⚠️ And on claim 3 it says *"with the implied resolved
+status"*: it **inferred** resolution from the delta rather than reading the flag, which happens to be
+correct here (the CI [+0.004620, +0.053876] lies wholly above 0) but is an inference, not a check —
+recorded so the next reader does not read it as one.
+
+**Register against:** §I70 (the oracle screen whose rows the three anchors reproduce), §I72 (the
+survival test this extends from one candidate to two, and whose convention correction it inherits),
+§I66 (the stage decomposition), §I67 (the nulls that make a stage diagnostic worth running), §I68
+(the nondeterministic fusion excluded here), §I13 (a named-vector slot whose name encodes its
+dimension — the reason gemma's low lane is a code change and nomic's is not), §I55 (the reranker
+swallow class G5 counts), §I58 (the ceiling rule).
+
+---
+
+### I75. 2026-10-24 — ⚠️ THE GRAPH LANE IS **REACHABLE AND SERVING**. The recorded blocker — *"Memgraph is DOWN — 7687 refused"* — is a **MIS-SCOPED PROBE**, and it has been keeping a working lane out of scope for several sessions
+
+**The claim that was in force.** `HANDOFF.md` session 13 §5 lists the graph lane as **out of scope**:
+*"the graph lane (Memgraph is DOWN — 7687 refused — and `hop_distance` is a constant 0)"*, and the
+gemma adoption plan's §5 repeats it. The lane's disposition has been decided on that line.
+
+**It is false, and the error is the §I49 Finding 1 class — a host assumed rather than resolved.**
+The probe that produced "7687 refused" tested **the cluster IPs** (`10.0.10.70`, `10.0.10.65`), which
+is where Qdrant and the embedder live. But Memgraph is not on the cluster: the code's default is
+`memgraph_host = "localhost"` (`src/core/config.py:238`, port `:239`) and `.env` sets
+`MEMGRAPH_HOST=localhost`. Measured 2026-10-24 (session 16):
+
+| check | result |
+|---|---|
+| `docker ps` | `synapse_memgraph`, `memgraph/memgraph:2.18.1`, **Up 6 days**, `0.0.0.0:7687->7687/tcp` published |
+| `127.0.0.1:7687` | **OPEN** |
+| Bolt query round-trip | **~2 s**, real data returned |
+| graph contents | **1 Document / 3,533 Chunk / 907 Page / 6,065 Concept / 14,405 MENTIONS / 21,670 RELATES_TO / 3,161 PREREQUISITE_OF**, and the only `Document` id is the **live** `7ba61432-c5e0-416d-aecf-25a232523481` |
+
+⚠️ **A second red herring, recorded so nobody chases it: the container reports `unhealthy` and has
+for its whole life.** `docker inspect` shows `FailingStreak: 24362` and every entry the same:
+`OCI runtime exec failed: exec: "mg_client": executable file not found in $PATH`. The healthcheck
+execs a binary that is not in the image — **a broken probe, not a broken database**, and it is
+indistinguishable from a real outage to anyone reading `docker ps`. Fix the healthcheck before
+trusting that column.
+
+**The lane does not merely connect — it SERVES.** Probe `logs/p1/step10/graph_lane_probe.py` →
+`graph_lane_probe.json`, exercising the **production** path (`cluster_embedder.embed_query` →
+`GraphBuilder.graph_search` → `_find_concepts_scored` (Qdrant `concept_embeddings` ANN) → Memgraph
+Cypher → chunks), **read-only, no LLM calls, ~5 s**:
+
+* **5/5** probed multihop queries resolved **8/8** concepts and returned **5 chunks each**
+  (`limit=5`). **VERDICT: REACHABLE AND SERVING.**
+
+⚠️ **What the probe does NOT show, and should not be read as:** that the lane helps. Every query
+returned **exactly its limit** — the lane always fills its budget — and several concept sets are
+visibly off-query (a question about the focus of an **ellipse** at a tilt resolves to
+*"focusing on a point on the sun"*; a question about the **'blob' from different points** resolves to
+*"speed of the moving object"*). That is consistent with §I70's note that the concept vocabulary holds
+near-duplicates, and with §I56's measured **negative** on the DA lane. **Reachability is not
+contribution**, and §I56 is the cautionary case for exactly this inference.
+
+**`hop_distance` is a constant `0`, confirmed live — §G5/§I2 stands, unchanged.** `graph_search`
+(`src/pdf_ingestion/graph_builder.py:544-555`) is a **single-hop** lookup —
+`MATCH (ch:Chunk)-[:MENTIONS]->(k:Concept)` with **no traversal** — and hardcodes `hop_distance: 0`
+at `:570`. So "multihop" is **nominal**, and that is a **code** defect, not an infrastructure one.
+⚠️ **Do not conflate the two**: this entry removes the *infrastructure* blocker only.
+
+**⚠️ AN UNEXPLAINED STORE CHANGE, FLAGGED AND NOT GUESSED.** The §I21 rebuild was verified at
+**7,427 Concept** nodes and §I49 recorded `concept_embeddings` at **7,427 @1024d**. Measured now:
+**Memgraph 6,065 Concept nodes** and **Qdrant `concept_embeddings` 6,065 points @1024d** — **exactly
+equal**, both **−1,362**. `Chunk` (3,533), `Page` (907) and `Document` (1) are unchanged, so the
+corpus is intact and only the **concept layer** moved. Two candidate mechanisms, **neither
+established**: `scripts/clean_stale_graph.py` deletes Concept nodes with no points in Qdrant (it
+would produce exactly this lockstep), or a further concept re-index. ⚠️ **This probe does not
+distinguish them, and the reading is not evidence for either — it needs its own check.** Recorded
+because a store that changes its contents with no register entry is the §I44 class.
+
+⚠️ **Also hit live, and already documented:** Memgraph 2.18.1 **refuses** the single-query orphan form
+`WHERE NOT (c)<-[:MENTIONS]-()` — `Not yet implemented: atom expression` — which is why
+`clear_graph_document.py` does orphan detection **two-phase and by name**. The trap is real and
+reproducible; do not write that Cypher form.
+
+**What this changes.** The graph lane should be **re-admitted to scope**, and two documents are now
+stale on this point: `HANDOFF.md` session 13 §5 and the gemma adoption plan's §5 "OUT OF SCOPE" line.
+⚠️ **What it does NOT change:** §G5/§I2 (`hop_distance` constant 0), §G1 (closed, measured-and-
+negative) and §I56 (the DA lane's measured negative) are all untouched — this entry removes a false
+*blocker*, it does not supply a *result*.
+
+**Cost:** one probe, ~5 s of cluster work, **no writes** to Memgraph or Qdrant, **no LLM calls**.
+**Register against:** §I49 Finding 1 (the resolved-store trap — the same class of error, a different
+host), §G5/§I2 (`hop_distance`), §I45 (Memgraph 2.18.1 Cypher limitations), §I21 (the rebuild whose
+counts this entry's discrepancy is measured against), §I56 (a live lane that still measured
+negative — the reason reachability must not be read as contribution), §I44 (a store changing without
+a record).
+
+---
+
+### I76. 2026-10-24 — ⚠️ `knowledge_base_v2` CARRIES **FOUR** LANES, INCLUDING `sparse`. The gemma plan's §8 "correction" (*"no sparse lane; a four-lane Stage E assertion is unpassable"*) is **itself wrong**, and the error is a lane inventory read from **one** config key
+
+**The claim that was in force.** The gemma adoption plan's §2 and §8 (written session 16) correct an
+earlier draft: *"the `sparse` lane **does not exist on v2** (`splade_enabled=False`, so nothing to
+carry over, and a four-lane Stage E assertion is unpassable)"*. `HANDOFF.md` session 16 §5 repeats it
+as one of the plan's four verified-wrong literals. **Both halves are false.**
+
+**Measured 2026-10-24 (session 17), read-only REST against the live store:**
+
+| check | result |
+|---|---|
+| resolved `cfg.splade_enabled` | **`True`** — `.env:159 SPLADE_ENABLED=true` overrides `src/core/config.py:178`'s default `False` |
+| v2 `config.params.vectors` | `colbert`(128, max_sim) · `dense_1024`(1024) · `dense_64`(64) — **three** |
+| v2 `config.params.sparse_vectors` | **`{"sparse": {}}`** — a **fourth**, in a **separate key** |
+| points, total | **3,869** |
+| points carrying `dense_64` / `dense_1024` | **3,869 / 3,869** — all |
+| points carrying `colbert` / `sparse` | **3,796 / 3,796** — real SPLADE `indices` + `values` on the points |
+| the **73** points without `colbert`/`sparse` | **`raptor_level: 1` summary nodes** — dense lanes only |
+
+**Mechanism — a lane inventory read from one field.** The session-16 correction read
+`config.params.vectors` and stopped; the sparse lane lives in `config.params.sparse_vectors`.
+⚠️ **The repo already knew this and says so verbatim:** `scripts/reembed_chunks.py:59` — *"Sparse lanes
+live in a SEPARATE config key, so a named-vector check alone misses them"* — and its own docstring
+(`:103-104`) states v2 *"carries **FOUR** lanes on every point — `dense_64`, `dense_1024`, `colbert`
+(128d multivector, max_sim) and the sparse…"*. The script that refuses because of the four-lane shape
+was in the tree while the plan was written.
+
+**Why it is not cosmetic — three consequences:**
+
+1. **Stage B:** v3 must declare **four** lanes. A three-lane v3 would be a **regression against v2 on
+   a lane the product path reads** — `store.py:460` `if cfg.splade_enabled and query_text` adds the
+   `sparse` prefetch, and `splade_enabled` resolves **True** here.
+2. **Stage F's A/B is confounded by lane presence.** v3-vs-v2 on the funnel would compare a store
+   missing a lane against one carrying it, **on the very path being measured** — and the difference
+   would be read as an embedder effect.
+3. **Stage E's per-point assertion needs a scope, not a deletion.** *"Every enabled lane on every
+   point"* is **already false on v2 itself**: the 73 `raptor_level: 1` nodes carry the dense lanes
+   only. The assertion must be **scoped by point kind** (chunk points: all four; RAPTOR summary nodes:
+   dense lanes) — scoped, per §I26, not edited away to get past it.
+
+**Cost of the fix, and it is small:** SPLADE vectors are **text-derived**, independent of the dense
+embedder, and Shape B preserves `chunk_id` — so the `sparse` lane (and `colbert`) can be **carried
+over by id** from v2 rather than recomputed. Cheap — but it must be **in the plan**, or the run
+produces a three-lane v3 and Stage F measures a store that is missing a lane.
+
+⚠️ **Flagged, NOT established — needs its own check.** With `splade_enabled` resolving **True** on this
+machine, any product-path run that loaded `.env` was running the **sparse lane** (and any that did not
+was not). `CLAUDE.md`'s *"laptop with existing Feynman data: `SPLADE_ENABLED=false`"* is **not** what
+`.env` resolves to today. Whether §I65/§I67's funnel runs included the sparse lane is **not asserted
+here** — it is readable from those harnesses' resolved-config prints and must be checked before either
+entry is quoted as sparse-off.
+
+**Cost:** four read-only REST probes, **no writes**, no LLM calls, ~2 s.
+**Register against:** §I49 Finding 1 (assumed vs **resolved** — the same class, a config key this
+time), §I13 (the four-lane refusal this contradicts), §I33 (a count-based gate holds a dead lane
+green — the reason the assertion is per-point), §I26 (scope the gate, do not edit it away), §I44 (a
+store fact that existed but was not on disk).
