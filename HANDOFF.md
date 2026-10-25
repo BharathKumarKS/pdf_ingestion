@@ -4,8 +4,9 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-25, session 18 (S1 green + committed; S2 LANDED — v3 re-created and C0
-> measured at ~7 min; the next session is S3, the re-embed).**
+> **Last updated: 2026-10-25, session 18 (S1 committed; S2 + S3 LANDED — `knowledge_base_v3` is
+> POPULATED: 3,796 points, all four lanes; the next session is S4 — the intent classifier +
+> preflight).**
 >
 > ## ▶ SESSION 18 — WHAT HAPPENED, AND WHAT IS NEXT
 >
@@ -75,14 +76,34 @@
 > Qwen3/1024**. (b) The C0 probe writes to a **fixed path** and overwrote the gemma FAILED artifact
 > (preserved as `c0_gemma_late_chunk_timing_FAILED.json`); the probe needs an `--out` argument.
 >
-> **12. ▶ NEXT — S3 (the re-embed).** A **background job**, not a session: extend
-> `scripts/reembed_chunks.py` (Shape B — recompute every lane per point, preserve `qdrant_point_id`),
-> wire in the late-chunk path, checkpoint it, write into `knowledge_base_v3`, then gate with
-> `verify_collection_lanes.py --collection knowledge_base_v3`. ⚠️ `data/embed_cache/` (874 dirs)
-> **cannot be reused** (model + `dense_dim_low` are in the fingerprint). Then S4 (intent classifier +
-> preflight), S5 (§I68 fix → the ONE pre-registered product-endpoint run + the §I66 decomposition),
-> S6 (the fine-tune; signoff 6 open). ⚠️ Still carried: **signoff 4** (accept the §I79 measurement),
-> **signoff 3** (re-confirm Shape B), the arm-2 harness, §I56's DA lane, §G2's V5 build, §G5/§I2.
+> **12. ✅ S3 IS DONE — read `IMPROVEMENTS.md` §I81. `knowledge_base_v3` IS POPULATED.** Shape B
+> re-embed: `scripts/reembed_chunks.py --from-collection knowledge_base_v2` (new mode; the SQLite mode
+> and its §I13 refusal are unchanged) recomputes the **dense** lanes with nomic **late-chunked**, and
+> **carries `colbert` + `sparse` over** from v2 (same models, unchanged vectors — plan §2). **3,796
+> points / 341 parents in 612.7 s, exit 0, 0 failures.** All five verifiers pass
+> (`logs/p1/step10/reembed_v3_verify.py`): **V1** chunk_id set byte-identical (3,796/3,796, 0
+> missing/extra), **V2** every lane on every chunk point, **V5** point ids preserved, **V3** A-vs-A
+> bit-identical (29 children), **V4** the known-vector spot check — Qwen3 recomputation reproduces
+> v2's stored `dense_1024` at **cos 1.000000**. The plan's gate
+> (`verify_collection_lanes.py --collection knowledge_base_v3`) → **exit 0, all four lanes 3,796/3,796**.
+> A **negative control** (V2 pointed at v2) FAILS 3,796/3,796 — the lane check discriminates.
+>
+> **13. ⚠️ S3's SCOPE — do not assume more than this.** **RAPTOR (73 nodes) is NOT in v3** (the gate
+> reports 0 raptor; the harness says so out loud) — that is a separate step
+> (`run_phase2.py --raptor-only`). **No unit test was added for the Shape B mode** — the evidence is
+> the live run + V1–V5 + the negative control. ⚠️ `knowledge_base_v2` is **still untouched (3,869)**.
+> ⚠️ Also caught while verifying: **the cluster embedder is a memoised singleton** — a check that asks
+> one process for two models must build the second one explicitly (V4 failed for the wrong reason
+> until it did).
+>
+> **14. ▶ NEXT — S4 (the intent classifier + preflight).** `scripts/train_intent_classifier.py` then
+> `scripts/preflight.py` against v3. ⚠️ **Not optional:** `intent_router.py:156` **refuses** a
+> classifier whose `n_features_in_ != cfg.dense_dim`, and the existing pickle is 1024-trained against
+> a 768 embedder. Then S5 (§I68 fix → the ONE pre-registered product-endpoint run + the §I66
+> decomposition), S6 (the fine-tune; signoff 6 open). ⚠️ `data/embed_cache/` (874 dirs) **cannot be
+> reused** (model + `dense_dim_low` are in the fingerprint). ⚠️ Still carried: **signoff 4** (accept
+> the §I79 measurement), **signoff 3** (re-confirm Shape B), the **A2 `.env` flip**, the arm-2
+> harness, §I56's DA lane, §G2's V5 build, §G5/§I2.
 >
 > ## ▶ SESSION 17b — THE EMBEDDER DECISION, AND THE NEXT SESSION'S OPENING PROMPT
 >

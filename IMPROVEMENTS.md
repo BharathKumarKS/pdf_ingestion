@@ -6690,3 +6690,64 @@ until it lands every stage must export `DENSE_MODEL`/`DENSE_DIM`/`DENSE_DIM_LOW`
 different), §I33 (a count-based gate is not a shape gate), §I76 (the lane inventory v3 must carry),
 §I79 (the same session's other measurement), §I13 (a dimension is immutable — the reason v3 had to be
 dropped rather than altered).
+
+---
+
+### I81. 2026-10-25 — ✅ S3: the Shape B re-embed into `knowledge_base_v3` is DONE — 3,796 points, all four lanes, ids preserved, and the late-chunk path reproduces the source at **cos 1.000000**
+
+**What Shape B is.** Recompute the **dense** lanes with the configured embedder (**nomic,
+late-chunked** — one cluster call per parent), **carry `colbert` + `sparse` over** from the source
+(different models, unchanged vectors — plan §2's "carried over"), and upsert into the destination
+**preserving every point id**. It is reproducible **without re-parsing**: the source payloads carry
+`text` / `parent_text` / `char_start` / `char_end` / `parent_id` / `chunk_index` / `page_number`, so
+the parent→child hierarchy and each child's span are reconstructed exactly — which is why the cards
+and the graph (both keyed on `chunk_id`) stay valid.
+
+**Built.** `scripts/reembed_chunks.py` gained a `--from-collection SRC` mode (the SQLite mode and its
+§I13 refusal are **unchanged**; Shape B computes all lanes, so it does not refuse). ⚠️ **No child may
+be dropped**: the late-chunk path returns `[]` for an empty parent and falls back to isolation when a
+parent tokenizes to zero tokens, so any child not returned late-chunked is embedded in **isolation** —
+that is what makes Verifier C-i passable. It checkpoints per parent and logs one line per parent with
+a rolling rate (§I23/§I25 — a stalled run is distinguishable from a slow one).
+
+**Run:** **3,796 points / 341 parents in 612.7 s (10.2 min)**, exit 0, **0 failures**. (C0's
+extrapolation was ~7 min; the delta is the scroll + the upserts + the per-parent checkpoint write —
+the extrapolation measured the late-chunk call alone, which is the honest reading of both numbers.)
+
+**Verifiers (plan §3 Stage C, Verifier C) — `logs/p1/step10/reembed_v3_verify.py`, ALL PASS:**
+
+| check | result |
+|---|---|
+| **V1** chunk_id set before == after | **3,796 / 3,796**, missing **0**, extra **0** (byte-identical sorted list) |
+| **V2** every lane on every chunk point, per point | **3,796** checked, **0 bad** |
+| **V5** point id preserved | every destination id exists in the source with the same `chunk_id` |
+| **V3** A-vs-A, fresh embedders | **29 children**, `array_equal` (bit-identical) |
+| **V4** known-vector spot check | Qwen3 recomputation reproduces the source's stored `dense_1024` at **cos = 1.000000** |
+
+⚠️ **V4 is the strongest and is the one to insist on:** it proves the late-chunk path used by this
+harness is the **shipped** one, not a re-implementation that happens to produce plausible vectors.
+
+**The plan's own gate:** `scripts/verify_collection_lanes.py --collection knowledge_base_v3` →
+**exit 0**, 3,796 points, **all four lanes 3,796 / 3,796** (`colbert`, `dense_64`, `dense_full`,
+`sparse`).
+
+**Negative control (the lane check discriminates):** pointed at `knowledge_base_v2` (which has no
+`dense_full`) **V2 FAILS 3,796 / 3,796, exit 2** — so V2 can fail, and its PASS on v3 means something.
+
+**⚠️ Two traps hit while writing the verifier, both worth keeping:**
+1. **The embedder is a memoised SINGLETON.** `LateChunkEmbedder(old_settings)` silently reused the
+   nomic instance already built for V3 and returned **768d vectors against a 1024d expectation** —
+   V4 failed for the *wrong reason* until it built the old embedder **explicitly**. Any check that
+   asks one process for two models must construct the second one itself.
+2. The A-vs-A sample was **one child** (the first parent has one). Widened to the parent with the
+   **most** children (29) — a one-span A-vs-A barely exercises the span→token mapping.
+
+**⚠️ Scope, stated so it is not assumed:** **RAPTOR (73 nodes) is NOT in v3.** The harness logs
+*"raptor is NOT re-embedded here"* and the gate reports **0 raptor**; RAPTOR re-embedding is a
+separate step (`run_phase2.py --raptor-only`). And **no unit test was added for the Shape B mode** —
+the verification is the live run plus V1–V5 plus the negative control. ⚠️ **`knowledge_base_v3` is
+now POPULATED; `knowledge_base_v2` is still untouched at 3,869.**
+
+**Register against:** §I13 (the dense-only refusal this mode resolves), §I33 (per-point, not counts),
+§I80 (C0's measured basis), §I76 (the four lanes v3 must carry), §I44 (the checkpoint makes the run
+resumable and its progress readable).

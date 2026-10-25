@@ -1,0 +1,693 @@
+2026-10-25 14:45:09.418 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-25 14:45:09.599 | INFO     | __main__:reembed_shape_b:256 - Shape B: knowledge_base_v2 -> knowledge_base_v3 | dense='dense_full' low='dense_64'(64d) model='nomic-ai/nomic-embed-text-v1.5' prefix='search_document: '
+2026-10-25 14:45:29.366 | INFO     | __main__:reembed_shape_b:263 - source: 3869 points (3796 chunk / 73 raptor; raptor is NOT re-embedded here)
+2026-10-25 14:45:29.369 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-25 14:45:33.287 | INFO     | src.pdf_ingestion.late_chunk_embedder:_get_tokenizer:191 - Late-chunk tokenizer ready: nomic-ai/nomic-embed-text-v1.5
+2026-10-25 14:45:33.287 | INFO     | __main__:reembed_shape_b:287 - Shape B: 341 parents / 3796 children to process
+2026-10-25 14:45:33.447 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 0 → 1 children (38 tokens, 40 vectors)
+2026-10-25 14:45:33.474 | INFO     | __main__:reembed_shape_b:370 - [1/341] parent 0 doc 7ba61432 -> 1 children  0.19s  1 pts  rolling 0.19s/parent
+2026-10-25 14:45:33.839 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 1 → 3 children (220 tokens, 222 vectors)
+2026-10-25 14:45:33.878 | INFO     | __main__:reembed_shape_b:370 - [2/341] parent 1 doc 7ba61432 -> 3 children  0.40s  4 pts  rolling 0.30s/parent
+2026-10-25 14:45:34.667 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 2 → 8 children (622 tokens, 624 vectors)
+2026-10-25 14:45:34.788 | INFO     | __main__:reembed_shape_b:370 - [3/341] parent 2 doc 7ba61432 -> 8 children  0.91s  12 pts  rolling 0.50s/parent
+2026-10-25 14:45:35.379 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 3 → 3 children (448 tokens, 450 vectors)
+2026-10-25 14:45:35.428 | INFO     | __main__:reembed_shape_b:370 - [4/341] parent 3 doc 7ba61432 -> 3 children  0.64s  15 pts  rolling 0.53s/parent
+2026-10-25 14:45:36.242 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 4 → 5 children (665 tokens, 667 vectors)
+2026-10-25 14:45:36.301 | INFO     | __main__:reembed_shape_b:370 - [5/341] parent 4 doc 7ba61432 -> 5 children  0.87s  20 pts  rolling 0.60s/parent
+2026-10-25 14:45:37.970 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 5 → 8 children (1286 tokens, 1288 vectors)
+2026-10-25 14:45:38.120 | INFO     | __main__:reembed_shape_b:370 - [6/341] parent 5 doc 7ba61432 -> 8 children  1.82s  28 pts  rolling 0.81s/parent
+2026-10-25 14:45:39.191 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 6 → 5 children (841 tokens, 843 vectors)
+2026-10-25 14:45:39.237 | INFO     | __main__:reembed_shape_b:370 - [7/341] parent 6 doc 7ba61432 -> 5 children  1.12s  33 pts  rolling 0.85s/parent
+2026-10-25 14:45:39.637 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 7 → 1 children (240 tokens, 242 vectors)
+2026-10-25 14:45:39.672 | INFO     | __main__:reembed_shape_b:370 - [8/341] parent 7 doc 7ba61432 -> 1 children  0.43s  34 pts  rolling 0.80s/parent
+2026-10-25 14:45:39.758 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 8 → 1 children (11 tokens, 13 vectors)
+2026-10-25 14:45:39.767 | INFO     | __main__:reembed_shape_b:370 - [9/341] parent 8 doc 7ba61432 -> 1 children  0.09s  35 pts  rolling 0.72s/parent
+2026-10-25 14:45:39.867 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 9 → 1 children (17 tokens, 19 vectors)
+2026-10-25 14:45:39.879 | INFO     | __main__:reembed_shape_b:370 - [10/341] parent 9 doc 7ba61432 -> 1 children  0.11s  36 pts  rolling 0.66s/parent
+2026-10-25 14:45:39.988 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 10 → 1 children (23 tokens, 25 vectors)
+2026-10-25 14:45:40.001 | INFO     | __main__:reembed_shape_b:370 - [11/341] parent 10 doc 7ba61432 -> 1 children  0.12s  37 pts  rolling 0.61s/parent
+2026-10-25 14:45:40.205 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 11 → 1 children (93 tokens, 95 vectors)
+2026-10-25 14:45:40.218 | INFO     | __main__:reembed_shape_b:370 - [12/341] parent 11 doc 7ba61432 -> 1 children  0.22s  38 pts  rolling 0.58s/parent
+2026-10-25 14:45:42.481 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 12 → 19 children (2021 tokens, 2023 vectors)
+2026-10-25 14:45:42.679 | INFO     | __main__:reembed_shape_b:370 - [13/341] parent 12 doc 7ba61432 -> 19 children  2.46s  57 pts  rolling 0.72s/parent
+2026-10-25 14:45:44.367 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 13 → 8 children (1305 tokens, 1307 vectors)
+2026-10-25 14:45:44.445 | INFO     | __main__:reembed_shape_b:370 - [14/341] parent 13 doc 7ba61432 -> 8 children  1.77s  65 pts  rolling 0.80s/parent
+2026-10-25 14:45:45.804 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 14 → 6 children (1092 tokens, 1094 vectors)
+2026-10-25 14:45:45.873 | INFO     | __main__:reembed_shape_b:370 - [15/341] parent 14 doc 7ba61432 -> 6 children  1.43s  71 pts  rolling 0.84s/parent
+2026-10-25 14:45:46.767 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 15 → 7 children (689 tokens, 691 vectors)
+2026-10-25 14:45:46.835 | INFO     | __main__:reembed_shape_b:370 - [16/341] parent 15 doc 7ba61432 -> 7 children  0.96s  78 pts  rolling 0.85s/parent
+2026-10-25 14:45:51.864 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 16 → 27 children (4162 tokens, 4164 vectors)
+2026-10-25 14:45:52.001 | INFO     | __main__:reembed_shape_b:370 - [17/341] parent 16 doc 7ba61432 -> 27 children  5.17s  105 pts  rolling 1.10s/parent
+2026-10-25 14:45:53.355 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 17 → 9 children (1130 tokens, 1132 vectors)
+2026-10-25 14:45:53.390 | INFO     | __main__:reembed_shape_b:370 - [18/341] parent 17 doc 7ba61432 -> 9 children  1.39s  114 pts  rolling 1.12s/parent
+2026-10-25 14:45:54.238 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 18 → 6 children (611 tokens, 613 vectors)
+2026-10-25 14:45:54.293 | INFO     | __main__:reembed_shape_b:370 - [19/341] parent 18 doc 7ba61432 -> 6 children  0.90s  120 pts  rolling 1.11s/parent
+2026-10-25 14:45:58.623 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 19 → 19 children (3822 tokens, 3824 vectors)
+2026-10-25 14:45:58.718 | INFO     | __main__:reembed_shape_b:370 - [20/341] parent 19 doc 7ba61432 -> 19 children  4.42s  139 pts  rolling 1.27s/parent
+2026-10-25 14:46:00.242 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 20 → 12 children (1280 tokens, 1282 vectors)
+2026-10-25 14:46:00.351 | INFO     | __main__:reembed_shape_b:370 - [21/341] parent 20 doc 7ba61432 -> 12 children  1.63s  151 pts  rolling 1.34s/parent
+2026-10-25 14:46:03.539 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 21 → 21 children (2620 tokens, 2622 vectors)
+2026-10-25 14:46:03.707 | INFO     | __main__:reembed_shape_b:370 - [22/341] parent 21 doc 7ba61432 -> 21 children  3.36s  172 pts  rolling 1.49s/parent
+2026-10-25 14:46:05.567 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 22 → 16 children (1645 tokens, 1647 vectors)
+2026-10-25 14:46:05.678 | INFO     | __main__:reembed_shape_b:370 - [23/341] parent 22 doc 7ba61432 -> 16 children  1.97s  188 pts  rolling 1.54s/parent
+2026-10-25 14:46:08.376 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 23 → 20 children (2385 tokens, 2387 vectors)
+2026-10-25 14:46:08.530 | INFO     | __main__:reembed_shape_b:370 - [24/341] parent 23 doc 7ba61432 -> 20 children  2.85s  208 pts  rolling 1.65s/parent
+2026-10-25 14:46:10.595 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 24 → 14 children (1775 tokens, 1777 vectors)
+2026-10-25 14:46:10.748 | INFO     | __main__:reembed_shape_b:370 - [25/341] parent 24 doc 7ba61432 -> 14 children  2.22s  222 pts  rolling 1.72s/parent
+2026-10-25 14:46:14.111 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 25 → 25 children (2754 tokens, 2756 vectors)
+2026-10-25 14:46:14.315 | INFO     | __main__:reembed_shape_b:370 - [26/341] parent 25 doc 7ba61432 -> 25 children  3.57s  247 pts  rolling 1.81s/parent
+2026-10-25 14:46:17.263 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 26 → 20 children (2325 tokens, 2327 vectors)
+2026-10-25 14:46:17.489 | INFO     | __main__:reembed_shape_b:370 - [27/341] parent 26 doc 7ba61432 -> 20 children  3.17s  267 pts  rolling 1.91s/parent
+2026-10-25 14:46:20.860 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 27 → 20 children (2719 tokens, 2721 vectors)
+2026-10-25 14:46:21.048 | INFO     | __main__:reembed_shape_b:370 - [28/341] parent 27 doc 7ba61432 -> 20 children  3.56s  287 pts  rolling 2.07s/parent
+2026-10-25 14:46:21.545 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 28 → 2 children (255 tokens, 257 vectors)
+2026-10-25 14:46:21.570 | INFO     | __main__:reembed_shape_b:370 - [29/341] parent 28 doc 7ba61432 -> 2 children  0.52s  289 pts  rolling 2.09s/parent
+2026-10-25 14:46:22.639 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 29 → 6 children (722 tokens, 724 vectors)
+2026-10-25 14:46:22.692 | INFO     | __main__:reembed_shape_b:370 - [30/341] parent 29 doc 7ba61432 -> 6 children  1.12s  295 pts  rolling 2.14s/parent
+2026-10-25 14:46:27.908 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 30 → 28 children (3881 tokens, 3883 vectors)
+2026-10-25 14:46:28.212 | INFO     | __main__:reembed_shape_b:370 - [31/341] parent 30 doc 7ba61432 -> 28 children  5.52s  323 pts  rolling 2.41s/parent
+2026-10-25 14:46:29.532 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 31 → 9 children (1078 tokens, 1080 vectors)
+2026-10-25 14:46:29.622 | INFO     | __main__:reembed_shape_b:370 - [32/341] parent 31 doc 7ba61432 -> 9 children  1.41s  332 pts  rolling 2.47s/parent
+2026-10-25 14:46:30.655 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 32 → 9 children (762 tokens, 764 vectors)
+2026-10-25 14:46:30.772 | INFO     | __main__:reembed_shape_b:370 - [33/341] parent 32 doc 7ba61432 -> 9 children  1.15s  341 pts  rolling 2.40s/parent
+2026-10-25 14:46:31.509 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 33 → 7 children (563 tokens, 565 vectors)
+2026-10-25 14:46:31.558 | INFO     | __main__:reembed_shape_b:370 - [34/341] parent 33 doc 7ba61432 -> 7 children  0.79s  348 pts  rolling 2.36s/parent
+2026-10-25 14:46:33.008 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 34 → 10 children (1071 tokens, 1073 vectors)
+2026-10-25 14:46:33.074 | INFO     | __main__:reembed_shape_b:370 - [35/341] parent 34 doc 7ba61432 -> 10 children  1.52s  358 pts  rolling 2.36s/parent
+2026-10-25 14:46:34.503 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 35 → 9 children (1146 tokens, 1148 vectors)
+2026-10-25 14:46:34.630 | INFO     | __main__:reembed_shape_b:370 - [36/341] parent 35 doc 7ba61432 -> 9 children  1.56s  367 pts  rolling 2.39s/parent
+2026-10-25 14:46:38.316 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 36 → 20 children (3100 tokens, 3102 vectors)
+2026-10-25 14:46:38.523 | INFO     | __main__:reembed_shape_b:370 - [37/341] parent 36 doc 7ba61432 -> 20 children  3.89s  387 pts  rolling 2.33s/parent
+2026-10-25 14:46:39.257 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 37 → 5 children (526 tokens, 528 vectors)
+2026-10-25 14:46:39.326 | INFO     | __main__:reembed_shape_b:370 - [38/341] parent 37 doc 7ba61432 -> 5 children  0.80s  392 pts  rolling 2.30s/parent
+2026-10-25 14:46:41.879 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 38 → 19 children (2178 tokens, 2180 vectors)
+2026-10-25 14:46:42.062 | INFO     | __main__:reembed_shape_b:370 - [39/341] parent 38 doc 7ba61432 -> 19 children  2.74s  411 pts  rolling 2.39s/parent
+2026-10-25 14:46:42.796 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 39 → 4 children (521 tokens, 523 vectors)
+2026-10-25 14:46:42.849 | INFO     | __main__:reembed_shape_b:370 - [40/341] parent 39 doc 7ba61432 -> 4 children  0.79s  415 pts  rolling 2.21s/parent
+2026-10-25 14:46:43.767 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 40 → 4 children (671 tokens, 673 vectors)
+2026-10-25 14:46:43.808 | INFO     | __main__:reembed_shape_b:370 - [41/341] parent 40 doc 7ba61432 -> 4 children  0.96s  419 pts  rolling 2.17s/parent
+2026-10-25 14:46:45.235 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 41 → 9 children (1168 tokens, 1170 vectors)
+2026-10-25 14:46:45.377 | INFO     | __main__:reembed_shape_b:370 - [42/341] parent 41 doc 7ba61432 -> 9 children  1.57s  428 pts  rolling 2.08s/parent
+2026-10-25 14:46:47.237 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 42 → 13 children (1263 tokens, 1265 vectors)
+2026-10-25 14:46:47.389 | INFO     | __main__:reembed_shape_b:370 - [43/341] parent 42 doc 7ba61432 -> 13 children  2.01s  441 pts  rolling 2.08s/parent
+2026-10-25 14:46:48.166 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 43 → 7 children (548 tokens, 550 vectors)
+2026-10-25 14:46:48.214 | INFO     | __main__:reembed_shape_b:370 - [44/341] parent 43 doc 7ba61432 -> 7 children  0.82s  448 pts  rolling 1.98s/parent
+2026-10-25 14:46:50.045 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 44 → 11 children (1443 tokens, 1445 vectors)
+2026-10-25 14:46:50.145 | INFO     | __main__:reembed_shape_b:370 - [45/341] parent 44 doc 7ba61432 -> 11 children  1.93s  459 pts  rolling 1.97s/parent
+2026-10-25 14:46:52.025 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 45 → 14 children (1526 tokens, 1528 vectors)
+2026-10-25 14:46:52.155 | INFO     | __main__:reembed_shape_b:370 - [46/341] parent 45 doc 7ba61432 -> 14 children  2.01s  473 pts  rolling 1.89s/parent
+2026-10-25 14:46:52.231 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 46 → 1 children (21 tokens, 23 vectors)
+2026-10-25 14:46:52.240 | INFO     | __main__:reembed_shape_b:370 - [47/341] parent 46 doc 7ba61432 -> 1 children  0.09s  474 pts  rolling 1.74s/parent
+2026-10-25 14:46:54.409 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 47 → 15 children (1640 tokens, 1642 vectors)
+2026-10-25 14:46:54.536 | INFO     | __main__:reembed_shape_b:370 - [48/341] parent 47 doc 7ba61432 -> 15 children  2.30s  489 pts  rolling 1.67s/parent
+2026-10-25 14:46:57.234 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 48 → 15 children (2137 tokens, 2139 vectors)
+2026-10-25 14:46:57.361 | INFO     | __main__:reembed_shape_b:370 - [49/341] parent 48 doc 7ba61432 -> 15 children  2.82s  504 pts  rolling 1.79s/parent
+2026-10-25 14:46:59.601 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 49 → 17 children (1858 tokens, 1860 vectors)
+2026-10-25 14:46:59.744 | INFO     | __main__:reembed_shape_b:370 - [50/341] parent 49 doc 7ba61432 -> 17 children  2.38s  521 pts  rolling 1.85s/parent
+2026-10-25 14:47:01.836 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 50 → 13 children (1792 tokens, 1794 vectors)
+2026-10-25 14:47:02.054 | INFO     | __main__:reembed_shape_b:370 - [51/341] parent 50 doc 7ba61432 -> 13 children  2.31s  534 pts  rolling 1.69s/parent
+2026-10-25 14:47:03.439 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 51 → 8 children (1132 tokens, 1134 vectors)
+2026-10-25 14:47:03.547 | INFO     | __main__:reembed_shape_b:370 - [52/341] parent 51 doc 7ba61432 -> 8 children  1.49s  542 pts  rolling 1.70s/parent
+2026-10-25 14:47:04.302 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 52 → 5 children (582 tokens, 584 vectors)
+2026-10-25 14:47:04.364 | INFO     | __main__:reembed_shape_b:370 - [53/341] parent 52 doc 7ba61432 -> 5 children  0.82s  547 pts  rolling 1.68s/parent
+2026-10-25 14:47:05.386 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 53 → 5 children (610 tokens, 612 vectors)
+2026-10-25 14:47:05.433 | INFO     | __main__:reembed_shape_b:370 - [54/341] parent 53 doc 7ba61432 -> 5 children  1.07s  552 pts  rolling 1.69s/parent
+2026-10-25 14:47:06.117 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 54 → 5 children (583 tokens, 585 vectors)
+2026-10-25 14:47:06.183 | INFO     | __main__:reembed_shape_b:370 - [55/341] parent 54 doc 7ba61432 -> 5 children  0.75s  557 pts  rolling 1.65s/parent
+2026-10-25 14:47:08.613 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 55 → 16 children (2043 tokens, 2045 vectors)
+2026-10-25 14:47:08.733 | INFO     | __main__:reembed_shape_b:370 - [56/341] parent 55 doc 7ba61432 -> 16 children  2.55s  573 pts  rolling 1.70s/parent
+2026-10-25 14:47:11.156 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 56 → 16 children (2073 tokens, 2075 vectors)
+2026-10-25 14:47:11.328 | INFO     | __main__:reembed_shape_b:370 - [57/341] parent 56 doc 7ba61432 -> 16 children  2.59s  589 pts  rolling 1.64s/parent
+2026-10-25 14:47:12.062 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 57 → 5 children (559 tokens, 561 vectors)
+2026-10-25 14:47:12.114 | INFO     | __main__:reembed_shape_b:370 - [58/341] parent 57 doc 7ba61432 -> 5 children  0.79s  594 pts  rolling 1.64s/parent
+2026-10-25 14:47:14.300 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 58 → 13 children (1791 tokens, 1793 vectors)
+2026-10-25 14:47:14.444 | INFO     | __main__:reembed_shape_b:370 - [59/341] parent 58 doc 7ba61432 -> 13 children  2.33s  607 pts  rolling 1.62s/parent
+2026-10-25 14:47:15.245 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 59 → 4 children (455 tokens, 457 vectors)
+2026-10-25 14:47:15.281 | INFO     | __main__:reembed_shape_b:370 - [60/341] parent 59 doc 7ba61432 -> 4 children  0.84s  611 pts  rolling 1.62s/parent
+2026-10-25 14:47:16.653 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 60 → 6 children (902 tokens, 904 vectors)
+2026-10-25 14:47:16.753 | INFO     | __main__:reembed_shape_b:370 - [61/341] parent 60 doc 7ba61432 -> 6 children  1.47s  617 pts  rolling 1.65s/parent
+2026-10-25 14:47:17.696 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 61 → 6 children (835 tokens, 837 vectors)
+2026-10-25 14:47:17.747 | INFO     | __main__:reembed_shape_b:370 - [62/341] parent 61 doc 7ba61432 -> 6 children  0.99s  623 pts  rolling 1.62s/parent
+2026-10-25 14:47:21.094 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 62 → 20 children (2897 tokens, 2899 vectors)
+2026-10-25 14:47:21.315 | INFO     | __main__:reembed_shape_b:370 - [63/341] parent 62 doc 7ba61432 -> 20 children  3.57s  643 pts  rolling 1.70s/parent
+2026-10-25 14:47:22.525 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 63 → 11 children (1051 tokens, 1053 vectors)
+2026-10-25 14:47:22.598 | INFO     | __main__:reembed_shape_b:370 - [64/341] parent 63 doc 7ba61432 -> 11 children  1.28s  654 pts  rolling 1.72s/parent
+2026-10-25 14:47:23.721 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 64 → 8 children (911 tokens, 913 vectors)
+2026-10-25 14:47:23.851 | INFO     | __main__:reembed_shape_b:370 - [65/341] parent 64 doc 7ba61432 -> 8 children  1.25s  662 pts  rolling 1.68s/parent
+2026-10-25 14:47:25.969 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 65 → 17 children (1777 tokens, 1779 vectors)
+2026-10-25 14:47:26.131 | INFO     | __main__:reembed_shape_b:370 - [66/341] parent 65 doc 7ba61432 -> 17 children  2.28s  679 pts  rolling 1.70s/parent
+2026-10-25 14:47:27.850 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 66 → 10 children (1378 tokens, 1380 vectors)
+2026-10-25 14:47:27.959 | INFO     | __main__:reembed_shape_b:370 - [67/341] parent 66 doc 7ba61432 -> 10 children  1.83s  689 pts  rolling 1.79s/parent
+2026-10-25 14:47:28.408 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 67 → 1 children (295 tokens, 297 vectors)
+2026-10-25 14:47:28.427 | INFO     | __main__:reembed_shape_b:370 - [68/341] parent 67 doc 7ba61432 -> 1 children  0.47s  690 pts  rolling 1.69s/parent
+2026-10-25 14:47:29.212 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 68 → 6 children (634 tokens, 636 vectors)
+2026-10-25 14:47:29.258 | INFO     | __main__:reembed_shape_b:370 - [69/341] parent 68 doc 7ba61432 -> 6 children  0.83s  696 pts  rolling 1.59s/parent
+2026-10-25 14:47:30.056 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 69 → 6 children (694 tokens, 696 vectors)
+2026-10-25 14:47:30.150 | INFO     | __main__:reembed_shape_b:370 - [70/341] parent 69 doc 7ba61432 -> 6 children  0.89s  702 pts  rolling 1.52s/parent
+2026-10-25 14:47:30.894 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 70 → 6 children (527 tokens, 529 vectors)
+2026-10-25 14:47:30.943 | INFO     | __main__:reembed_shape_b:370 - [71/341] parent 70 doc 7ba61432 -> 6 children  0.79s  708 pts  rolling 1.44s/parent
+2026-10-25 14:47:32.941 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 71 → 9 children (1629 tokens, 1631 vectors)
+2026-10-25 14:47:33.023 | INFO     | __main__:reembed_shape_b:370 - [72/341] parent 71 doc 7ba61432 -> 9 children  2.08s  717 pts  rolling 1.47s/parent
+2026-10-25 14:47:34.316 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 72 → 8 children (1057 tokens, 1059 vectors)
+2026-10-25 14:47:34.419 | INFO     | __main__:reembed_shape_b:370 - [73/341] parent 72 doc 7ba61432 -> 8 children  1.40s  725 pts  rolling 1.50s/parent
+2026-10-25 14:47:37.128 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 73 → 9 children (2193 tokens, 2195 vectors)
+2026-10-25 14:47:37.193 | INFO     | __main__:reembed_shape_b:370 - [74/341] parent 73 doc 7ba61432 -> 9 children  2.77s  734 pts  rolling 1.59s/parent
+2026-10-25 14:47:38.770 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 74 → 13 children (1281 tokens, 1283 vectors)
+2026-10-25 14:47:38.943 | INFO     | __main__:reembed_shape_b:370 - [75/341] parent 74 doc 7ba61432 -> 13 children  1.75s  747 pts  rolling 1.64s/parent
+2026-10-25 14:47:41.560 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 75 → 13 children (2170 tokens, 2172 vectors)
+2026-10-25 14:47:41.763 | INFO     | __main__:reembed_shape_b:370 - [76/341] parent 75 doc 7ba61432 -> 13 children  2.82s  760 pts  rolling 1.65s/parent
+2026-10-25 14:47:44.270 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 76 → 16 children (2024 tokens, 2026 vectors)
+2026-10-25 14:47:44.430 | INFO     | __main__:reembed_shape_b:370 - [77/341] parent 76 doc 7ba61432 -> 16 children  2.67s  776 pts  rolling 1.65s/parent
+2026-10-25 14:47:45.651 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 77 → 12 children (1073 tokens, 1075 vectors)
+2026-10-25 14:47:45.731 | INFO     | __main__:reembed_shape_b:370 - [78/341] parent 77 doc 7ba61432 -> 12 children  1.30s  788 pts  rolling 1.68s/parent
+2026-10-25 14:47:47.201 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 78 → 7 children (1158 tokens, 1160 vectors)
+2026-10-25 14:47:47.268 | INFO     | __main__:reembed_shape_b:370 - [79/341] parent 78 doc 7ba61432 -> 7 children  1.54s  795 pts  rolling 1.64s/parent
+2026-10-25 14:47:48.051 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 79 → 8 children (664 tokens, 666 vectors)
+2026-10-25 14:47:48.126 | INFO     | __main__:reembed_shape_b:370 - [80/341] parent 79 doc 7ba61432 -> 8 children  0.86s  803 pts  rolling 1.64s/parent
+2026-10-25 14:47:49.394 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 80 → 10 children (986 tokens, 988 vectors)
+2026-10-25 14:47:49.471 | INFO     | __main__:reembed_shape_b:370 - [81/341] parent 80 doc 7ba61432 -> 10 children  1.34s  813 pts  rolling 1.64s/parent
+2026-10-25 14:47:51.113 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 81 → 11 children (1433 tokens, 1435 vectors)
+2026-10-25 14:47:51.237 | INFO     | __main__:reembed_shape_b:370 - [82/341] parent 81 doc 7ba61432 -> 11 children  1.77s  824 pts  rolling 1.67s/parent
+2026-10-25 14:47:52.624 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 82 → 12 children (1232 tokens, 1234 vectors)
+2026-10-25 14:47:52.753 | INFO     | __main__:reembed_shape_b:370 - [83/341] parent 82 doc 7ba61432 -> 12 children  1.52s  836 pts  rolling 1.57s/parent
+2026-10-25 14:47:54.494 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 83 → 13 children (1398 tokens, 1400 vectors)
+2026-10-25 14:47:54.581 | INFO     | __main__:reembed_shape_b:370 - [84/341] parent 83 doc 7ba61432 -> 13 children  1.83s  849 pts  rolling 1.60s/parent
+2026-10-25 14:47:55.638 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 84 → 10 children (902 tokens, 904 vectors)
+2026-10-25 14:47:55.745 | INFO     | __main__:reembed_shape_b:370 - [85/341] parent 84 doc 7ba61432 -> 10 children  1.16s  859 pts  rolling 1.59s/parent
+2026-10-25 14:47:57.732 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 85 → 13 children (1519 tokens, 1521 vectors)
+2026-10-25 14:47:57.903 | INFO     | __main__:reembed_shape_b:370 - [86/341] parent 85 doc 7ba61432 -> 13 children  2.16s  872 pts  rolling 1.59s/parent
+2026-10-25 14:48:00.324 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 86 → 17 children (2103 tokens, 2105 vectors)
+2026-10-25 14:48:00.533 | INFO     | __main__:reembed_shape_b:370 - [87/341] parent 86 doc 7ba61432 -> 17 children  2.63s  889 pts  rolling 1.63s/parent
+2026-10-25 14:48:03.635 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 87 → 20 children (2545 tokens, 2547 vectors)
+2026-10-25 14:48:03.868 | INFO     | __main__:reembed_shape_b:370 - [88/341] parent 87 doc 7ba61432 -> 20 children  3.33s  909 pts  rolling 1.77s/parent
+2026-10-25 14:48:05.381 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 88 → 10 children (1145 tokens, 1147 vectors)
+2026-10-25 14:48:05.476 | INFO     | __main__:reembed_shape_b:370 - [89/341] parent 88 doc 7ba61432 -> 10 children  1.61s  919 pts  rolling 1.81s/parent
+2026-10-25 14:48:09.245 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 89 → 24 children (3134 tokens, 3136 vectors)
+2026-10-25 14:48:09.513 | INFO     | __main__:reembed_shape_b:370 - [90/341] parent 89 doc 7ba61432 -> 24 children  4.04s  943 pts  rolling 1.97s/parent
+2026-10-25 14:48:11.225 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 90 → 12 children (1425 tokens, 1427 vectors)
+2026-10-25 14:48:11.407 | INFO     | __main__:reembed_shape_b:370 - [91/341] parent 90 doc 7ba61432 -> 12 children  1.89s  955 pts  rolling 2.02s/parent
+2026-10-25 14:48:11.944 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 91 → 4 children (359 tokens, 361 vectors)
+2026-10-25 14:48:11.993 | INFO     | __main__:reembed_shape_b:370 - [92/341] parent 91 doc 7ba61432 -> 4 children  0.59s  959 pts  rolling 1.95s/parent
+2026-10-25 14:48:14.515 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 92 → 19 children (2178 tokens, 2180 vectors)
+2026-10-25 14:48:14.764 | INFO     | __main__:reembed_shape_b:370 - [93/341] parent 92 doc 7ba61432 -> 19 children  2.77s  978 pts  rolling 2.02s/parent
+2026-10-25 14:48:17.412 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 93 → 18 children (2276 tokens, 2278 vectors)
+2026-10-25 14:48:17.561 | INFO     | __main__:reembed_shape_b:370 - [94/341] parent 93 doc 7ba61432 -> 18 children  2.80s  996 pts  rolling 2.02s/parent
+2026-10-25 14:48:18.720 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 94 → 10 children (985 tokens, 987 vectors)
+2026-10-25 14:48:18.788 | INFO     | __main__:reembed_shape_b:370 - [95/341] parent 94 doc 7ba61432 -> 10 children  1.23s  1,006 pts  rolling 1.99s/parent
+2026-10-25 14:48:20.700 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 95 → 13 children (1597 tokens, 1599 vectors)
+2026-10-25 14:48:20.832 | INFO     | __main__:reembed_shape_b:370 - [96/341] parent 95 doc 7ba61432 -> 13 children  2.04s  1,019 pts  rolling 1.95s/parent
+2026-10-25 14:48:22.850 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 96 → 11 children (1732 tokens, 1734 vectors)
+2026-10-25 14:48:22.959 | INFO     | __main__:reembed_shape_b:370 - [97/341] parent 96 doc 7ba61432 -> 11 children  2.13s  1,030 pts  rolling 1.93s/parent
+2026-10-25 14:48:23.558 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 97 → 4 children (484 tokens, 486 vectors)
+2026-10-25 14:48:23.602 | INFO     | __main__:reembed_shape_b:370 - [98/341] parent 97 doc 7ba61432 -> 4 children  0.64s  1,034 pts  rolling 1.89s/parent
+2026-10-25 14:48:26.633 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 98 → 19 children (2611 tokens, 2613 vectors)
+2026-10-25 14:48:26.882 | INFO     | __main__:reembed_shape_b:370 - [99/341] parent 98 doc 7ba61432 -> 19 children  3.28s  1,053 pts  rolling 1.98s/parent
+2026-10-25 14:48:28.316 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 99 → 9 children (1059 tokens, 1061 vectors)
+2026-10-25 14:48:28.398 | INFO     | __main__:reembed_shape_b:370 - [100/341] parent 99 doc 7ba61432 -> 9 children  1.52s  1,062 pts  rolling 2.01s/parent
+2026-10-25 14:48:31.417 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 100 → 20 children (2574 tokens, 2576 vectors)
+2026-10-25 14:48:31.575 | INFO     | __main__:reembed_shape_b:370 - [101/341] parent 100 doc 7ba61432 -> 20 children  3.18s  1,082 pts  rolling 2.10s/parent
+2026-10-25 14:48:33.373 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 101 → 14 children (1530 tokens, 1532 vectors)
+2026-10-25 14:48:33.507 | INFO     | __main__:reembed_shape_b:370 - [102/341] parent 101 doc 7ba61432 -> 14 children  1.93s  1,096 pts  rolling 2.11s/parent
+2026-10-25 14:48:34.267 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 102 → 6 children (595 tokens, 597 vectors)
+2026-10-25 14:48:34.346 | INFO     | __main__:reembed_shape_b:370 - [103/341] parent 102 doc 7ba61432 -> 6 children  0.84s  1,102 pts  rolling 2.08s/parent
+2026-10-25 14:48:36.094 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 103 → 14 children (1551 tokens, 1553 vectors)
+2026-10-25 14:48:36.202 | INFO     | __main__:reembed_shape_b:370 - [104/341] parent 103 doc 7ba61432 -> 14 children  1.86s  1,116 pts  rolling 2.08s/parent
+2026-10-25 14:48:38.262 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 104 → 17 children (1785 tokens, 1787 vectors)
+2026-10-25 14:48:38.380 | INFO     | __main__:reembed_shape_b:370 - [105/341] parent 104 doc 7ba61432 -> 17 children  2.18s  1,133 pts  rolling 2.13s/parent
+2026-10-25 14:48:38.920 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 105 → 2 children (368 tokens, 370 vectors)
+2026-10-25 14:48:38.953 | INFO     | __main__:reembed_shape_b:370 - [106/341] parent 105 doc 7ba61432 -> 2 children  0.57s  1,135 pts  rolling 2.05s/parent
+2026-10-25 14:48:39.654 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 106 → 4 children (518 tokens, 520 vectors)
+2026-10-25 14:48:39.696 | INFO     | __main__:reembed_shape_b:370 - [107/341] parent 106 doc 7ba61432 -> 4 children  0.74s  1,139 pts  rolling 1.96s/parent
+2026-10-25 14:48:40.277 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 107 → 3 children (457 tokens, 459 vectors)
+2026-10-25 14:48:40.315 | INFO     | __main__:reembed_shape_b:370 - [108/341] parent 107 doc 7ba61432 -> 3 children  0.62s  1,142 pts  rolling 1.82s/parent
+2026-10-25 14:48:41.650 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 108 → 9 children (1090 tokens, 1092 vectors)
+2026-10-25 14:48:41.745 | INFO     | __main__:reembed_shape_b:370 - [109/341] parent 108 doc 7ba61432 -> 9 children  1.43s  1,151 pts  rolling 1.81s/parent
+2026-10-25 14:48:42.848 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 109 → 9 children (922 tokens, 924 vectors)
+2026-10-25 14:48:42.926 | INFO     | __main__:reembed_shape_b:370 - [110/341] parent 109 doc 7ba61432 -> 9 children  1.18s  1,160 pts  rolling 1.67s/parent
+2026-10-25 14:48:45.283 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 110 → 16 children (2061 tokens, 2063 vectors)
+2026-10-25 14:48:45.479 | INFO     | __main__:reembed_shape_b:370 - [111/341] parent 110 doc 7ba61432 -> 16 children  2.55s  1,176 pts  rolling 1.70s/parent
+2026-10-25 14:48:46.342 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 111 → 4 children (646 tokens, 648 vectors)
+2026-10-25 14:48:46.393 | INFO     | __main__:reembed_shape_b:370 - [112/341] parent 111 doc 7ba61432 -> 4 children  0.91s  1,180 pts  rolling 1.72s/parent
+2026-10-25 14:48:48.375 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 112 → 12 children (1690 tokens, 1692 vectors)
+2026-10-25 14:48:48.476 | INFO     | __main__:reembed_shape_b:370 - [113/341] parent 112 doc 7ba61432 -> 12 children  2.08s  1,192 pts  rolling 1.69s/parent
+2026-10-25 14:48:50.722 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 113 → 15 children (1959 tokens, 1961 vectors)
+2026-10-25 14:48:50.863 | INFO     | __main__:reembed_shape_b:370 - [114/341] parent 113 doc 7ba61432 -> 15 children  2.39s  1,207 pts  rolling 1.66s/parent
+2026-10-25 14:48:52.677 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 114 → 12 children (1595 tokens, 1597 vectors)
+2026-10-25 14:48:52.802 | INFO     | __main__:reembed_shape_b:370 - [115/341] parent 114 doc 7ba61432 -> 12 children  1.94s  1,219 pts  rolling 1.70s/parent
+2026-10-25 14:48:54.777 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 115 → 11 children (1669 tokens, 1671 vectors)
+2026-10-25 14:48:54.873 | INFO     | __main__:reembed_shape_b:370 - [116/341] parent 115 doc 7ba61432 -> 11 children  2.07s  1,230 pts  rolling 1.70s/parent
+2026-10-25 14:48:56.379 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 116 → 9 children (1235 tokens, 1237 vectors)
+2026-10-25 14:48:56.548 | INFO     | __main__:reembed_shape_b:370 - [117/341] parent 116 doc 7ba61432 -> 9 children  1.67s  1,239 pts  rolling 1.68s/parent
+2026-10-25 14:48:57.791 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 117 → 8 children (922 tokens, 924 vectors)
+2026-10-25 14:48:57.853 | INFO     | __main__:reembed_shape_b:370 - [118/341] parent 117 doc 7ba61432 -> 8 children  1.30s  1,247 pts  rolling 1.71s/parent
+2026-10-25 14:48:59.558 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 118 → 11 children (1451 tokens, 1453 vectors)
+2026-10-25 14:48:59.642 | INFO     | __main__:reembed_shape_b:370 - [119/341] parent 118 doc 7ba61432 -> 11 children  1.79s  1,258 pts  rolling 1.64s/parent
+2026-10-25 14:49:01.715 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 119 → 16 children (1639 tokens, 1641 vectors)
+2026-10-25 14:49:01.863 | INFO     | __main__:reembed_shape_b:370 - [120/341] parent 119 doc 7ba61432 -> 16 children  2.22s  1,274 pts  rolling 1.67s/parent
+2026-10-25 14:49:03.708 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 120 → 10 children (1527 tokens, 1529 vectors)
+2026-10-25 14:49:03.893 | INFO     | __main__:reembed_shape_b:370 - [121/341] parent 120 doc 7ba61432 -> 10 children  2.03s  1,284 pts  rolling 1.62s/parent
+2026-10-25 14:49:06.731 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 121 → 20 children (2429 tokens, 2431 vectors)
+2026-10-25 14:49:06.922 | INFO     | __main__:reembed_shape_b:370 - [122/341] parent 121 doc 7ba61432 -> 20 children  3.03s  1,304 pts  rolling 1.67s/parent
+2026-10-25 14:49:08.343 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 122 → 11 children (1135 tokens, 1137 vectors)
+2026-10-25 14:49:08.472 | INFO     | __main__:reembed_shape_b:370 - [123/341] parent 122 doc 7ba61432 -> 11 children  1.55s  1,315 pts  rolling 1.71s/parent
+2026-10-25 14:49:10.115 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 123 → 6 children (1279 tokens, 1281 vectors)
+2026-10-25 14:49:10.192 | INFO     | __main__:reembed_shape_b:370 - [124/341] parent 123 doc 7ba61432 -> 6 children  1.72s  1,321 pts  rolling 1.70s/parent
+2026-10-25 14:49:13.675 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 124 → 20 children (2927 tokens, 2929 vectors)
+2026-10-25 14:49:13.909 | INFO     | __main__:reembed_shape_b:370 - [125/341] parent 124 doc 7ba61432 -> 20 children  3.72s  1,341 pts  rolling 1.78s/parent
+2026-10-25 14:49:14.977 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 125 → 6 children (860 tokens, 862 vectors)
+2026-10-25 14:49:15.023 | INFO     | __main__:reembed_shape_b:370 - [126/341] parent 125 doc 7ba61432 -> 6 children  1.11s  1,347 pts  rolling 1.80s/parent
+2026-10-25 14:49:17.649 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 126 → 20 children (2377 tokens, 2379 vectors)
+2026-10-25 14:49:17.826 | INFO     | __main__:reembed_shape_b:370 - [127/341] parent 126 doc 7ba61432 -> 20 children  2.80s  1,367 pts  rolling 1.91s/parent
+2026-10-25 14:49:19.981 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 127 → 18 children (1964 tokens, 1966 vectors)
+2026-10-25 14:49:20.159 | INFO     | __main__:reembed_shape_b:370 - [128/341] parent 127 doc 7ba61432 -> 18 children  2.33s  1,385 pts  rolling 1.99s/parent
+2026-10-25 14:49:23.662 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 128 → 23 children (3091 tokens, 3093 vectors)
+2026-10-25 14:49:23.878 | INFO     | __main__:reembed_shape_b:370 - [129/341] parent 128 doc 7ba61432 -> 23 children  3.72s  1,408 pts  rolling 2.11s/parent
+2026-10-25 14:49:24.937 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 129 → 9 children (842 tokens, 844 vectors)
+2026-10-25 14:49:25.040 | INFO     | __main__:reembed_shape_b:370 - [130/341] parent 129 doc 7ba61432 -> 9 children  1.16s  1,417 pts  rolling 2.11s/parent
+2026-10-25 14:49:27.702 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 130 → 22 children (2259 tokens, 2261 vectors)
+2026-10-25 14:49:27.854 | INFO     | __main__:reembed_shape_b:370 - [131/341] parent 130 doc 7ba61432 -> 22 children  2.81s  1,439 pts  rolling 2.12s/parent
+2026-10-25 14:49:28.725 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 131 → 6 children (770 tokens, 772 vectors)
+2026-10-25 14:49:28.771 | INFO     | __main__:reembed_shape_b:370 - [132/341] parent 131 doc 7ba61432 -> 6 children  0.92s  1,445 pts  rolling 2.12s/parent
+2026-10-25 14:49:29.398 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 132 → 4 children (551 tokens, 553 vectors)
+2026-10-25 14:49:29.434 | INFO     | __main__:reembed_shape_b:370 - [133/341] parent 132 doc 7ba61432 -> 4 children  0.66s  1,449 pts  rolling 2.05s/parent
+2026-10-25 14:49:31.896 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 133 → 21 children (2177 tokens, 2179 vectors)
+2026-10-25 14:49:32.047 | INFO     | __main__:reembed_shape_b:370 - [134/341] parent 133 doc 7ba61432 -> 21 children  2.61s  1,470 pts  rolling 2.06s/parent
+2026-10-25 14:49:33.233 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 134 → 7 children (775 tokens, 777 vectors)
+2026-10-25 14:49:33.331 | INFO     | __main__:reembed_shape_b:370 - [135/341] parent 134 doc 7ba61432 -> 7 children  1.28s  1,477 pts  rolling 2.03s/parent
+2026-10-25 14:49:34.527 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 135 → 6 children (803 tokens, 805 vectors)
+2026-10-25 14:49:34.736 | INFO     | __main__:reembed_shape_b:370 - [136/341] parent 135 doc 7ba61432 -> 6 children  1.40s  1,483 pts  rolling 1.99s/parent
+2026-10-25 14:49:35.779 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 136 → 7 children (833 tokens, 835 vectors)
+2026-10-25 14:49:35.824 | INFO     | __main__:reembed_shape_b:370 - [137/341] parent 136 doc 7ba61432 -> 7 children  1.09s  1,490 pts  rolling 1.96s/parent
+2026-10-25 14:49:37.053 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 137 → 8 children (990 tokens, 992 vectors)
+2026-10-25 14:49:37.129 | INFO     | __main__:reembed_shape_b:370 - [138/341] parent 137 doc 7ba61432 -> 8 children  1.31s  1,498 pts  rolling 1.96s/parent
+2026-10-25 14:49:37.861 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 138 → 4 children (552 tokens, 554 vectors)
+2026-10-25 14:49:37.903 | INFO     | __main__:reembed_shape_b:370 - [139/341] parent 138 doc 7ba61432 -> 4 children  0.77s  1,502 pts  rolling 1.91s/parent
+2026-10-25 14:49:39.229 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 139 → 10 children (1123 tokens, 1125 vectors)
+2026-10-25 14:49:39.311 | INFO     | __main__:reembed_shape_b:370 - [140/341] parent 139 doc 7ba61432 -> 10 children  1.41s  1,512 pts  rolling 1.87s/parent
+2026-10-25 14:49:41.994 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 140 → 17 children (2301 tokens, 2303 vectors)
+2026-10-25 14:49:42.171 | INFO     | __main__:reembed_shape_b:370 - [141/341] parent 140 doc 7ba61432 -> 17 children  2.86s  1,529 pts  rolling 1.91s/parent
+2026-10-25 14:49:43.688 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 141 → 9 children (1175 tokens, 1177 vectors)
+2026-10-25 14:49:43.756 | INFO     | __main__:reembed_shape_b:370 - [142/341] parent 141 doc 7ba61432 -> 9 children  1.58s  1,538 pts  rolling 1.84s/parent
+2026-10-25 14:49:45.694 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 142 → 13 children (1557 tokens, 1559 vectors)
+2026-10-25 14:49:45.812 | INFO     | __main__:reembed_shape_b:370 - [143/341] parent 142 doc 7ba61432 -> 13 children  2.05s  1,551 pts  rolling 1.87s/parent
+2026-10-25 14:49:46.484 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 143 → 3 children (539 tokens, 541 vectors)
+2026-10-25 14:49:46.526 | INFO     | __main__:reembed_shape_b:370 - [144/341] parent 143 doc 7ba61432 -> 3 children  0.71s  1,554 pts  rolling 1.82s/parent
+2026-10-25 14:49:48.062 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 144 → 8 children (1341 tokens, 1343 vectors)
+2026-10-25 14:49:48.182 | INFO     | __main__:reembed_shape_b:370 - [145/341] parent 144 doc 7ba61432 -> 8 children  1.66s  1,562 pts  rolling 1.71s/parent
+2026-10-25 14:49:50.179 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 145 → 15 children (1738 tokens, 1740 vectors)
+2026-10-25 14:49:50.303 | INFO     | __main__:reembed_shape_b:370 - [146/341] parent 145 doc 7ba61432 -> 15 children  2.12s  1,577 pts  rolling 1.76s/parent
+2026-10-25 14:49:52.299 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 146 → 13 children (1763 tokens, 1765 vectors)
+2026-10-25 14:49:52.426 | INFO     | __main__:reembed_shape_b:370 - [147/341] parent 146 doc 7ba61432 -> 13 children  2.12s  1,590 pts  rolling 1.73s/parent
+2026-10-25 14:49:54.563 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 147 → 14 children (1951 tokens, 1953 vectors)
+2026-10-25 14:49:54.676 | INFO     | __main__:reembed_shape_b:370 - [148/341] parent 147 doc 7ba61432 -> 14 children  2.25s  1,604 pts  rolling 1.73s/parent
+2026-10-25 14:49:57.617 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 148 → 23 children (2540 tokens, 2542 vectors)
+2026-10-25 14:49:57.822 | INFO     | __main__:reembed_shape_b:370 - [149/341] parent 148 doc 7ba61432 -> 23 children  3.15s  1,627 pts  rolling 1.70s/parent
+2026-10-25 14:49:59.815 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 149 → 12 children (1709 tokens, 1711 vectors)
+2026-10-25 14:49:59.937 | INFO     | __main__:reembed_shape_b:370 - [150/341] parent 149 doc 7ba61432 -> 12 children  2.11s  1,639 pts  rolling 1.74s/parent
+2026-10-25 14:50:01.919 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 150 → 15 children (1807 tokens, 1809 vectors)
+2026-10-25 14:50:02.023 | INFO     | __main__:reembed_shape_b:370 - [151/341] parent 150 doc 7ba61432 -> 15 children  2.09s  1,654 pts  rolling 1.71s/parent
+2026-10-25 14:50:03.637 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 151 → 11 children (1307 tokens, 1309 vectors)
+2026-10-25 14:50:03.741 | INFO     | __main__:reembed_shape_b:370 - [152/341] parent 151 doc 7ba61432 -> 11 children  1.72s  1,665 pts  rolling 1.75s/parent
+2026-10-25 14:50:05.257 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 152 → 13 children (1352 tokens, 1354 vectors)
+2026-10-25 14:50:05.384 | INFO     | __main__:reembed_shape_b:370 - [153/341] parent 152 doc 7ba61432 -> 13 children  1.64s  1,678 pts  rolling 1.80s/parent
+2026-10-25 14:50:08.315 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 153 → 19 children (2587 tokens, 2589 vectors)
+2026-10-25 14:50:08.496 | INFO     | __main__:reembed_shape_b:370 - [154/341] parent 153 doc 7ba61432 -> 19 children  3.11s  1,697 pts  rolling 1.82s/parent
+2026-10-25 14:50:10.082 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 154 → 11 children (1438 tokens, 1440 vectors)
+2026-10-25 14:50:10.158 | INFO     | __main__:reembed_shape_b:370 - [155/341] parent 154 doc 7ba61432 -> 11 children  1.66s  1,708 pts  rolling 1.84s/parent
+2026-10-25 14:50:12.076 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 155 → 16 children (1818 tokens, 1820 vectors)
+2026-10-25 14:50:12.203 | INFO     | __main__:reembed_shape_b:370 - [156/341] parent 155 doc 7ba61432 -> 16 children  2.04s  1,724 pts  rolling 1.87s/parent
+2026-10-25 14:50:13.209 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 156 → 8 children (882 tokens, 884 vectors)
+2026-10-25 14:50:13.264 | INFO     | __main__:reembed_shape_b:370 - [157/341] parent 156 doc 7ba61432 -> 8 children  1.06s  1,732 pts  rolling 1.87s/parent
+2026-10-25 14:50:14.406 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 157 → 8 children (1065 tokens, 1067 vectors)
+2026-10-25 14:50:14.481 | INFO     | __main__:reembed_shape_b:370 - [158/341] parent 157 doc 7ba61432 -> 8 children  1.22s  1,740 pts  rolling 1.87s/parent
+2026-10-25 14:50:14.897 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 158 → 3 children (336 tokens, 338 vectors)
+2026-10-25 14:50:14.922 | INFO     | __main__:reembed_shape_b:370 - [159/341] parent 158 doc 7ba61432 -> 3 children  0.44s  1,743 pts  rolling 1.85s/parent
+2026-10-25 14:50:15.718 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 159 → 10 children (706 tokens, 708 vectors)
+2026-10-25 14:50:15.781 | INFO     | __main__:reembed_shape_b:370 - [160/341] parent 159 doc 7ba61432 -> 10 children  0.86s  1,753 pts  rolling 1.82s/parent
+2026-10-25 14:50:17.901 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 160 → 16 children (1856 tokens, 1858 vectors)
+2026-10-25 14:50:18.117 | INFO     | __main__:reembed_shape_b:370 - [161/341] parent 160 doc 7ba61432 -> 16 children  2.34s  1,769 pts  rolling 1.80s/parent
+2026-10-25 14:50:20.905 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 161 → 17 children (2434 tokens, 2436 vectors)
+2026-10-25 14:50:21.092 | INFO     | __main__:reembed_shape_b:370 - [162/341] parent 161 doc 7ba61432 -> 17 children  2.97s  1,786 pts  rolling 1.87s/parent
+2026-10-25 14:50:22.182 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 162 → 8 children (958 tokens, 960 vectors)
+2026-10-25 14:50:22.252 | INFO     | __main__:reembed_shape_b:370 - [163/341] parent 162 doc 7ba61432 -> 8 children  1.16s  1,794 pts  rolling 1.82s/parent
+2026-10-25 14:50:23.039 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 163 → 4 children (650 tokens, 652 vectors)
+2026-10-25 14:50:23.111 | INFO     | __main__:reembed_shape_b:370 - [164/341] parent 163 doc 7ba61432 -> 4 children  0.86s  1,798 pts  rolling 1.83s/parent
+2026-10-25 14:50:23.897 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 164 → 4 children (614 tokens, 616 vectors)
+2026-10-25 14:50:23.943 | INFO     | __main__:reembed_shape_b:370 - [165/341] parent 164 doc 7ba61432 -> 4 children  0.83s  1,802 pts  rolling 1.79s/parent
+2026-10-25 14:50:26.665 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 165 → 18 children (2362 tokens, 2364 vectors)
+2026-10-25 14:50:26.870 | INFO     | __main__:reembed_shape_b:370 - [166/341] parent 165 doc 7ba61432 -> 18 children  2.93s  1,820 pts  rolling 1.83s/parent
+2026-10-25 14:50:28.230 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 166 → 10 children (1168 tokens, 1170 vectors)
+2026-10-25 14:50:28.308 | INFO     | __main__:reembed_shape_b:370 - [167/341] parent 166 doc 7ba61432 -> 10 children  1.44s  1,830 pts  rolling 1.79s/parent
+2026-10-25 14:50:29.184 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 167 → 7 children (721 tokens, 723 vectors)
+2026-10-25 14:50:29.288 | INFO     | __main__:reembed_shape_b:370 - [168/341] parent 167 doc 7ba61432 -> 7 children  0.98s  1,837 pts  rolling 1.73s/parent
+2026-10-25 14:50:29.987 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 168 → 3 children (556 tokens, 558 vectors)
+2026-10-25 14:50:30.016 | INFO     | __main__:reembed_shape_b:370 - [169/341] parent 168 doc 7ba61432 -> 3 children  0.73s  1,840 pts  rolling 1.61s/parent
+2026-10-25 14:50:30.973 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 169 → 7 children (838 tokens, 840 vectors)
+2026-10-25 14:50:31.045 | INFO     | __main__:reembed_shape_b:370 - [170/341] parent 169 doc 7ba61432 -> 7 children  1.03s  1,847 pts  rolling 1.55s/parent
+2026-10-25 14:50:32.070 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 170 → 8 children (821 tokens, 823 vectors)
+2026-10-25 14:50:32.125 | INFO     | __main__:reembed_shape_b:370 - [171/341] parent 170 doc 7ba61432 -> 8 children  1.08s  1,855 pts  rolling 1.50s/parent
+2026-10-25 14:50:34.828 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 171 → 16 children (2439 tokens, 2441 vectors)
+2026-10-25 14:50:35.066 | INFO     | __main__:reembed_shape_b:370 - [172/341] parent 171 doc 7ba61432 -> 16 children  2.94s  1,871 pts  rolling 1.57s/parent
+2026-10-25 14:50:36.333 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 172 → 7 children (1079 tokens, 1081 vectors)
+2026-10-25 14:50:36.456 | INFO     | __main__:reembed_shape_b:370 - [173/341] parent 172 doc 7ba61432 -> 7 children  1.39s  1,878 pts  rolling 1.55s/parent
+2026-10-25 14:50:37.903 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 173 → 9 children (1184 tokens, 1186 vectors)
+2026-10-25 14:50:37.982 | INFO     | __main__:reembed_shape_b:370 - [174/341] parent 173 doc 7ba61432 -> 9 children  1.53s  1,887 pts  rolling 1.47s/parent
+2026-10-25 14:50:39.095 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 174 → 8 children (948 tokens, 950 vectors)
+2026-10-25 14:50:39.204 | INFO     | __main__:reembed_shape_b:370 - [175/341] parent 174 doc 7ba61432 -> 8 children  1.22s  1,895 pts  rolling 1.45s/parent
+2026-10-25 14:50:40.216 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 175 → 11 children (916 tokens, 918 vectors)
+2026-10-25 14:50:40.279 | INFO     | __main__:reembed_shape_b:370 - [176/341] parent 175 doc 7ba61432 -> 11 children  1.07s  1,906 pts  rolling 1.40s/parent
+2026-10-25 14:50:41.021 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 176 → 3 children (594 tokens, 596 vectors)
+2026-10-25 14:50:41.059 | INFO     | __main__:reembed_shape_b:370 - [177/341] parent 176 doc 7ba61432 -> 3 children  0.78s  1,909 pts  rolling 1.39s/parent
+2026-10-25 14:50:42.200 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 177 → 8 children (899 tokens, 901 vectors)
+2026-10-25 14:50:42.299 | INFO     | __main__:reembed_shape_b:370 - [178/341] parent 177 doc 7ba61432 -> 8 children  1.24s  1,917 pts  rolling 1.39s/parent
+2026-10-25 14:50:44.843 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 178 → 14 children (2239 tokens, 2241 vectors)
+2026-10-25 14:50:45.047 | INFO     | __main__:reembed_shape_b:370 - [179/341] parent 178 doc 7ba61432 -> 14 children  2.75s  1,931 pts  rolling 1.51s/parent
+2026-10-25 14:50:47.667 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 179 → 21 children (2139 tokens, 2141 vectors)
+2026-10-25 14:50:47.857 | INFO     | __main__:reembed_shape_b:370 - [180/341] parent 179 doc 7ba61432 -> 21 children  2.81s  1,952 pts  rolling 1.60s/parent
+2026-10-25 14:50:50.662 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 180 → 22 children (2424 tokens, 2426 vectors)
+2026-10-25 14:50:50.832 | INFO     | __main__:reembed_shape_b:370 - [181/341] parent 180 doc 7ba61432 -> 22 children  2.97s  1,974 pts  rolling 1.64s/parent
+2026-10-25 14:50:53.579 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 181 → 18 children (2384 tokens, 2386 vectors)
+2026-10-25 14:50:53.828 | INFO     | __main__:reembed_shape_b:370 - [182/341] parent 181 doc 7ba61432 -> 18 children  2.99s  1,992 pts  rolling 1.64s/parent
+2026-10-25 14:50:54.820 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 182 → 8 children (758 tokens, 760 vectors)
+2026-10-25 14:50:54.873 | INFO     | __main__:reembed_shape_b:370 - [183/341] parent 182 doc 7ba61432 -> 8 children  1.04s  2,000 pts  rolling 1.63s/parent
+2026-10-25 14:50:55.944 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 183 → 6 children (949 tokens, 951 vectors)
+2026-10-25 14:50:56.005 | INFO     | __main__:reembed_shape_b:370 - [184/341] parent 183 doc 7ba61432 -> 6 children  1.13s  2,006 pts  rolling 1.64s/parent
+2026-10-25 14:50:56.955 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 184 → 5 children (790 tokens, 792 vectors)
+2026-10-25 14:50:57.013 | INFO     | __main__:reembed_shape_b:370 - [185/341] parent 184 doc 7ba61432 -> 5 children  1.01s  2,011 pts  rolling 1.65s/parent
+2026-10-25 14:50:58.605 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 185 → 11 children (1401 tokens, 1403 vectors)
+2026-10-25 14:50:58.700 | INFO     | __main__:reembed_shape_b:370 - [186/341] parent 185 doc 7ba61432 -> 11 children  1.69s  2,022 pts  rolling 1.59s/parent
+2026-10-25 14:51:00.876 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 186 → 16 children (1918 tokens, 1920 vectors)
+2026-10-25 14:51:00.984 | INFO     | __main__:reembed_shape_b:370 - [187/341] parent 186 doc 7ba61432 -> 16 children  2.28s  2,038 pts  rolling 1.63s/parent
+2026-10-25 14:51:04.045 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 187 → 27 children (2659 tokens, 2661 vectors)
+2026-10-25 14:51:04.259 | INFO     | __main__:reembed_shape_b:370 - [188/341] parent 187 doc 7ba61432 -> 27 children  3.27s  2,065 pts  rolling 1.75s/parent
+2026-10-25 14:51:04.540 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 188 → 1 children (144 tokens, 146 vectors)
+2026-10-25 14:51:04.558 | INFO     | __main__:reembed_shape_b:370 - [189/341] parent 188 doc 7ba61432 -> 1 children  0.30s  2,066 pts  rolling 1.73s/parent
+2026-10-25 14:51:05.878 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 189 → 10 children (1119 tokens, 1121 vectors)
+2026-10-25 14:51:05.970 | INFO     | __main__:reembed_shape_b:370 - [190/341] parent 189 doc 7ba61432 -> 10 children  1.41s  2,076 pts  rolling 1.75s/parent
+2026-10-25 14:51:08.835 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 190 → 17 children (2195 tokens, 2197 vectors)
+2026-10-25 14:51:08.985 | INFO     | __main__:reembed_shape_b:370 - [191/341] parent 190 doc 7ba61432 -> 17 children  3.01s  2,093 pts  rolling 1.84s/parent
+2026-10-25 14:51:09.972 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 191 → 7 children (758 tokens, 760 vectors)
+2026-10-25 14:51:10.048 | INFO     | __main__:reembed_shape_b:370 - [192/341] parent 191 doc 7ba61432 -> 7 children  1.06s  2,100 pts  rolling 1.75s/parent
+2026-10-25 14:51:11.266 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 192 → 9 children (997 tokens, 999 vectors)
+2026-10-25 14:51:11.363 | INFO     | __main__:reembed_shape_b:370 - [193/341] parent 192 doc 7ba61432 -> 9 children  1.31s  2,109 pts  rolling 1.74s/parent
+2026-10-25 14:51:12.869 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 193 → 9 children (1132 tokens, 1134 vectors)
+2026-10-25 14:51:12.965 | INFO     | __main__:reembed_shape_b:370 - [194/341] parent 193 doc 7ba61432 -> 9 children  1.60s  2,118 pts  rolling 1.75s/parent
+2026-10-25 14:51:14.257 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 194 → 10 children (1118 tokens, 1120 vectors)
+2026-10-25 14:51:14.331 | INFO     | __main__:reembed_shape_b:370 - [195/341] parent 194 doc 7ba61432 -> 10 children  1.36s  2,128 pts  rolling 1.76s/parent
+2026-10-25 14:51:15.732 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 195 → 10 children (1249 tokens, 1251 vectors)
+2026-10-25 14:51:15.811 | INFO     | __main__:reembed_shape_b:370 - [196/341] parent 195 doc 7ba61432 -> 10 children  1.48s  2,138 pts  rolling 1.78s/parent
+2026-10-25 14:51:17.014 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 196 → 7 children (1094 tokens, 1096 vectors)
+2026-10-25 14:51:17.083 | INFO     | __main__:reembed_shape_b:370 - [197/341] parent 196 doc 7ba61432 -> 7 children  1.27s  2,145 pts  rolling 1.80s/parent
+2026-10-25 14:51:18.734 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 197 → 7 children (1413 tokens, 1415 vectors)
+2026-10-25 14:51:18.818 | INFO     | __main__:reembed_shape_b:370 - [198/341] parent 197 doc 7ba61432 -> 7 children  1.73s  2,152 pts  rolling 1.83s/parent
+2026-10-25 14:51:22.198 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 198 → 23 children (2871 tokens, 2873 vectors)
+2026-10-25 14:51:22.450 | INFO     | __main__:reembed_shape_b:370 - [199/341] parent 198 doc 7ba61432 -> 23 children  3.63s  2,175 pts  rolling 1.87s/parent
+2026-10-25 14:51:24.030 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 199 → 11 children (1343 tokens, 1345 vectors)
+2026-10-25 14:51:24.126 | INFO     | __main__:reembed_shape_b:370 - [200/341] parent 199 doc 7ba61432 -> 11 children  1.67s  2,186 pts  rolling 1.81s/parent
+2026-10-25 14:51:24.434 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 200 → 1 children (178 tokens, 180 vectors)
+2026-10-25 14:51:24.451 | INFO     | __main__:reembed_shape_b:370 - [201/341] parent 200 doc 7ba61432 -> 1 children  0.33s  2,187 pts  rolling 1.68s/parent
+2026-10-25 14:51:26.749 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 201 → 16 children (2143 tokens, 2145 vectors)
+2026-10-25 14:51:26.925 | INFO     | __main__:reembed_shape_b:370 - [202/341] parent 201 doc 7ba61432 -> 16 children  2.47s  2,203 pts  rolling 1.65s/parent
+2026-10-25 14:51:28.002 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 202 → 7 children (942 tokens, 944 vectors)
+2026-10-25 14:51:28.060 | INFO     | __main__:reembed_shape_b:370 - [203/341] parent 202 doc 7ba61432 -> 7 children  1.13s  2,210 pts  rolling 1.66s/parent
+2026-10-25 14:51:28.908 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 203 → 6 children (722 tokens, 724 vectors)
+2026-10-25 14:51:28.967 | INFO     | __main__:reembed_shape_b:370 - [204/341] parent 203 doc 7ba61432 -> 6 children  0.91s  2,216 pts  rolling 1.65s/parent
+2026-10-25 14:51:30.939 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 204 → 16 children (1815 tokens, 1817 vectors)
+2026-10-25 14:51:31.111 | INFO     | __main__:reembed_shape_b:370 - [205/341] parent 204 doc 7ba61432 -> 16 children  2.14s  2,232 pts  rolling 1.70s/parent
+2026-10-25 14:51:33.138 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 205 → 13 children (1513 tokens, 1515 vectors)
+2026-10-25 14:51:33.250 | INFO     | __main__:reembed_shape_b:370 - [206/341] parent 205 doc 7ba61432 -> 13 children  2.14s  2,245 pts  rolling 1.73s/parent
+2026-10-25 14:51:34.779 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 206 → 8 children (1210 tokens, 1212 vectors)
+2026-10-25 14:51:34.866 | INFO     | __main__:reembed_shape_b:370 - [207/341] parent 206 doc 7ba61432 -> 8 children  1.62s  2,253 pts  rolling 1.69s/parent
+2026-10-25 14:51:36.107 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 207 → 6 children (982 tokens, 984 vectors)
+2026-10-25 14:51:36.161 | INFO     | __main__:reembed_shape_b:370 - [208/341] parent 207 doc 7ba61432 -> 6 children  1.29s  2,259 pts  rolling 1.59s/parent
+2026-10-25 14:51:38.782 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 208 → 14 children (1910 tokens, 1912 vectors)
+2026-10-25 14:51:38.980 | INFO     | __main__:reembed_shape_b:370 - [209/341] parent 208 doc 7ba61432 -> 14 children  2.82s  2,273 pts  rolling 1.72s/parent
+2026-10-25 14:51:39.893 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 209 → 7 children (723 tokens, 725 vectors)
+2026-10-25 14:51:39.991 | INFO     | __main__:reembed_shape_b:370 - [210/341] parent 209 doc 7ba61432 -> 7 children  1.01s  2,280 pts  rolling 1.70s/parent
+2026-10-25 14:51:40.581 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 210 → 3 children (376 tokens, 378 vectors)
+2026-10-25 14:51:40.622 | INFO     | __main__:reembed_shape_b:370 - [211/341] parent 210 doc 7ba61432 -> 3 children  0.63s  2,283 pts  rolling 1.58s/parent
+2026-10-25 14:51:42.726 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 211 → 15 children (1528 tokens, 1530 vectors)
+2026-10-25 14:51:42.842 | INFO     | __main__:reembed_shape_b:370 - [212/341] parent 211 doc 7ba61432 -> 15 children  2.22s  2,298 pts  rolling 1.64s/parent
+2026-10-25 14:51:44.316 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 212 → 11 children (1123 tokens, 1125 vectors)
+2026-10-25 14:51:44.427 | INFO     | __main__:reembed_shape_b:370 - [213/341] parent 212 doc 7ba61432 -> 11 children  1.58s  2,309 pts  rolling 1.65s/parent
+2026-10-25 14:51:45.112 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 213 → 5 children (525 tokens, 527 vectors)
+2026-10-25 14:51:45.183 | INFO     | __main__:reembed_shape_b:370 - [214/341] parent 213 doc 7ba61432 -> 5 children  0.76s  2,314 pts  rolling 1.61s/parent
+2026-10-25 14:51:46.627 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 214 → 10 children (1162 tokens, 1164 vectors)
+2026-10-25 14:51:46.709 | INFO     | __main__:reembed_shape_b:370 - [215/341] parent 214 doc 7ba61432 -> 10 children  1.53s  2,324 pts  rolling 1.62s/parent
+2026-10-25 14:51:48.121 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 215 → 8 children (1046 tokens, 1048 vectors)
+2026-10-25 14:51:48.200 | INFO     | __main__:reembed_shape_b:370 - [216/341] parent 215 doc 7ba61432 -> 8 children  1.49s  2,332 pts  rolling 1.62s/parent
+2026-10-25 14:51:49.516 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 216 → 11 children (1055 tokens, 1057 vectors)
+2026-10-25 14:51:49.594 | INFO     | __main__:reembed_shape_b:370 - [217/341] parent 216 doc 7ba61432 -> 11 children  1.39s  2,343 pts  rolling 1.62s/parent
+2026-10-25 14:51:53.195 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 217 → 24 children (2939 tokens, 2941 vectors)
+2026-10-25 14:51:53.469 | INFO     | __main__:reembed_shape_b:370 - [218/341] parent 217 doc 7ba61432 -> 24 children  3.87s  2,367 pts  rolling 1.73s/parent
+2026-10-25 14:51:54.562 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 218 → 9 children (817 tokens, 819 vectors)
+2026-10-25 14:51:54.625 | INFO     | __main__:reembed_shape_b:370 - [219/341] parent 218 doc 7ba61432 -> 9 children  1.15s  2,376 pts  rolling 1.61s/parent
+2026-10-25 14:51:56.046 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 219 → 9 children (1165 tokens, 1167 vectors)
+2026-10-25 14:51:56.155 | INFO     | __main__:reembed_shape_b:370 - [220/341] parent 219 doc 7ba61432 -> 9 children  1.53s  2,385 pts  rolling 1.60s/parent
+2026-10-25 14:51:57.642 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 220 → 10 children (1238 tokens, 1240 vectors)
+2026-10-25 14:51:57.788 | INFO     | __main__:reembed_shape_b:370 - [221/341] parent 220 doc 7ba61432 -> 10 children  1.63s  2,395 pts  rolling 1.67s/parent
+2026-10-25 14:51:58.249 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 221 → 3 children (287 tokens, 289 vectors)
+2026-10-25 14:51:58.283 | INFO     | __main__:reembed_shape_b:370 - [222/341] parent 221 doc 7ba61432 -> 3 children  0.50s  2,398 pts  rolling 1.57s/parent
+2026-10-25 14:52:00.835 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 222 → 17 children (2109 tokens, 2111 vectors)
+2026-10-25 14:52:00.992 | INFO     | __main__:reembed_shape_b:370 - [223/341] parent 222 doc 7ba61432 -> 17 children  2.71s  2,415 pts  rolling 1.65s/parent
+2026-10-25 14:52:04.687 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 223 → 18 children (2818 tokens, 2820 vectors)
+2026-10-25 14:52:04.878 | INFO     | __main__:reembed_shape_b:370 - [224/341] parent 223 doc 7ba61432 -> 18 children  3.89s  2,433 pts  rolling 1.79s/parent
+2026-10-25 14:52:05.835 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 224 → 8 children (797 tokens, 799 vectors)
+2026-10-25 14:52:05.968 | INFO     | __main__:reembed_shape_b:370 - [225/341] parent 224 doc 7ba61432 -> 8 children  1.09s  2,441 pts  rolling 1.74s/parent
+2026-10-25 14:52:09.065 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 225 → 21 children (2223 tokens, 2225 vectors)
+2026-10-25 14:52:09.246 | INFO     | __main__:reembed_shape_b:370 - [226/341] parent 225 doc 7ba61432 -> 21 children  3.28s  2,462 pts  rolling 1.80s/parent
+2026-10-25 14:52:10.005 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 226 → 4 children (569 tokens, 571 vectors)
+2026-10-25 14:52:10.053 | INFO     | __main__:reembed_shape_b:370 - [227/341] parent 226 doc 7ba61432 -> 4 children  0.81s  2,466 pts  rolling 1.76s/parent
+2026-10-25 14:52:12.965 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 227 → 23 children (2443 tokens, 2445 vectors)
+2026-10-25 14:52:13.126 | INFO     | __main__:reembed_shape_b:370 - [228/341] parent 227 doc 7ba61432 -> 23 children  3.07s  2,489 pts  rolling 1.85s/parent
+2026-10-25 14:52:13.440 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 228 → 2 children (196 tokens, 198 vectors)
+2026-10-25 14:52:13.462 | INFO     | __main__:reembed_shape_b:370 - [229/341] parent 228 doc 7ba61432 -> 2 children  0.33s  2,491 pts  rolling 1.72s/parent
+2026-10-25 14:52:14.549 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 229 → 8 children (959 tokens, 961 vectors)
+2026-10-25 14:52:14.675 | INFO     | __main__:reembed_shape_b:370 - [230/341] parent 229 doc 7ba61432 -> 8 children  1.21s  2,499 pts  rolling 1.73s/parent
+2026-10-25 14:52:15.887 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 230 → 9 children (976 tokens, 978 vectors)
+2026-10-25 14:52:16.030 | INFO     | __main__:reembed_shape_b:370 - [231/341] parent 230 doc 7ba61432 -> 9 children  1.36s  2,508 pts  rolling 1.77s/parent
+2026-10-25 14:52:17.280 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 231 → 11 children (1094 tokens, 1096 vectors)
+2026-10-25 14:52:17.376 | INFO     | __main__:reembed_shape_b:370 - [232/341] parent 231 doc 7ba61432 -> 11 children  1.35s  2,519 pts  rolling 1.73s/parent
+2026-10-25 14:52:18.368 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 232 → 6 children (826 tokens, 828 vectors)
+2026-10-25 14:52:18.429 | INFO     | __main__:reembed_shape_b:370 - [233/341] parent 232 doc 7ba61432 -> 6 children  1.05s  2,525 pts  rolling 1.70s/parent
+2026-10-25 14:52:19.715 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 233 → 13 children (1169 tokens, 1171 vectors)
+2026-10-25 14:52:19.801 | INFO     | __main__:reembed_shape_b:370 - [234/341] parent 233 doc 7ba61432 -> 13 children  1.37s  2,538 pts  rolling 1.73s/parent
+2026-10-25 14:52:22.913 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 234 → 22 children (2705 tokens, 2707 vectors)
+2026-10-25 14:52:23.146 | INFO     | __main__:reembed_shape_b:370 - [235/341] parent 234 doc 7ba61432 -> 22 children  3.34s  2,560 pts  rolling 1.82s/parent
+2026-10-25 14:52:23.506 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 235 → 1 children (172 tokens, 174 vectors)
+2026-10-25 14:52:23.534 | INFO     | __main__:reembed_shape_b:370 - [236/341] parent 235 doc 7ba61432 -> 1 children  0.39s  2,561 pts  rolling 1.77s/parent
+2026-10-25 14:52:24.413 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 236 → 6 children (763 tokens, 765 vectors)
+2026-10-25 14:52:24.463 | INFO     | __main__:reembed_shape_b:370 - [237/341] parent 236 doc 7ba61432 -> 6 children  0.93s  2,567 pts  rolling 1.74s/parent
+2026-10-25 14:52:25.377 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 237 → 7 children (760 tokens, 762 vectors)
+2026-10-25 14:52:25.444 | INFO     | __main__:reembed_shape_b:370 - [238/341] parent 237 doc 7ba61432 -> 7 children  0.98s  2,574 pts  rolling 1.60s/parent
+2026-10-25 14:52:26.453 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 238 → 9 children (864 tokens, 866 vectors)
+2026-10-25 14:52:26.546 | INFO     | __main__:reembed_shape_b:370 - [239/341] parent 238 doc 7ba61432 -> 9 children  1.10s  2,583 pts  rolling 1.60s/parent
+2026-10-25 14:52:29.411 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 239 → 19 children (2458 tokens, 2460 vectors)
+2026-10-25 14:52:29.626 | INFO     | __main__:reembed_shape_b:370 - [240/341] parent 239 doc 7ba61432 -> 19 children  3.08s  2,602 pts  rolling 1.67s/parent
+2026-10-25 14:52:30.930 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 240 → 10 children (1058 tokens, 1060 vectors)
+2026-10-25 14:52:31.011 | INFO     | __main__:reembed_shape_b:370 - [241/341] parent 240 doc 7ba61432 -> 10 children  1.38s  2,612 pts  rolling 1.66s/parent
+2026-10-25 14:52:32.663 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 241 → 10 children (1271 tokens, 1273 vectors)
+2026-10-25 14:52:32.778 | INFO     | __main__:reembed_shape_b:370 - [242/341] parent 241 doc 7ba61432 -> 10 children  1.77s  2,622 pts  rolling 1.72s/parent
+2026-10-25 14:52:33.867 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 242 → 8 children (806 tokens, 808 vectors)
+2026-10-25 14:52:33.984 | INFO     | __main__:reembed_shape_b:370 - [243/341] parent 242 doc 7ba61432 -> 8 children  1.21s  2,630 pts  rolling 1.65s/parent
+2026-10-25 14:52:36.444 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 243 → 16 children (1886 tokens, 1888 vectors)
+2026-10-25 14:52:36.647 | INFO     | __main__:reembed_shape_b:370 - [244/341] parent 243 doc 7ba61432 -> 16 children  2.66s  2,646 pts  rolling 1.59s/parent
+2026-10-25 14:52:38.299 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 244 → 10 children (1265 tokens, 1267 vectors)
+2026-10-25 14:52:38.403 | INFO     | __main__:reembed_shape_b:370 - [245/341] parent 244 doc 7ba61432 -> 10 children  1.75s  2,656 pts  rolling 1.62s/parent
+2026-10-25 14:52:42.013 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 245 → 27 children (3120 tokens, 3122 vectors)
+2026-10-25 14:52:42.213 | INFO     | __main__:reembed_shape_b:370 - [246/341] parent 245 doc 7ba61432 -> 27 children  3.81s  2,683 pts  rolling 1.65s/parent
+2026-10-25 14:52:43.014 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 246 → 5 children (653 tokens, 655 vectors)
+2026-10-25 14:52:43.058 | INFO     | __main__:reembed_shape_b:370 - [247/341] parent 246 doc 7ba61432 -> 5 children  0.84s  2,688 pts  rolling 1.65s/parent
+2026-10-25 14:52:46.885 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 247 → 25 children (3347 tokens, 3349 vectors)
+2026-10-25 14:52:47.189 | INFO     | __main__:reembed_shape_b:370 - [248/341] parent 247 doc 7ba61432 -> 25 children  4.13s  2,713 pts  rolling 1.70s/parent
+2026-10-25 14:52:49.317 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 248 → 13 children (1721 tokens, 1723 vectors)
+2026-10-25 14:52:49.485 | INFO     | __main__:reembed_shape_b:370 - [249/341] parent 248 doc 7ba61432 -> 13 children  2.29s  2,726 pts  rolling 1.80s/parent
+2026-10-25 14:52:50.943 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 249 → 11 children (1261 tokens, 1263 vectors)
+2026-10-25 14:52:51.090 | INFO     | __main__:reembed_shape_b:370 - [250/341] parent 249 doc 7ba61432 -> 11 children  1.60s  2,737 pts  rolling 1.82s/parent
+2026-10-25 14:52:52.031 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 250 → 6 children (717 tokens, 719 vectors)
+2026-10-25 14:52:52.093 | INFO     | __main__:reembed_shape_b:370 - [251/341] parent 250 doc 7ba61432 -> 6 children  1.00s  2,743 pts  rolling 1.80s/parent
+2026-10-25 14:52:53.355 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 251 → 7 children (972 tokens, 974 vectors)
+2026-10-25 14:52:53.416 | INFO     | __main__:reembed_shape_b:370 - [252/341] parent 251 doc 7ba61432 -> 7 children  1.32s  2,750 pts  rolling 1.80s/parent
+2026-10-25 14:52:56.603 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 252 → 26 children (2558 tokens, 2560 vectors)
+2026-10-25 14:52:56.783 | INFO     | __main__:reembed_shape_b:370 - [253/341] parent 252 doc 7ba61432 -> 26 children  3.37s  2,776 pts  rolling 1.92s/parent
+2026-10-25 14:52:58.859 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 253 → 14 children (1737 tokens, 1739 vectors)
+2026-10-25 14:52:59.016 | INFO     | __main__:reembed_shape_b:370 - [254/341] parent 253 doc 7ba61432 -> 14 children  2.23s  2,790 pts  rolling 1.96s/parent
+2026-10-25 14:53:00.989 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 254 → 15 children (1785 tokens, 1787 vectors)
+2026-10-25 14:53:01.116 | INFO     | __main__:reembed_shape_b:370 - [255/341] parent 254 doc 7ba61432 -> 15 children  2.10s  2,805 pts  rolling 1.90s/parent
+2026-10-25 14:53:04.056 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 255 → 20 children (2401 tokens, 2403 vectors)
+2026-10-25 14:53:04.237 | INFO     | __main__:reembed_shape_b:370 - [256/341] parent 255 doc 7ba61432 -> 20 children  3.12s  2,825 pts  rolling 2.03s/parent
+2026-10-25 14:53:07.449 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 256 → 19 children (2718 tokens, 2720 vectors)
+2026-10-25 14:53:07.695 | INFO     | __main__:reembed_shape_b:370 - [257/341] parent 256 doc 7ba61432 -> 19 children  3.46s  2,844 pts  rolling 2.16s/parent
+2026-10-25 14:53:10.333 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 257 → 17 children (2278 tokens, 2280 vectors)
+2026-10-25 14:53:10.536 | INFO     | __main__:reembed_shape_b:370 - [258/341] parent 257 doc 7ba61432 -> 17 children  2.84s  2,861 pts  rolling 2.25s/parent
+2026-10-25 14:53:13.117 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 258 → 19 children (2139 tokens, 2141 vectors)
+2026-10-25 14:53:13.259 | INFO     | __main__:reembed_shape_b:370 - [259/341] parent 258 doc 7ba61432 -> 19 children  2.72s  2,880 pts  rolling 2.33s/parent
+2026-10-25 14:53:17.014 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 259 → 25 children (3000 tokens, 3002 vectors)
+2026-10-25 14:53:17.263 | INFO     | __main__:reembed_shape_b:370 - [260/341] parent 259 doc 7ba61432 -> 25 children  4.00s  2,905 pts  rolling 2.38s/parent
+2026-10-25 14:53:18.290 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 260 → 6 children (892 tokens, 894 vectors)
+2026-10-25 14:53:18.335 | INFO     | __main__:reembed_shape_b:370 - [261/341] parent 260 doc 7ba61432 -> 6 children  1.07s  2,911 pts  rolling 2.37s/parent
+2026-10-25 14:53:20.218 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 261 → 12 children (1679 tokens, 1681 vectors)
+2026-10-25 14:53:20.365 | INFO     | __main__:reembed_shape_b:370 - [262/341] parent 261 doc 7ba61432 -> 12 children  2.03s  2,923 pts  rolling 2.38s/parent
+2026-10-25 14:53:22.037 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 262 → 11 children (1434 tokens, 1436 vectors)
+2026-10-25 14:53:22.160 | INFO     | __main__:reembed_shape_b:370 - [263/341] parent 262 doc 7ba61432 -> 11 children  1.79s  2,934 pts  rolling 2.41s/parent
+2026-10-25 14:53:24.751 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 263 → 20 children (2208 tokens, 2210 vectors)
+2026-10-25 14:53:24.963 | INFO     | __main__:reembed_shape_b:370 - [264/341] parent 263 doc 7ba61432 -> 20 children  2.80s  2,954 pts  rolling 2.42s/parent
+2026-10-25 14:53:27.367 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 264 → 14 children (1937 tokens, 1939 vectors)
+2026-10-25 14:53:27.549 | INFO     | __main__:reembed_shape_b:370 - [265/341] parent 264 doc 7ba61432 -> 14 children  2.59s  2,968 pts  rolling 2.46s/parent
+2026-10-25 14:53:28.657 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 265 → 7 children (946 tokens, 948 vectors)
+2026-10-25 14:53:28.710 | INFO     | __main__:reembed_shape_b:370 - [266/341] parent 265 doc 7ba61432 -> 7 children  1.16s  2,975 pts  rolling 2.32s/parent
+2026-10-25 14:53:30.654 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 266 → 11 children (1637 tokens, 1639 vectors)
+2026-10-25 14:53:30.762 | INFO     | __main__:reembed_shape_b:370 - [267/341] parent 266 doc 7ba61432 -> 11 children  2.05s  2,986 pts  rolling 2.38s/parent
+2026-10-25 14:53:31.541 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 267 → 6 children (652 tokens, 654 vectors)
+2026-10-25 14:53:31.595 | INFO     | __main__:reembed_shape_b:370 - [268/341] parent 267 doc 7ba61432 -> 6 children  0.83s  2,992 pts  rolling 2.22s/parent
+2026-10-25 14:53:33.925 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 268 → 16 children (1927 tokens, 1929 vectors)
+2026-10-25 14:53:34.054 | INFO     | __main__:reembed_shape_b:370 - [269/341] parent 268 doc 7ba61432 -> 16 children  2.46s  3,008 pts  rolling 2.23s/parent
+2026-10-25 14:53:34.760 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 269 → 5 children (567 tokens, 569 vectors)
+2026-10-25 14:53:34.810 | INFO     | __main__:reembed_shape_b:370 - [270/341] parent 269 doc 7ba61432 -> 5 children  0.76s  3,013 pts  rolling 2.19s/parent
+2026-10-25 14:53:37.206 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 270 → 13 children (2026 tokens, 2028 vectors)
+2026-10-25 14:53:37.323 | INFO     | __main__:reembed_shape_b:370 - [271/341] parent 270 doc 7ba61432 -> 13 children  2.51s  3,026 pts  rolling 2.26s/parent
+2026-10-25 14:53:38.851 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 271 → 10 children (1276 tokens, 1278 vectors)
+2026-10-25 14:53:38.944 | INFO     | __main__:reembed_shape_b:370 - [272/341] parent 271 doc 7ba61432 -> 10 children  1.62s  3,036 pts  rolling 2.28s/parent
+2026-10-25 14:53:42.180 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 272 → 18 children (2519 tokens, 2521 vectors)
+2026-10-25 14:53:42.362 | INFO     | __main__:reembed_shape_b:370 - [273/341] parent 272 doc 7ba61432 -> 18 children  3.42s  3,054 pts  rolling 2.28s/parent
+2026-10-25 14:53:44.314 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 273 → 12 children (1649 tokens, 1651 vectors)
+2026-10-25 14:53:44.413 | INFO     | __main__:reembed_shape_b:370 - [274/341] parent 273 doc 7ba61432 -> 12 children  2.05s  3,066 pts  rolling 2.27s/parent
+2026-10-25 14:53:46.034 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 274 → 10 children (1066 tokens, 1068 vectors)
+2026-10-25 14:53:46.182 | INFO     | __main__:reembed_shape_b:370 - [275/341] parent 274 doc 7ba61432 -> 10 children  1.77s  3,076 pts  rolling 2.25s/parent
+2026-10-25 14:53:50.264 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 275 → 22 children (2351 tokens, 2353 vectors)
+2026-10-25 14:53:50.493 | INFO     | __main__:reembed_shape_b:370 - [276/341] parent 275 doc 7ba61432 -> 22 children  4.31s  3,098 pts  rolling 2.31s/parent
+2026-10-25 14:53:51.082 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 276 → 3 children (211 tokens, 213 vectors)
+2026-10-25 14:53:51.118 | INFO     | __main__:reembed_shape_b:370 - [277/341] parent 276 doc 7ba61432 -> 3 children  0.62s  3,101 pts  rolling 2.17s/parent
+2026-10-25 14:53:53.980 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 277 → 17 children (2432 tokens, 2434 vectors)
+2026-10-25 14:53:54.143 | INFO     | __main__:reembed_shape_b:370 - [278/341] parent 277 doc 7ba61432 -> 17 children  3.02s  3,118 pts  rolling 2.18s/parent
+2026-10-25 14:53:56.728 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 278 → 14 children (2127 tokens, 2129 vectors)
+2026-10-25 14:53:56.923 | INFO     | __main__:reembed_shape_b:370 - [279/341] parent 278 doc 7ba61432 -> 14 children  2.78s  3,132 pts  rolling 2.18s/parent
+2026-10-25 14:53:59.832 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 279 → 25 children (2599 tokens, 2601 vectors)
+2026-10-25 14:54:00.081 | INFO     | __main__:reembed_shape_b:370 - [280/341] parent 279 doc 7ba61432 -> 25 children  3.16s  3,157 pts  rolling 2.14s/parent
+2026-10-25 14:54:01.556 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 280 → 12 children (1233 tokens, 1235 vectors)
+2026-10-25 14:54:01.639 | INFO     | __main__:reembed_shape_b:370 - [281/341] parent 280 doc 7ba61432 -> 12 children  1.56s  3,169 pts  rolling 2.16s/parent
+2026-10-25 14:54:02.905 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 281 → 9 children (961 tokens, 963 vectors)
+2026-10-25 14:54:02.980 | INFO     | __main__:reembed_shape_b:370 - [282/341] parent 281 doc 7ba61432 -> 9 children  1.34s  3,178 pts  rolling 2.13s/parent
+2026-10-25 14:54:04.469 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 282 → 10 children (1198 tokens, 1200 vectors)
+2026-10-25 14:54:04.587 | INFO     | __main__:reembed_shape_b:370 - [283/341] parent 282 doc 7ba61432 -> 10 children  1.61s  3,188 pts  rolling 2.12s/parent
+2026-10-25 14:54:05.885 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 283 → 10 children (1021 tokens, 1023 vectors)
+2026-10-25 14:54:05.977 | INFO     | __main__:reembed_shape_b:370 - [284/341] parent 283 doc 7ba61432 -> 10 children  1.39s  3,198 pts  rolling 2.05s/parent
+2026-10-25 14:54:07.707 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 284 → 12 children (1345 tokens, 1347 vectors)
+2026-10-25 14:54:07.800 | INFO     | __main__:reembed_shape_b:370 - [285/341] parent 284 doc 7ba61432 -> 12 children  1.82s  3,210 pts  rolling 2.01s/parent
+2026-10-25 14:54:09.810 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 285 → 13 children (1677 tokens, 1679 vectors)
+2026-10-25 14:54:09.908 | INFO     | __main__:reembed_shape_b:370 - [286/341] parent 285 doc 7ba61432 -> 13 children  2.11s  3,223 pts  rolling 2.06s/parent
+2026-10-25 14:54:11.959 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 286 → 18 children (1690 tokens, 1692 vectors)
+2026-10-25 14:54:12.175 | INFO     | __main__:reembed_shape_b:370 - [287/341] parent 286 doc 7ba61432 -> 18 children  2.27s  3,241 pts  rolling 2.07s/parent
+2026-10-25 14:54:13.461 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 287 → 8 children (951 tokens, 953 vectors)
+2026-10-25 14:54:13.561 | INFO     | __main__:reembed_shape_b:370 - [288/341] parent 287 doc 7ba61432 -> 8 children  1.38s  3,249 pts  rolling 2.10s/parent
+2026-10-25 14:54:13.667 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 288 → 1 children (42 tokens, 44 vectors)
+2026-10-25 14:54:13.683 | INFO     | __main__:reembed_shape_b:370 - [289/341] parent 288 doc 7ba61432 -> 1 children  0.12s  3,250 pts  rolling 1.98s/parent
+2026-10-25 14:54:15.543 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 289 → 10 children (1603 tokens, 1605 vectors)
+2026-10-25 14:54:15.667 | INFO     | __main__:reembed_shape_b:370 - [290/341] parent 289 doc 7ba61432 -> 10 children  1.98s  3,260 pts  rolling 2.04s/parent
+2026-10-25 14:54:16.686 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 290 → 8 children (781 tokens, 783 vectors)
+2026-10-25 14:54:16.755 | INFO     | __main__:reembed_shape_b:370 - [291/341] parent 290 doc 7ba61432 -> 8 children  1.09s  3,268 pts  rolling 1.97s/parent
+2026-10-25 14:54:17.753 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 291 → 6 children (752 tokens, 754 vectors)
+2026-10-25 14:54:17.838 | INFO     | __main__:reembed_shape_b:370 - [292/341] parent 291 doc 7ba61432 -> 6 children  1.08s  3,274 pts  rolling 1.94s/parent
+2026-10-25 14:54:19.847 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 292 → 13 children (1639 tokens, 1641 vectors)
+2026-10-25 14:54:19.950 | INFO     | __main__:reembed_shape_b:370 - [293/341] parent 292 doc 7ba61432 -> 13 children  2.11s  3,287 pts  rolling 1.88s/parent
+2026-10-25 14:54:21.153 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 293 → 8 children (1056 tokens, 1058 vectors)
+2026-10-25 14:54:21.278 | INFO     | __main__:reembed_shape_b:370 - [294/341] parent 293 doc 7ba61432 -> 8 children  1.33s  3,295 pts  rolling 1.84s/parent
+2026-10-25 14:54:22.935 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 294 → 11 children (1453 tokens, 1455 vectors)
+2026-10-25 14:54:23.028 | INFO     | __main__:reembed_shape_b:370 - [295/341] parent 294 doc 7ba61432 -> 11 children  1.75s  3,306 pts  rolling 1.84s/parent
+2026-10-25 14:54:24.998 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 295 → 13 children (1678 tokens, 1680 vectors)
+2026-10-25 14:54:25.118 | INFO     | __main__:reembed_shape_b:370 - [296/341] parent 295 doc 7ba61432 -> 13 children  2.09s  3,319 pts  rolling 1.73s/parent
+2026-10-25 14:54:26.312 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 296 → 9 children (1074 tokens, 1076 vectors)
+2026-10-25 14:54:26.423 | INFO     | __main__:reembed_shape_b:370 - [297/341] parent 296 doc 7ba61432 -> 9 children  1.30s  3,328 pts  rolling 1.76s/parent
+2026-10-25 14:54:27.552 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 297 → 7 children (926 tokens, 928 vectors)
+2026-10-25 14:54:27.608 | INFO     | __main__:reembed_shape_b:370 - [298/341] parent 297 doc 7ba61432 -> 7 children  1.18s  3,335 pts  rolling 1.67s/parent
+2026-10-25 14:54:28.979 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 298 → 10 children (1063 tokens, 1065 vectors)
+2026-10-25 14:54:29.080 | INFO     | __main__:reembed_shape_b:370 - [299/341] parent 298 doc 7ba61432 -> 10 children  1.47s  3,345 pts  rolling 1.61s/parent
+2026-10-25 14:54:30.514 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 299 → 10 children (1212 tokens, 1214 vectors)
+2026-10-25 14:54:30.602 | INFO     | __main__:reembed_shape_b:370 - [300/341] parent 299 doc 7ba61432 -> 10 children  1.52s  3,355 pts  rolling 1.53s/parent
+2026-10-25 14:54:32.129 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 300 → 10 children (1240 tokens, 1242 vectors)
+2026-10-25 14:54:32.258 | INFO     | __main__:reembed_shape_b:370 - [301/341] parent 300 doc 7ba61432 -> 10 children  1.66s  3,365 pts  rolling 1.53s/parent
+2026-10-25 14:54:32.619 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 301 → 1 children (182 tokens, 184 vectors)
+2026-10-25 14:54:32.638 | INFO     | __main__:reembed_shape_b:370 - [302/341] parent 301 doc 7ba61432 -> 1 children  0.38s  3,366 pts  rolling 1.48s/parent
+2026-10-25 14:54:34.840 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 302 → 15 children (1958 tokens, 1960 vectors)
+2026-10-25 14:54:34.958 | INFO     | __main__:reembed_shape_b:370 - [303/341] parent 302 doc 7ba61432 -> 15 children  2.32s  3,381 pts  rolling 1.52s/parent
+2026-10-25 14:54:35.975 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 303 → 10 children (868 tokens, 870 vectors)
+2026-10-25 14:54:36.053 | INFO     | __main__:reembed_shape_b:370 - [304/341] parent 303 doc 7ba61432 -> 10 children  1.09s  3,391 pts  rolling 1.50s/parent
+2026-10-25 14:54:36.873 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 304 → 6 children (697 tokens, 699 vectors)
+2026-10-25 14:54:36.933 | INFO     | __main__:reembed_shape_b:370 - [305/341] parent 304 doc 7ba61432 -> 6 children  0.88s  3,397 pts  rolling 1.46s/parent
+2026-10-25 14:54:38.325 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 305 → 7 children (1209 tokens, 1211 vectors)
+2026-10-25 14:54:38.402 | INFO     | __main__:reembed_shape_b:370 - [306/341] parent 305 doc 7ba61432 -> 7 children  1.47s  3,404 pts  rolling 1.42s/parent
+2026-10-25 14:54:39.508 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 306 → 8 children (954 tokens, 956 vectors)
+2026-10-25 14:54:39.572 | INFO     | __main__:reembed_shape_b:370 - [307/341] parent 306 doc 7ba61432 -> 8 children  1.17s  3,412 pts  rolling 1.37s/parent
+2026-10-25 14:54:41.301 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 307 → 13 children (1541 tokens, 1543 vectors)
+2026-10-25 14:54:41.467 | INFO     | __main__:reembed_shape_b:370 - [308/341] parent 307 doc 7ba61432 -> 13 children  1.90s  3,425 pts  rolling 1.39s/parent
+2026-10-25 14:54:43.692 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 308 → 18 children (1807 tokens, 1809 vectors)
+2026-10-25 14:54:43.800 | INFO     | __main__:reembed_shape_b:370 - [309/341] parent 308 doc 7ba61432 -> 18 children  2.33s  3,443 pts  rolling 1.51s/parent
+2026-10-25 14:54:44.269 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 309 → 4 children (362 tokens, 364 vectors)
+2026-10-25 14:54:44.298 | INFO     | __main__:reembed_shape_b:370 - [310/341] parent 309 doc 7ba61432 -> 4 children  0.50s  3,447 pts  rolling 1.43s/parent
+2026-10-25 14:54:46.260 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 310 → 18 children (1760 tokens, 1762 vectors)
+2026-10-25 14:54:46.369 | INFO     | __main__:reembed_shape_b:370 - [311/341] parent 310 doc 7ba61432 -> 18 children  2.07s  3,465 pts  rolling 1.48s/parent
+2026-10-25 14:54:47.554 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 311 → 7 children (1028 tokens, 1030 vectors)
+2026-10-25 14:54:47.675 | INFO     | __main__:reembed_shape_b:370 - [312/341] parent 311 doc 7ba61432 -> 7 children  1.31s  3,472 pts  rolling 1.49s/parent
+2026-10-25 14:54:50.050 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 312 → 18 children (2042 tokens, 2044 vectors)
+2026-10-25 14:54:50.259 | INFO     | __main__:reembed_shape_b:370 - [313/341] parent 312 doc 7ba61432 -> 18 children  2.58s  3,490 pts  rolling 1.51s/parent
+2026-10-25 14:54:52.680 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 313 → 17 children (2229 tokens, 2231 vectors)
+2026-10-25 14:54:52.801 | INFO     | __main__:reembed_shape_b:370 - [314/341] parent 313 doc 7ba61432 -> 17 children  2.54s  3,507 pts  rolling 1.58s/parent
+2026-10-25 14:54:55.404 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 314 → 19 children (2294 tokens, 2296 vectors)
+2026-10-25 14:54:55.572 | INFO     | __main__:reembed_shape_b:370 - [315/341] parent 314 doc 7ba61432 -> 19 children  2.77s  3,526 pts  rolling 1.63s/parent
+2026-10-25 14:54:56.130 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 315 → 5 children (420 tokens, 422 vectors)
+2026-10-25 14:54:56.166 | INFO     | __main__:reembed_shape_b:370 - [316/341] parent 315 doc 7ba61432 -> 5 children  0.59s  3,531 pts  rolling 1.55s/parent
+2026-10-25 14:54:56.320 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 316 → 1 children (54 tokens, 56 vectors)
+2026-10-25 14:54:56.333 | INFO     | __main__:reembed_shape_b:370 - [317/341] parent 316 doc 7ba61432 -> 1 children  0.17s  3,532 pts  rolling 1.49s/parent
+2026-10-25 14:54:58.680 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 317 → 14 children (2092 tokens, 2094 vectors)
+2026-10-25 14:54:58.802 | INFO     | __main__:reembed_shape_b:370 - [318/341] parent 317 doc 7ba61432 -> 14 children  2.47s  3,546 pts  rolling 1.56s/parent
+2026-10-25 14:54:59.491 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 318 → 3 children (466 tokens, 468 vectors)
+2026-10-25 14:54:59.523 | INFO     | __main__:reembed_shape_b:370 - [319/341] parent 318 doc 7ba61432 -> 3 children  0.72s  3,549 pts  rolling 1.52s/parent
+2026-10-25 14:55:02.014 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 319 → 15 children (2200 tokens, 2202 vectors)
+2026-10-25 14:55:02.166 | INFO     | __main__:reembed_shape_b:370 - [320/341] parent 319 doc 7ba61432 -> 15 children  2.64s  3,564 pts  rolling 1.58s/parent
+2026-10-25 14:55:03.659 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 320 → 8 children (1242 tokens, 1244 vectors)
+2026-10-25 14:55:03.781 | INFO     | __main__:reembed_shape_b:370 - [321/341] parent 320 doc 7ba61432 -> 8 children  1.61s  3,572 pts  rolling 1.58s/parent
+2026-10-25 14:55:04.736 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 321 → 6 children (811 tokens, 813 vectors)
+2026-10-25 14:55:04.803 | INFO     | __main__:reembed_shape_b:370 - [322/341] parent 321 doc 7ba61432 -> 6 children  1.02s  3,578 pts  rolling 1.61s/parent
+2026-10-25 14:55:06.670 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 322 → 12 children (1609 tokens, 1611 vectors)
+2026-10-25 14:55:06.822 | INFO     | __main__:reembed_shape_b:370 - [323/341] parent 322 doc 7ba61432 -> 12 children  2.02s  3,590 pts  rolling 1.59s/parent
+2026-10-25 14:55:08.367 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 323 → 10 children (1310 tokens, 1312 vectors)
+2026-10-25 14:55:08.470 | INFO     | __main__:reembed_shape_b:370 - [324/341] parent 323 doc 7ba61432 -> 10 children  1.65s  3,600 pts  rolling 1.62s/parent
+2026-10-25 14:55:09.383 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 324 → 9 children (787 tokens, 789 vectors)
+2026-10-25 14:55:09.438 | INFO     | __main__:reembed_shape_b:370 - [325/341] parent 324 doc 7ba61432 -> 9 children  0.97s  3,609 pts  rolling 1.62s/parent
+2026-10-25 14:55:09.894 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 325 → 1 children (345 tokens, 347 vectors)
+2026-10-25 14:55:09.909 | INFO     | __main__:reembed_shape_b:370 - [326/341] parent 325 doc 7ba61432 -> 1 children  0.47s  3,610 pts  rolling 1.57s/parent
+2026-10-25 14:55:11.139 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 326 → 10 children (980 tokens, 982 vectors)
+2026-10-25 14:55:11.192 | INFO     | __main__:reembed_shape_b:370 - [327/341] parent 326 doc 7ba61432 -> 10 children  1.28s  3,620 pts  rolling 1.58s/parent
+2026-10-25 14:55:12.754 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 327 → 12 children (1214 tokens, 1216 vectors)
+2026-10-25 14:55:12.843 | INFO     | __main__:reembed_shape_b:370 - [328/341] parent 327 doc 7ba61432 -> 12 children  1.65s  3,632 pts  rolling 1.57s/parent
+2026-10-25 14:55:14.065 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 328 → 8 children (956 tokens, 958 vectors)
+2026-10-25 14:55:14.126 | INFO     | __main__:reembed_shape_b:370 - [329/341] parent 328 doc 7ba61432 -> 8 children  1.28s  3,640 pts  rolling 1.52s/parent
+2026-10-25 14:55:15.149 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 329 → 8 children (898 tokens, 900 vectors)
+2026-10-25 14:55:15.193 | INFO     | __main__:reembed_shape_b:370 - [330/341] parent 329 doc 7ba61432 -> 8 children  1.07s  3,648 pts  rolling 1.54s/parent
+2026-10-25 14:55:17.315 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 330 → 7 children (1728 tokens, 1730 vectors)
+2026-10-25 14:55:17.374 | INFO     | __main__:reembed_shape_b:370 - [331/341] parent 330 doc 7ba61432 -> 7 children  2.18s  3,655 pts  rolling 1.55s/parent
+2026-10-25 14:55:19.391 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 331 → 13 children (1578 tokens, 1580 vectors)
+2026-10-25 14:55:19.553 | INFO     | __main__:reembed_shape_b:370 - [332/341] parent 331 doc 7ba61432 -> 13 children  2.18s  3,668 pts  rolling 1.59s/parent
+2026-10-25 14:55:21.316 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 332 → 10 children (1482 tokens, 1484 vectors)
+2026-10-25 14:55:21.378 | INFO     | __main__:reembed_shape_b:370 - [333/341] parent 332 doc 7ba61432 -> 10 children  1.82s  3,678 pts  rolling 1.56s/parent
+2026-10-25 14:55:22.773 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 333 → 8 children (1151 tokens, 1153 vectors)
+2026-10-25 14:55:22.823 | INFO     | __main__:reembed_shape_b:370 - [334/341] parent 333 doc 7ba61432 -> 8 children  1.44s  3,686 pts  rolling 1.50s/parent
+2026-10-25 14:55:24.515 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 334 → 8 children (1358 tokens, 1360 vectors)
+2026-10-25 14:55:24.596 | INFO     | __main__:reembed_shape_b:370 - [335/341] parent 334 doc 7ba61432 -> 8 children  1.77s  3,694 pts  rolling 1.45s/parent
+2026-10-25 14:55:30.066 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 335 → 21 children (4716 tokens, 4718 vectors)
+2026-10-25 14:55:30.309 | INFO     | __main__:reembed_shape_b:370 - [336/341] parent 335 doc 7ba61432 -> 21 children  5.71s  3,715 pts  rolling 1.71s/parent
+2026-10-25 14:55:34.226 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 336 → 19 children (3347 tokens, 3349 vectors)
+2026-10-25 14:55:34.380 | INFO     | __main__:reembed_shape_b:370 - [337/341] parent 336 doc 7ba61432 -> 19 children  4.07s  3,734 pts  rolling 1.90s/parent
+2026-10-25 14:55:37.342 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 337 → 15 children (2702 tokens, 2704 vectors)
+2026-10-25 14:55:37.460 | INFO     | __main__:reembed_shape_b:370 - [338/341] parent 337 doc 7ba61432 -> 15 children  3.08s  3,749 pts  rolling 1.93s/parent
+2026-10-25 14:55:38.410 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 338 → 3 children (746 tokens, 748 vectors)
+2026-10-25 14:55:38.441 | INFO     | __main__:reembed_shape_b:370 - [339/341] parent 338 doc 7ba61432 -> 3 children  0.98s  3,752 pts  rolling 1.95s/parent
+2026-10-25 14:55:40.976 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 339 → 15 children (2093 tokens, 2095 vectors)
+2026-10-25 14:55:41.052 | INFO     | __main__:reembed_shape_b:370 - [340/341] parent 339 doc 7ba61432 -> 15 children  2.61s  3,767 pts  rolling 1.94s/parent
+2026-10-25 14:55:45.764 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 340 → 29 children (4193 tokens, 4195 vectors)
+2026-10-25 14:55:45.984 | INFO     | __main__:reembed_shape_b:370 - [341/341] parent 340 doc 7ba61432 -> 29 children  4.93s  3,796 pts  rolling 2.11s/parent
+2026-10-25 14:55:45.987 | SUCCESS  | __main__:reembed_shape_b:380 - Shape B done: 3,796 points upserted in 612.7s (6.2 pts/s), 341 parents, 0 failures
+
+Shape B: 3,796 points into 'knowledge_base_v3' from 'knowledge_base_v2' (341 
+parents, 612.7s)
+EXIT=0
