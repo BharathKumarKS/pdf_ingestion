@@ -11,6 +11,14 @@
 >
 > ## ▶ SESSION 18 — WHAT HAPPENED, AND WHAT IS NEXT
 >
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 18 (items 15–16 especially), then the
+> nomic plan's §3 Stage F/G and §7 signoffs, then `IMPROVEMENTS.md` §I68. I am starting S5: land the
+> §I68 client-side-RRF fix first, then pre-register the ONE product-endpoint run (nomic/v3 vs
+> qwen3/v2, HyDE ON and frozen) and COMMIT THE PRE-REGISTRATION ALONE before running it."*
+> ⚠️ **The A2 `.env` flip is still NOT applied** — every stage so far has run on env exports
+> (`DENSE_MODEL`/`DENSE_DIM`/`DENSE_DIM_LOW`/`QUERY_INSTRUCTION`/`DOCUMENT_PREFIX` + `QDRANT_HOST`
+> `QDRANT_COLLECTION`); forget them and the run silently uses Qwen3/1024. **Owner action, still open.**
+>
 > **1. ✅ S1 (Stage A2 + A2b) IS FINISHED AND GREEN — but session 17's end left it UNCOMMITTED and RED,
 > and neither the handoff nor `IMPROVEMENTS.md` recorded it.** Full entry: `IMPROVEMENTS.md` **§I78**.
 > One line: the code for the document-side prefix, the span shift and the model-aware special-token
