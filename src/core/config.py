@@ -71,8 +71,11 @@ class Settings(BaseSettings):
     # so the 64d view is sliced client-side and re-normalised.
     dense_model: str = "Qwen/Qwen3-Embedding-0.6B"
     dense_dim: int = 1024                # native dim of dense_model; also the intent classifier's width
-    dense_dim_low: int = 128             # MRL truncation for the fast ANN first stage — the
-                                         # width a NEW collection declares (the gemma lane's).
+    dense_dim_low: int = 64              # MRL truncation for the fast ANN first stage — the
+                                         # width a NEW collection declares. 64 is nomic's own
+                                         # smallest MRL slot (Stage A2, 2026-10-25); the gemma
+                                         # plan's 128 was that model's slot, and leaving it would
+                                         # describe an embedder we did not adopt.
                                          # ⚠️ Existing collections keep their own width: the
                                          # lane name AND size are resolved off the collection
                                          # (store._resolve_low_lane), because v2's low lane is
@@ -97,6 +100,17 @@ class Settings(BaseSettings):
     query_instruction: str = (
         "Instruct: Given a physics question, retrieve textbook passages that answer it\nQuery: "
     )
+    # Document-side prefix — the ASYMMETRIC twin of `query_instruction`, and a mechanism that did
+    # NOT exist on the cluster path before nomic. `NomicEmbedder` (the local legacy embedder)
+    # prefixes BOTH sides (`search_document: ` / `search_query: `), but `ClusterDenseEmbedder` —
+    # which is what the re-ingest actually uses — applied the query instruction only ("Documents
+    # carry no instruction"), so nomic would have been used OUT OF DISTRIBUTION. §I62 measured the
+    # size of getting this wrong: unprefixed cosine 0.949 against 1.000000 prefixed. Qwen3 needs no
+    # document prefix, so the default is empty; `.env` sets it for nomic. ⚠️ It is applied by
+    # `ClusterDenseEmbedder`'s passage paths AND by `LateChunkEmbedder`'s tokenization — the two
+    # must agree, or every child's span shifts by the prefix's token count with no warning
+    # (ARCHITECTURE.md §8; IMPROVEMENTS §I78).
+    document_prefix: str = ""
     # Cluster-served models for the ColBERT + sparse lanes (§I1 upgrades).
     sv_colbert_model: str = "lightonai/GTE-ModernColBERT-v1"
     sv_sparse_model: str = "Qdrant/bm42-all-minilm-l6-v2-attentions"

@@ -250,8 +250,9 @@ def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
     """Create the knowledge_base collection with the 4-vector schema.
 
     Named vectors (re-ingest schema, plan §5 Step 7):
-        dense_64    — MRL truncation of the dense model (fast ANN first stage)
-        dense_1024  — full dense embedding, ``dense_model`` native dim (rescore stage)
+        dense_64    — MRL truncation of the dense model (fast ANN first stage), width
+                      ``cfg.dense_dim_low``; the name is nomic's own MRL slot
+        dense_full  — full dense embedding, ``dense_model`` native dim (rescore stage)
         colbert     — ColBERT 128d token matrices, MaxSim comparator (third stage)
         sparse      — SPLADE sparse vectors (optional fourth lane)
 
@@ -268,12 +269,16 @@ def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
     name from the collection's own schema (plan R1, old-vs-new comparison).
 
     Nested prefetch in search():
-        dense_64(1000) → dense_1024(500) → colbert MaxSim(250), RRF over the live lanes
+        dense_<low>(1000) → dense_<full>(500) → colbert MaxSim(250), RRF over the live lanes
+    (the concrete lane names are resolved off the collection — see ``store._resolve_low_lane``)
     """
     existing = {c.name for c in client.get_collections().collections}
     if cfg.qdrant_collection not in existing:
         vectors_config: dict = {
-            "dense_128": VectorParams(size=cfg.dense_dim_low, distance=Distance.COSINE),
+            # ⚠️ The name must agree with `cfg.dense_dim_low` — a lane named for a width it does
+            # not have is §I13's trap. It was `dense_128` while the gemma plan was live; nomic's
+            # MRL slot is 64, so both moved together in Stage A2 (2026-10-25).
+            "dense_64": VectorParams(size=cfg.dense_dim_low, distance=Distance.COSINE),
             "dense_full": VectorParams(size=cfg.dense_dim, distance=Distance.COSINE),
         }
         if cfg.colbert_enabled:

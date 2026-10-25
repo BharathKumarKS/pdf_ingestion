@@ -96,10 +96,13 @@ def _iter_upsert_batches(
 _DENSE_VECTOR_NAMES = ("dense_full", "dense_1024", "dense_768")
 
 # The low-dimension (MRL) dense vector — the retrieval funnel's fast first stage. Same rule:
-# read off the collection, newest first. ``dense_128`` is what the gemma re-ingest declares;
-# ``dense_64`` is what ``knowledge_base_v2`` declares and MUST stay readable, because the
-# gemma adoption's product-endpoint A/B queries v2 as its baseline arm.
-_LOW_VECTOR_NAMES = ("dense_128", "dense_64")
+# read off the collection, newest first. ``dense_64`` is what a NEW collection declares (nomic's
+# own smallest MRL slot, Stage A2 2026-10-25) **and** what ``knowledge_base_v2`` declares;
+# ``dense_128`` stays readable because ``knowledge_base_v3`` was created with the gemma shape on
+# 2026-10-25 (it is dropped and re-created in Stage B, so nothing should be reading it after that).
+# ⚠️ The order here is the fallback name for a collection that does not exist yet — it is NOT a
+# statement about which lane a live collection has (that is read off the collection itself).
+_LOW_VECTOR_NAMES = ("dense_64", "dense_128")
 
 
 def _dense_name_from(vectors_cfg) -> str | None:
@@ -278,9 +281,9 @@ class DocumentStore:
         doc_id = parsed_doc.document_id
         meta   = extra_meta or {}
         # The dense slots of THIS collection, resolved once per document off the collection
-        # itself (§I49 Finding 1): the full-dimension name is dense_full after the gemma
-        # re-ingest, dense_1024 after the Qwen3 one, dense_768 on the deployed collection (R1);
-        # the low-dimension name is dense_128 on a new collection, dense_64 on v2.
+        # itself (§I49 Finding 1): the full-dimension name is dense_full on a new collection,
+        # dense_1024 on v2 (Qwen3), dense_768 on the deployed collection (R1); the low-dimension
+        # name is dense_64 on a new collection and on v2, dense_128 on the gemma-shaped v3.
         dense_name = self._dense_vector_name()
         low_name, low_size = _resolve_low_lane(self._collection_vectors(), self._cfg)
         if low_size != self._cfg.dense_dim_low:
@@ -495,8 +498,9 @@ class DocumentStore:
                                                  └─  or dense_full alone if SPLADE is off
 
         ⚠️ BOTH dense lane names AND the low lane's WIDTH are read off the collection. The low
-        lane is ``dense_128`` (128d) on a gemma-built collection and ``dense_64`` (64d) on
-        ``knowledge_base_v2``; the full lane is ``dense_full`` / ``dense_1024`` / ``dense_768``.
+        lane is ``dense_64`` (64d) on ``knowledge_base_v2`` and on any NEW collection, and
+        ``dense_128`` (128d) on the gemma-shaped ``knowledge_base_v3``; the full lane is
+        ``dense_full`` / ``dense_1024`` / ``dense_768``.
         Legacy fallback for old single-vector collections.
         Local file Qdrant skips ColBERT (Python MaxSim bug on real collections).
         """

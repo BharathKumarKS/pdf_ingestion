@@ -7,11 +7,15 @@ pattern — `Labs/Week_6/sv_rag_pipeline/src/svrag/late_chunk_embedder.py` and t
 
 Endpoint: ``POST {sv_embed_url}`` with ``{"model": ..., "input": [...]}``.
 
-Two views of one model:
+Two views of one model, each with its OWN side of the asymmetric task prefix:
 
-* ``embed_documents(texts)``      -> pooled ``(N, dense_dim)``, L2-normalised
-* ``embed_query(text)``           -> pooled ``(dense_dim,)``, with the query instruction
-* ``embed_documents_tokens(texts)`` -> per-token ``(n_tokens, dense_dim)``, for late chunking
+* ``embed_documents(texts)``      -> pooled ``(N, dense_dim)``, L2-normalised, with
+                                     ``cfg.document_prefix`` (``search_document: `` for nomic;
+                                     empty for Qwen3, which needs none)
+* ``embed_query(text)``           -> pooled ``(dense_dim,)``, with ``cfg.query_instruction``
+* ``embed_documents_tokens(texts)`` -> per-token ``(n_tokens, dense_dim)``, for late chunking —
+                                     the prefix applies here too, and ``LateChunkEmbedder`` must
+                                     tokenize the same prefixed string (see ``_prefixed``)
 
 The last one sets ``return_token_embeddings: true``. That flag is what makes late chunking
 possible against the cluster at all: the default response is a single pooled vector per
@@ -97,9 +101,10 @@ def l2_normalise(vec: np.ndarray) -> np.ndarray:
 class StubClusterEmbedder:
     """Deterministic pseudo-random vectors — no cluster, no download."""
 
-    def __init__(self, dim: int = 1024, dim_low: int = 64) -> None:
+    def __init__(self, dim: int = 1024, dim_low: int = 64, document_prefix: str = "") -> None:
         self.dim = dim
         self.dim_low = dim_low
+        self.document_prefix = document_prefix
         self.model_name = "stub"
         logger.warning("StubClusterEmbedder active — embeddings are random vectors")
 
@@ -111,15 +116,23 @@ class StubClusterEmbedder:
     def _seed(self, text: str) -> np.random.Generator:
         return np.random.default_rng(seed=hash(text) % (2**31))
 
+    def _prefixed(self, texts: list[str]) -> list[str]:
+        """Mirror `ClusterDenseEmbedder._prefixed` — the stub must obey the same contract."""
+        if not self.document_prefix:
+            return texts
+        return [self.document_prefix + t for t in texts]
+
     def embed_documents(self, texts: list[str]) -> list[np.ndarray]:
-        return [self._unit(self._seed(t), (self.dim,)) for t in texts]
+        return [self._unit(self._seed(t), (self.dim,)) for t in self._prefixed(texts)]
 
     def embed_query(self, text: str) -> np.ndarray:
         return self._unit(self._seed(text), (self.dim,))
 
     def embed_documents_tokens(self, texts: list[str]) -> list[np.ndarray]:
         # ~1 token per 4 characters, floor 1 — deterministic, so tests can assert shapes.
-        return [self._unit(self._seed(t), (max(1, len(t) // 4), self.dim)) for t in texts]
+        # ⚠️ No special-token vector: the stub's contract is `n_api == n_local` (see StubTokenizer).
+        return [self._unit(self._seed(t), (max(1, len(t) // 4), self.dim))
+                for t in self._prefixed(texts)]
 
 
 class StubTokenizer:
@@ -167,6 +180,7 @@ class ClusterDenseEmbedder:
         self._dim = cfg.dense_dim
         self._dim_low = cfg.dense_dim_low
         self._instruction = cfg.query_instruction
+        self._doc_prefix = cfg.document_prefix
         self._batch_size = max(1, cfg.embedding_batch_size)
         self._client = client  # injected in tests (httpx.MockTransport)
 
@@ -181,6 +195,24 @@ class ClusterDenseEmbedder:
     @property
     def dim_low(self) -> int:
         return self._dim_low
+
+    @property
+    def document_prefix(self) -> str:
+        return self._doc_prefix
+
+    def _prefixed(self, texts: list[str]) -> list[str]:
+        """Apply the document-side prefix — the passage twin of ``embed_query``'s instruction.
+
+        Every passage path goes through here so no caller can forget it (§I28's class: a mechanism
+        wired into some callers and not others). The prefix is ``cfg.document_prefix``, which is
+        empty for models that need none (Qwen3) and ``"search_document: "`` for nomic.
+
+        ⚠️ ``LateChunkEmbedder`` must tokenize the **same prefixed string** to compute character
+        offsets, or every child's span shifts by the prefix's token count with no warning.
+        """
+        if not self._doc_prefix:
+            return texts
+        return [self._doc_prefix + t for t in texts]
 
     # -- HTTP ------------------------------------------------------------------
 
@@ -290,20 +322,31 @@ class ClusterDenseEmbedder:
     # -- Public API ------------------------------------------------------------
 
     def embed_documents(self, texts: list[str]) -> list[np.ndarray]:
-        """Pooled passage embeddings, L2-normalised. Documents carry no instruction."""
+        """Pooled passage embeddings, L2-normalised, with the document-side prefix.
+
+        "Documents carry no instruction" was true for Qwen3 only; nomic requires
+        ``search_document: `` on the passage side, and the prefix is applied here so every caller
+        (late chunking, the isolation twin, RAPTOR summaries, re-embed scripts) gets it.
+        """
         if not texts:
             return []
-        return [l2_normalise(v) for v in self._post(texts, token_embeddings=False)]
+        return [l2_normalise(v)
+                for v in self._post(self._prefixed(texts), token_embeddings=False)]
 
     def embed_query(self, text: str) -> np.ndarray:
         """Pooled query embedding, L2-normalised, with the configured instruction."""
         return l2_normalise(self._post([self._instruction + text], token_embeddings=False)[0])
 
     def embed_documents_tokens(self, texts: list[str]) -> list[np.ndarray]:
-        """Per-token passage embeddings ``(n_tokens, dim)`` — the late-chunking input."""
+        """Per-token passage embeddings ``(n_tokens, dim)`` — the late-chunking input.
+
+        ⚠️ The prefix is applied here too, so the endpoint's tokens are the tokens of the
+        **prefixed** string. ``LateChunkEmbedder`` tokenizes the same prefixed string for its
+        offsets; that agreement is the whole of trap 2.
+        """
         if not texts:
             return []
-        return self._post(texts, token_embeddings=True)
+        return self._post(self._prefixed(texts), token_embeddings=True)
 
 
 # -- Singleton factory ---------------------------------------------------------
@@ -318,7 +361,10 @@ def get_cluster_embedder(
     if _cluster_embedder is None:
         cfg = settings or get_settings()
         if cfg.use_stub_embedder:
-            _cluster_embedder = StubClusterEmbedder(dim=cfg.dense_dim, dim_low=cfg.dense_dim_low)
+            _cluster_embedder = StubClusterEmbedder(
+                dim=cfg.dense_dim, dim_low=cfg.dense_dim_low,
+                document_prefix=cfg.document_prefix,
+            )
         else:
             _cluster_embedder = ClusterDenseEmbedder(settings=cfg)
             logger.info(

@@ -171,6 +171,62 @@ def test_query_prepends_the_instruction():
     assert reqs[0]["input"] == ["Instruct: test\nQuery: what is a lever"]
 
 
+def test_document_prefix_is_sent_on_both_passage_paths():
+    """trap 1: nomic must see ``search_document: `` on the passage side too — the cluster applies
+    no prefix itself (§I62), so an unprefixed passage is out of distribution. Asserted on the
+    payload, not the docstring, and on BOTH passage paths (pooled and per-token)."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        body = json.loads(request.content.decode())
+        if body.get("return_token_embeddings") is True:
+            data = [{"index": i, "embedding": [_unit(np.random.default_rng(i), (3, 1024)).tolist()]}
+                    for i in range(len(body["input"]))]
+        else:
+            data = [{"index": i, "embedding": _unit(np.random.default_rng(i), (1024,)).tolist()}
+                    for i in range(len(body["input"]))]
+        return httpx.Response(200, json={"data": data})
+
+    reqs: list = []
+    emb = ClusterDenseEmbedder(
+        settings=_settings(document_prefix="search_document: "),
+        client=_capturing_client(handler, reqs),
+    )
+    emb.embed_documents(["lever"])
+    emb.embed_documents_tokens(["lever"])
+    emb.embed_query("what is a lever")
+
+    assert reqs[0]["input"] == ["search_document: lever"]      # pooled passage
+    assert reqs[1]["input"] == ["search_document: lever"]      # per-token passage
+    assert reqs[2]["input"] == ["Instruct: test\nQuery: what is a lever"]  # query is the twin
+
+
+def test_no_document_prefix_sends_the_text_verbatim():
+    """Qwen3 needs none: an empty ``document_prefix`` must not touch the payload."""
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        body = json.loads(request.content.decode())
+        data = [{"index": i, "embedding": _unit(np.random.default_rng(i), (1024,)).tolist()}
+                for i in range(len(body["input"]))]
+        return httpx.Response(200, json={"data": data})
+
+    reqs: list = []
+    emb = ClusterDenseEmbedder(settings=_settings(), client=_capturing_client(handler, reqs))
+    emb.embed_documents(["lever"])
+    assert reqs[0]["input"] == ["lever"]
+
+
+def test_stub_applies_the_document_prefix():
+    """The stub must obey the same contract, or a test could pass under stub and fail live."""
+    with_prefix = StubClusterEmbedder(
+        dim=8, dim_low=4, document_prefix="search_document: "
+    ).embed_documents(["lever"])[0]
+    plain = StubClusterEmbedder(dim=8, dim_low=4).embed_documents(["lever"])[0]
+    assert not np.allclose(with_prefix, plain)
+
+
 def test_pooled_paths_normalise_an_unnormalised_endpoint():
     """The endpoint does NOT return unit vectors — the client must normalise.
 

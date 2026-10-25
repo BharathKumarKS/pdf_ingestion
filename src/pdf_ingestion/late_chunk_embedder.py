@@ -11,12 +11,21 @@ The cluster makes this possible without a local model: ``return_token_embeddings
 (``cluster_embedder.ClusterDenseEmbedder.embed_documents_tokens``). Only the **tokenizer** is
 local, for character offsets.
 
-Alignment (probed live 2026-10-17 — ``logs/p1/step4/probe_qwen3_alignment.py``,
-``alignment.json``): the local ``Qwen/Qwen3-Embedding-0.6B`` tokenizer tokenizes with
-``add_special_tokens=False`` and its ``offset_mapping`` tiles the text; the endpoint returns
-**exactly one extra trailing** ``<|endoftext|>`` vector. So the content matrix is
-``matrix[:-1]`` when ``n_api == n_local + 1``. Both other shapes are handled explicitly and a
-third raises — a silent off-by-one here would mis-attribute every child vector.
+Alignment (probed per model — ``logs/p1/step4/probe_qwen3_alignment.py`` for Qwen3 and
+``logs/p1/step10/probe_nomic_alignment.py`` for nomic): the local tokenizer tokenizes with
+``add_special_tokens=False`` and its ``offset_mapping`` tiles the text, while the endpoint wraps the
+input in its own special tokens. **How many, and WHERE they sit, is a property of one tokenizer +
+one server** — so it is declared per model in ``_DECLARED_SPECIALS`` and re-probed, never inherited.
+Qwen3 adds one TRAILING ``<|endoftext|>`` (``matrix[:-1]``); nomic adds **two TRAILING and no leading
+token** (``matrix[:-2]``), so ``matrix[:-1]`` would keep one special vector and shift every child's
+pooling window (§I77, plan trap 3). ⚠️ The BERT-style guess — ``[CLS] … [SEP]``, one LEADING and one
+trailing — was **wrong**, and the probe is what caught it. A layout that does not match the
+declaration raises rather than shifting.
+
+⚠️ **The document-side prefix is part of this contract.** The endpoint is handed
+``document_prefix + parent.text``, so the character offsets must be computed on the **same prefixed
+string** and each child's span translated by ``len(prefix)``. Applying the prefix to one side only
+shifts every span with no warning at all (plan trap 2) — the failure this module is most exposed to.
 
 MRL: the mean is linear, so ``mean(tok)[:64] == mean(tok[:64])`` (pinned by
 ``test_cluster_embedder.test_mrl_slice_of_a_mean_equals_mean_of_slices``). The 64d view is
@@ -45,6 +54,48 @@ from src.pdf_ingestion.cluster_embedder import (
     mrl_slice,
 )
 from src.pdf_ingestion.models import ParentChunk
+
+# -- Endpoint special-token layout ---------------------------------------------
+#
+# The per-token endpoint wraps its input in its own special tokens, so the response carries
+# `n_local + leading + trailing` vectors — and `_content_tokens` needs BOTH numbers, not their sum.
+# For a BERT-style tokenizer the layout is `[CLS] content… [SEP]`, so the content matrix is
+# `matrix[1:-1]`; dropping only the last vector would shift every child's pooling window by one
+# token, silently. §I77's addendum established nomic's DELTA (+2) but explicitly NOT which two
+# tokens they are, so this map is filled by **measurement**
+# (`logs/p1/step10/probe_nomic_alignment.py`).
+#
+# ⚠️ The probe MEASURES; this map DECLARES — deliberately separate, because a probe that both
+# discovers and authorises the rule is a guard that can never fail. `probe_alignment` asserts the
+# live endpoint still matches the declaration.
+_DECLARED_SPECIALS: dict[str, tuple[int, int]] = {
+    # (leading, trailing) special-token vectors the endpoint adds.
+    # 0 leading + 2 TRAILING (``matrix[:-2]``) — MEASURED 2026-10-25, not assumed:
+    # ``probe_nomic_alignment.json`` puts the best offset at 0 with a 7.87x margin over the
+    # runner-up. The BERT-style ``[CLS] … [SEP]`` guess (1, 1) was wrong; it would have pooled
+    # every child one token off, silently.
+    "nomic-ai/nomic-embed-text-v1.5": (0, 2),
+    "Qwen/Qwen3-Embedding-0.6B": (0, 1),        # probed 2026-10-17 (one trailing <|endoftext|>)
+}
+
+
+def declared_specials(model: str) -> tuple[int, int]:
+    """``(leading, trailing)`` special-token vectors the endpoint adds for ``model``.
+
+    Raises for an undeclared model rather than assuming the Qwen3 contract: guessing the layout is
+    not an off-by-one on a count, it is a silent shift of every child's pooling window (§I77).
+    """
+    try:
+        return _DECLARED_SPECIALS[model]
+    except KeyError:
+        raise ValueError(
+            f"No declared special-token layout for {model!r}. The per-token endpoint wraps its "
+            f"input, and late chunking must know WHERE the specials sit (leading vs trailing) — "
+            f"assuming the Qwen3 contract would shift every child's pooling window. Probe it "
+            f"(logs/p1/step10/probe_nomic_alignment.py) and declare the result in "
+            f"late_chunk_embedder._DECLARED_SPECIALS."
+        ) from None
+
 
 # -- Data contract -------------------------------------------------------------
 
@@ -76,12 +127,45 @@ class LateChunkEmbedder:
         settings: Settings | None = None,
         embedder: ClusterDenseEmbedder | StubClusterEmbedder | None = None,
         tokenizer=None,
+        specials: tuple[int, int] | None = None,
     ) -> None:
         self._cfg = settings or get_settings()
         self._embedder = embedder or get_cluster_embedder(self._cfg)
         self._tokenizer = tokenizer
         self._dim = self._cfg.dense_dim
         self._dim_low = self._cfg.dense_dim_low
+        self._doc_prefix = self._cfg.document_prefix
+        # `(leading, trailing)` special-token vectors the endpoint adds. Resolved from the model
+        # declaration, EXCEPT for the stub, whose documented contract is `n_api == n_local` (the
+        # stub embedder emits no special vector — see `cluster_embedder.StubTokenizer`).
+        # ⚠️ Keyed on the EMBEDDER ACTUALLY IN USE, not `cfg.use_stub_embedder`: the flag is a
+        # global that a unit test holds True while passing a real (mock-transport) embedder, and
+        # the layout is a property of the embedder, not of the process — keying off the flag made
+        # 14 tests raise on the count mismatch (§I78).
+        if specials is not None:
+            self._specials = specials
+        elif isinstance(self._embedder, StubClusterEmbedder):
+            self._specials = (0, 0)
+        else:
+            self._specials = declared_specials(self._cfg.dense_model)
+
+    @property
+    def specials(self) -> tuple[int, int]:
+        """``(leading, trailing)`` — the layout every pooled child vector depends on."""
+        return self._specials
+
+    @property
+    def document_prefix(self) -> str:
+        return self._doc_prefix
+
+    def _prefixed(self, text: str) -> str:
+        """The exact string the endpoint is handed — the prefix must be in BOTH places.
+
+        ⚠️ The embedder applies ``cfg.document_prefix`` on its passage paths, so the tokenizer here
+        must see the same prefixed string or every child's span is short by the prefix's token
+        count (plan §1 trap 2 — the silent one).
+        """
+        return self._doc_prefix + text
 
     @property
     def model_name(self) -> str:
@@ -110,36 +194,50 @@ class LateChunkEmbedder:
     # -- Offsets ---------------------------------------------------------------
 
     def _offsets(self, text: str) -> list[tuple[int, int]]:
-        """Character spans of the parent's tokens, plain tokenization (no special tokens)."""
-        enc = self._get_tokenizer()(text, add_special_tokens=False, return_offsets_mapping=True)
+        """Character spans of the **prefixed** parent's tokens, plain tokenization.
+
+        ⚠️ ``self._prefixed(text)``, not ``text``. The endpoint is handed the prefixed string, so
+        tokenizing the raw text here would make every child's span short by the prefix's token
+        count — a mis-pooled vector with no warning (plan §1 trap 2). The caller translates each
+        child's span by ``len(self._doc_prefix)`` into these coordinates.
+        """
+        enc = self._get_tokenizer()(
+            self._prefixed(text), add_special_tokens=False, return_offsets_mapping=True
+        )
         return [(int(s), int(e)) for s, e in enc["offset_mapping"]]
 
     @staticmethod
-    def _content_tokens(matrix: np.ndarray, n_local: int, parent_id: int, dim: int) -> np.ndarray:
-        """Drop the endpoint's trailing special-token vector; refuse anything else.
+    def _content_tokens(
+        matrix: np.ndarray,
+        n_local: int,
+        parent_id: int,
+        dim: int,
+        specials: tuple[int, int] = (0, 1),
+    ) -> np.ndarray:
+        """Drop the endpoint's special-token vectors; refuse any layout it cannot explain.
 
-        Measured contract (probe, 2026-10-17): ``n_api == n_local + 1`` with the extra vector
-        last. ``n_api == n_local`` means a server that does not append it. Any other count
-        would silently shift every span by one token, so it raises.
+        ``specials`` is ``(leading, trailing)`` — **where** the wrapper sits, not just how many.
+        The old signature hard-coded the Qwen3 contract (``n_local + 1``, trailing); nomic adds two,
+        both TRAILING, so ``matrix[:-1]`` would keep a special vector and shift every span by one
+        token while the counts still looked plausible (§I77; plan trap 3).
         """
         if matrix.ndim != 2 or matrix.shape[1] != dim:
             raise ValueError(
                 f"Per-token matrix for parent {parent_id} has shape {matrix.shape}, "
                 f"expected (n_tokens, {dim})"
             )
+        leading, trailing = specials
         n_api = matrix.shape[0]
-        if n_api == n_local + 1:
-            return matrix[:-1]
-        if n_api == n_local:
-            logger.debug(
-                "Parent {}: endpoint returned no trailing special vector ({} tokens)",
-                parent_id, n_local,
-            )
-            return matrix
+        if n_api == n_local + leading + trailing:
+            end = n_api - trailing if trailing else n_api
+            return matrix[leading:end]
         raise ValueError(
-            f"Token alignment broken for parent {parent_id}: local tokenizer produced "
-            f"{n_local} tokens, the endpoint returned {n_api} vectors. Late chunking needs "
-            f"them equal (or the endpoint's single trailing special vector)."
+            f"Token alignment broken for parent {parent_id}: the local tokenizer produced "
+            f"{n_local} tokens and the endpoint returned {n_api} vectors, but this model's "
+            f"declared layout is {leading} leading + {trailing} trailing specials (so "
+            f"{n_local + leading + trailing} were expected). A count this module cannot explain "
+            f"would shift every child's pooling window, so nothing was pooled — re-probe the "
+            f"layout (logs/p1/step10/probe_nomic_alignment.py) and update _DECLARED_SPECIALS."
         )
 
     # -- Pooling ---------------------------------------------------------------
@@ -203,12 +301,21 @@ class LateChunkEmbedder:
         matrix = np.asarray(
             self._embedder.embed_documents_tokens([parent.text])[0], dtype=np.float32
         )
-        tokens = self._content_tokens(matrix, len(offsets), parent.parent_id, self._dim)
+        tokens = self._content_tokens(
+            matrix, len(offsets), parent.parent_id, self._dim, self._specials
+        )
+
+        # ⚠️ `offsets` are in the PREFIXED string's coordinates (the endpoint was handed
+        # `prefix + parent.text`), while a child's `char_start`/`char_end` index the RAW parent
+        # text. Translating by `len(prefix)` puts the two in one coordinate system; skipping it
+        # pools every child from the wrong tokens, and **nothing raises** (plan §1 trap 2).
+        shift = len(self._doc_prefix)
 
         out: list[EnrichedChunk] = []
         for child in children:
             pooled, span = self._pool(
-                tokens, offsets, (child.char_start, child.char_end), parent.parent_id
+                tokens, offsets, (child.char_start + shift, child.char_end + shift),
+                parent.parent_id,
             )
             out.append(self._finish(pooled, child, span, late=True))
         logger.debug(
@@ -216,6 +323,73 @@ class LateChunkEmbedder:
             parent.parent_id, len(out), len(offsets), matrix.shape[0],
         )
         return out
+
+    def probe_alignment(self, text: str, sentinel: str = " sentinel") -> dict:
+        """Measure the live endpoint's special-token layout and CHECK it against the declaration.
+
+        Two calls — the text, and the same text plus a sentinel word. Left-to-right tokenization
+        makes the first text's content tokens a **prefix** of the second's, so the responses align
+        at the number of LEADING special vectors:
+
+            leading  = argmin_o max|M1[o:o+n1] - M2[o:o+n1]|
+            trailing = len(M1) - n1 - leading
+
+        ⚠️ This is the **guard**, not the source of truth. ``_DECLARED_SPECIALS`` declares and this
+        asserts: a server-side layout change is loud here instead of silently shifting every
+        child's pooling window.
+
+        The match is tolerant because the right offset is an **exact** zero only for a CAUSAL model.
+        Measured 2026-10-25 (``probe_nomic_alignment.json``): both models' per-token path IS
+        bit-reproducible (repeated identical calls differ by 0.0), but Qwen3 — causal, so appending
+        a sentinel cannot change an earlier token's hidden state — matches at 0.0, while nomic is
+        bidirectional and the sentinel does move its earlier vectors (1.18 at the correct offset,
+        against 9.3 for the runner-up: a 7.9x margin). So the argmin is what decides, and the
+        runner-up margin is returned so an alignment that is only marginally better than its
+        neighbours is visible rather than assumed.
+        """
+        tok = self._get_tokenizer()
+        t1, t2 = text, text + sentinel
+        n1 = len(tok(self._prefixed(t1), add_special_tokens=False)["input_ids"])
+        m1 = np.asarray(self._embedder.embed_documents_tokens([t1])[0], dtype=np.float64)
+        m2 = np.asarray(self._embedder.embed_documents_tokens([t2])[0], dtype=np.float64)
+
+        # ⚠️ Compare each candidate block against ``m1[:n1]`` — the CONTENT vectors — not against
+        # ``m1``, which carries the specials too. Comparing to ``m1`` can never match (the shapes
+        # differ by exactly the specials), so the guard would raise for every model, including the
+        # ones it is meant to confirm.
+        profile: list[dict] = []
+        for offset in range(0, m2.shape[0] - n1 + 1):
+            block = m2[offset:offset + n1]
+            if block.shape != m1[:n1].shape:
+                continue
+            profile.append({"leading": offset,
+                            "max_abs_diff": float(np.max(np.abs(m1[:n1] - block)))})
+        if not profile:
+            raise RuntimeError(
+                f"could not align the endpoint's two responses for {self.model_name!r}: "
+                f"{m1.shape[0]} vectors for {n1} local tokens, and no offset matched. The "
+                f"special-token layout is NOT established, so late chunking cannot be trusted."
+            )
+        best = min(profile, key=lambda r: r["max_abs_diff"])
+        leading = int(best["leading"])
+        trailing = int(m1.shape[0]) - n1 - leading
+        # The margin, not the residual, is the signal: a bidirectional model's correct offset is
+        # small but NOT zero (the sentinel moves earlier tokens' hidden states), so an alignment
+        # only marginally better than its neighbours is not established.
+        others = sorted(r["max_abs_diff"] for r in profile if r["leading"] != leading)
+        margin = (round(others[0] / best["max_abs_diff"], 3)
+                  if others and best["max_abs_diff"] > 0 else None)
+        measured = (leading, trailing)
+        if measured != self._specials:
+            raise RuntimeError(
+                f"the endpoint's special-token layout for {self.model_name!r} is measured as "
+                f"{measured} (leading, trailing) but _DECLARED_SPECIALS says {self._specials}. "
+                f"Every child's pooling window would shift by the difference. Re-probe and update "
+                f"the declaration before embedding anything."
+            )
+        return {"leading": leading, "trailing": trailing, "n_local": n1,
+                "n_api": int(m1.shape[0]), "match_max_abs_diff": best["max_abs_diff"],
+                "runner_up_margin_x": margin, "profile": profile}
 
     def embed_children(
         self,

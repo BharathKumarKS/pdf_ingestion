@@ -25,7 +25,11 @@ import pytest
 from src.core.config import Settings
 from src.pdf_ingestion.chunker import TextChunk
 from src.pdf_ingestion.cluster_embedder import ClusterDenseEmbedder, mrl_slice
-from src.pdf_ingestion.late_chunk_embedder import EnrichedChunk, LateChunkEmbedder
+from src.pdf_ingestion.late_chunk_embedder import (
+    EnrichedChunk,
+    LateChunkEmbedder,
+    declared_specials,
+)
 from src.pdf_ingestion.models import ParentChunk
 
 URL = "http://cluster.test/embed-text/v1/embeddings"
@@ -52,17 +56,22 @@ def _token_strings(text: str) -> list[str]:
     return [m.group(0) for m in re.finditer(r"\S+", text)]
 
 
-def _token_vector(token: str, index: int) -> np.ndarray:
-    """Deterministic, position-aware unit vector for a token — the fake endpoint's unit."""
-    rng = np.random.default_rng(abs(hash((token, index))) % (2**31))
+def _token_vector(token: str) -> np.ndarray:
+    """Deterministic unit vector for a token — the fake endpoint's unit.
+
+    ⚠️ Independent of POSITION on purpose: a document prefix shifts every token index, and the
+    span-invariance guard asserts a child's pooled vector is unchanged by the prefix. A
+    position-aware vector would make that guard fail for the wrong reason.
+    """
+    rng = np.random.default_rng(abs(hash(token)) % (2**31))
     v = rng.random(DIM).astype(np.float32)
     return v / (np.linalg.norm(v) + 1e-9)
 
 
 def _expected_matrix(text: str, extra: int = 1) -> np.ndarray:
     """The matrix the fake endpoint returns: one vector per token, plus ``extra`` trailing."""
-    vecs = [_token_vector(t, i) for i, t in enumerate(_token_strings(text))]
-    vecs += [_token_vector("<|endoftext|>", 10_000 + i) for i in range(extra)]
+    vecs = [_token_vector(t) for t in _token_strings(text)]
+    vecs += [_token_vector("<|endoftext|>") for _ in range(extra)]
     return np.asarray(vecs, dtype=np.float32)
 
 
@@ -421,6 +430,54 @@ def test_tokenizer_is_resolved_before_the_pool_starts(monkeypatch):
         f"otherwise the workers race its lazy load (got {order[:3]})"
     )
     assert order.count("parent") == len(parents)
+
+
+# ── 5b. The document prefix and the model-aware special layout (plan §1 traps 1–3) ──
+
+def test_declared_specials_are_model_specific_and_refuse_unknowns():
+    """trap 3: the endpoint's special-token layout is a property of the MODEL, and an unknown
+    model is refused rather than assumed to follow the Qwen3 contract."""
+    assert declared_specials("nomic-ai/nomic-embed-text-v1.5") == (0, 2)
+    assert declared_specials("Qwen/Qwen3-Embedding-0.6B") == (0, 1)
+    with pytest.raises(ValueError, match="declared special-token layout"):
+        declared_specials("some/unknown-model")
+
+
+def test_content_tokens_drops_the_declared_wrapper():
+    """nomic adds TWO trailing specials; Qwen3 one; a BERT-style layout is leading + trailing."""
+    matrix = np.arange(30, dtype=np.float32).reshape(10, 3)
+    nomic = LateChunkEmbedder._content_tokens(matrix, 8, 0, 3, (0, 2))
+    assert np.array_equal(nomic, matrix[:8])             # two trailing dropped
+    bert = LateChunkEmbedder._content_tokens(matrix, 8, 0, 3, (1, 1))
+    assert np.array_equal(bert, matrix[1:9])             # one leading, one trailing
+    with pytest.raises(ValueError, match="alignment"):   # an unexplained count is loud, not a shift
+        LateChunkEmbedder._content_tokens(matrix, 9, 0, 3, (0, 2))
+
+
+def test_a_document_prefix_does_not_shift_a_childs_pooling_window():
+    """trap 2, the silent one: the prefix must move with BOTH the tokenization and the endpoint
+    input, so each child still pools the SAME parent tokens and its span moves by exactly the
+    prefix's token count. A missing shift pools the wrong tokens and NOTHING raises."""
+    raw = _cfg()                                       # no prefix (Qwen3)
+    pref = _cfg(document_prefix="search_document: ")   # nomic
+    parent = _parent()
+    s, e = 0, PARENT_TEXT.index("This")
+    children = [
+        _child(0, PARENT_TEXT[s:e].strip(), s, e, parent),
+        _child(1, PARENT_TEXT[e:].strip(), e, len(PARENT_TEXT), parent),
+    ]
+
+    a = _embedder(raw).embed_parent(parent, children)
+    b = _embedder(pref).embed_parent(parent, children)
+
+    n_prefix = len(FakeTokenizer()(
+        "search_document:", add_special_tokens=False, return_offsets_mapping=True
+    )["offset_mapping"])
+    assert n_prefix >= 1
+    for x, y in zip(a, b):
+        assert np.allclose(x.dense_1024, y.dense_1024, atol=1e-6)   # the SAME tokens pooled
+        assert np.allclose(x.dense_64, y.dense_64, atol=1e-6)
+        assert y.token_span == (x.token_span[0] + n_prefix, x.token_span[1] + n_prefix)
 
 
 # ── 6. Live (slow): the plan's Step 4 acceptance check ───────────────────────

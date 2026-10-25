@@ -206,7 +206,7 @@ def test_pipeline_writes_the_hierarchy_to_qdrant_and_sqlite(settings, tmp_path):
     assert [r.parent_id for r in rows] == [0, 1]
     assert [r.page_number for r in rows] == [1, 2]
 
-    # Qdrant carries the parent link, the parent text, and the dense_1024 lane.
+    # Qdrant carries the parent link, the parent text, and the dense_full + low lanes.
     from src.core.database import get_qdrant
     points = get_qdrant(settings).retrieve(
         collection_name=settings.qdrant_collection,
@@ -220,7 +220,7 @@ def test_pipeline_writes_the_hierarchy_to_qdrant_and_sqlite(settings, tmp_path):
         assert point.payload["parent_text"] == PARENT_TEXT
         assert point.payload["is_content"] is True
         assert len(point.vector["dense_full"]) == settings.dense_dim
-        assert len(point.vector["dense_128"]) == settings.dense_dim_low
+        assert len(point.vector["dense_64"]) == settings.dense_dim_low
 
 
 def test_pipeline_rejects_a_pdf_with_no_parents(settings, tmp_path):

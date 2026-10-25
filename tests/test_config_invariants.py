@@ -72,9 +72,23 @@ def test_embedder_honors_configured_dim(settings):
 def test_dense_lane_dim_defaults():
     assert _default("dense_model") == "Qwen/Qwen3-Embedding-0.6B"
     assert _default("dense_dim") == 1024
-    # The width a NEW collection is created at (the gemma lane's). Existing collections keep
-    # their own width — the lane name AND size are resolved off the collection.
-    assert _default("dense_dim_low") == 128
+    # The width a NEW collection is created at — **nomic's own smallest MRL slot**, which is what
+    # the adopted embedder has (Stage A2, 2026-10-25; the gemma plan's 128 was that model's slot).
+    # Existing collections keep their own width — the lane name AND size are resolved off the
+    # collection (`store._resolve_low_lane`).
+    assert _default("dense_dim_low") == 64
+
+
+def test_document_prefix_defaults_empty_and_is_the_query_instruction_twin():
+    """The document-side prefix must default OFF, and be a real setting.
+
+    Qwen3 needs no document prefix; nomic does (`search_document: `). It is set per environment in
+    `.env`, so the code default must be empty — a non-empty default would silently prefix every
+    passage for a model that does not want it. The field must also be a real `Settings` field, not
+    a constant: `.env` is the whole mechanism.
+    """
+    assert _default("document_prefix") == ""
+    assert "document_prefix" in Settings.model_fields
 
 
 def test_query_vector_uses_the_dense_lane(settings):
