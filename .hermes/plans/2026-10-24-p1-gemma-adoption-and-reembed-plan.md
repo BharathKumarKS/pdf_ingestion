@@ -165,7 +165,22 @@ here, in seconds, rather than after the embedding") — it earned its place befo
 
 **Verifier A2:** the resolved config prints `dense_model`/`dense_dim`; the cluster serves the model;
 `scripts/validate_embedders.py` passes; and **Stage B then produces `dense_full` at 768d** — read
-back from the LIVE collection, not from the code that created it.
+back from the LIVE store, not from the code that created it.
+
+**✅ DONE AND THEN DELIBERATELY REVERTED (owner decision, 2026-10-25).** A2 was applied as an **`.env`
+override** (`DENSE_MODEL`/`DENSE_DIM` — chosen over a `config.py` default change so Stage F can switch
+per arm in one process and the flip reverts without a code edit), verified, and **Stage B ran under
+it**: `knowledge_base_v3` exists with `dense_full` **768**, `dense_128` **128**, `colbert` (max_sim),
+`sparse`, 0 points, read back from the LIVE store. ⚠️ **The `.env` lines were then REVERTED** because
+C0 is blocked (below) and the flip leaves the interim hazard live; the dense lane is back to
+`Qwen/Qwen3-Embedding-0.6B` / 1024. ⚠️ **v3 is unaffected — its `dense_full` is 768 and a dimension is
+immutable.** **⇒ A2 is re-applied as the FIRST step of the re-embed window, not before it.**
+
+⚠️ **C0's blocker and its resolution:** the gemma tokenizer is gated. **Owner decision: authenticate
+HuggingFace and accept the Gemma licence** (clean provenance; `cfg.dense_model` unchanged). The
+ungated `unsloth/embeddinggemma-300m` mirror loads without credentials (measured: `GemmaTokenizerFast`,
+vocab 262,144) and was **declined** — third-party copy, licence still applies, byte-identity
+unverifiable. **This is outstanding, and it is the only thing standing between here and C0.**
 
 ### Stage B — create `knowledge_base_v3` with the §2 schema
 
