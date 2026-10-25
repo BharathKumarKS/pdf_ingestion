@@ -95,7 +95,30 @@
 > queryable only via a caller that supplies the matching embedder per arm. **Full note: the plan's
 > Stage A2.** **OWNER DECISION, NOT TAKEN.**
 >
-> **9. ▶ NEXT, IN ORDER.** (a) **Stage A2** (above) — the gemma embedder config, before B. (b) **Stage B** — create `knowledge_base_v3` with **four** lanes
+> **9b. ✅ A2 AND B ARE DONE (2026-10-25). ⚠️ C0 IS BLOCKED — AND IT BLOCKS STAGE C TOO.**
+> **A2**: `dense_model`/`dense_dim` are now an **`.env` override** (`.env:170-171`, gitignored) —
+> chosen over a `config.py` default change so Stage F can switch per arm in one process and the flip
+> reverts without a code edit. Resolved config prints `google/embeddinggemma-300m` / **768**.
+> **B**: `knowledge_base_v3` **EXISTS**, read back from the LIVE store — `dense_full` **768**,
+> `dense_128` **128**, `colbert` (max_sim), `sparse`, **0 points**; **v2 untouched (3,869)**.
+> ⚠️ **C0 cannot run, and the reason blocks Stage C as well:** `google/embeddinggemma-300m` is a
+> **GATED HuggingFace repo** and the late-chunk path needs its **tokenizer locally**
+> (`LateChunkEmbedder._get_tokenizer`) — the cluster returns per-token *vectors*, but the
+> **character offsets** that define each child's span come from a local tokenization. Measured:
+> **401 gated repo**, and **no HF credential is configured on this machine** (no `HF_TOKEN`, no
+> `HUGGING_FACE_HUB_TOKEN`, no stored token). The previous ingest never hit this because **Qwen3 is
+> not gated**. ⇒ **Shape B's cost is unmeasurable and Stage C cannot start until the gemma tokenizer
+> is available locally. OWNER ACTION (authenticate HF + accept the Gemma licence), not a code fix.**
+> Probe/artifact: `logs/p1/step10/c0_late_chunk_timing.{py,json}` → `status: BLOCKED_ON_TOKENIZER`,
+> exit 3. ✅ Its corpus half **did** verify: **341 parents / 3,796 children / 11.13 per parent**,
+> reproducing the register exactly.
+> ⚠️ **Second-order, and it is live now: the `.env` flip is in place, so the default product path
+> against v2 is the interim-hazard case** — 768d query vectors against v2's `dense_1024` slot. v2
+> stays queryable only via a caller that supplies the matching embedder per arm (which Stage F's
+> harness does explicitly). Either finish the window or revert the two `.env` lines.
+>
+> **9. ▶ NEXT, IN ORDER.** (a) **Unblock the gemma tokenizer** (HF auth + licence), then **C0**.
+> (b) **Stage B** ✅ done. (c) **Stage C0** — time the late-chunk pass on **~20 PARENTS** (not chunks)
 > (`dense_full` 768, `dense_128` 128, `colbert`, `sparse`); seconds. (b) **Stage C0** — time the
 > late-chunk pass on **~20 PARENTS** (not chunks) and record the unit; this confirms signoff 4. (c)
 > Stage C (the re-embed, Shape B), then D (classifier retrain), E (preflight), F (the ONE

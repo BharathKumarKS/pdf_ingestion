@@ -225,6 +225,19 @@ invalidate the choice.
   so this is a streaming job, not an in-memory one.
   **Gate:** if the extrapolated pass exceeds the owner's budget, stop and re-decide (Shape A is *not*
   cheaper; the honest alternative is to ship the non-late-chunked variant as a pre-registered arm).
+  ⚠️ **BLOCKED 2026-10-25 — and it blocks Stage C, not just C0.** `google/embeddinggemma-300m` is a
+  **GATED HuggingFace repo**, and the late-chunk path needs its **tokenizer locally**
+  (`LateChunkEmbedder._get_tokenizer` → `AutoTokenizer.from_pretrained(cfg.dense_model)`), because
+  the cluster returns per-token *vectors* but the **character offsets** that define each child's span
+  come from a local tokenization. The cluster serves the model fine (measured: 768d embeddings), but
+  the tokenizer download returns **401 gated repo**. ⚠️ **No HF credential is configured on this
+  machine** (no `HF_TOKEN`, no `HUGGING_FACE_HUB_TOKEN`, no stored token file). The previous ingest
+  never hit this because **Qwen3 is not gated**. ⇒ **Shape B's cost cannot be measured, and Stage C
+  cannot run, until the gemma tokenizer is available locally** — an owner action (authenticate HF and
+  accept the Gemma licence), not a code fix. Probe + artifact:
+  `logs/p1/step10/c0_late_chunk_timing.py` → `c0_late_chunk_timing.json`
+  (`status: BLOCKED_ON_TOKENIZER`, exit 3). ✅ The probe's corpus half DID verify: **341 parents,
+  3,796 children, 11.13 children/parent**, reproducing the register exactly.
 * **Verifier C:** (i) `chunk_id` set before == after (byte-identical sorted list) — **this is the
   assertion the whole shape rests on**; (ii) every enabled lane present on **every** point, via the
   `scripts/verify_collection_lanes.py` written in this stage (⚠️ not a point count — §I33: a
