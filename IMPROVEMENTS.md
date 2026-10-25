@@ -6751,3 +6751,53 @@ now POPULATED; `knowledge_base_v2` is still untouched at 3,869.**
 **Register against:** §I13 (the dense-only refusal this mode resolves), §I33 (per-point, not counts),
 §I80 (C0's measured basis), §I76 (the four lanes v3 must carry), §I44 (the checkpoint makes the run
 resumable and its progress readable).
+
+---
+
+### I82. 2026-10-25 — ✅ S4's classifier half is DONE (768d, and it agrees with the gold labels +0.218 better than the 1024 one); ⚠️ the preflight half is NOT — 2 derived collections are still 1024d, and the gate was NOT edited to hide it
+
+**Stage D — the retrain.** `scripts/train_intent_classifier.py --train-only` on the existing
+1,158-query synthetic set, **re-embedded with nomic** (`(1158, 768)`), saved to
+`data/models/intent_classifier.pkl`. The synthetic held-out accuracy is **99.6 %** — ⚠️ that is
+self-consistency on synthetic queries, **not** a product measure; do not quote it as one.
+
+**Verifier D — `logs/p1/step10/s4_intent_verify.py`, ALL PASS:**
+
+| check | result |
+|---|---|
+| **V1** widths | new clf **768**, old clf **1024**, `cfg.dense_dim` **768** |
+| **V2** the router's load guard is real | an `IntentRouter` with a 768 config pointed at the 1024 pickle **REFUSES it** (`_clf is None`) — the reason S4 is not optional |
+| **V3** the router loads the new clf | `classify("What is Newton's second law?")` → `Intent.FACTUAL` |
+| **V4** held-out comparison, 133 gold queries | agreement **new 0.5714** vs **old 0.3534**, Δ **+0.2180** |
+| **V5** not degenerate | predicts all four classes on the gold set |
+| **V6** a REAL query through the product funnel | **5 hits**, top chunk page 284, score **0.7367** |
+
+⚠️ **V4's per-type detail is the interesting half:** `factual` 0.434 (old 0.264), `multihop` 0.725
+(old **0.825** — the new one is *slightly worse* here), `overview` 0.600 (old **0.000** — the old
+classifier was failing this class entirely). So the headline delta is real but it is **mostly the
+overview class**, and the absolute agreement (**0.57**) is **moderate**: the synthetic training set
+does **not** transfer perfectly to real gold queries. Reported, not buried — and note the classifier
+has no `mixed` class while the router does (it falls back to prototypes for `mixed`).
+
+**Stage E — the preflight (`logs/p1/step10/s4_preflight_v3.txt`): exit 1, and exactly TWO blockers.**
+
+| blocker | detail |
+|---|---|
+| `qdrant.derivative_artifacts.dim` | **1024d** while the query side is **768d** — every query against the lane is REJECTED (73,406 points) |
+| `qdrant.concept_embeddings.dim` | **1024d** vs 768d — same failure (6,065 points) |
+
+⚠️ **This is exactly the mid-migration trap the plan predicted (§I26 / §I12 / §I47):** the derived
+collections were built at the old width and have **not** been re-indexed for the 768 embedder, so a
+check that compares them against `cfg.dense_dim` **cannot pass** yet. **The gate was NOT edited to get
+past it** (the plan's explicit instruction). ⇒ **S4's "preflight exit 0" is NOT met, and it is not a
+code fix — it needs the derived collections re-indexed at 768.**
+
+**Everything else in the preflight PASSES:** `knowledge_base_v3` **3,796**; `intent-classifier`
+**n_features_in_=768**; `visual_knowledge_base` 1,033; **`graph.matches-qdrant` 0/3,533 ids absent
+(0.0 %), graph doc(s) present (3,796 points)**; Memgraph up (docs=1 chunks=3,533 concepts=6,065); and
+every LLM endpoint. ⚠️ **The graph check passing is a real finding, not a coincidence:** the graph's
+chunk ids match v3 because **Shape B preserved them** (§I81) — the graph did not need rebuilding.
+
+**Register against:** §I26 (the mid-migration trap this is an instance of), §I12/§I13/§I47 (the
+derived-collection width), §I81 (the id preservation that keeps the graph valid), §I79/§I70 (nomic),
+§I47 (a count-based check holds a dead lane green).

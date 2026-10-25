@@ -1,0 +1,47 @@
+
+Synapse Intent Classifier Training Pipeline
+  Generator:  openai / openai/gpt-oss-20b
+  Judge:      skip (disabled)
+  Output dir: data/intent_classifier
+
+
+Step 3: Embedding 1158 validated queries...
+  factual: 250 queries
+  overview: 250 queries
+  multihop: 250 queries
+  visual: 408 queries
+2026-10-25 15:26:16.931 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+  Embedding... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+  Embeddings shape: (1158, 768)
+
+Step 4: Training Logistic Regression (926 train, 232 test)...
+
+Step 5: Evaluation
+              precision    recall  f1-score   support
+
+     factual       1.00      1.00      1.00        50
+    multihop       0.98      1.00      0.99        50
+    overview       1.00      0.98      0.99        50
+      visual       1.00      1.00      1.00        82
+
+    accuracy                           1.00       232
+   macro avg       1.00      0.99      0.99       232
+weighted avg       1.00      1.00      1.00       232
+
+                       Confusion Matrix                        
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━┓
+┃ Actual \ Predicted ┃ factual ┃ overview ┃ multihop ┃ visual ┃
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━┩
+│ factual            │ 50      │ 0        │ 0        │ 0      │
+│ overview           │ 0       │ 49       │ 1        │ 0      │
+│ multihop           │ 0       │ 0        │ 50       │ 0      │
+│ visual             │ 0       │ 0        │ 0        │ 82     │
+└────────────────────┴─────────┴──────────┴──────────┴────────┘
+
+Overall accuracy: 99.6%
+
+Model saved to: data/models/intent_classifier.pkl
+Metrics saved to: data/intent_classifier/training_report.json
+
+Done! The intent router will automatically use the trained classifier on next 
+app start — no code changes needed.

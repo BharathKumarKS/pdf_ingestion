@@ -4,9 +4,9 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-25, session 18 (S1 committed; S2 + S3 LANDED — `knowledge_base_v3` is
-> POPULATED: 3,796 points, all four lanes; the next session is S4 — the intent classifier +
-> preflight).**
+> **Last updated: 2026-10-25, session 18 (S1–S3 committed; `knowledge_base_v3` POPULATED at 3,796
+> points / 4 lanes; the classifier is retrained at 768 and verified; ⚠️ the preflight has 2 EXPECTED
+> blockers — the derived collections are still 1024d. Next: re-index them, then S5).**
 >
 > ## ▶ SESSION 18 — WHAT HAPPENED, AND WHAT IS NEXT
 >
@@ -96,14 +96,33 @@
 > one process for two models must build the second one explicitly (V4 failed for the wrong reason
 > until it did).
 >
-> **14. ▶ NEXT — S4 (the intent classifier + preflight).** `scripts/train_intent_classifier.py` then
-> `scripts/preflight.py` against v3. ⚠️ **Not optional:** `intent_router.py:156` **refuses** a
-> classifier whose `n_features_in_ != cfg.dense_dim`, and the existing pickle is 1024-trained against
-> a 768 embedder. Then S5 (§I68 fix → the ONE pre-registered product-endpoint run + the §I66
-> decomposition), S6 (the fine-tune; signoff 6 open). ⚠️ `data/embed_cache/` (874 dirs) **cannot be
-> reused** (model + `dense_dim_low` are in the fingerprint). ⚠️ Still carried: **signoff 4** (accept
-> the §I79 measurement), **signoff 3** (re-confirm Shape B), the **A2 `.env` flip**, the arm-2
-> harness, §I56's DA lane, §G2's V5 build, §G5/§I2.
+> **14. ✅ S4's CLASSIFIER HALF IS DONE — read `IMPROVEMENTS.md` §I82.** Retrained
+> (`--train-only`, the existing 1,158-query set re-embedded with nomic) → `(1158, 768)` at
+> `data/models/intent_classifier.pkl`. ⚠️ Its synthetic held-out accuracy is **99.6 %** — that is
+> self-consistency on synthetic queries, **not** a product measure. Verifier
+> (`logs/p1/step10/s4_intent_verify.py`, ALL PASS): the router **REFUSES** the 1024 pickle under a 768
+> config (V2 — why this stage is not optional); the new one loads and predicts; on the **133 gold
+> queries** agreement is **0.5714 vs the old 0.3534 (Δ +0.2180)** — ⚠️ mostly the **overview** class
+> (old **0.000**), while **multihop got slightly worse** (0.725 vs 0.825), and the absolute 0.57 is
+> **moderate** (synthetic training does not transfer cleanly to real queries — reported, not buried);
+> and a **real query through the product funnel returns 5 hits** (V6).
+>
+> **15. ⚠️ S4's PREFLIGHT HALF IS *NOT* DONE — and the gate was NOT edited to hide it.**
+> `scripts/preflight.py` against v3 exits **1** with exactly **two** blockers:
+> `derivative_artifacts` (73,406) and `concept_embeddings` (6,065) are **1024d while the query side is
+> 768d**, so every query against those lanes is REJECTED. **This is the mid-migration trap the plan
+> predicted (§I26/§I12/§I47)** — they were built at the old width and have not been re-indexed. It is
+> **not a code fix**. Everything else PASSES: v3 3,796; classifier 768; **graph↔Qdrant 0/3,533 absent
+> (0.0 %)** — ⚠️ and that is a real finding: the graph matches v3 **because Shape B preserved the
+> chunk ids** (§I81), so the graph needed no rebuild; Memgraph up; all endpoints.
+>
+> **16. ▶ NEXT — re-index the derived collections at 768, then S5.** (a) **Re-index
+> `derivative_artifacts` + `concept_embeddings`** for the 768 embedder (drop + re-index; §I12/§I13),
+> then re-run the preflight for **exit 0**. (b) **S5**: §I68's client-side-RRF fix, then the ONE
+> pre-registered product-endpoint run (nomic/v3 vs qwen3/v2, HyDE ON and frozen) + the §I66
+> decomposition. (c) S6, the fine-tune (**signoff 6** open). ⚠️ `data/embed_cache/` (874 dirs) cannot
+> be reused. ⚠️ Still carried: **signoff 4** (accept the §I79 measurement), **signoff 3** (re-confirm
+> Shape B), the **A2 `.env` flip**, the arm-2 harness, §I56's DA lane, §G2's V5 build, §G5/§I2.
 >
 > ## ▶ SESSION 17b — THE EMBEDDER DECISION, AND THE NEXT SESSION'S OPENING PROMPT
 >

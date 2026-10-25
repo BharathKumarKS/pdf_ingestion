@@ -1,0 +1,86 @@
+
+Synapse — baseline preflight
+
+                             Resolved configuration                             
+┌─────────────────────────────┬────────────────────────────────────────────────┐
+│ Qdrant                      │ 10.0.10.65                                     │
+│ Memgraph                    │ localhost:7687                                 │
+│ embedding (query+index)     │ nomic-ai/nomic-embed-text-v1.5 (768d + 64d     │
+│                             │ MRL)                                           │
+│ embedding (derived indexes) │ nomic-ai/nomic-embed-text-v1.5 (768d) —        │
+│                             │ DA/concept collections (§I12; was              │
+│                             │ nomic-ai/nomic-embed-text-v1.5 768d)           │
+│ reranker                    │ BAAI/bge-reranker-v2-m3  enabled=True          │
+│ colbert                     │ enabled=True                                   │
+│                             │ url=http://10.0.10.70:8123/embed-text/v1/mult… │
+│ splade                      │ enabled=True                                   │
+│                             │ url=http://10.0.10.70:8123/embed-text/v1/spar… │
+│ graph                       │ enabled=True  tenant=global                    │
+│ hyde                        │ True                                           │
+│ DA lane                     │ True                                           │
+│ MMR                         │ lambda=0.7 candidates=100                      │
+└─────────────────────────────┴────────────────────────────────────────────────┘
+2026-10-25 15:28:13.541 | INFO     | src.core.pipeline_config:load_config:29 - Loaded config.yaml from /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/config.yaml
+                       Qdrant collections                        
+┏━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ points                ┃ vectors ┃ status                      ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ knowledge_base_v3     │ 3,796   │ colbert,dense_64,dense_full │
+│ derivative_artifacts  │ 73,406  │ (unnamed)                   │
+│ visual_knowledge_base │ 1,033   │ colpali                     │
+│ concept_embeddings    │ 6,065   │ (unnamed)                   │
+└───────────────────────┴─────────┴─────────────────────────────┘
+  Memgraph: Documents=1 Pages=907 Chunks=3533 Concepts=6065
+                                    Verdict                                     
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ check                           ┃ result ┃ detail                            ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ colbert-lane                    │ PASS   │ colbert will run (server)         │
+│ pipeline.card_generation        │ PASS   │ openai/gpt-oss-20b @              │
+│                                 │        │ http://10.0.10.70:8000/v1         │
+│ pipeline.raptor_summarization   │ PASS   │ openai/gpt-oss-20b @              │
+│                                 │        │ http://10.0.10.70:8000/v1         │
+│ pipeline.intent_classifier      │ PASS   │ openai/gpt-oss-20b @              │
+│                                 │        │ http://10.0.10.70:8000/v1         │
+│ pipeline.evaluation             │ PASS   │ openai/gpt-oss-20b @              │
+│                                 │        │ http://10.0.10.70:8000/v1         │
+│ qdrant                          │ PASS   │ 35 collections                    │
+│ qdrant.knowledge_base_v3        │ PASS   │ 3,796 points                      │
+│ qdrant.derivative_artifacts     │ PASS   │ 73,406 points                     │
+│ qdrant.visual_knowledge_base    │ PASS   │ 1,033 points                      │
+│ qdrant.concept_embeddings       │ PASS   │ 6,065 points                      │
+│ qdrant.derivative_artifacts.dim │ FAIL   │ 1024d, but the query side is 768d │
+│                                 │        │ — every query against this lane   │
+│                                 │        │ is REJECTED, so the lane silently │
+│                                 │        │ returns nothing. It predates the  │
+│                                 │        │ dense-lane move (§I12): drop the  │
+│                                 │        │ collection and re-index. See      │
+│                                 │        │ §I47.                             │
+│ qdrant.concept_embeddings.dim   │ FAIL   │ 1024d, but the query side is 768d │
+│                                 │        │ — every query against this lane   │
+│                                 │        │ is REJECTED, so the lane silently │
+│                                 │        │ returns nothing. It predates the  │
+│                                 │        │ dense-lane move (§I12): drop the  │
+│                                 │        │ collection and re-index. See      │
+│                                 │        │ §I47.                             │
+│ memgraph                        │ PASS   │ docs=1 chunks=3533 concepts=6065  │
+│ graph.matches-qdrant            │ PASS   │ 0/3,533 graph chunk ids absent    │
+│                                 │        │ from Qdrant (0.0%)  (graph doc(s) │
+│                                 │        │ present in collection: 3,796      │
+│                                 │        │ point(s))                         │
+│ intent-classifier               │ PASS   │ loaded LogisticRegression,        │
+│                                 │        │ n_features_in_=768 (dense         │
+│                                 │        │ lane=768)                         │
+│ llm.models                      │ PASS   │ HTTP 200                          │
+│                                 │        │ http://10.0.10.70:8000/v1/models  │
+│ llm.rerank                      │ PASS   │ HTTP 200                          │
+│                                 │        │ http://10.0.10.70:8123/rerank/v1… │
+│ llm.sparse                      │ PASS   │ HTTP 200                          │
+│                                 │        │ http://10.0.10.70:8123/embed-tex… │
+│ llm.multivector                 │ PASS   │ HTTP 200                          │
+│                                 │        │ http://10.0.10.70:8123/embed-tex… │
+│ llm.completion                  │ PASS   │ openai/gpt-oss-20b -> 'OK'        │
+└─────────────────────────────────┴────────┴───────────────────────────────────┘
+
+2 BLOCKER(S) — a baseline run would be misleading.
+
