@@ -1,0 +1,49 @@
+X2: host='10.0.10.65' collection='knowledge_base_v2' window=[30,936] pass=True
+2026-10-24 19:15:34.645 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-24 19:15:35.505 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+pool: 3489 in-window chunks x 1024d  (11s)
+reachable pages (SQLite, §I58): 888
+queries: 133
+IN-POOL flagged by the CURRENT filter (from text): 19  bands={'toc': 19}
+CORPUS flagged: 263  bands={'index': 186, 'toc': 72, 'front_matter': 5}  page ranges={'index': [937, 968, 186], 'toc': [22, 34, 72], 'front_matter': [2, 14, 5]}
+CORPUS window split: {'in_window': 3489, 'out_of_window': 307, 'flagged_out_of_window': 244, 'flagged_in_window': 19}
+stored is_content values (whole corpus): {'True': 3791, 'False': 5}
+C4: in-pool flagged from text=19 (expected 19), corpus=263 (expected 263), stored False=5  pass=True
+C2: pool_C=3489 - flagged=19 = pool_T=3470  in-pool bands={'toc': 19}  corpus bands={'toc': 72, 'index': 186, 'front_matter': 5, 'furniture': 0}  out-of-window=244  pass=True
+pages covered: C=888  T=887  pages lost from the ceiling=1
+ceiling (§I58 reachable ∩ relevant, per arm): C=888  T=887
+X1: pool pages == SQLite reachable pages = True (pool-only 0, sqlite-only 0)
+embedded gemma: (3489, 768) in 61.7s
+C3(a): A-vs-A re-embed batch 128 vs 64 max_abs_diff=0.0 rows_differing=0
+2026-10-24 19:18:09.036 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:324 - Dense embedder: SV cluster 'Qwen/Qwen3-Embedding-0.6B' at http://10.0.10.70:8123/embed-text/v1/embeddings
+query vectors ready
+  [25/133] gold-032 … 0s
+  [50/133] gold-059 … 0s
+  [75/133] gold-085 … 0s
+  [100/133] ovw-007 … 0s
+  [125/133] ovw-041 … 1s
+C3(b): arm C on the control vectors — 0 metric mismatch(es), pass=True
+C5: 0 query/arm(s) with an empty ceiling; C has 133, T has 133
+C1: R@20=0.293934 R@100=0.569074 R@500=0.922982 R@1000=1.0  pass=True
+
+wrote /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/logs/p1/step10/chunk_filter_ab.json
+sha256 4e64f1ac07dbfda7ad4ce8485c9fad45fe180ed90248232aa578a28072607de2
+
+=== ceiling-normalised R@20 / raw R@20, per arm and embedder ===
+   arm embedder     cR@20    cR@100   rawR@20  rawR@100
+     C    gemma    0.4804    0.7049    0.4692    0.6885
+     C    qwen3    0.2939    0.5691    0.2893    0.5597
+     T    gemma    0.4741    0.6975    0.4628    0.6811
+     T    qwen3    0.2939    0.5691    0.2893    0.5597
+
+=== the endpoint: paired T − C ===
+   gemma  ceiling_norm R@20  Δ -0.006330 [-0.021115,+0.008456] n=133 UNRESOLVED  W/L/T 1/8/124
+   gemma           raw R@20  Δ -0.006391 [-0.021173,+0.008391] n=133 UNRESOLVED  W/L/T 1/7/125
+   qwen3  ceiling_norm R@20  Δ +0.000009 [-0.000009,+0.000028] n=133 UNRESOLVED  W/L/T 0/1/132
+   qwen3           raw R@20  Δ +0.000000 [+0.000000,+0.000000] n=133 UNRESOLVED  W/L/T 0/0/133
+
+  pages covered  C=888  T=887  (lost from the ceiling: 1)
+  chunks/page    C=3.9291  T=3.9121
+
+verifiers: X2=True  C4=True  C2=True  X1=True  C6=True  C3=True  C5=True  C1=True
+EXIT=0

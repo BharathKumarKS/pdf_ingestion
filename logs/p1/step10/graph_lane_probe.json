@@ -1,0 +1,311 @@
+{
+  "probe": "graph_lane_probe",
+  "memgraph": "localhost:7687",
+  "qdrant": "10.0.10.65",
+  "collection": "knowledge_base_v2",
+  "queries_total": 201,
+  "query_types": {
+    "null": 1,
+    "factual": 87,
+    "multihop": 40,
+    "overview": 40,
+    "visual": 33
+  },
+  "probed": [
+    {
+      "query_id": "gold-008",
+      "query": "How did astronomers discover that stars are made of atoms of the same kind as those on Earth?",
+      "concepts_resolved": [
+        "Composition of stars and Earth",
+        "element formation in stars",
+        "formation of the Earth from extraterrestrial material",
+        "element synthesis in stars",
+        "Atomic nature of matter",
+        "atomic structure of the brain",
+        "cosmic abundance of elements",
+        "Motion of stars and planets"
+      ],
+      "n_concepts_resolved": 8,
+      "n_hits": 5,
+      "hits": [
+        {
+          "chunk_id": "8fa338d4-ff8e-4a3c-856d-b4422df38f90",
+          "matched_concepts": 2,
+          "hop_distance": 0,
+          "concept_path": [
+            "Composition of stars and Earth",
+            "Motion of stars and planets"
+          ]
+        },
+        {
+          "chunk_id": "4e295b43-0530-45b6-a66a-236c7fc937de",
+          "matched_concepts": 2,
+          "hop_distance": 0,
+          "concept_path": [
+            "element synthesis in stars",
+            "cosmic abundance of elements"
+          ]
+        },
+        {
+          "chunk_id": "f6e88bb3-b19f-4b3f-98c6-57b317cc8fc4",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "Composition of stars and Earth"
+          ]
+        },
+        {
+          "chunk_id": "91f1344d-af56-4138-8adf-8ba37d3637e5",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "element formation in stars"
+          ]
+        },
+        {
+          "chunk_id": "defebfc8-d770-491e-a0c5-37ef9f2e5138",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "formation of the Earth from extraterrestrial material"
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "gold-013",
+      "query": "What happens to the focus of an ellipse when it is viewed at a tilt?",
+      "concepts_resolved": [
+        "focusing on a point on the sun",
+        "Focal Property of Ellipse",
+        "Focal Point of a Lens",
+        "radius of curvature of the eye",
+        "angle of telescope tilt",
+        "Image as object for next lens",
+        "converging of parallel rays",
+        "Image formation by curved surfaces"
+      ],
+      "n_concepts_resolved": 8,
+      "n_hits": 5,
+      "hits": [
+        {
+          "chunk_id": "db99dc33-c3b6-40db-92b0-6deeb12d33b1",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "focusing on a point on the sun"
+          ]
+        },
+        {
+          "chunk_id": "d81e03c5-fe1b-42aa-b2be-ab4a5e792d9e",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "Focal Property of Ellipse"
+          ]
+        },
+        {
+          "chunk_id": "a2c7fd43-d007-438e-a4da-bca06d65d0b6",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "Focal Point of a Lens"
+          ]
+        },
+        {
+          "chunk_id": "e07d93e5-b231-44a3-97e4-43bc91842a44",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "radius of curvature of the eye"
+          ]
+        },
+        {
+          "chunk_id": "97127a32-1b09-4b5f-be4e-86e222014bc9",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "angle of telescope tilt"
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "gold-027",
+      "query": "Why does the passage state that we look at the 'blob' from different points of view when moving at different velocities?",
+      "concepts_resolved": [
+        "focusing on a point on the sun",
+        "speed of the moving object",
+        "light propagation in moving frame",
+        "inability to measure velocity without external reference",
+        "local observation of a system",
+        "the concept of 'right now'",
+        "failure of simultaneity at a distance",
+        "observer frame of reference"
+      ],
+      "n_concepts_resolved": 8,
+      "n_hits": 5,
+      "hits": [
+        {
+          "chunk_id": "db99dc33-c3b6-40db-92b0-6deeb12d33b1",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "focusing on a point on the sun"
+          ]
+        },
+        {
+          "chunk_id": "330f8801-23ee-4b7d-8ec7-985b76155783",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "speed of the moving object"
+          ]
+        },
+        {
+          "chunk_id": "bd173f7a-4be0-47d2-a90b-09a89e4967f1",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "light propagation in moving frame"
+          ]
+        },
+        {
+          "chunk_id": "f8f91a4b-57b9-4a7b-b0ad-2fae0a3144b1",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "inability to measure velocity without external reference"
+          ]
+        },
+        {
+          "chunk_id": "e93db838-4ce6-4e6e-9681-3d30491b2060",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "local observation of a system"
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "gold-032",
+      "query": "When a mass moves only along the radius, which quantity stays constant and how is the torque \u03c4 related to the Coriolis f",
+      "concepts_resolved": [
+        "Torque Equals Rate of Change of Angular Momentum",
+        "Dependence of torque on axis of rotation",
+        "Torque as a vector quantity",
+        "Theorem Relating Torque and Angular Momentum",
+        "Component Form of Torque and Angular Momentum",
+        "magnitude of Coriolis force",
+        "Velocity of a point in a rigid body",
+        "Tangential Component of Force"
+      ],
+      "n_concepts_resolved": 8,
+      "n_hits": 5,
+      "hits": [
+        {
+          "chunk_id": "74aa2131-2116-4104-8967-b6aa65fb420c",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "Torque Equals Rate of Change of Angular Momentum"
+          ]
+        },
+        {
+          "chunk_id": "c09b3891-b9f0-406a-9987-b745acbadcdf",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "Dependence of torque on axis of rotation"
+          ]
+        },
+        {
+          "chunk_id": "8eab8a7d-0110-42cc-a063-84c08bda4b25",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "Torque as a vector quantity"
+          ]
+        },
+        {
+          "chunk_id": "40b3e511-4e61-410a-83bb-7019863113ce",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "Theorem Relating Torque and Angular Momentum"
+          ]
+        },
+        {
+          "chunk_id": "77ba3f6a-97eb-4cb9-b703-10cec92e0bf6",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "Component Form of Torque and Angular Momentum"
+          ]
+        }
+      ]
+    },
+    {
+      "query_id": "gold-038",
+      "query": "Why, according to the passage, does the force only need to fight friction to keep an efficient oscillator steady after i",
+      "concepts_resolved": [
+        "driving force in oscillatory systems",
+        "Equilibrium between Oscillator and Radiation",
+        "velocity independence of friction",
+        "energy dissipation in oscillators",
+        "cyclic behavior in oscillatory motion",
+        "Natural frequency of oscillators",
+        "object acted on by a field",
+        "frictional force"
+      ],
+      "n_concepts_resolved": 8,
+      "n_hits": 5,
+      "hits": [
+        {
+          "chunk_id": "feb49ab1-7d2a-4814-b9ea-5b1ad89e3a63",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "driving force in oscillatory systems"
+          ]
+        },
+        {
+          "chunk_id": "fa389217-2f56-4ca1-9a70-07e62c38588f",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "Equilibrium between Oscillator and Radiation"
+          ]
+        },
+        {
+          "chunk_id": "a656851f-7161-478e-8383-35aae0a0b855",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "velocity independence of friction"
+          ]
+        },
+        {
+          "chunk_id": "c3d42f46-548a-439d-bcaa-7f12cdfccc74",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "energy dissipation in oscillators"
+          ]
+        },
+        {
+          "chunk_id": "cb688ffa-d7c0-458e-8e2a-073270ebaa62",
+          "matched_concepts": 1,
+          "hop_distance": 0,
+          "concept_path": [
+            "cyclic behavior in oscillatory motion"
+          ]
+        }
+      ]
+    }
+  ],
+  "n_with_concepts": 5,
+  "n_with_hits": 5,
+  "verdict": "REACHABLE AND SERVING"
+}

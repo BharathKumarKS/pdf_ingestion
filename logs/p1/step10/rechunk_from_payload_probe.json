@@ -1,0 +1,31 @@
+{
+  "probe": "rechunk_from_payload_probe",
+  "store": {
+    "host": "10.0.10.65",
+    "port": 6333,
+    "collection": "knowledge_base_v2"
+  },
+  "document_id": [
+    "7ba61432-c5e0-416d-aecf-25a232523481"
+  ],
+  "chunks_stored": 3796,
+  "stored_is_content": {
+    "true": 3791,
+    "false": 5
+  },
+  "settings": {
+    "min_chunk_tokens": 32,
+    "semantic_threshold": 0.8,
+    "chunk_size": 512
+  },
+  "parents_reconstructed": 341,
+  "parents_with_inconsistent_parent_text": 0,
+  "parents_identical": 341,
+  "parents_differing": 0,
+  "children_stored": 3796,
+  "children_recut": 3796,
+  "children_raw_chonkie_no_merge": 5715,
+  "reproduced": true,
+  "first_diffs": [],
+  "page_map_caveat": "ParentChunk.page_map is not stored; reconstructed from the stored children's (char_start, page_number) pairs, so it is only as fine as the child starts \u2014 an approximation of the true element-level provenance map."
+}

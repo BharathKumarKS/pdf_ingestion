@@ -1,0 +1,47 @@
+S0: collection='knowledge_base_v2' rerank='http://10.0.10.70:8123/rerank/v1/rank' model='BAAI/bge-reranker-v2-m3' fetch_k=100 top_k=20 hyde_enabled=True (run is HyDE-OFF by design) pass=True
+2026-10-24 20:53:50.430 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-24 20:53:51.286 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+pool: 3489 in-window chunks x 1024d  (10s)
+reachable pages (SQLite, §I58): 888
+queries: 133
+gemma embedded (3489, 768) in 61.0s (control 76.7s)
+S5: A-vs-A re-embed max_abs_diff=0.0 rows_differing=0 pass=True
+2026-10-24 20:56:18.677 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:324 - Dense embedder: SV cluster 'Qwen/Qwen3-Embedding-0.6B' at http://10.0.10.70:8123/embed-text/v1/embeddings
+query vectors ready
+2026-10-24 20:56:38.682 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+reranker: ClusterCrossEncoderReranker  fallbacks so far=0
+  [20/133] gold-027 … 38s (failures so far 0)
+  [40/133] gold-047 … 69s (failures so far 0)
+  [60/133] gold-070 … 101s (failures so far 0)
+  [80/133] gold-090 … 135s (failures so far 0)
+  [100/133] ovw-007 … 171s (failures so far 0)
+  [120/133] ovw-036 … 208s (failures so far 0)
+S1′(a) §I70 convention: qwen3@1024 R@20=0.293934 (want 0.293934)  gemma@768 R@20=0.48041 (want 0.48041)  pass=True
+S1′(b) contrast convention (product, pages of top-k chunks): PRE qwen3=0.274348 gemma=0.458665
+S2: 266 of 266 reranked lists changed order  pass=True
+S3: 10/10 repeat calls identical  pass=True
+S4: 0 rerank failure(s); unrecorded=[]  pass=True
+
+wrote /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/logs/p1/step10/ce_survival.json
+sha256 47f207477035a273b41fcd722b91c9d0a0244c8836a9e9e6c00c61be49d8c326
+
+=== ceiling-normalised R@20, §I70's convention (top-k PAGES) — S1′(a) ===
+    i70    qwen3  0.293934  0.569074
+    i70    gemma  0.480410  0.704882
+
+=== ceiling-normalised R@20, PRE vs POST, per embedder (product convention) ===
+  stage embedder      R@20     R@100  raw R@20
+    pre    qwen3  0.274348  0.519204  0.269981
+    pre    gemma  0.458665  0.654642  0.448794
+   post    qwen3  0.363144  0.363144  0.355924
+   post    gemma  0.460703  0.460703  0.448479
+
+=== the endpoint: gemma − qwen3, before and after the cross-encoder ===
+  PRE  (cosine order)    Δ +0.184317 [+0.130809,+0.237824] n=133 RESOLVED  W/L/T 12/77/44
+  POST (cross-encoder)   Δ +0.097559 [+0.056072,+0.139045] n=133 RESOLVED  W/L/T 22/46/65
+  survival ratio (post/pre) = 0.5293
+
+  DECISION: SURVIVES=True — the base-lane ranking gain SURVIVES the cross-encoder
+
+verifiers: S0=True  S5=True  S1prime=True  S2=True  S3=True  S4=True  S6=True
+EXIT=0
