@@ -176,11 +176,35 @@ C0 is blocked (below) and the flip leaves the interim hazard live; the dense lan
 `Qwen/Qwen3-Embedding-0.6B` / 1024. ⚠️ **v3 is unaffected — its `dense_full` is 768 and a dimension is
 immutable.** **⇒ A2 is re-applied as the FIRST step of the re-embed window, not before it.**
 
-⚠️ **C0's blocker and its resolution:** the gemma tokenizer is gated. **Owner decision: authenticate
-HuggingFace and accept the Gemma licence** (clean provenance; `cfg.dense_model` unchanged). The
-ungated `unsloth/embeddinggemma-300m` mirror loads without credentials (measured: `GemmaTokenizerFast`,
-vocab 262,144) and was **declined** — third-party copy, licence still applies, byte-identity
-unverifiable. **This is outstanding, and it is the only thing standing between here and C0.**
+⚠️ **C0's blocker, diagnosed exactly (2026-10-25).** The gemma tokenizer is gated. **Owner decision:
+authenticate HuggingFace and accept the Gemma licence** (clean provenance; `cfg.dense_model`
+unchanged). The ungated `unsloth/embeddinggemma-300m` mirror loads without credentials (measured:
+`GemmaTokenizerFast`, vocab 262,144) and was **declined** — third-party copy, licence still applies,
+byte-identity unverifiable.
+
+**Measured state of the credential** — `huggingface-cli login` has been run and it is **valid**
+(token stored, 37 chars, `whoami` → `BharathKS`, type `user`). **But the gated file still 403s, and
+the server's message names the TOKEN, not the licence:**
+
+| request | status | what the server said |
+|---|---|---|
+| `https://huggingface.co` (no auth) | **200** | connectivity is fine |
+| `bert-base-uncased/config.json` (ungated) | **200** | — |
+| `google/embeddinggemma-300m/config.json` (no auth) | **401** | *"restricted. You must have access to it and be authenticated"* |
+| `google/embeddinggemma-300m/config.json` (**with auth**) | **403** | *"Please enable access to **public gated repositories** in your **fine-grained token settings**"* |
+
+**⇒ Two conditions, and only the first is currently reported:** (1) the **token must be allowed to
+reach public gated repos** — for a fine-grained token that is a permission to enable
+(`huggingface.co/settings/tokens`), or use a **classic read token**, which has it by default; and
+(2) the **Gemma licence must be accepted** on the model page. ⚠️ The 403 for (1) **masks** whether
+(2) is already satisfied — re-run the probe after fixing the token and it will return **200** (both
+satisfied) or a *different* 403 naming the licence.
+
+⚠️ **A diagnostic trap worth keeping:** `transformers`/`huggingface_hub` surface this 403 as
+**`LocalEntryNotFoundError` — "We couldn't connect to 'https://huggingface.co' … check your internet
+connection"**, with `status=None`. **The error text points at the network and the cause is an access
+permission.** Do not chase connectivity on this message; read the status with the auth header
+instead. (Same class as §I44: a record that disagrees with the thing it records.)
 
 ### Stage B — create `knowledge_base_v3` with the §2 schema
 

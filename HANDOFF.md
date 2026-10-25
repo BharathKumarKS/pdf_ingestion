@@ -114,7 +114,17 @@
 > reproducing the register exactly.
 > ✅ **RESOLVED THE SAME DAY (owner decisions, session 17).** **(a) The tokenizer is unblocked by
 > HuggingFace auth + accepting the Gemma licence** — clean provenance, `cfg.dense_model` unchanged.
-> **This is an OWNER ACTION and it is OUTSTANDING.** ⚠️ The ungated `unsloth/embeddinggemma-300m`
+> **This is an OWNER ACTION and it is OUTSTANDING.** ⚠️ **Diagnosed exactly 2026-10-25: `hf login`
+> HAS been run and the token is VALID** (`whoami` → `BharathKS`, type `user`; connectivity fine — an
+> ungated file returns 200). **The gated file still returns 403, and the server's message names the
+> TOKEN, not the licence:** *"Please enable access to public gated repositories in your fine-grained
+> token settings"*. ⇒ **Two conditions:** (1) the token must be permitted to reach public gated
+> repos (enable it in the fine-grained token's settings, or use a **classic read token**, which has
+> it by default); (2) the Gemma licence accepted on the model page. ⚠️ (1) **masks** whether (2) is
+> already done — re-run the probe after fixing the token. ⚠️ **The trap: `transformers` reports this
+> 403 as `LocalEntryNotFoundError` — "couldn't connect … check your internet connection" — with
+> `status=None`.** The text blames the network; the cause is a permission. Read the status with the
+> auth header, do not chase connectivity. ⚠️ The ungated `unsloth/embeddinggemma-300m`
 > mirror **does** load without credentials (measured: `GemmaTokenizerFast`, vocab 262,144, offsets
 > returned) but was **DECLINED**: third-party copy, the Gemma licence still applies, and byte-identity
 > against the gated original cannot be verified. **(b) The `.env` flip was REVERTED** — the dense lane
