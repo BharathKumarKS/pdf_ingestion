@@ -1,0 +1,64 @@
+S1 / Stage A2b — mutation-proof log (2026-10-25)
+
+Each mutation breaks ONE mechanism; the guard paired with it must FAIL. A guard that has never
+been seen to fail is not a guard. Both mutated files were restored byte-identical afterwards
+(sha256 check at the end of the run).
+
+Command: bash <scratch>/mutate.sh > /tmp/mut.txt   (script kept in the session scratch dir)
+
+=== BASELINE (no mutation) ===
+[baseline] -> 6 passed, 39 deselected
+
+=== M1: drop the child-span shift (plan §1 trap 2) ===
+  mutation : late_chunk_embedder.embed_parent  `shift = len(self._doc_prefix)` -> `shift = 0`
+  guard    : test_a_document_prefix_does_not_shift_a_childs_pooling_window
+  result   : 1 failed   (DISCRIMINATES)
+
+=== M2: ClusterDenseEmbedder._prefixed is a no-op (plan §1 trap 1) ===
+  mutation : cluster_embedder.ClusterDenseEmbedder._prefixed
+             `return [self._doc_prefix + t for t in texts]` -> `return texts`
+  guard    : test_document_prefix_is_sent_on_both_passage_paths
+  result   : 1 failed   (DISCRIMINATES)
+
+=== M3: LateChunkEmbedder tokenizes RAW text (plan §1 trap 2, the other half) ===
+  mutation : late_chunk_embedder.LateChunkEmbedder._prefixed  `return self._doc_prefix + text`
+             -> `return text`
+  guard    : test_a_document_prefix_does_not_shift_a_childs_pooling_window
+  result   : 1 failed   (DISCRIMINATES)
+
+=== M4: declare the WRONG nomic layout (plan §1 trap 3) ===
+  mutation : _DECLARED_SPECIALS["nomic-ai/nomic-embed-text-v1.5"] (0, 2) -> (1, 1)
+  guard    : test_declared_specials_are_model_specific_and_refuse_unknowns
+  result   : 1 failed   (DISCRIMINATES)
+
+=== M5: _content_tokens `end` ignores the `if trailing else n_api` guard  ===
+  mutation : `end = n_api - trailing if trailing else n_api` -> `end = n_api - trailing`
+  guard    : test_content_tokens_drops_the_declared_wrapper
+  result   : 1 PASSED   *** THIS MUTATION IS A NO-OP, NOT A PASSING GUARD ***
+
+  ⚠️ Why it is a no-op, recorded so the log is not self-contradictory: for the BERT case the
+  guard exercises, specials = (1, 1) so trailing = 1 is truthy and `n_api - trailing` equals the
+  correct `end` anyway. The mutation changed nothing, so the guard had nothing to catch. An
+  independent reviewer (openai/gpt-oss-20b, read-only, deleg_b2ed9ceb task 2) read the raw log,
+  flagged this row as not self-consistent, and was RIGHT to — though its stated mechanism ("the
+  guard's defaults use leading = 0") is not the reason. Replaced by M5b below.
+
+=== M5b: _content_tokens ignores the LEADING slice ===
+  mutation : `return matrix[leading:end]` -> `return matrix[:end]`
+  guard    : test_content_tokens_drops_the_declared_wrapper
+  result   : 1 failed   (DISCRIMINATES)
+
+=== M6: specials keyed on the global stub flag again (the bug this session fixed) ===
+  mutation : `elif isinstance(self._embedder, StubClusterEmbedder):` ->
+             `elif self._cfg.use_stub_embedder:`
+  guard    : test_child_vector_is_the_mean_of_its_token_vectors,
+             test_second_pass_re_embeds_nothing, test_enriched_chunk_wraps_the_child_unchanged
+  result   : 3 failed   (DISCRIMINATES — the mutation re-breaks the 14 tests the fix repaired)
+
+=== RESTORED ===
+[restored] -> 6 passed, 39 deselected
+late_chunk_embedder.py byte-identical
+cluster_embedder.py byte-identical
+
+SUMMARY: 6 of 7 mutations discriminate; the one that does not (M5) is a no-op mutation, and its
+replacement M5b discriminates. No guard is unfalsified.

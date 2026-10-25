@@ -1,0 +1,14 @@
+2026-10-25 11:24:52.751 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+declared (leading, trailing) : (0, 2)
+2026-10-25 11:24:57.231 | INFO     | src.pdf_ingestion.late_chunk_embedder:_get_tokenizer:187 - Late-chunk tokenizer ready: nomic-ai/nomic-embed-text-v1.5
+guard measured               : (0, 2)
+guard match_max_abs_diff     : 1.1795
+guard profile                : o=0:1.179  o=1:9.280  o=2:10.057  o=3:9.534
+guard verdict                : AGREES with the declaration
+n_local=76  n_api=78  delta=2  content_rows=76  (must equal n_local)
+2026-10-25 11:24:58.141 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:317 - Late-chunked parent 1 → 2 children (76 tokens, 78 vectors)
+child c1: token_span=(4, 49) dim=768 |v|=1.000000 dense_64=64
+child c2: token_span=(49, 76) dim=768 |v|=1.000000 dense_64=64
+
+PASS — the live endpoint matches the declared (0, 2) layout and the parent path pools real spans.
+EXIT=0
