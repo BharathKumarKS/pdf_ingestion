@@ -14,6 +14,13 @@ which legitimately carry the dense lanes only. A naive "every lane on every poin
 FAILS on a collection that is known-good — which is how a gate gets edited until it passes
 (§I26). Scope it; do not delete it.
 
+⚠️ **That is not a hypothetical: an intermediate version of this script treated all of
+``params.vectors`` as the RAPTOR requirement and reported exactly 73 false gaps on the live
+collection** (every one ``missing ['colbert']``), exiting 1 on a store that was fine. The run is
+preserved verbatim as evidence:
+``logs/p1/step10/verify_collection_lanes_prefix_FALSE_GAPS.txt``. ``colbert`` is a named dense
+vector but a summary node does not carry it, so it belongs in ``all_lanes`` only.
+
 ⚠️ **The lane inventory is read from BOTH ``params.vectors`` AND ``params.sparse_vectors``.**
 The sparse lane lives in the second key, so a named-vector check that reads only the first
 misses it entirely — the mistake registered as ``IMPROVEMENTS.md`` §I76.

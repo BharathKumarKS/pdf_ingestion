@@ -1,0 +1,41 @@
+=== unit tests ===
+E       assert 0 == 2
+
+tests/test_verify_collection_lanes.py:130: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_verify_collection_lanes.py::test_passes_when_chunks_carry_every_lane_and_raptor_nodes_only_the_dense_ones
+FAILED tests/test_verify_collection_lanes.py::test_raptor_nodes_are_still_required_to_carry_the_dense_lanes
+FAILED tests/test_verify_collection_lanes.py::test_a_collection_with_no_named_lanes_is_refused
+3 failed, 8 passed in 1.48s
+
+=== LIVE: the gate against knowledge_base_v2 (expected 3,796 / 3,869) ===
+
+FAIL: 73 point(s) missing a required lane (showing up to 10):
+    point 037c6448-2a3a-4cb2-a59c-320eba90f57c: missing ['colbert']
+    point 06ed2c04-09c0-4d76-9cb4-758a5dc1c8cf: missing ['colbert']
+    point 0840358e-8af0-4437-bb06-b335b7ec59a3: missing ['colbert']
+    point 0d88486e-3421-468c-ad2b-434f1cfec4b9: missing ['colbert']
+    point 0f26a001-0dc4-4c22-bb6f-c4144ab6d32f: missing ['colbert']
+    point 1276b9bf-9523-4ca5-bee9-c06ff2d39e55: missing ['colbert']
+    point 13504d08-827d-49bd-81a4-c576a0b8ea7a: missing ['colbert']
+    point 15d733b5-9920-432c-985a-940a67a1fedf: missing ['colbert']
+    point 17242fcc-ec5c-44e6-bf04-0e65e69bc6fa: missing ['colbert']
+    point 1a31dcda-6a0c-423a-a2b1-0a2e6f593b35: missing ['colbert']
+resolved store      : host 10.0.10.65:6333
+resolved collection : knowledge_base_v2
+points inspected    : 3869 (3796 chunk / 73 raptor)
+enabled lanes       : colbert, dense_1024, dense_64, sparse
+per-lane coverage   :
+    colbert        3796 / 3869
+    dense_1024     3869 / 3869
+    dense_64       3869 / 3869
+    sparse         3796 / 3869
+exit=1
+
+=== LIVE: the gate against a collection that does NOT exist (must be loud, exit 2) ===
+FAIL: cannot read collection 'knowledge_base_v3': Unexpected Response: 404 (Not Found)
+Raw response content:
+b'{"status":{"error":"Not found: Collection `knowledge_base_v3` doesn\'t exist!"},"time":8.025e-6}'
+resolved store      : host 10.0.10.65:6333
+resolved collection : knowledge_base_v3
+exit=2
