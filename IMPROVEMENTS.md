@@ -6639,3 +6639,54 @@ still open.**
 
 **Register against:** §I70 item 4 (where the convention was first registered), §I59 (the rows that
 would need re-measuring), §I78 (S1, the same session).
+
+---
+
+### I80. 2026-10-25 — ✅ S2: `knowledge_base_v3` is re-created with the §2 schema and VERIFIED empty; ✅ C0 PASSES under nomic — **~7.0 min** for the whole late-chunk pass, not the derived **~48 min**
+
+**Stage B.** `knowledge_base_v3` held the **gemma shape** (`dense_128` 128d + `dense_full` 768d, **0
+points**). Dropped and re-created through the project's own bootstrap
+(`logs/p1/step10/s2_create_v3.py`, targeted: it touches **only** v3 — `reset_for_reingest.py` is
+wrong here because it also clears SQLite and the derived collections). Resolved config for the run:
+`nomic-ai/nomic-embed-text-v1.5` / 768 / 64 / `search_query: ` / `search_document: `, host
+`10.0.10.65`.
+
+**Verifier B — an INDEPENDENT live read-back (§I33: not via the code that created it).** A fresh
+`QdrantClient` reads: lanes `{dense_64: 64, dense_full: 768, colbert: 128}` + `sparse`,
+`points_count == 0`; **`v2` untouched at 3,869**. ⚠️ **`scripts/verify_collection_lanes.py` exits 2 on
+an EMPTY collection** (*"an empty scroll is NOT a pass"*) — it is the **S3** gate (per-point lane
+presence), **not** S2's; S2's assertion is the shape+count read-back, which is what was run.
+
+**Stage C0 — the late-chunk pass, timed on 20 real PARENTS against v2's corpus** (read-only; one
+cluster call per parent, per-token vectors, nomic config):
+
+| | |
+|---|---|
+| sampled | **20 / 20** parents, **0 failed** |
+| guards | **C0-G1, C0-G2, C0-G3, C0-G4 — all True** |
+| corpus reproduced | 341 parents / 3,796 children / **11.132** per parent (exact) |
+| per parent | mean **1.232 s**, p50 0.875 s, p90 4.467 s |
+| **extrapolated to 341 parents** | **~7.0 min** (serial, mean×341) |
+
+⚠️ **This replaces the derived ~48 min in the plan's cost table — the Shape B pass is ~7× cheaper
+than assumed, and the biggest unknown in the re-ingest cost is now measured.** It also closes trap 3
+end-to-end: **C0-G2 (alignment held, no token mismatch)** confirms the `(0, 2)` declaration against
+the **live** endpoint, not just the offline probe.
+
+**⚠️ Signoff 3 (Shape B) is at its confirmation point.** The plan made it provisional until C0; the
+measured number is far under budget and Shape A is *not* cheaper, so Shape B stands. **OWNER to
+re-confirm.**
+
+**⚠️ Two records to fix, both §I44's class.** (a) The C0 probe writes to a **fixed** path, so the
+nomic run **overwrote the gemma FAILED artifact**; the gemma evidence is preserved as
+`c0_gemma_late_chunk_timing_FAILED.json` (and in git at `e020f0c`). **The probe should take an
+`--out` argument** — a record that the next run can silently replace is not a record. (b) **A2 was
+applied as ENV OVERRIDES for this run, not written to `.env`.** ⚠️ The plan designates `.env` as A2's
+home so **Stage F can switch per arm in one process**; that flip is **still an owner action**, and
+until it lands every stage must export `DENSE_MODEL`/`DENSE_DIM`/`DENSE_DIM_LOW`/`QUERY_INSTRUCTION`/
+`DOCUMENT_PREFIX` explicitly or it will silently run Qwen3/1024.
+
+**Register against:** §I77 (gemma's C0 failure at the same path, and why the measured number is
+different), §I33 (a count-based gate is not a shape gate), §I76 (the lane inventory v3 must carry),
+§I79 (the same session's other measurement), §I13 (a dimension is immutable — the reason v3 had to be
+dropped rather than altered).

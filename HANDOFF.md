@@ -4,8 +4,8 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-25, session 18 (S1 is GREEN and mutation-proven; signoff 4 is MEASURED —
-> keep the plain slice; the next session is S2).**
+> **Last updated: 2026-10-25, session 18 (S1 green + committed; S2 LANDED — v3 re-created and C0
+> measured at ~7 min; the next session is S3, the re-embed).**
 >
 > ## ▶ SESSION 18 — WHAT HAPPENED, AND WHAT IS NEXT
 >
@@ -52,11 +52,37 @@
 > no refutations — cheap (10 calls / 25 s), NOT banked**. (c) the mutation-check reviewer returned
 > **5 CONFIRMED / 1 REFUTED (M5)** — the refutation was **VALID** and is why the log was reconciled.
 >
-> **8. ▶ NEXT — S2.** (a) **owner accepts signoff 4**; (b) **commit S1** (still uncommitted) **before**
-> S2; (c) **S2**: drop the gemma-shaped v3, create it with the §2 schema (`dense_64` 64 + `dense_full`
-> 768 + `colbert` + `sparse`), read it back LIVE, then run **C0 on ~20 PARENTS** and record
-> seconds/parent; owner re-confirms signoff 3 (Shape B). ⚠️ `knowledge_base_v3` still holds the gemma
-> shape; **v2 untouched (3,869)**; the re-ingest is **0 %**.
+> **8. ✅ S1 IS COMMITTED** (4 commits: `ff2651f` feat, `5f1c0c2`/`87d3221` logs, `e97f165` docs). The
+> only untracked files are the **arm-2 fragment** (`min_chunk_tokens_ab*.py`) — deliberately left out,
+> it is the known-broken fragment the brief says to treat as **arm 2 unstarted**.
+>
+> **9. ✅ S2 IS LANDED — read `IMPROVEMENTS.md` §I80.** `knowledge_base_v3` was dropped (it held the
+> gemma shape, 0 points) and re-created through the project's own bootstrap with the §2 schema —
+> verified by an **INDEPENDENT** live read-back (fresh client, §I33): `dense_64` 64 + `dense_full` 768
+> + `colbert` 128 + `sparse`, **0 points**; **v2 untouched (3,869)**. ⚠️ `verify_collection_lanes.py`
+> exits 2 on an EMPTY collection — it is the **S3** gate, not S2's.
+>
+> **10. ✅ C0 PASSES UNDER NOMIC — ~7.0 min, NOT the derived ~48 min.** 20/20 parents, 0 failed, all
+> four guards True; the corpus reproduced exactly (341 parents / 3,796 children / 11.132 per parent);
+> mean **1.232 s/parent**, p90 4.467. ⚠️ **C0-G2 confirms the `(0,2)` alignment declaration against
+> the LIVE endpoint** — trap 3 closed end-to-end. ⚠️ **Signoff 3 (Shape B) is now at its confirmation
+> point — owner to re-confirm** (the measured number is far under budget; Shape A is not cheaper).
+>
+> **11. ⚠️ TWO OWNER ACTIONS, BOTH §I44's CLASS, RECORDED IN §I80.** (a) **The A2 `.env` flip is
+> still NOT applied** — S2 ran on **env overrides**. ⚠️ Every stage must export
+> `DENSE_MODEL`/`DENSE_DIM`/`DENSE_DIM_LOW`/`QUERY_INSTRUCTION`/`DOCUMENT_PREFIX` (or the `.env` flip
+> must land, which the plan wants anyway for Stage F's per-arm switching) or it will **silently run
+> Qwen3/1024**. (b) The C0 probe writes to a **fixed path** and overwrote the gemma FAILED artifact
+> (preserved as `c0_gemma_late_chunk_timing_FAILED.json`); the probe needs an `--out` argument.
+>
+> **12. ▶ NEXT — S3 (the re-embed).** A **background job**, not a session: extend
+> `scripts/reembed_chunks.py` (Shape B — recompute every lane per point, preserve `qdrant_point_id`),
+> wire in the late-chunk path, checkpoint it, write into `knowledge_base_v3`, then gate with
+> `verify_collection_lanes.py --collection knowledge_base_v3`. ⚠️ `data/embed_cache/` (874 dirs)
+> **cannot be reused** (model + `dense_dim_low` are in the fingerprint). Then S4 (intent classifier +
+> preflight), S5 (§I68 fix → the ONE pre-registered product-endpoint run + the §I66 decomposition),
+> S6 (the fine-tune; signoff 6 open). ⚠️ Still carried: **signoff 4** (accept the §I79 measurement),
+> **signoff 3** (re-confirm Shape B), the arm-2 harness, §I56's DA lane, §G2's V5 build, §G5/§I2.
 >
 > ## ▶ SESSION 17b — THE EMBEDDER DECISION, AND THE NEXT SESSION'S OPENING PROMPT
 >

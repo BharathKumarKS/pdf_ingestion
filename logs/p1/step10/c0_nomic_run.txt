@@ -1,0 +1,57 @@
+resolved store   : host '10.0.10.65' collection 'knowledge_base_v2'
+resolved embedder: 'nomic-ai/nomic-embed-text-v1.5' dim=768 low=64
+late_chunk       : enabled=True workers=1 (forced serial for a clean per-parent cost)
+
+corpus rebuilt   : 341 parents, 3796 children (11.13 children/parent)
+2026-10-25 14:06:42.857 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-25 14:06:46.893 | INFO     | src.pdf_ingestion.late_chunk_embedder:_get_tokenizer:191 - Late-chunk tokenizer ready: nomic-ai/nomic-embed-text-v1.5
+tokenizer load   : 4.04s
+2026-10-25 14:06:47.036 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 0 → 1 children (38 tokens, 40 vectors)
+  parent    0:   0.14s     38 tokens  ->  1 children
+2026-10-25 14:06:47.391 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 1 → 3 children (220 tokens, 222 vectors)
+  parent    1:   0.35s    220 tokens  ->  3 children
+2026-10-25 14:06:48.279 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 2 → 8 children (622 tokens, 624 vectors)
+  parent    2:   0.89s    622 tokens  ->  8 children
+2026-10-25 14:06:48.832 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 3 → 3 children (448 tokens, 450 vectors)
+  parent    3:   0.55s    448 tokens  ->  3 children
+2026-10-25 14:06:49.656 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 4 → 5 children (665 tokens, 667 vectors)
+  parent    4:   0.82s    665 tokens  ->  5 children
+2026-10-25 14:06:51.377 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 5 → 8 children (1286 tokens, 1288 vectors)
+  parent    5:   1.72s   1286 tokens  ->  8 children
+2026-10-25 14:06:52.357 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 6 → 5 children (841 tokens, 843 vectors)
+  parent    6:   0.98s    841 tokens  ->  5 children
+2026-10-25 14:06:52.735 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 7 → 1 children (240 tokens, 242 vectors)
+  parent    7:   0.38s    240 tokens  ->  1 children
+2026-10-25 14:06:52.810 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 8 → 1 children (11 tokens, 13 vectors)
+  parent    8:   0.07s     11 tokens  ->  1 children
+2026-10-25 14:06:52.897 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 9 → 1 children (17 tokens, 19 vectors)
+  parent    9:   0.09s     17 tokens  ->  1 children
+2026-10-25 14:06:53.005 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 10 → 1 children (23 tokens, 25 vectors)
+  parent   10:   0.11s     23 tokens  ->  1 children
+2026-10-25 14:06:53.223 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 11 → 1 children (93 tokens, 95 vectors)
+  parent   11:   0.22s     93 tokens  ->  1 children
+2026-10-25 14:06:55.554 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 12 → 19 children (2021 tokens, 2023 vectors)
+  parent   12:   2.33s   2021 tokens  -> 19 children
+2026-10-25 14:06:57.111 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 13 → 8 children (1305 tokens, 1307 vectors)
+  parent   13:   1.55s   1305 tokens  ->  8 children
+2026-10-25 14:06:58.421 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 14 → 6 children (1092 tokens, 1094 vectors)
+  parent   14:   1.31s   1092 tokens  ->  6 children
+2026-10-25 14:06:59.581 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 15 → 7 children (689 tokens, 691 vectors)
+  parent   15:   1.16s    689 tokens  ->  7 children
+2026-10-25 14:07:04.897 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 16 → 27 children (4162 tokens, 4164 vectors)
+  parent   16:   5.31s   4162 tokens  -> 27 children
+2026-10-25 14:07:06.215 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 17 → 9 children (1130 tokens, 1132 vectors)
+  parent   17:   1.31s   1130 tokens  ->  9 children
+2026-10-25 14:07:07.080 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 18 → 6 children (611 tokens, 613 vectors)
+  parent   18:   0.86s    611 tokens  ->  6 children
+2026-10-25 14:07:11.548 | DEBUG    | src.pdf_ingestion.late_chunk_embedder:embed_parent:321 - Late-chunked parent 19 → 19 children (3822 tokens, 3824 vectors)
+  parent   19:   4.47s   3822 tokens  -> 19 children
+
+wrote /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/logs/p1/step10/c0_late_chunk_timing.json
+
+--- C0 RESULT (unit: PARENTS) ---
+  sampled            : 20/20 parents
+  per parent         : mean 1.232s  p50 0.875s  p90 4.467s
+  tokens/parent      : mean 966.8  max 4162
+  EXTRAPOLATED to 341 parents: ~7.0 min (serial, measured basis)
+  guards             : {'C0-G1_all_sampled_parents_succeeded': True, 'C0-G2_alignment_held_no_token_mismatch': True, 'C0-G3_vectors_are_the_configured_width': True, 'C0-G4_every_child_got_a_late_chunked_vector': True}
