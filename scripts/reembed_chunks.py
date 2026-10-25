@@ -1,30 +1,51 @@
 #!/usr/bin/env python3
 """
-Re-embed existing SQLite chunks into Qdrant without touching SQLite.
+Re-embed existing chunks into Qdrant without touching SQLite.
 
-Use this when Qdrant is empty (points_count=0) but SQLite has valid chunk
-records and cards. Re-embeds all chunks for a tenant/document and upserts
-them to Qdrant using the existing qdrant_point_id values so card chunk_id
-references remain valid.
+Two modes:
 
-⚠️ CURRENTLY REFUSES (IMPROVEMENTS.md §I13). It computes only the dense lane, while the collection
-carries four (`dense_64`, `dense_1024`, `colbert`, `sparse`). A dense-only upsert is accepted by
-Qdrant and leaves the ColBERT and SPLADE stages of the funnel empty — a degraded index that looks
-recovered. Until the script is extended to recompute every lane (reusing the ingest's payload
-builder), it exits with the reason rather than writing one. Rebuild with
-`scripts/ingest_base_textbook.py --reindex` instead.
+(a) **SQLite → Qdrant** (``--tenant`` / ``--doc-id``): the original recovery path. It computes only
+    the dense lane and therefore **REFUSES** on a multi-lane collection (§I13) — a dense-only upsert
+    is accepted by Qdrant and leaves the ColBERT and SPLADE stages empty, a degraded index that
+    *looks* recovered.
+
+(b) **Shape B re-embed** (``--from-collection SRC``): reads the SOURCE collection's payloads,
+    recomputes the dense lanes with the configured embedder (**late-chunked**, one cluster call per
+    parent), **carries the ``colbert`` and ``sparse`` lanes over** from the source (different models,
+    unchanged vectors — plan §2), and upserts into the destination collection **preserving every
+    point id**. This is the nomic re-ingest into ``knowledge_base_v3`` (plan §3 Stage C).
+
+    ⚠️ Shape B is reproducible **without re-parsing**: the source payloads carry ``text`` /
+    ``parent_text`` / ``char_start`` / ``char_end`` / ``parent_id`` / ``chunk_index`` / ``page_number``,
+    so the parent→child hierarchy and each child's span are reconstructed exactly. That is why the
+    cards and the graph — both keyed on ``chunk_id`` — stay valid.
+
+    ⚠️ **No child may be dropped.** The late-chunk path returns ``[]`` for an empty/whitespace parent
+    and falls back to isolation embeddings when the parent tokenizes to zero tokens; every child that
+    does not come back late-chunked is embedded in **isolation** here, so the ``chunk_id`` set before
+    and after are equal (plan Verifier C-i).
+
+Usage:
+    # Shape B: v2 -> v3 with the configured (nomic) embedder
+    unset PYTHONPATH
+    export QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v3 \
+           DENSE_MODEL=nomic-ai/nomic-embed-text-v1.5 DENSE_DIM=768 DENSE_DIM_LOW=64 \
+           QUERY_INSTRUCTION="search_query: " DOCUMENT_PREFIX="search_document: "
+    uv run python -u scripts/reembed_chunks.py --from-collection knowledge_base_v2 \
+        --checkpoint logs/p1/step10/reembed_v3_checkpoint.json
+
+    # a smoke test on N parents (still writes):
+    uv run python -u scripts/reembed_chunks.py --from-collection knowledge_base_v2 --limit-parents 2
 
 After running this, re-run RAPTOR:
     uv run python scripts/run_phase2.py --tenant global --raptor-only
-
-Usage:
-    uv run python scripts/reembed_chunks.py --tenant global
-    uv run python scripts/reembed_chunks.py --doc-id <uuid>
 """
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -37,13 +58,27 @@ console = Console()
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Re-embed SQLite chunks into Qdrant")
-    g = p.add_mutually_exclusive_group(required=True)
-    g.add_argument("--tenant", help="Re-embed all documents for this tenant")
-    g.add_argument("--doc-id", help="Re-embed a specific document")
+    p = argparse.ArgumentParser(description="Re-embed chunks into Qdrant")
+    g = p.add_mutually_exclusive_group(required=False)
+    g.add_argument("--tenant", help="Re-embed all documents for this tenant (SQLite mode)")
+    g.add_argument("--doc-id", help="Re-embed a specific document (SQLite mode)")
+    g.add_argument("--from-collection", dest="from_collection",
+                   help="Shape B: SOURCE collection to read payloads from (e.g. knowledge_base_v2)")
+    p.add_argument("--collection-name", dest="collection_name",
+                   help="DESTINATION collection (default: cfg.qdrant_collection)")
     p.add_argument("--batch", type=int, default=8, help="Embedding batch size (default 8, use 32 on GPU)")
-    return p.parse_args()
+    p.add_argument("--limit-parents", dest="limit_parents", type=int, default=None,
+                   help="Shape B: process only the first N parents (smoke test; still writes)")
+    p.add_argument("--checkpoint", default=None,
+                   help="Shape B: JSON checkpoint path; a re-run resumes past completed parents")
+    p.add_argument("--dry-run", action="store_true", help="Shape B: count and validate, write nothing")
+    args = p.parse_args()
+    if not (args.tenant or args.doc_id or args.from_collection):
+        p.error("one of --tenant, --doc-id or --from-collection is required")
+    return args
 
+
+# ── SQLite mode (unchanged) ───────────────────────────────────────────────────
 
 def _refuse_partial_payload(cfg, qdrant) -> None:
     """Refuse when the collection expects lanes this script does not compute.
@@ -99,21 +134,11 @@ def reembed_document(doc_id: str, batch_size: int) -> int:
     store    = DocumentStore(cfg)
 
     # ── Why this refuses by default (IMPROVEMENTS.md §I13) ────────────────────
-    # This script used the retired local 768d Nomic embedder and wrote `{"dense": [...]}` — or a
-    # bare vector — neither of which matches the collection's NAMED vectors, so it has been broken
-    # since the re-ingest (it failed at the upsert with a Qdrant vector-name error).
-    #
-    # Moving it onto the dense lane is NOT sufficient. `knowledge_base_v2` carries FOUR lanes on
-    # every point — `dense_64`, `dense_1024`, `colbert` (128d multivector, max_sim) and the sparse
-    # `sparse` — and this script computes only the dense one. A dense-only upsert succeeds, because
-    # Qdrant permits absent named vectors, and leaves the ColBERT and SPLADE stages of the funnel
-    # looking at nothing. That is a degraded index that LOOKS recovered.
-    #
-    # The register's fix — "reuse `store.save_document`'s payload builder" — is therefore a scoped
-    # job: it must recompute all four lanes (the 64d MRL slice is a re-normalised truncation, not a
-    # raw slice; ARCHITECTURE.md §8 trap 5), not re-point one embedder. Until that lands, refusing
-    # is the correct behaviour: it is the difference between "recovery did not run" and "recovery
-    # ran and produced a quietly worse index".
+    # `knowledge_base_v2` carries FOUR lanes on every point — `dense_64`, `dense_1024`,
+    # `colbert` (128d multivector, max_sim) and the sparse `sparse` — and this mode computes only
+    # the dense one. A dense-only upsert succeeds, because Qdrant permits absent named vectors, and
+    # leaves the ColBERT and SPLADE stages of the funnel looking at nothing. Use Shape B
+    # (`--from-collection`) instead, which recomputes the dense lanes and carries the rest over.
     _refuse_partial_payload(cfg, qdrant)
 
     # Load chunks from SQLite
@@ -184,13 +209,205 @@ def reembed_document(doc_id: str, batch_size: int) -> int:
     return upserted
 
 
+# ── Shape B mode: source collection -> destination collection ─────────────────
+
+def _scroll_all(client, collection: str, *, with_vectors: bool, payload_keys=None) -> list:
+    """Every point in ``collection``, paged. Deterministic order is imposed by the caller."""
+    out: list = []
+    offset = None
+    while True:
+        batch, offset = client.scroll(
+            collection_name=collection, limit=512, offset=offset,
+            with_payload=payload_keys if payload_keys is not None else True,
+            with_vectors=with_vectors,
+        )
+        out.extend(batch)
+        if offset is None:
+            break
+    return out
+
+
+def reembed_shape_b(src_collection: str, *, batch_size: int, limit_parents: int | None,
+                    checkpoint_path: Path | None, dry_run: bool) -> dict:
+    """Recompute the dense lanes into the destination collection, carrying colbert/sparse over."""
+    import numpy as np
+    from qdrant_client.models import PointStruct, SparseVector as QSparseVector
+
+    from src.core.config import get_settings
+    from src.core.database import get_qdrant
+    from src.pdf_ingestion.chunker import TextChunk
+    from src.pdf_ingestion.late_chunk_embedder import LateChunkEmbedder
+    from src.pdf_ingestion.models import ParentChunk
+    from src.pdf_ingestion.store import (
+        _dense_name_from, _iter_upsert_batches, _resolve_low_lane,
+    )
+
+    cfg = get_settings()
+    dst = cfg.qdrant_collection
+    if src_collection == dst:
+        raise SystemExit(f"REFUSING: source and destination are both {dst!r}")
+    client = get_qdrant(cfg)
+
+    # The destination's lane NAMES and the low lane's WIDTH are read off the DESTINATION
+    # collection, never from cfg (§I49 Finding 1; ARCHITECTURE §8 trap 5).
+    dst_params = client.get_collection(dst).config.params
+    dense_name = _dense_name_from(dst_params.vectors) or "dense_full"
+    low_name, low_size = _resolve_low_lane(dst_params.vectors, cfg)
+    logger.info("Shape B: {} -> {} | dense='{}' low='{}'({}d) model='{}' prefix='{}'",
+                src_collection, dst, dense_name, low_name, low_size,
+                cfg.dense_model, cfg.document_prefix)
+
+    src_points = _scroll_all(client, src_collection, with_vectors=True)
+    chunks_pts = [p for p in src_points if p.payload.get("raptor_level") is None]
+    raptor_pts = [p for p in src_points if p.payload.get("raptor_level") is not None]
+    logger.info("source: {} points ({} chunk / {} raptor; raptor is NOT re-embedded here)",
+                len(src_points), len(chunks_pts), len(raptor_pts))
+
+    # Group children by (document_id, parent_id) — the parent is the unit of the late-chunk call.
+    groups: dict[tuple[str, int], list] = {}
+    for p in chunks_pts:
+        key = (p.payload["document_id"], p.payload["parent_id"])
+        groups.setdefault(key, []).append(p)
+    order = sorted(groups.keys())
+    if limit_parents is not None:
+        order = order[:limit_parents]
+
+    # Resume: skip parents already recorded complete.
+    done: set[str] = set()
+    if checkpoint_path and checkpoint_path.exists():
+        ck = json.loads(checkpoint_path.read_text())
+        if ck.get("src") == src_collection and ck.get("dst") == dst:
+            done = set(ck.get("done_parents", []))
+            logger.info("checkpoint: resuming, {} parents already done", len(done))
+
+    lce = LateChunkEmbedder(cfg)
+    _ = lce._get_tokenizer()          # load once, before the loop (never race a lazy load)
+
+    total_children = sum(len(groups[k]) for k in order)
+    logger.info("Shape B: {} parents / {} children to process", len(order), total_children)
+
+    failures: list[dict] = []
+    upserted = 0
+    started = time.time()
+    rate_window: list[float] = []
+
+    for i, key in enumerate(order, 1):
+        doc_id, parent_id = key
+        ckey = f"{doc_id}|{parent_id}"
+        if ckey in done:
+            continue
+
+        pts = groups[key]
+        parent_text = pts[0].payload.get("parent_text") or ""
+        parent = ParentChunk(parent_id=parent_id, text=parent_text,
+                             page_map={0: pts[0].payload.get("page_number") or 1})
+        children = [
+            TextChunk(
+                chunk_id=p.payload["chunk_id"],
+                document_id=doc_id,
+                tenant_id=p.payload.get("tenant_id", "global"),
+                chunk_index=p.payload.get("chunk_index", 0),
+                text=p.payload["text"],
+                char_start=p.payload.get("char_start", 0),
+                char_end=p.payload.get("char_end", 0),
+                token_count=p.payload.get("token_count", 0),
+                page_number=p.payload.get("page_number"),
+                parent_id=parent_id,
+                parent_text=parent_text,
+                is_content=p.payload.get("is_content", True),
+            )
+            for p in sorted(pts, key=lambda q: q.payload.get("chunk_index", 0))
+        ]
+
+        t0 = time.time()
+        try:
+            enriched = lce.embed_parent(parent, children)
+        except Exception as exc:                       # noqa: BLE001 — one bad parent must not kill the run
+            failures.append({"parent": ckey, "error": f"{type(exc).__name__}: {exc}"})
+            logger.error("parent {} FAILED: {} — {}", ckey, type(exc).__name__, exc)
+            continue
+
+        by_id = {e.chunk.chunk_id: e for e in enriched}
+        # ⚠️ Verifier C-i: no child may be dropped. Anything not late-chunked is embedded in isolation.
+        for child in children:
+            if child.chunk_id not in by_id:
+                by_id[child.chunk_id] = lce.embed_isolated(child)
+
+        points = []
+        for p in pts:
+            cid = p.payload["chunk_id"]
+            ec = by_id.get(cid)
+            if ec is None:
+                failures.append({"parent": ckey, "error": f"child {cid} produced no vector"})
+                continue
+            vec: dict = {
+                low_name:   np.asarray(ec.dense_64, dtype=np.float32).tolist(),
+                dense_name: np.asarray(ec.dense_1024, dtype=np.float32).tolist(),
+            }
+            # Carry colbert + sparse over verbatim (same models, unchanged vectors — plan §2).
+            sv = p.vector or {}
+            if "colbert" in sv:
+                vec["colbert"] = sv["colbert"]
+            if "sparse" in sv:
+                sp = sv["sparse"]
+                vec["sparse"] = (QSparseVector(indices=list(sp.indices), values=list(sp.values))
+                                 if hasattr(sp, "indices") else sp)
+            payload = dict(p.payload)
+            payload["embedding_version"] = ec.model_name or cfg.dense_model
+            points.append(PointStruct(id=p.id, vector=vec, payload=payload))
+
+        if not dry_run:
+            for b in _iter_upsert_batches(points):
+                client.upsert(collection_name=dst, points=b)
+        upserted += len(points)
+
+        done.add(ckey)
+        dt = time.time() - t0
+        rate_window.append(dt)
+        if len(rate_window) > 20:
+            rate_window.pop(0)
+        rolling = sum(rate_window) / len(rate_window)
+        logger.info("[{}/{}] parent {} doc {} -> {} children  {:.2f}s  {:,} pts  rolling {:.2f}s/parent",
+                    i, len(order), parent_id, doc_id[:8], len(points), dt, upserted, rolling)
+
+        if checkpoint_path:
+            checkpoint_path.write_text(json.dumps({
+                "src": src_collection, "dst": dst, "done_parents": sorted(done),
+                "upserted": upserted, "updated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            }))
+
+    elapsed = time.time() - started
+    logger.success("Shape B done: {:,} points upserted in {:.1f}s ({:.1f} pts/s), {} parents, {} failures",
+                   upserted, elapsed, (upserted / elapsed) if elapsed else 0.0, len(done), len(failures))
+    return {"upserted": upserted, "parents": len(done), "failures": failures,
+            "elapsed_s": round(elapsed, 1), "src": src_collection, "dst": dst,
+            "children_expected": total_children}
+
+
 def main():
     args = parse_args()
 
     from src.core.config import get_settings
-    from src.pdf_ingestion.store import DocumentStore
 
-    cfg   = get_settings()
+    cfg = get_settings()
+    if args.collection_name:
+        cfg.qdrant_collection = args.collection_name
+
+    if args.from_collection:
+        ck = Path(args.checkpoint) if args.checkpoint else None
+        res = reembed_shape_b(
+            args.from_collection, batch_size=args.batch, limit_parents=args.limit_parents,
+            checkpoint_path=ck, dry_run=args.dry_run,
+        )
+        console.print(f"\n[bold green]Shape B:[/] {res['upserted']:,} points into "
+                      f"'{res['dst']}' from '{res['src']}' ({res['parents']} parents, "
+                      f"{res['elapsed_s']}s)")
+        if res["failures"]:
+            console.print(f"[bold red]{len(res['failures'])} FAILURES[/] — first: {res['failures'][0]}")
+            sys.exit(3)
+        return
+
+    from src.pdf_ingestion.store import DocumentStore
     store = DocumentStore(cfg)
 
     if args.doc_id:
