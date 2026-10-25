@@ -4,7 +4,62 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-25, session 17 (Stage A landed; the next action is Stage B + C0).**
+> **Last updated: 2026-10-25, session 17 (the plan is SETTLED for NOMIC; the next session starts the
+> re-ingest).**
+>
+> ## ▶ SESSION 17b — THE EMBEDDER DECISION, AND THE NEXT SESSION'S OPENING PROMPT
+>
+> **⚠️ THE ADOPTED EMBEDDER IS NOW `nomic-ai/nomic-embed-text-v1.5` @768/64 — NOT gemma.** Owner
+> decision 2026-10-25, taken on the measurement in **`IMPROVEMENTS.md` §I77** and its **addendum**.
+>
+> **▶ READ, in this order and only this much:** this block → the nomic plan's **§0, §1, §8**
+> (`.hermes/plans/2026-10-25-p1-nomic-adoption-reembed-and-finetune-plan.md`) → the nomic brief
+> (`.hermes/plans/2026-10-25-p1-nomic-adoption-SESSIONS.md`) → then only the § your stage needs.
+> **Opening prompt:** *"Read HANDOFF.md session 17b, then the nomic plan's §0/§1/§8 and the nomic
+> SESSIONS brief. I am starting S1 (Stage A2 + A2b). Signoff 4 (the MRL convention) is still open and
+> gates S3 — take it first."*
+>
+> **1. WHY NOMIC, AND THE HALF THAT MUST SURVIVE.** ⚠️ **This is a COST decision on NEW MEASUREMENT —
+> it is NOT a finding that nomic is better.** §I74's product-stage contrast still favours gemma
+> (**+0.029248**, resolved but only ~1.19× the run's own resolution floor, CI lower bound below it).
+> What changed is the **cost**, measured on both candidates over the same corpus: gemma's endpoint
+> **truncates at 2048 tokens** (71/341 parents, **37.3 %** of children in a truncated parent, **9.2 %**
+> losing vectors outright) while nomic's window is **8192** and **0/341 parents exceed it**; and gemma's
+> tokenizer is a **gated HF repo** while nomic's is **ungated**. ⚠️ **Do not restate this later as
+> "gemma was worse"** — that is the one sentence the plan's §0 forbids.
+>
+> **2. ⚠️ THE FOUR TRAPS (plan §1) — three of them bite SILENTLY. Read them before writing code.**
+> (a) **The document-side prefix does not exist on the cluster path**: `NomicEmbedder` (local) prefixes
+> both sides, but `ClusterDenseEmbedder` applies the query instruction only — nomic would be used out of
+> distribution (§I62: unprefixed cosine 0.949 vs 1.000000). (b) ⚠️ **The prefix collides with late
+> chunking**: offsets are computed on the RAW parent text while the endpoint would get PREFIXED text, so
+> **every span shifts by the prefix's token count** — a mis-pooled vector with **no warning**. (c) **The
+> alignment rule must be re-probed**: nomic's endpoint returns `n_api == n_local + 2` (the same delta as
+> gemma) and `_content_tokens` accepts only `n_local`/`n_local+1`, so **it raises on every parent**.
+> (d) **The MRL convention is now load-bearing**: `mrl_slice` does a plain slice + re-normalise while
+> Nomic's card prescribes `layer_norm`-then-slice, so **every Nomic-64 number in the register is under
+> the project's convention** — and the 64d lane IS the funnel's first stage. **Signoff 4, still open.**
+>
+> **3. WHAT SURVIVES FROM THE GEMMA WORK.** Stage A's machinery is **in force and load-bearing**:
+> `_LOW_VECTOR_NAMES = ("dense_128", "dense_64")` + `_resolve_low_lane`, which reads the lane's **name
+> and width off the collection**, is exactly what makes this embedder change a **config switch** rather
+> than a code fork. The full lane stays the width-free **`dense_full`**. ⚠️ `dense_dim_low` goes
+> **128 → 64** and the low lane is named **`dense_64`** (nomic's MRL slot). **Stage A: ✅ committed.**
+>
+> **4. ✅ ALSO DONE THIS SESSION:** the **lane gate** (`scripts/verify_collection_lanes.py` — it did not
+> exist; 11 tests, 5/5 mutations, verified live against v2 at 3,796/3,869) · **§I76** (v2 carries FOUR
+> lanes incl. `sparse`, measured) · **§I77** + its addendum · sessions 13–17 committed (13 commits).
+>
+> **5. ⚠️ CURRENT MACHINE STATE, so the next session does not mis-read it.** `.env` holds **no**
+> `DENSE_*` keys — the config resolves to the **Qwen3/1024** default, so v2 works normally and **no
+> interim hazard is armed**. ⚠️ **`knowledge_base_v3` EXISTS WITH THE GEMMA SHAPE** (`dense_128` 128d +
+> `dense_full` 768d, **0 points**): **S2 drops and re-creates it** — a dimension is immutable.
+> **`knowledge_base_v2` is untouched (3,869 points).** ⚠️ **The re-ingest itself has still NOT STARTED:
+> 0 %.**
+>
+> **6. ▶ THE OPEN SIGNOFFS** (plan §7): **3** Shape B vs A — provisional, confirmed at S2's C0; **4** the
+> MRL truncation convention — **OPEN, gates S3**; **6** the fine-tune's validation split (by
+> document/passage, not by card) — **OPEN, gates S6**.
 >
 > ## ▶ SESSION 17 — WHAT HAPPENED, AND WHAT IS NEXT
 >
