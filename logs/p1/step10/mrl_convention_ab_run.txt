@@ -1,0 +1,43 @@
+resolved store   : host '10.0.10.65' port 6333 collection 'knowledge_base_v2'
+resolved embed   : 'nomic-ai/nomic-embed-text-v1.5' via http://10.0.10.70:8123/embed-text/v1/embeddings
+pre-registration : 2026-10-25-p1-mrl-convention-ab-preregistration.md sha256 5d9066c5be56d378…
+queries          : 133
+2026-10-25 08:42:11.069 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-25 08:42:11.913 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+pool             : 3489 in-window chunks x 1024d (17s)
+reachable pages  : 888
+nomic embedded   : 3489x768 + 133 queries in 37.8s
+G4: A==truncation=True  numpy-vs-torch ln max|d|=8.88e-16  rows_differing=3489  cos(A,B)=0.999987  pass=True
+G3: A-vs-A max_abs_diff=0.0 mismatch=0 pass=True
+  [40/133] gold-047 … 0s
+  [80/133] gold-090 … 0s
+  [120/133] ovw-036 … 0s
+G5: shared pages=True queries_with_both=133/133 pass=True
+G6: 0 error(s), 133 queries kept  pass=True
+G1: A reproduces §I70 nomic@64 (every-chunk) pass=True  R@20=0.364342 R@100=0.569055 R@500=0.916027 R@1000=1.0
+G2: A reproduces §I70 nomic@64 (top-1000 pool) pass=True  R@20=0.364342 R@100=0.569055 R@500=0.915738 R@1000=0.918953
+
+wrote /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/logs/p1/step10/mrl_convention_ab.json
+sha256 6a8635b5e7231ffae45b1d4da3582dbe746b8267ba8c96f298bdf19579f49fc5
+
+=== ceiling-normalised, arm A (plain slice) vs arm B (layer_norm->slice) ===
+        metric         A         B  delta B-A                   95% CI  verdict
+  ceiling_no R@20    0.3643    0.3647    +0.0003  [-0.0035, +0.0042]  unresolved straddles 0 {'B_worse': 1, 'B_better': 2, 'tie': 130}
+  ceiling_no R@100    0.5691    0.5690    -0.0000  [-0.0002, +0.0002]  unresolved straddles 0 {'B_worse': 1, 'B_better': 1, 'tie': 131}
+  ceiling_no R@500    0.9160    0.9160    +0.0000  [+0.0000, +0.0000]  unresolved straddles 0 {'B_worse': 0, 'B_better': 0, 'tie': 133}
+  ceiling_no R@1000    1.0000    1.0000    +0.0000  [+0.0000, +0.0000]  unresolved straddles 0 {'B_worse': 0, 'B_better': 0, 'tie': 133}
+  ceiling_no R@20    0.3643    0.3647    +0.0003  [-0.0035, +0.0042]  unresolved straddles 0 {'B_worse': 1, 'B_better': 2, 'tie': 130}
+  ceiling_no R@100    0.5691    0.5690    -0.0000  [-0.0002, +0.0002]  unresolved straddles 0 {'B_worse': 1, 'B_better': 1, 'tie': 131}
+  ceiling_no R@500    0.9157    0.9157    +0.0000  [+0.0000, +0.0000]  unresolved straddles 0 {'B_worse': 0, 'B_better': 0, 'tie': 133}
+  ceiling_no R@1000    0.9190    0.9191    +0.0001  [-0.0001, +0.0003]  unresolved straddles 0 {'B_worse': 0, 'B_better': 1, 'tie': 132}
+
+=== the pre-registered rule ===
+  primary delta      : +0.000314  CI [-0.003539, 0.004167]
+  resolution floor   : 0.003853
+  ci excludes 0      : False
+  |delta| >= floor   : False
+  => ADOPT LAYER NORM: False
+  verdict            : KEEP the project's plain slice (A). The convention does not move the 64d lane's ranking on this corpus by more than the run's own resolution floor — a RESULT, not an unresolved one. §I59's rows stand; no re-measurement.
+
+guards: G1=True  G2=True  G3=True  G4=True  G5=True  G6=True
+EXIT=0
