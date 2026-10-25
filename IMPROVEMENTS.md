@@ -6440,3 +6440,65 @@ entry is quoted as sparse-off.
 time), §I13 (the four-lane refusal this contradicts), §I33 (a count-based gate holds a dead lane
 green — the reason the assertion is per-point), §I26 (scope the gate, do not edit it away), §I44 (a
 store fact that existed but was not on disk).
+
+---
+
+### I77. 2026-10-25 — ⚠️ THE LATE-CHUNK PATH DOES NOT WORK UNDER GEMMA: the alignment contract is off-by-**TWO**, and the endpoint **truncates at 2048 tokens**
+
+**The claim that was in force.** `late_chunk_embedder.py`'s alignment contract — *"``n_api ==
+n_local + 1`` with the extra vector last… probed live 2026-10-17"* — was probed against **Qwen3**,
+and C0 assumed it would carry to gemma. It does not.
+
+**Measured (C0, 20 parents, serial, live cluster): 20 of 20 parents FAILED**, every one with
+`Token alignment broken for parent N: local tokenizer produced X tokens, the endpoint returned X+2
+vectors`. Not a sample of failures — all of them.
+
+Then quantified offline (tokenizer only, no cluster, no writes):
+
+| check | result |
+|---|---|
+| special tokens gemma adds | **2** (`<bos>` + `<eos>`): 755 → 757 with `add_special_tokens=True` |
+| ⇒ the content matrix | **`matrix[1:-1]`**, not `matrix[:-1]` |
+| parents over the window | **71 / 341 (20.8 %)** |
+| children fully inside 2048 | 3,445 / 3,796 (**90.8 %**) |
+| children straddling the cutoff | 70 (1.8 %) |
+| children **ENTIRELY** beyond it | **281 (7.4 %)** |
+
+**Two independent defects, and neither is incidental:**
+
+1. **The alignment rule is off-by-two for gemma.** ⚠️ `_content_tokens` **raises** on any count other
+   than `n_local` or `n_local + 1`, which is why this surfaced at all instead of silently shifting
+   every span by one or two tokens — the guard earned its keep (§I47's class, working as designed).
+   The fix is a **model-aware** rule (gemma: `matrix[1:-1]`).
+2. **The gemma endpoint truncates at 2048 tokens.** The library warns *"Token indices sequence length
+   is longer than the specified maximum sequence length for this model (4653 > 2048). Running this
+   sequence through the model will result in indexing errors."* A parent longer than the window has
+   **no token vectors past 2048**, so late chunking over the whole parent is **impossible** for it.
+   Qwen3's window is far larger, so the existing corpus never met this — ⚠️ **the adoption introduces
+   it.** **351 children (9.2 %) cannot be late-chunked faithfully**: 281 have no overlapping vectors
+   at all and 70 straddle the cutoff.
+
+⚠️ **What this does NOT touch, stated before anyone reads it as a reason to revisit the adoption:**
+§I70 / §I72 / §I74 measured gemma on **pooled chunk embeddings, not late-chunked ones** — so the
+measured gains (+0.029248 vs nomic, +0.186476 vs the incumbent) are **unaffected**. Late chunking is
+**orthogonal** to the measured gain.
+
+⚠️ **Why it matters for Shape B, and why it is a DECISION rather than a bug fix.** The late-chunk pass
+*is* the Shape B re-embed's core, and as it stands **the pass cannot run at all**. The options:
+
+* **(a)** accept a **MIXED index** — late-chunked for 90.8 %, isolated (E3's own control) for 9.2 % —
+  and **pre-register** that mixture, because it is a different index from either pure arm;
+* **(b)** **split long parents** before late-chunking — new boundaries ⇒ **new chunk ids** ⇒ the cards
+  (keyed on `chunk_id`) and the graph (chunk nodes keyed by id) invalidate ⇒ **this is Shape A**;
+* **(c)** drop late chunking for gemma entirely (every child isolated) — simplest, abandons E3.
+
+**OWNER DECISION, NOT TAKEN.** ⚠️ And the Shape B cost estimate (**~48 min**, itself derived) is
+**moot until this is settled** — the pass produces nothing today.
+
+**Cost:** 20 cluster calls (~1 min) + an offline tokenizer pass over 341 parents. **No writes, no LLM
+calls, no re-parse.** Probe + artifacts: `logs/p1/step10/c0_late_chunk_timing.{py,json}` (the failure,
+`status: FAILED`, 20/20) and `c0_gemma_alignment_and_truncation.{py,json}` (the quantification).
+**Register against:** §I47 (a loud guard where a bare 400 or a silent shift would have hidden this),
+§E3 (late chunking's design and its own control), §I70/§I72/§I74 (**what** was measured, and that it
+was pooled), §I13/§I76 (the gemma adoption's other shape changes), §I44 (a fact that now exists on
+disk because a probe wrote it there).

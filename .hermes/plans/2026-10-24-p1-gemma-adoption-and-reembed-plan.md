@@ -277,6 +277,22 @@ invalidate the choice.
   `logs/p1/step10/c0_late_chunk_timing.py` → `c0_late_chunk_timing.json`
   (`status: BLOCKED_ON_TOKENIZER`, exit 3). ✅ The probe's corpus half DID verify: **341 parents,
   3,796 children, 11.13 children/parent**, reproducing the register exactly.
+  ✅ **UNBLOCKED AND RUN 2026-10-25 — AND IT FAILED, WHICH IS THE RESULT.** HF access was fixed (the
+  fine-grained token needed the public-gated-repos permission; a re-runnable probe is at
+  `logs/p1/step10/check_hf_gated_access.py`). C0 then ran and **20 of 20 parents FAILED**, exposing
+  two structural defects — ⚠️ **the late-chunk pass cannot run under gemma at all, so Shape B's
+  ~48 min estimate is MOOT until they are settled.** Full entry: **`IMPROVEMENTS.md` §I77**.
+  * **The alignment contract is off-by-TWO, not off-by-one** — gemma appends `<bos>` **and** `<eos>`,
+    so the content matrix is `matrix[1:-1]`. `_content_tokens` raises rather than mis-shifting, which
+    is why this surfaced loudly instead of silently corrupting every span.
+  * **The gemma endpoint truncates at 2048 tokens** (Qwen3's window is far larger, so the existing
+    corpus never met this). Quantified: **71/341 parents (20.8 %) exceed it**, and **351 of 3,796
+    children (9.2 %) cannot be late-chunked faithfully** — 281 entirely beyond, 70 straddling.
+  * ⇒ **This is a DESIGN DECISION, not a bug fix**: (a) accept a pre-registered MIXED index (90.8 %
+    late-chunked, 9.2 % isolated), (b) split long parents ⇒ new chunk ids ⇒ **Shape A**, or (c) drop
+    late chunking for gemma. **OWNER DECISION, NOT TAKEN.**
+  * ⚠️ **It does NOT touch §I70/§I72/§I74's measured gain** — those embedded the chunk text **pooled,
+    not late-chunked**. Late chunking is orthogonal to what was measured.
 * **Verifier C:** (i) `chunk_id` set before == after (byte-identical sorted list) — **this is the
   assertion the whole shape rests on**; (ii) every enabled lane present on **every** point, via the
   `scripts/verify_collection_lanes.py` written in this stage (⚠️ not a point count — §I33: a

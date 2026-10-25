@@ -132,8 +132,23 @@
 > ⚠️ **v3 is unaffected and stays valid: its `dense_full` is 768, and a dimension is immutable.**
 > **A2 is re-applied as the FIRST step of the re-embed window, not before it.**
 >
-> **9. ▶ NEXT, IN ORDER.** (a) **OWNER: `huggingface-cli login` + accept the Gemma licence at
-> https://huggingface.co/google/embeddinggemma-300m**, then C0 runs unchanged. (b) **Stage B** ✅ done.
+> **9c. ✅ HF ACCESS IS FIXED; ⚠️ C0 THEN RAN AND FAILED — read `IMPROVEMENTS.md` §I77.** The 403 was
+> the **fine-grained token's missing "public gated repositories" permission**; once fixed the gated
+> file returned **200** and the gemma tokenizer loaded through the project's own path
+> (`GemmaTokenizerFast`, vocab 262,144). **C0 ran: 20 of 20 parents FAILED.** Two structural defects:
+> **(1) the alignment contract is off-by-TWO for gemma** (`<bos>` + `<eos>`, so the content matrix is
+> `matrix[1:-1]`; `_content_tokens` raises rather than mis-shifting — the guard worked); **(2) the
+> gemma endpoint TRUNCATES at 2048 tokens**, which Qwen3's larger window meant the corpus never met —
+> **71/341 parents (20.8 %) exceed it** and **351/3,796 children (9.2 %) cannot be late-chunked
+> faithfully** (281 entirely beyond, 70 straddling). ⚠️ **The late-chunk pass — Shape B's core —
+> cannot run under gemma at all, so the ~48 min estimate is MOOT until this is settled, and it is a
+> DESIGN DECISION, not a bug fix:** (a) pre-registered MIXED index (90.8 % late-chunked / 9.2 %
+> isolated), (b) split long parents ⇒ new chunk ids ⇒ **Shape A**, or (c) drop late chunking for
+> gemma. **OWNER DECISION, NOT TAKEN.** ⚠️ **It does NOT touch §I70/§I72/§I74's measured gain** —
+> those embedded the text **pooled, not late-chunked**.
+>
+> **9. ▶ NEXT, IN ORDER.** (a) **OWNER: decide the late-chunk disposition (§I77)** — this now gates
+> Stage C. (b) **Stage B** ✅ done.
 > (c) **Stage C0** — time the late-chunk pass on **~20 PARENTS** (not chunks)
 > (`dense_full` 768, `dense_128` 128, `colbert`, `sparse`); seconds. (b) **Stage C0** — time the
 > late-chunk pass on **~20 PARENTS** (not chunks) and record the unit; this confirms signoff 4. (c)

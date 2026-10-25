@@ -1,7 +1,119 @@
 {
   "stage": "C0",
-  "status": "BLOCKED_ON_TOKENIZER",
+  "unit": "parents",
+  "collection": "knowledge_base_v2",
   "dense_model": "google/embeddinggemma-300m",
-  "error": "OSError: You are trying to access a gated repo.\nMake sure to have access to it at https://huggingface.co/google/embeddinggemma-300m.\n401 Client Error. (Request ID: Root=1-6ade063a-7376dd1d321ef9dc2b834ec8;24c781b3-7002-49f8-ae96-5136e3368065)\n\nCannot access gated repo for url https://huggingface.co/google/embeddinggemma-300m/resolve/main/config.json.\nAccess to model google/embeddinggemma-300m is restricted. You must have access to it and be authenticated to access it. Please log in.",
-  "unit": "parents"
+  "dense_dim": 768,
+  "dense_dim_low": 128,
+  "corpus": {
+    "parents": 341,
+    "children": 3796,
+    "children_per_parent": 11.132
+  },
+  "sampled_parents": 20,
+  "succeeded": 0,
+  "failed": [
+    {
+      "parent_id": 0,
+      "children": 1,
+      "error": "ValueError: Token alignment broken for parent 0: local tokenizer produced 49 tokens, the endpoint returned 51 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 1,
+      "children": 3,
+      "error": "ValueError: Token alignment broken for parent 1: local tokenizer produced 269 tokens, the endpoint returned 271 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 2,
+      "children": 8,
+      "error": "ValueError: Token alignment broken for parent 2: local tokenizer produced 601 tokens, the endpoint returned 603 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 3,
+      "children": 3,
+      "error": "ValueError: Token alignment broken for parent 3: local tokenizer produced 423 tokens, the endpoint returned 425 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 4,
+      "children": 5,
+      "error": "ValueError: Token alignment broken for parent 4: local tokenizer produced 634 tokens, the endpoint returned 636 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 5,
+      "children": 8,
+      "error": "ValueError: Token alignment broken for parent 5: local tokenizer produced 1250 tokens, the endpoint returned 1252 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 6,
+      "children": 5,
+      "error": "ValueError: Token alignment broken for parent 6: local tokenizer produced 819 tokens, the endpoint returned 821 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 7,
+      "children": 1,
+      "error": "ValueError: Token alignment broken for parent 7: local tokenizer produced 221 tokens, the endpoint returned 223 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 8,
+      "children": 1,
+      "error": "ValueError: Token alignment broken for parent 8: local tokenizer produced 9 tokens, the endpoint returned 11 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 9,
+      "children": 1,
+      "error": "ValueError: Token alignment broken for parent 9: local tokenizer produced 13 tokens, the endpoint returned 15 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 10,
+      "children": 1,
+      "error": "ValueError: Token alignment broken for parent 10: local tokenizer produced 28 tokens, the endpoint returned 30 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 11,
+      "children": 1,
+      "error": "ValueError: Token alignment broken for parent 11: local tokenizer produced 113 tokens, the endpoint returned 115 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 12,
+      "children": 19,
+      "error": "ValueError: Token alignment broken for parent 12: local tokenizer produced 1997 tokens, the endpoint returned 1999 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 13,
+      "children": 8,
+      "error": "ValueError: Token alignment broken for parent 13: local tokenizer produced 1304 tokens, the endpoint returned 1306 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 14,
+      "children": 6,
+      "error": "ValueError: Token alignment broken for parent 14: local tokenizer produced 1196 tokens, the endpoint returned 1198 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 15,
+      "children": 7,
+      "error": "ValueError: Token alignment broken for parent 15: local tokenizer produced 807 tokens, the endpoint returned 809 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 16,
+      "children": 27,
+      "error": "ValueError: Token alignment broken for parent 16: local tokenizer produced 4653 tokens, the endpoint returned 2048 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 17,
+      "children": 9,
+      "error": "ValueError: Token alignment broken for parent 17: local tokenizer produced 1235 tokens, the endpoint returned 1237 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 18,
+      "children": 6,
+      "error": "ValueError: Token alignment broken for parent 18: local tokenizer produced 727 tokens, the endpoint returned 729 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    },
+    {
+      "parent_id": 19,
+      "children": 19,
+      "error": "ValueError: Token alignment broken for parent 19: local tokenizer produced 4221 tokens, the endpoint returned 2048 vectors. Late chunking needs them equal (or the endpoint's single trailing special vector)."
+    }
+  ],
+  "tokenizer_load_seconds": 5.01,
+  "per_parent": []
 }

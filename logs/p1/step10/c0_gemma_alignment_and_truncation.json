@@ -1,0 +1,2822 @@
+{
+  "stage": "C0-followup",
+  "dense_model": "google/embeddinggemma-300m",
+  "max_seq": 2048,
+  "alignment": {
+    "no_special": 755,
+    "with_special": 757,
+    "delta": 2,
+    "is_bos_plus_eos": true
+  },
+  "parents": 341,
+  "parents_over_window": 71,
+  "over_window_parent_ids": [
+    16,
+    19,
+    21,
+    23,
+    25,
+    26,
+    27,
+    30,
+    36,
+    38,
+    48,
+    55,
+    56,
+    62,
+    73,
+    75,
+    86,
+    87,
+    89,
+    92,
+    93,
+    98,
+    100,
+    121,
+    124,
+    126,
+    128,
+    130,
+    133,
+    140,
+    148,
+    153,
+    161,
+    165,
+    171,
+    178,
+    179,
+    180,
+    181,
+    187,
+    190,
+    198,
+    217,
+    222,
+    223,
+    225,
+    227,
+    234,
+    239,
+    245,
+    247,
+    252,
+    255,
+    256,
+    257,
+    258,
+    259,
+    263,
+    272,
+    275,
+    277,
+    279,
+    312,
+    313,
+    314,
+    319,
+    335,
+    336,
+    337,
+    339,
+    340
+  ],
+  "children": {
+    "total": 3796,
+    "inside": 3445,
+    "straddle": 70,
+    "beyond": 281
+  },
+  "per_parent": [
+    {
+      "parent_id": 0,
+      "tokens": 49,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 1,
+      "tokens": 269,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 2,
+      "tokens": 601,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 3,
+      "tokens": 423,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 4,
+      "tokens": 634,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 5,
+      "tokens": 1250,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 6,
+      "tokens": 819,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 7,
+      "tokens": 221,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 8,
+      "tokens": 9,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 9,
+      "tokens": 13,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 10,
+      "tokens": 28,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 11,
+      "tokens": 113,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 12,
+      "tokens": 1997,
+      "children": 19,
+      "inside": 19,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 13,
+      "tokens": 1304,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 14,
+      "tokens": 1196,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 15,
+      "tokens": 807,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 16,
+      "tokens": 4653,
+      "children": 27,
+      "inside": 10,
+      "straddle": 1,
+      "beyond": 16
+    },
+    {
+      "parent_id": 17,
+      "tokens": 1235,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 18,
+      "tokens": 727,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 19,
+      "tokens": 4221,
+      "children": 19,
+      "inside": 9,
+      "straddle": 1,
+      "beyond": 9
+    },
+    {
+      "parent_id": 20,
+      "tokens": 1261,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 21,
+      "tokens": 2611,
+      "children": 21,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 5
+    },
+    {
+      "parent_id": 22,
+      "tokens": 1614,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 23,
+      "tokens": 2355,
+      "children": 20,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 24,
+      "tokens": 1756,
+      "children": 14,
+      "inside": 14,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 25,
+      "tokens": 2829,
+      "children": 25,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 6
+    },
+    {
+      "parent_id": 26,
+      "tokens": 2287,
+      "children": 20,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 27,
+      "tokens": 2641,
+      "children": 20,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 4
+    },
+    {
+      "parent_id": 28,
+      "tokens": 249,
+      "children": 2,
+      "inside": 2,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 29,
+      "tokens": 705,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 30,
+      "tokens": 3802,
+      "children": 28,
+      "inside": 13,
+      "straddle": 1,
+      "beyond": 14
+    },
+    {
+      "parent_id": 31,
+      "tokens": 1063,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 32,
+      "tokens": 743,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 33,
+      "tokens": 553,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 34,
+      "tokens": 1048,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 35,
+      "tokens": 1138,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 36,
+      "tokens": 3070,
+      "children": 20,
+      "inside": 12,
+      "straddle": 1,
+      "beyond": 7
+    },
+    {
+      "parent_id": 37,
+      "tokens": 512,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 38,
+      "tokens": 2111,
+      "children": 19,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 39,
+      "tokens": 527,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 40,
+      "tokens": 660,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 41,
+      "tokens": 1121,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 42,
+      "tokens": 1373,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 43,
+      "tokens": 553,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 44,
+      "tokens": 1443,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 45,
+      "tokens": 1629,
+      "children": 14,
+      "inside": 14,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 46,
+      "tokens": 15,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 47,
+      "tokens": 1638,
+      "children": 15,
+      "inside": 15,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 48,
+      "tokens": 2685,
+      "children": 15,
+      "inside": 9,
+      "straddle": 1,
+      "beyond": 5
+    },
+    {
+      "parent_id": 49,
+      "tokens": 1861,
+      "children": 17,
+      "inside": 17,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 50,
+      "tokens": 1790,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 51,
+      "tokens": 1135,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 52,
+      "tokens": 548,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 53,
+      "tokens": 609,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 54,
+      "tokens": 564,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 55,
+      "tokens": 2112,
+      "children": 16,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 56,
+      "tokens": 2054,
+      "children": 16,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 57,
+      "tokens": 538,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 58,
+      "tokens": 1806,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 59,
+      "tokens": 431,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 60,
+      "tokens": 983,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 61,
+      "tokens": 859,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 62,
+      "tokens": 3044,
+      "children": 20,
+      "inside": 12,
+      "straddle": 1,
+      "beyond": 7
+    },
+    {
+      "parent_id": 63,
+      "tokens": 1025,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 64,
+      "tokens": 899,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 65,
+      "tokens": 1735,
+      "children": 17,
+      "inside": 17,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 66,
+      "tokens": 1327,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 67,
+      "tokens": 285,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 68,
+      "tokens": 606,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 69,
+      "tokens": 677,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 70,
+      "tokens": 519,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 71,
+      "tokens": 1937,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 72,
+      "tokens": 1059,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 73,
+      "tokens": 3110,
+      "children": 9,
+      "inside": 0,
+      "straddle": 1,
+      "beyond": 8
+    },
+    {
+      "parent_id": 74,
+      "tokens": 1264,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 75,
+      "tokens": 2131,
+      "children": 13,
+      "inside": 12,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 76,
+      "tokens": 2047,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 77,
+      "tokens": 1031,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 78,
+      "tokens": 1138,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 79,
+      "tokens": 665,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 80,
+      "tokens": 942,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 81,
+      "tokens": 1419,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 82,
+      "tokens": 1206,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 83,
+      "tokens": 1362,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 84,
+      "tokens": 877,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 85,
+      "tokens": 1463,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 86,
+      "tokens": 2065,
+      "children": 17,
+      "inside": 16,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 87,
+      "tokens": 2484,
+      "children": 20,
+      "inside": 17,
+      "straddle": 1,
+      "beyond": 2
+    },
+    {
+      "parent_id": 88,
+      "tokens": 1132,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 89,
+      "tokens": 3124,
+      "children": 24,
+      "inside": 17,
+      "straddle": 1,
+      "beyond": 6
+    },
+    {
+      "parent_id": 90,
+      "tokens": 1406,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 91,
+      "tokens": 358,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 92,
+      "tokens": 2115,
+      "children": 19,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 93,
+      "tokens": 2306,
+      "children": 18,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 2
+    },
+    {
+      "parent_id": 94,
+      "tokens": 981,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 95,
+      "tokens": 1568,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 96,
+      "tokens": 1708,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 97,
+      "tokens": 473,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 98,
+      "tokens": 2605,
+      "children": 19,
+      "inside": 17,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 99,
+      "tokens": 1039,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 100,
+      "tokens": 2502,
+      "children": 20,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 4
+    },
+    {
+      "parent_id": 101,
+      "tokens": 1567,
+      "children": 14,
+      "inside": 14,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 102,
+      "tokens": 569,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 103,
+      "tokens": 1522,
+      "children": 14,
+      "inside": 14,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 104,
+      "tokens": 1777,
+      "children": 17,
+      "inside": 17,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 105,
+      "tokens": 367,
+      "children": 2,
+      "inside": 2,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 106,
+      "tokens": 497,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 107,
+      "tokens": 442,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 108,
+      "tokens": 1092,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 109,
+      "tokens": 894,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 110,
+      "tokens": 2041,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 111,
+      "tokens": 639,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 112,
+      "tokens": 1668,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 113,
+      "tokens": 1954,
+      "children": 15,
+      "inside": 15,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 114,
+      "tokens": 1592,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 115,
+      "tokens": 1631,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 116,
+      "tokens": 1238,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 117,
+      "tokens": 915,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 118,
+      "tokens": 1407,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 119,
+      "tokens": 1642,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 120,
+      "tokens": 1484,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 121,
+      "tokens": 2376,
+      "children": 20,
+      "inside": 17,
+      "straddle": 1,
+      "beyond": 2
+    },
+    {
+      "parent_id": 122,
+      "tokens": 1098,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 123,
+      "tokens": 1237,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 124,
+      "tokens": 2893,
+      "children": 20,
+      "inside": 14,
+      "straddle": 1,
+      "beyond": 5
+    },
+    {
+      "parent_id": 125,
+      "tokens": 874,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 126,
+      "tokens": 2335,
+      "children": 20,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 127,
+      "tokens": 1916,
+      "children": 18,
+      "inside": 18,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 128,
+      "tokens": 2995,
+      "children": 23,
+      "inside": 13,
+      "straddle": 1,
+      "beyond": 9
+    },
+    {
+      "parent_id": 129,
+      "tokens": 806,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 130,
+      "tokens": 2188,
+      "children": 22,
+      "inside": 20,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 131,
+      "tokens": 735,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 132,
+      "tokens": 521,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 133,
+      "tokens": 2153,
+      "children": 21,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 2
+    },
+    {
+      "parent_id": 134,
+      "tokens": 762,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 135,
+      "tokens": 765,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 136,
+      "tokens": 804,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 137,
+      "tokens": 971,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 138,
+      "tokens": 552,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 139,
+      "tokens": 1143,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 140,
+      "tokens": 2714,
+      "children": 17,
+      "inside": 12,
+      "straddle": 1,
+      "beyond": 4
+    },
+    {
+      "parent_id": 141,
+      "tokens": 1362,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 142,
+      "tokens": 1585,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 143,
+      "tokens": 775,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 144,
+      "tokens": 1549,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 145,
+      "tokens": 1679,
+      "children": 15,
+      "inside": 15,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 146,
+      "tokens": 1746,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 147,
+      "tokens": 1899,
+      "children": 14,
+      "inside": 14,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 148,
+      "tokens": 2579,
+      "children": 23,
+      "inside": 19,
+      "straddle": 1,
+      "beyond": 3
+    },
+    {
+      "parent_id": 149,
+      "tokens": 1651,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 150,
+      "tokens": 1740,
+      "children": 15,
+      "inside": 15,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 151,
+      "tokens": 1256,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 152,
+      "tokens": 1348,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 153,
+      "tokens": 2550,
+      "children": 19,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 3
+    },
+    {
+      "parent_id": 154,
+      "tokens": 1388,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 155,
+      "tokens": 1716,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 156,
+      "tokens": 915,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 157,
+      "tokens": 1054,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 158,
+      "tokens": 329,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 159,
+      "tokens": 857,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 160,
+      "tokens": 1817,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 161,
+      "tokens": 2458,
+      "children": 17,
+      "inside": 13,
+      "straddle": 1,
+      "beyond": 3
+    },
+    {
+      "parent_id": 162,
+      "tokens": 960,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 163,
+      "tokens": 644,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 164,
+      "tokens": 603,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 165,
+      "tokens": 2350,
+      "children": 18,
+      "inside": 16,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 166,
+      "tokens": 1162,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 167,
+      "tokens": 695,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 168,
+      "tokens": 560,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 169,
+      "tokens": 811,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 170,
+      "tokens": 803,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 171,
+      "tokens": 2400,
+      "children": 16,
+      "inside": 13,
+      "straddle": 1,
+      "beyond": 2
+    },
+    {
+      "parent_id": 172,
+      "tokens": 1057,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 173,
+      "tokens": 1165,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 174,
+      "tokens": 980,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 175,
+      "tokens": 901,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 176,
+      "tokens": 582,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 177,
+      "tokens": 864,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 178,
+      "tokens": 2240,
+      "children": 14,
+      "inside": 13,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 179,
+      "tokens": 2087,
+      "children": 21,
+      "inside": 20,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 180,
+      "tokens": 2444,
+      "children": 22,
+      "inside": 16,
+      "straddle": 1,
+      "beyond": 5
+    },
+    {
+      "parent_id": 181,
+      "tokens": 2316,
+      "children": 18,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 2
+    },
+    {
+      "parent_id": 182,
+      "tokens": 741,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 183,
+      "tokens": 947,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 184,
+      "tokens": 765,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 185,
+      "tokens": 1395,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 186,
+      "tokens": 1891,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 187,
+      "tokens": 2599,
+      "children": 27,
+      "inside": 24,
+      "straddle": 1,
+      "beyond": 2
+    },
+    {
+      "parent_id": 188,
+      "tokens": 134,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 189,
+      "tokens": 1075,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 190,
+      "tokens": 2136,
+      "children": 17,
+      "inside": 16,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 191,
+      "tokens": 731,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 192,
+      "tokens": 989,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 193,
+      "tokens": 1090,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 194,
+      "tokens": 1076,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 195,
+      "tokens": 1272,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 196,
+      "tokens": 1039,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 197,
+      "tokens": 1429,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 198,
+      "tokens": 2800,
+      "children": 23,
+      "inside": 17,
+      "straddle": 1,
+      "beyond": 5
+    },
+    {
+      "parent_id": 199,
+      "tokens": 1309,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 200,
+      "tokens": 164,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 201,
+      "tokens": 1976,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 202,
+      "tokens": 886,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 203,
+      "tokens": 707,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 204,
+      "tokens": 1779,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 205,
+      "tokens": 1442,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 206,
+      "tokens": 1160,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 207,
+      "tokens": 959,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 208,
+      "tokens": 1908,
+      "children": 14,
+      "inside": 14,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 209,
+      "tokens": 727,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 210,
+      "tokens": 353,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 211,
+      "tokens": 1458,
+      "children": 15,
+      "inside": 15,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 212,
+      "tokens": 1101,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 213,
+      "tokens": 511,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 214,
+      "tokens": 1146,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 215,
+      "tokens": 1024,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 216,
+      "tokens": 1055,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 217,
+      "tokens": 2876,
+      "children": 24,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 8
+    },
+    {
+      "parent_id": 218,
+      "tokens": 823,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 219,
+      "tokens": 1163,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 220,
+      "tokens": 1230,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 221,
+      "tokens": 324,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 222,
+      "tokens": 2077,
+      "children": 17,
+      "inside": 16,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 223,
+      "tokens": 2773,
+      "children": 18,
+      "inside": 13,
+      "straddle": 1,
+      "beyond": 4
+    },
+    {
+      "parent_id": 224,
+      "tokens": 766,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 225,
+      "tokens": 2206,
+      "children": 21,
+      "inside": 19,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 226,
+      "tokens": 553,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 227,
+      "tokens": 2488,
+      "children": 23,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 4
+    },
+    {
+      "parent_id": 228,
+      "tokens": 208,
+      "children": 2,
+      "inside": 2,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 229,
+      "tokens": 955,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 230,
+      "tokens": 984,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 231,
+      "tokens": 1131,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 232,
+      "tokens": 813,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 233,
+      "tokens": 1230,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 234,
+      "tokens": 2753,
+      "children": 22,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 6
+    },
+    {
+      "parent_id": 235,
+      "tokens": 165,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 236,
+      "tokens": 743,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 237,
+      "tokens": 755,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 238,
+      "tokens": 853,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 239,
+      "tokens": 2431,
+      "children": 19,
+      "inside": 14,
+      "straddle": 1,
+      "beyond": 4
+    },
+    {
+      "parent_id": 240,
+      "tokens": 1046,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 241,
+      "tokens": 1267,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 242,
+      "tokens": 801,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 243,
+      "tokens": 1829,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 244,
+      "tokens": 1238,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 245,
+      "tokens": 3030,
+      "children": 27,
+      "inside": 17,
+      "straddle": 1,
+      "beyond": 9
+    },
+    {
+      "parent_id": 246,
+      "tokens": 635,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 247,
+      "tokens": 3390,
+      "children": 25,
+      "inside": 14,
+      "straddle": 1,
+      "beyond": 10
+    },
+    {
+      "parent_id": 248,
+      "tokens": 1745,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 249,
+      "tokens": 1251,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 250,
+      "tokens": 680,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 251,
+      "tokens": 950,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 252,
+      "tokens": 2497,
+      "children": 26,
+      "inside": 20,
+      "straddle": 1,
+      "beyond": 5
+    },
+    {
+      "parent_id": 253,
+      "tokens": 1870,
+      "children": 14,
+      "inside": 14,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 254,
+      "tokens": 1779,
+      "children": 15,
+      "inside": 15,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 255,
+      "tokens": 2359,
+      "children": 20,
+      "inside": 19,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 256,
+      "tokens": 2576,
+      "children": 19,
+      "inside": 14,
+      "straddle": 1,
+      "beyond": 4
+    },
+    {
+      "parent_id": 257,
+      "tokens": 2208,
+      "children": 17,
+      "inside": 15,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 258,
+      "tokens": 2113,
+      "children": 19,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 259,
+      "tokens": 2934,
+      "children": 25,
+      "inside": 16,
+      "straddle": 1,
+      "beyond": 8
+    },
+    {
+      "parent_id": 260,
+      "tokens": 872,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 261,
+      "tokens": 1639,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 262,
+      "tokens": 1402,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 263,
+      "tokens": 2136,
+      "children": 20,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 264,
+      "tokens": 1901,
+      "children": 14,
+      "inside": 14,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 265,
+      "tokens": 921,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 266,
+      "tokens": 1614,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 267,
+      "tokens": 626,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 268,
+      "tokens": 1840,
+      "children": 16,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 269,
+      "tokens": 549,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 270,
+      "tokens": 1973,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 271,
+      "tokens": 1257,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 272,
+      "tokens": 2508,
+      "children": 18,
+      "inside": 14,
+      "straddle": 1,
+      "beyond": 3
+    },
+    {
+      "parent_id": 273,
+      "tokens": 1664,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 274,
+      "tokens": 1020,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 275,
+      "tokens": 2283,
+      "children": 22,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 3
+    },
+    {
+      "parent_id": 276,
+      "tokens": 203,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 277,
+      "tokens": 2332,
+      "children": 17,
+      "inside": 14,
+      "straddle": 1,
+      "beyond": 2
+    },
+    {
+      "parent_id": 278,
+      "tokens": 2041,
+      "children": 14,
+      "inside": 14,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 279,
+      "tokens": 2532,
+      "children": 25,
+      "inside": 18,
+      "straddle": 1,
+      "beyond": 6
+    },
+    {
+      "parent_id": 280,
+      "tokens": 1214,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 281,
+      "tokens": 959,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 282,
+      "tokens": 1199,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 283,
+      "tokens": 1010,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 284,
+      "tokens": 1295,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 285,
+      "tokens": 1616,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 286,
+      "tokens": 1655,
+      "children": 18,
+      "inside": 18,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 287,
+      "tokens": 940,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 288,
+      "tokens": 40,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 289,
+      "tokens": 1574,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 290,
+      "tokens": 735,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 291,
+      "tokens": 718,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 292,
+      "tokens": 1604,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 293,
+      "tokens": 1059,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 294,
+      "tokens": 1479,
+      "children": 11,
+      "inside": 11,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 295,
+      "tokens": 1648,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 296,
+      "tokens": 1065,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 297,
+      "tokens": 911,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 298,
+      "tokens": 1042,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 299,
+      "tokens": 1183,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 300,
+      "tokens": 1227,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 301,
+      "tokens": 171,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 302,
+      "tokens": 1958,
+      "children": 15,
+      "inside": 15,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 303,
+      "tokens": 839,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 304,
+      "tokens": 674,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 305,
+      "tokens": 1185,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 306,
+      "tokens": 930,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 307,
+      "tokens": 1504,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 308,
+      "tokens": 1729,
+      "children": 18,
+      "inside": 18,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 309,
+      "tokens": 369,
+      "children": 4,
+      "inside": 4,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 310,
+      "tokens": 1728,
+      "children": 18,
+      "inside": 18,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 311,
+      "tokens": 1035,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 312,
+      "tokens": 2054,
+      "children": 18,
+      "inside": 17,
+      "straddle": 1,
+      "beyond": 0
+    },
+    {
+      "parent_id": 313,
+      "tokens": 2171,
+      "children": 17,
+      "inside": 16,
+      "straddle": 0,
+      "beyond": 1
+    },
+    {
+      "parent_id": 314,
+      "tokens": 2270,
+      "children": 19,
+      "inside": 17,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 315,
+      "tokens": 416,
+      "children": 5,
+      "inside": 5,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 316,
+      "tokens": 60,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 317,
+      "tokens": 2040,
+      "children": 14,
+      "inside": 14,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 318,
+      "tokens": 451,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 319,
+      "tokens": 2160,
+      "children": 15,
+      "inside": 13,
+      "straddle": 1,
+      "beyond": 1
+    },
+    {
+      "parent_id": 320,
+      "tokens": 1248,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 321,
+      "tokens": 809,
+      "children": 6,
+      "inside": 6,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 322,
+      "tokens": 1530,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 323,
+      "tokens": 1254,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 324,
+      "tokens": 778,
+      "children": 9,
+      "inside": 9,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 325,
+      "tokens": 414,
+      "children": 1,
+      "inside": 1,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 326,
+      "tokens": 1149,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 327,
+      "tokens": 1465,
+      "children": 12,
+      "inside": 12,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 328,
+      "tokens": 1104,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 329,
+      "tokens": 1059,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 330,
+      "tokens": 2017,
+      "children": 7,
+      "inside": 7,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 331,
+      "tokens": 1861,
+      "children": 13,
+      "inside": 13,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 332,
+      "tokens": 1772,
+      "children": 10,
+      "inside": 10,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 333,
+      "tokens": 1388,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 334,
+      "tokens": 1618,
+      "children": 8,
+      "inside": 8,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 335,
+      "tokens": 5880,
+      "children": 21,
+      "inside": 5,
+      "straddle": 1,
+      "beyond": 15
+    },
+    {
+      "parent_id": 336,
+      "tokens": 3985,
+      "children": 19,
+      "inside": 7,
+      "straddle": 1,
+      "beyond": 11
+    },
+    {
+      "parent_id": 337,
+      "tokens": 3199,
+      "children": 15,
+      "inside": 12,
+      "straddle": 1,
+      "beyond": 2
+    },
+    {
+      "parent_id": 338,
+      "tokens": 1003,
+      "children": 3,
+      "inside": 3,
+      "straddle": 0,
+      "beyond": 0
+    },
+    {
+      "parent_id": 339,
+      "tokens": 2694,
+      "children": 15,
+      "inside": 10,
+      "straddle": 1,
+      "beyond": 4
+    },
+    {
+      "parent_id": 340,
+      "tokens": 5133,
+      "children": 29,
+      "inside": 9,
+      "straddle": 1,
+      "beyond": 19
+    }
+  ]
+}
