@@ -4,9 +4,10 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-25, session 18 (S1–S3 committed; `knowledge_base_v3` POPULATED at 3,796
-> points / 4 lanes; the classifier is retrained at 768 and verified; ⚠️ the preflight has 2 EXPECTED
-> blockers — the derived collections are still 1024d. Next: re-index them, then S5).**
+> **Last updated: 2026-10-25, session 18 (S1–S4 ALL DONE AND COMMITTED: `knowledge_base_v3` POPULATED
+> at 3,796 points / 4 lanes, the classifier retrained at 768, the derived collections re-indexed at
+> 768, and **the preflight exits 0**. Next session: S5 — the §I68 fix, then the ONE pre-registered
+> product-endpoint run).**
 >
 > ## ▶ SESSION 18 — WHAT HAPPENED, AND WHAT IS NEXT
 >
@@ -107,20 +108,27 @@
 > **moderate** (synthetic training does not transfer cleanly to real queries — reported, not buried);
 > and a **real query through the product funnel returns 5 hits** (V6).
 >
-> **15. ⚠️ S4's PREFLIGHT HALF IS *NOT* DONE — and the gate was NOT edited to hide it.**
-> `scripts/preflight.py` against v3 exits **1** with exactly **two** blockers:
-> `derivative_artifacts` (73,406) and `concept_embeddings` (6,065) are **1024d while the query side is
-> 768d**, so every query against those lanes is REJECTED. **This is the mid-migration trap the plan
-> predicted (§I26/§I12/§I47)** — they were built at the old width and have not been re-indexed. It is
-> **not a code fix**. Everything else PASSES: v3 3,796; classifier 768; **graph↔Qdrant 0/3,533 absent
-> (0.0 %)** — ⚠️ and that is a real finding: the graph matches v3 **because Shape B preserved the
-> chunk ids** (§I81), so the graph needed no rebuild; Memgraph up; all endpoints.
+> **15. ✅ S4 IS COMPLETE — the preflight is CLEAN (exit 0). Read `IMPROVEMENTS.md` §I83.** The two
+> blockers were the derived collections at the retired **1024d**. They were dropped via the
+> **allowlisted** `scripts/reset_derived_collections.py` (NOT `reset_for_reingest.py`, which would also
+> clear `knowledge_base` + SQLite), recreated at **768** by `get_qdrant()`, and re-populated:
+> **`derivative_artifacts` 73,406** (`index_derivative_artifacts.py --clear --doc-id …`, ~26 min) and
+> **`concept_embeddings` 6,065** (NEW `logs/p1/step10/reindex_concepts_768.py`, ~24 min).
+> ⚠️ **The concept re-embed did NOT rebuild the graph** — `run_phase3 --graph-only` would re-extract
+> concepts (an LLM pass, ~1 h 6 m) and **double every `RELATES_TO` weight** unless the graph is
+> cleared. Only the vectors changed width; the graph was valid, so only the NAMES were re-embedded
+> (reproducing `graph_builder._upsert_concepts_to_qdrant`'s id scheme and its `embed_query`
+> both-sides convention). **Result: `preflight.py` exits 0 — *"All checks passed — safe to run the
+> baseline."*** v3 3,796; both derived dim checks **768d == dense_dim**; graph↔Qdrant 0/3,533 absent.
+> ⚠️ DA reads **0 points until it finishes** (it buffers all points, then upserts in 256-batches) —
+> not a stall.
 >
-> **16. ▶ NEXT — re-index the derived collections at 768, then S5.** (a) **Re-index
-> `derivative_artifacts` + `concept_embeddings`** for the 768 embedder (drop + re-index; §I12/§I13),
-> then re-run the preflight for **exit 0**. (b) **S5**: §I68's client-side-RRF fix, then the ONE
-> pre-registered product-endpoint run (nomic/v3 vs qwen3/v2, HyDE ON and frozen) + the §I66
-> decomposition. (c) S6, the fine-tune (**signoff 6** open). ⚠️ `data/embed_cache/` (874 dirs) cannot
+> **16. ▶ NEXT — S5.** (a) **§I68's client-side-RRF fix** (Qdrant's server-side RRF is
+> nondeterministic; `store._rrf_merge` is the in-repo replacement — blast radius: one source file,
+> **two test files that break by construction**, one harness). (b) The **ONE pre-registered
+> product-endpoint run**: **nomic/v3 vs qwen3/v2**, 133 queries, paired, **HyDE ON and frozen** via
+> `data/hyde_cache/`; pre-registration **committed ALONE first**. (c) The **§I66 decomposition**
+> alongside it. (d) S6, the fine-tune (**signoff 6** open). ⚠️ `data/embed_cache/` (874 dirs) cannot
 > be reused. ⚠️ Still carried: **signoff 4** (accept the §I79 measurement), **signoff 3** (re-confirm
 > Shape B), the **A2 `.env` flip**, the arm-2 harness, §I56's DA lane, §G2's V5 build, §G5/§I2.
 >

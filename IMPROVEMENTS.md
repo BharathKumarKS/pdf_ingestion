@@ -6801,3 +6801,43 @@ chunk ids match v3 because **Shape B preserved them** (§I81) — the graph did 
 **Register against:** §I26 (the mid-migration trap this is an instance of), §I12/§I13/§I47 (the
 derived-collection width), §I81 (the id preservation that keeps the graph valid), §I79/§I70 (nomic),
 §I47 (a count-based check holds a dead lane green).
+
+---
+
+### I83. 2026-10-25 — ✅ the preflight is CLEAN (exit 0): the two derived collections are re-indexed at 768, and the concept re-embed did NOT rebuild the graph
+
+**The blockers, and their removal.** `derivative_artifacts` (73,406) and `concept_embeddings`
+(6,065) were at the retired **1024d**. Both were dropped with
+`scripts/reset_derived_collections.py --collections derivative_artifacts concept_embeddings --yes` —
+⚠️ the **allowlisted** path, which refuses any other name. **`reset_for_reingest.py` is wrong here**:
+it also clears `knowledge_base` and every SQLite row. `get_qdrant()` then recreated both at
+`dense_dim` = **768**.
+
+**Re-population — two different mechanisms, deliberately:**
+
+* **`derivative_artifacts`** — `scripts/index_derivative_artifacts.py --clear --doc-id 7ba61432-…`
+  (SQLite active cards; `embed_documents`, because these are passages). **73,406 points**, ~26 min
+  (measured: a 32-doc embed call is **0.67 s** → 73,406/32 ≈ 2,294 calls). ⚠️ **The script
+  accumulates every point in memory and upserts in 256-batches at the END**, so the collection reads
+  **0 until it finishes** — that is not a stall, and reading it as one would have killed a healthy run.
+* **`concept_embeddings`** — NEW `logs/p1/step10/reindex_concepts_768.py`, **6,065 points in
+  1,433.7 s**. ⚠️ **It does NOT run `run_phase3.py --graph-only`**: that re-EXTRACTS concepts from
+  every chunk (an LLM pass over 3,533 chunks, ~1 h 6 m) and **doubles every `RELATES_TO` weight**
+  unless the graph is cleared first. **Only the vectors changed width** — the graph is valid — so
+  only the **names** needed re-embedding. It reproduces `graph_builder._upsert_concepts_to_qdrant`
+  exactly (`id = uuid5(NAMESPACE_DNS, "concept:<name>")`, payload `{name, type}`) and uses
+  **`embed_query`** on the names, which is the graph builder's deliberate **both-sides** convention
+  (§I12's note) — `embed_documents` here would put the index and the query in different spaces.
+
+**Result: `scripts/preflight.py` against v3 exits 0 — *"All checks passed — safe to run the
+baseline."*** The two dim checks now read **`768d == dense_dim`**; `knowledge_base_v3` 3,796;
+`graph.matches-qdrant` **0/3,533 absent**; `intent-classifier` 768; Memgraph up. **S4 is complete.**
+
+⚠️ **Cost:** ~50 min wall for the re-population (DA ~26, concepts ~24). The concept pass was
+**4× the first estimate** (0.06 s/name suggested ~6 min): the builder's per-name `embed_query` loop
+is **6,065 sequential round-trips**, and that is the cost of matching its convention rather than
+batching.
+
+**Register against:** §I12/§I13/§I47 (the dim mismatch these two collections carried), §I26 (the
+trap that surfaced it), §I82 (S4's first half), §I75 (the graph is up and valid), §I81 (why the graph
+survived).

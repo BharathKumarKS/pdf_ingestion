@@ -1,0 +1,66 @@
+2026-10-25 15:32:30.510 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-10-25 15:32:30.585 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-25 15:32:30.750 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+
+Phase A — Derivative Artifact Indexing
+  Collection : derivative_artifacts
+  Card types : ['summary', 'definition', 'example', 'misconception', 'question',
+'objective', 'formula', 'factoid']
+  Tenant     : all
+2026-10-25 15:32:30.830 | INFO     | src.core.database:_ensure_da_collection:371 - Created Qdrant DA collection 'derivative_artifacts'
+  Cleared existing DA vectors.
+  Cards found: 75662 (before chapter filter)
+  After filter: 73406 kept, 2256 skipped (non-chapter / front matter)
+  Embedding cards... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+  Upserting to Qdrant... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+   DA Indexing Summary   
+┏━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Card Type     ┃ Count ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ definition    │  2589 │
+│ example       │   890 │
+│ factoid       │ 29625 │
+│ formula       │  1219 │
+│ misconception │  3366 │
+│ objective     │  3667 │
+│ question      │ 28374 │
+│ summary       │  3676 │
+│ Total         │ 73406 │
+└───────────────┴───────┘
+
+Done! 73406 vectors in 'derivative_artifacts'.
+
+Next: run the evaluation to measure Phase A lift:
+  uv run python scripts/evaluate_rag.py --retrieval-only --skip-visual 
+--run-name phase_a
+DA_EXIT=0
+2026-10-25 15:47:10.931 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+target 'concept_embeddings': 768d, 0 points
+Memgraph: 6065 Concept names to embed
+  [256/6065] upserted 256  rolling 0.062s/name
+  [512/6065] upserted 512  rolling 0.062s/name
+  [768/6065] upserted 768  rolling 0.068s/name
+  [1024/6065] upserted 1,024  rolling 0.066s/name
+  [1280/6065] upserted 1,280  rolling 0.057s/name
+  [1536/6065] upserted 1,536  rolling 0.055s/name
+  [1792/6065] upserted 1,792  rolling 0.059s/name
+  [2048/6065] upserted 2,048  rolling 0.055s/name
+  [2304/6065] upserted 2,304  rolling 0.059s/name
+  [2560/6065] upserted 2,560  rolling 0.059s/name
+  [2816/6065] upserted 2,816  rolling 0.057s/name
+  [3072/6065] upserted 3,072  rolling 0.057s/name
+  [3328/6065] upserted 3,328  rolling 0.062s/name
+  [3584/6065] upserted 3,584  rolling 0.062s/name
+  [3840/6065] upserted 3,840  rolling 0.060s/name
+  [4096/6065] upserted 4,096  rolling 0.061s/name
+  [4352/6065] upserted 4,352  rolling 0.064s/name
+  [4608/6065] upserted 4,608  rolling 0.061s/name
+  [4864/6065] upserted 4,864  rolling 0.066s/name
+2026-10-25 16:09:59.424 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ReadError: [Errno 54] Connection reset by peer) — retry 1/3 in 2.5s
+  [5120/6065] upserted 5,120  rolling 0.160s/name
+  [5376/6065] upserted 5,376  rolling 0.053s/name
+  [5632/6065] upserted 5,632  rolling 0.044s/name
+  [5888/6065] upserted 5,888  rolling 0.053s/name
+
+upserted 6,065 concept points in 1433.7s; collection now 6,065 points at 768d
+CONCEPT_EXIT=0
