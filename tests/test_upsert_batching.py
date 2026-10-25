@@ -41,8 +41,8 @@ def _point(n_tokens: int = 100, text_len: int = 1_200) -> PointStruct:
     return PointStruct(
         id="00000000-0000-0000-0000-000000000001",
         vector={
-            "dense_64": rng.random(DIM_LOW).astype(np.float32).tolist(),
-            "dense_1024": rng.random(DENSE_DIM).astype(np.float32).tolist(),
+            "dense_128": rng.random(DIM_LOW).astype(np.float32).tolist(),
+            "dense_full": rng.random(DENSE_DIM).astype(np.float32).tolist(),
             "colbert": rng.random((n_tokens, COLBERT_DIM)).astype(np.float32).tolist(),
             "sparse": QSparseVector(indices=list(range(60)), values=[0.5] * 60),
         },

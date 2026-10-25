@@ -88,11 +88,18 @@ def _iter_upsert_batches(
 
 # ── Qdrant payload builder ─────────────────────────────────────────────────
 
-# The KB collection's full-dimension dense vector. The re-ingest retires ``dense_768``
-# (Nomic) in favour of ``dense_1024`` (Qwen3, plan R2), but the deployed ``knowledge_base``
-# still carries ``dense_768`` and R1 keeps it queryable so old and new can be compared. So
-# the name is **read off the collection** rather than hard-coded — newest first.
-_DENSE_VECTOR_NAMES = ("dense_1024", "dense_768")
+# The KB collection's full-dimension dense vector. The name is **read off the collection**
+# rather than hard-coded — newest first. ``dense_full`` is the width-free name a NEW collection
+# declares (the gemma re-ingest); ``dense_1024`` (Qwen3, plan R2) and ``dense_768`` (Nomic, the
+# deployed ``knowledge_base``) stay readable because R1 keeps the old collections queryable so
+# old and new can be compared.
+_DENSE_VECTOR_NAMES = ("dense_full", "dense_1024", "dense_768")
+
+# The low-dimension (MRL) dense vector — the retrieval funnel's fast first stage. Same rule:
+# read off the collection, newest first. ``dense_128`` is what the gemma re-ingest declares;
+# ``dense_64`` is what ``knowledge_base_v2`` declares and MUST stay readable, because the
+# gemma adoption's product-endpoint A/B queries v2 as its baseline arm.
+_LOW_VECTOR_NAMES = ("dense_128", "dense_64")
 
 
 def _dense_name_from(vectors_cfg) -> str | None:
@@ -102,6 +109,65 @@ def _dense_name_from(vectors_cfg) -> str | None:
             if name in vectors_cfg:
                 return name
     return None
+
+
+def _low_name_from(vectors_cfg) -> str | None:
+    """The collection's low-dimension dense vector name, or None for a legacy schema."""
+    if isinstance(vectors_cfg, dict):
+        for name in _LOW_VECTOR_NAMES:
+            if name in vectors_cfg:
+                return name
+    return None
+
+
+def _lane_size(vectors_cfg, name: str | None) -> int | None:
+    """The declared width of a named dense lane, or None when it cannot be read.
+
+    ``None`` is the honest answer for a fake/stub schema (tests pass ``object()``) and for a
+    legacy layout — callers fall back to the configured width, never to a guess.
+    """
+    if not isinstance(vectors_cfg, dict) or name is None:
+        return None
+    return getattr(vectors_cfg.get(name), "size", None)
+
+
+def _resolve_low_lane(vectors_cfg, cfg) -> tuple[str, int]:
+    """``(lane name, lane width)`` for the low-dimension (MRL) dense lane.
+
+    ⚠️ **The WIDTH is resolved off the COLLECTION, not from ``cfg.dense_dim_low``**, and the two
+    genuinely differ while both collections are live: ``knowledge_base_v2`` declares its low lane
+    at **64d** and ``knowledge_base_v3`` at **128d**, and the gemma adoption's Stage F queries
+    **both**. Slicing the query vector to the config value would send a 128d vector to v2's 64d
+    lane — losing the baseline arm of the A/B, or worse, searching at a silently wrong width.
+
+    ``cfg.dense_dim_low`` is the width a **NEW** collection is created at
+    (``_ensure_collection``), and the fallback when the schema cannot be read. Where the two
+    disagree the collection's own width wins — it is the only one Qdrant will accept, and a
+    deployed collection is not re-created just because a config default moved.
+    """
+    name = _low_name_from(vectors_cfg) or _LOW_VECTOR_NAMES[0]
+    size = _lane_size(vectors_cfg, name)
+    if size is None:                        # legacy or stub schema — nothing to read
+        return name, cfg.dense_dim_low
+    return name, size
+
+
+def _assert_lane_width(low, low_name: str, low_size: int, cfg) -> None:
+    """A vector written into a named lane must have that lane's width.
+
+    ⚠️ The mismatch this catches is the §I13/§I47 class: a 128d vector into a 64d lane is a bare
+    Qdrant 400 with no fix in it, so it raises here naming the lane, both widths and the remedy.
+    It is checked on the **write** path only — on the read path the slice is taken *to* the lane's
+    width, so the two cannot disagree by construction.
+    """
+    got = int(np.asarray(low).shape[0])
+    if got != low_size:
+        raise RuntimeError(
+            f"the low-dimension lane '{low_name}' on '{cfg.qdrant_collection}' is {low_size}d, but "
+            f"this vector is {got}d — Qdrant would reject the write. Write into a collection whose "
+            f"'{low_name}' lane is {got}d (QDRANT_COLLECTION), or set dense_dim_low={got} and "
+            f"re-ingest. Nothing was written."
+        )
 
 
 def _dense_vectors(ec, dim_low: int | None = None) -> tuple[np.ndarray, np.ndarray]:
@@ -191,12 +257,12 @@ class DocumentStore:
     def _dense_vector_name(self) -> str:
         """Name of this collection's full-dimension dense vector.
 
-        ``dense_1024`` on a collection built by the re-ingest, ``dense_768`` on the deployed
-        one. Defaults to the re-ingest name when the schema cannot be read: that is what
-        ``_ensure_collection`` creates, so the failure mode is a loud dimension error rather
-        than a silent write to a vector that does not exist.
+        ``dense_full`` on a collection built by the gemma re-ingest, ``dense_1024`` after the
+        earlier one (Qwen3), ``dense_768`` on the deployed one. Defaults to the newest name when
+        the schema cannot be read: that is what ``_ensure_collection`` creates, so the failure
+        mode is a loud dimension error rather than a silent write to a vector that does not exist.
         """
-        return _dense_name_from(self._collection_vectors()) or "dense_1024"
+        return _dense_name_from(self._collection_vectors()) or "dense_full"
 
     # ── Phase 1: write ────────────────────────────────────────────────────
 
@@ -211,9 +277,19 @@ class DocumentStore:
     ) -> str:
         doc_id = parsed_doc.document_id
         meta   = extra_meta or {}
-        # The full-dimension dense slot of THIS collection — dense_1024 after the re-ingest,
-        # dense_768 on the deployed one (R1). Resolved once per document.
+        # The dense slots of THIS collection, resolved once per document off the collection
+        # itself (§I49 Finding 1): the full-dimension name is dense_full after the gemma
+        # re-ingest, dense_1024 after the Qwen3 one, dense_768 on the deployed collection (R1);
+        # the low-dimension name is dense_128 on a new collection, dense_64 on v2.
         dense_name = self._dense_vector_name()
+        low_name, low_size = _resolve_low_lane(self._collection_vectors(), self._cfg)
+        if low_size != self._cfg.dense_dim_low:
+            logger.warning(
+                "collection '{}' declares its low-dimension lane '{}' at {}d while "
+                "dense_dim_low is {}d — writing at the collection's width (it is the only one "
+                "Qdrant accepts); the config value is the width a NEW collection is created at",
+                self._cfg.qdrant_collection, low_name, low_size, self._cfg.dense_dim_low,
+            )
 
         db_doc = Document(
             id=doc_id,
@@ -283,9 +359,10 @@ class DocumentStore:
 
         points = []
         for i, ec in enumerate(embedded_chunks):
-            full, low = _dense_vectors(ec, dim_low=self._cfg.dense_dim_low)
+            full, low = _dense_vectors(ec, dim_low=low_size)
+            _assert_lane_width(low, low_name, low_size, self._cfg)
             vector: dict = {
-                "dense_64":  low.tolist(),
+                low_name:    low.tolist(),
                 dense_name:  full.tolist(),
             }
             if self._cfg.colbert_enabled and colbert_mats[i] is not None:
@@ -413,12 +490,14 @@ class DocumentStore:
         """
         Notebook-style retrieval funnel (see retrieval_funnel.ipynb):
 
-          [dense_64(1000) → dense_1024(500)]  ─┐
-          [splade(250), if enabled]            ─┤ → RRF over the live lanes
-                                                └─  or dense_1024 alone if SPLADE is off
+          [dense_low(1000) → dense_full(500)]  ─┐
+          [splade(250), if enabled]             ─┤ → RRF over the live lanes
+                                                 └─  or dense_full alone if SPLADE is off
 
-        The dense names are read off the collection (``dense_1024`` after the re-ingest,
-        ``dense_768`` on the deployed one). Legacy fallback for old single-vector collections.
+        ⚠️ BOTH dense lane names AND the low lane's WIDTH are read off the collection. The low
+        lane is ``dense_128`` (128d) on a gemma-built collection and ``dense_64`` (64d) on
+        ``knowledge_base_v2``; the full lane is ``dense_full`` / ``dense_1024`` / ``dense_768``.
+        Legacy fallback for old single-vector collections.
         Local file Qdrant skips ColBERT (Python MaxSim bug on real collections).
         """
         from qdrant_client.models import Fusion, FusionQuery, Prefetch
@@ -429,8 +508,9 @@ class DocumentStore:
         # logs and returns None when the collection cannot be read, so an outage can no longer
         # surface as an UnboundLocalError on the next line (the recorded failure mode).
         vectors_cfg = self._collection_vectors()
-        has_new_schema = isinstance(vectors_cfg, dict) and "dense_64" in vectors_cfg
-        dense_name = _dense_name_from(vectors_cfg) or "dense_1024"
+        low_name = _low_name_from(vectors_cfg)
+        has_new_schema = low_name is not None
+        dense_name = _dense_name_from(vectors_cfg) or "dense_full"
 
         if not has_new_schema:
             using = "dense" if isinstance(vectors_cfg, dict) and "dense" in vectors_cfg else None
@@ -443,12 +523,17 @@ class DocumentStore:
                 with_payload=True,
             )
 
-        # Stage 1+2: dense funnel (always)
-        vec_64 = query_vector[:cfg.dense_dim_low].copy()
-        vec_64 /= np.linalg.norm(vec_64) + 1e-9
+        # Stage 1+2: dense funnel (always). ⚠️ The low lane's NAME and WIDTH both come off the
+        # collection, never from `cfg.dense_dim_low`: v2's low lane is 64d and v3's is 128d, and
+        # the gemma A/B queries both — slicing to the config value would send a 128d vector to
+        # v2's 64d lane and lose the baseline arm. `cfg.dense_dim_low` is the width a NEW
+        # collection is created at (`_ensure_collection`), not a property of every collection.
+        low_name, low_size = _resolve_low_lane(vectors_cfg, cfg)
+        vec_low = query_vector[:low_size].copy()
+        vec_low /= np.linalg.norm(vec_low) + 1e-9
 
         dense_prefetch = Prefetch(
-            prefetch=[Prefetch(query=vec_64.tolist(), using="dense_64",
+            prefetch=[Prefetch(query=vec_low.tolist(), using=low_name,
                                limit=cfg.dense_prefetch_limit)],
             query=query_vector.tolist(),
             using=dense_name,
@@ -1127,17 +1212,20 @@ class DocumentStore:
             session.commit()
 
         points = []
+        # Same rule as the chunk write path: the low lane's name AND width come off the collection.
+        low_name, low_size = _resolve_low_lane(self._collection_vectors(), self._cfg)
         for nd in nodes:
             if nd.embedding is None:
                 continue
             vec_full = nd.embedding.tolist()
-            vec_64 = nd.embedding[:self._cfg.dense_dim_low].copy()
-            vec_64 /= float(np.linalg.norm(vec_64)) + 1e-9
+            vec_low = nd.embedding[:low_size].copy()
+            _assert_lane_width(vec_low, low_name, low_size, self._cfg)
+            vec_low /= float(np.linalg.norm(vec_low)) + 1e-9
             # Step 7 moved ``raptor_tree._embed`` onto the dense lane, so ``nd.embedding`` is
-            # the same 1024d cluster vector as the chunks — one space, one collection slot.
+            # the same cluster vector as the chunks — one space, one collection slot.
             points.append(PointStruct(
                 id=nd.qdrant_point_id,
-                vector={"dense_64": vec_64.tolist(), self._dense_vector_name(): vec_full},
+                vector={low_name: vec_low.tolist(), self._dense_vector_name(): vec_full},
                 payload={
                     "tenant_id":          nd.tenant_id,
                     "source_type":        "raptor_summary",

@@ -71,7 +71,12 @@ class Settings(BaseSettings):
     # so the 64d view is sliced client-side and re-normalised.
     dense_model: str = "Qwen/Qwen3-Embedding-0.6B"
     dense_dim: int = 1024                # native dim of dense_model; also the intent classifier's width
-    dense_dim_low: int = 64              # MRL truncation for the fast ANN first stage
+    dense_dim_low: int = 128             # MRL truncation for the fast ANN first stage — the
+                                         # width a NEW collection declares (the gemma lane's).
+                                         # ⚠️ Existing collections keep their own width: the
+                                         # lane name AND size are resolved off the collection
+                                         # (store._resolve_low_lane), because v2's low lane is
+                                         # 64d and stays live as the A/B baseline.
     # The 64d lane's prefetch depth in the dense funnel (`store._qdrant_search`):
     # [dense_64(prefetch) -> dense_dim(rescore, 500)]. §I61 measured that the *filtered* HNSW
     # search path, not the MRL width, is what loses pool coverage — at 1000 the new index's 64d

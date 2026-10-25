@@ -50,14 +50,20 @@ class TestDatabase:
         assert settings.qdrant_collection in collections
 
     def test_collection_has_the_four_reingest_vectors(self, settings):
-        """The re-ingest schema: dense_64 + dense_1024 (+colbert/+sparse), dense_768 retired."""
+        """The re-ingest schema: dense_128 + dense_full (+colbert/+sparse); the older names retire.
+
+        ⚠️ The names are width-free now (``dense_full``) or carry the MRL width (``dense_128``);
+        ``dense_64``/``dense_1024``/``dense_768`` stay *readable* on the collections that already
+        declare them (v2 and the deployed ``knowledge_base``), which is what keeps them queryable.
+        """
         from src.core.database import get_qdrant
         client = get_qdrant(settings)
         vectors = client.get_collection(settings.qdrant_collection).config.params.vectors
         assert isinstance(vectors, dict)
-        assert vectors["dense_64"].size == settings.dense_dim_low
-        assert vectors["dense_1024"].size == settings.dense_dim
+        assert vectors["dense_128"].size == settings.dense_dim_low
+        assert vectors["dense_full"].size == settings.dense_dim
         assert "dense_768" not in vectors
+        assert "dense_64" not in vectors and "dense_1024" not in vectors
         assert vectors["colbert"].size == settings.colbert_dim
 
     def test_chunks_table_has_parent_id(self, settings):

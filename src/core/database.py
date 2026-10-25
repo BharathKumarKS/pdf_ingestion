@@ -255,9 +255,14 @@ def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
         colbert     — ColBERT 128d token matrices, MaxSim comparator (third stage)
         sparse      — SPLADE sparse vectors (optional fourth lane)
 
-    ``dense_768`` (Nomic) is **retired** here in favour of ``dense_1024`` (Qwen3, plan R2).
-    The name encodes the dimension and must track ``dense_dim`` — pinned by
-    ``tests/test_config_invariants.py::test_dense_vector_name_matches_configured_dim``.
+    ``dense_full`` is the **width-free** name a new collection declares, so a later embedder
+    change does not repeat this rename (§I13's trap: a lane whose name encodes its dimension
+    lies at the next model change). ``dense_1024`` (Qwen3, plan R2) and ``dense_768`` (Nomic)
+    stay readable because the deployed collections keep those names (plan R1).
+    ⚠️ This docstring used to claim the name/dim coupling is "pinned by
+    ``tests/test_config_invariants.py::test_dense_vector_name_matches_configured_dim``" — that
+    test **does not exist** (checked 2026-10-24). The coupling is now resolved off the
+    collection (``store._dense_name_from`` / ``store._resolve_low_lane``), not asserted.
     An already-created collection is left alone: the deployed ``knowledge_base`` keeps
     ``dense_768`` and stays queryable, because the write and read paths resolve the vector
     name from the collection's own schema (plan R1, old-vs-new comparison).
@@ -268,8 +273,8 @@ def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
     existing = {c.name for c in client.get_collections().collections}
     if cfg.qdrant_collection not in existing:
         vectors_config: dict = {
-            "dense_64": VectorParams(size=cfg.dense_dim_low, distance=Distance.COSINE),
-            "dense_1024": VectorParams(size=cfg.dense_dim, distance=Distance.COSINE),
+            "dense_128": VectorParams(size=cfg.dense_dim_low, distance=Distance.COSINE),
+            "dense_full": VectorParams(size=cfg.dense_dim, distance=Distance.COSINE),
         }
         if cfg.colbert_enabled:
             vectors_config["colbert"] = VectorParams(
@@ -288,10 +293,15 @@ def _ensure_collection(client: QdrantClient, cfg: Settings) -> None:
             create_kwargs["sparse_vectors_config"] = sparse_cfg
 
         client.create_collection(**create_kwargs)
+        # ⚠️ Derived from `vectors_config`, not written out by hand: this line said
+        # "dense_64+dense_1024" for two sessions after the lanes were renamed, so the log
+        # disagreed with the collection it had just created (§I44's class — a record that
+        # drifts from the thing it records).
         logger.info(
-            "Created Qdrant collection '{}' (dense_64+dense_1024{}{})",
+            "Created Qdrant collection '{}' ({} lane(s): {}{})",
             cfg.qdrant_collection,
-            "+colbert" if cfg.colbert_enabled else "",
+            len(vectors_config),
+            "+".join(vectors_config),
             "+sparse" if cfg.splade_enabled else "",
         )
 

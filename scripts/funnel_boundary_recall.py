@@ -109,7 +109,7 @@ def main() -> int:
 
     from src.core.config import get_settings
     from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
-    from src.pdf_ingestion.store import DocumentStore
+    from src.pdf_ingestion.store import DocumentStore, _resolve_low_lane
 
     cfg = get_settings()
     store = DocumentStore(cfg)
@@ -121,6 +121,10 @@ def main() -> int:
     # The full-dimension dense slot of THIS collection — dense_1024 after the re-ingest,
     # dense_768 on the deployed one. Resolved, never hard-coded (plan R1).
     dense_name = store._dense_vector_name()
+    # The low-dimension lane's name AND width, resolved off the collection too: v2's is 64d
+    # (`dense_64`) and a gemma-built collection's is 128d (`dense_128`). Slicing to
+    # `cfg.dense_dim_low` would send the wrong width to whichever collection is not that one.
+    low_name, low_size = _resolve_low_lane(store._collection_vectors(), cfg)
 
     queries = [x for x in json.loads(Path(args.queries).read_text())
                if x.get("calibrated") and x.get("relevant_pages")]
@@ -193,11 +197,11 @@ def main() -> int:
                 vec = np.asarray(embedder.embed_query(hyp), dtype=np.float32)
                 rerank_query = hyp
 
-        vec_64 = vec[: cfg.dense_dim_low].copy()
+        vec_64 = vec[: low_size].copy()
         vec_64 /= np.linalg.norm(vec_64) + 1e-9
 
         dense_prefetch = Prefetch(
-            prefetch=[Prefetch(query=vec_64.tolist(), using="dense_64", limit=1000)],
+            prefetch=[Prefetch(query=vec_64.tolist(), using=low_name, limit=1000)],
             query=vec.tolist(), using=dense_name, limit=500,
         )
         prefetches = [dense_prefetch]
@@ -221,9 +225,9 @@ def main() -> int:
 
         row = {"id": qid, "n_relevant": len(relevant), "pages": {}}
 
-        # B1 dense_64 @1000
+        # B1 low-dim lane @1000 — the key name is the HISTORICAL identifier, the lane is resolved
         r = q.query_points(collection_name=coll, query=vec_64.tolist(),
-                           using="dense_64", query_filter=filt, limit=1000,
+                           using=low_name, query_filter=filt, limit=1000,
                            with_payload=True).points
         row["pages"]["B1_dense64_1000"] = pages_of(post(r))
 

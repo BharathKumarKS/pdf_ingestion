@@ -63,7 +63,10 @@ def _refuse_partial_payload(cfg, qdrant) -> None:
         return                      # unreadable → let the upsert speak for itself
     if not names:
         return                      # a single-vector collection: dense-only IS complete
-    computed = {"dense_64", "dense_768", "dense_1024", "dense"}
+    # The dense lanes this script computes, under EVERY name a collection may declare them:
+    # the width-free ``dense_full`` and the MRL names (``dense_128``/``dense_64``). A name
+    # missing from here makes this refuse a collection it could actually write.
+    computed = {"dense_128", "dense_64", "dense_768", "dense_full", "dense_1024", "dense"}
     missing = sorted(n for n in names if n not in computed)
     missing += sorted(sparse_names)     # this script computes no sparse lane at all
     if missing:

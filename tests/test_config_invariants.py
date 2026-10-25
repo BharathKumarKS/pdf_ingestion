@@ -72,7 +72,9 @@ def test_embedder_honors_configured_dim(settings):
 def test_dense_lane_dim_defaults():
     assert _default("dense_model") == "Qwen/Qwen3-Embedding-0.6B"
     assert _default("dense_dim") == 1024
-    assert _default("dense_dim_low") == 64
+    # The width a NEW collection is created at (the gemma lane's). Existing collections keep
+    # their own width — the lane name AND size are resolved off the collection.
+    assert _default("dense_dim_low") == 128
 
 
 def test_query_vector_uses_the_dense_lane(settings):

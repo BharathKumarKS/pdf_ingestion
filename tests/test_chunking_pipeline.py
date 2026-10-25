@@ -31,7 +31,7 @@ from src.pdf_ingestion.embedder import EmbeddedChunk
 from src.pdf_ingestion.late_chunk_embedder import EnrichedChunk, LateChunkEmbedder
 from src.pdf_ingestion.models import ParentChunk
 from src.pdf_ingestion.parent_chunker import ParentChunker
-from src.pdf_ingestion.store import _dense_name_from, _dense_vectors
+from src.pdf_ingestion.store import _dense_name_from, _dense_vectors, _low_name_from
 
 PARENT_TEXT = (
     "The lever is a rigid bar that rotates about a fulcrum. "
@@ -43,7 +43,8 @@ PARENT_TEXT = (
 # ── 1. Vector-name resolution ───────────────────────────────────────────────
 
 @pytest.mark.parametrize("vectors,expected", [
-    ({"dense_64": object(), "dense_1024": object()}, "dense_1024"),
+    ({"dense_128": object(), "dense_full": object()}, "dense_full"),   # the gemma schema
+    ({"dense_64": object(), "dense_1024": object()}, "dense_1024"),    # v2, still queryable
     ({"dense_64": object(), "dense_768": object()}, "dense_768"),
     ({"dense_64": object()}, None),          # 4-vector schema, no full-dim dense vector
     ({"dense": object()}, None),             # legacy single-vector collection
@@ -54,10 +55,23 @@ def test_dense_name_resolution(vectors, expected):
     assert _dense_name_from(vectors) == expected
 
 
-def test_dense_name_prefers_1024_when_both_are_present():
-    """A collection carrying both is mid-migration; the newest lane wins."""
-    both = {"dense_64": object(), "dense_768": object(), "dense_1024": object()}
-    assert _dense_name_from(both) == "dense_1024"
+@pytest.mark.parametrize("vectors,expected", [
+    ({"dense_128": object(), "dense_full": object()}, "dense_128"),    # the gemma schema
+    ({"dense_64": object(), "dense_1024": object()}, "dense_64"),      # v2, still queryable
+    ({"dense_full": object()}, None),        # full-dim only: no low lane
+    ({"dense": object()}, None),             # legacy single-vector collection
+    (None, None),                            # schema unreadable (cluster down)
+])
+def test_low_name_resolution(vectors, expected):
+    """The low lane is resolved off the collection too — v2's ``dense_64`` must stay readable."""
+    assert _low_name_from(vectors) == expected
+
+
+def test_dense_name_prefers_the_newest_when_several_are_present():
+    """A collection carrying several is mid-migration; the newest lane wins."""
+    both = {"dense_128": object(), "dense_64": object(), "dense_768": object(),
+            "dense_1024": object(), "dense_full": object()}
+    assert _dense_name_from(both) == "dense_full"
 
 
 # ── 2. The two chunk shapes reach one write path ─────────────────────────────
@@ -205,8 +219,8 @@ def test_pipeline_writes_the_hierarchy_to_qdrant_and_sqlite(settings, tmp_path):
         assert point.payload["parent_id"] == r.parent_id
         assert point.payload["parent_text"] == PARENT_TEXT
         assert point.payload["is_content"] is True
-        assert len(point.vector["dense_1024"]) == settings.dense_dim
-        assert len(point.vector["dense_64"]) == settings.dense_dim_low
+        assert len(point.vector["dense_full"]) == settings.dense_dim
+        assert len(point.vector["dense_128"]) == settings.dense_dim_low
 
 
 def test_pipeline_rejects_a_pdf_with_no_parents(settings, tmp_path):
@@ -246,7 +260,11 @@ def test_save_document_writes_dense_768_into_a_dense_768_collection(settings, tm
     client.create_collection(
         collection_name=settings.qdrant_collection,
         vectors_config={
-            "dense_64": VectorParams(size=settings.dense_dim_low, distance=Distance.COSINE),
+            # The DEPLOYED collection's own shape: a 64d low lane, whatever cfg.dense_dim_low is.
+            # ⚠️ Deliberately NOT `settings.dense_dim_low` (128) — this test exists to prove the
+            # deployed 64d-lane collection stays writable, which is the case the write guard must
+            # let through (the vector's width is checked against the LANE's, not against cfg).
+            "dense_64": VectorParams(size=64, distance=Distance.COSINE),
             "dense_768": VectorParams(size=768, distance=Distance.COSINE),
         },
     )
