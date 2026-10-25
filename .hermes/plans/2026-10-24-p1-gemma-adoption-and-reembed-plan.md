@@ -129,6 +129,44 @@ never been seen to fail is not a guard**.
   (ii) fail.
 * **Gate:** no Stage B/C work starts until A is green and its verifier has run.
 
+### ⚠️ Stage A2 — the gemma EMBEDDER config (a gap in this plan, found 2026-10-25 by running Stage B)
+
+**No stage in this plan assigns `dense_model` / `dense_dim`.** Stage A lists only `dense_dim_low = 128`,
+and §2 declares `dense_full` at **768** — but `src/core/config.py:72-73` still reads
+`dense_model = "Qwen/Qwen3-Embedding-0.6B"`, `dense_dim = 1024`. The plan's own Stage D knows the dim
+must move (*"both candidates are 768 against today's 1024"*) and never says who moves it.
+
+**Measured, not inferred:** running Stage B with the current config created `knowledge_base_v3` with
+**`dense_full` at 1024d** — a vector dimension is **immutable**, so that collection can never hold
+gemma's 768d vectors. It was empty, so it was **dropped** and the prior state restored (v2 untouched
+at 3,869 points). ⚠️ **Stage B's own gate is what caught this** ("a lane whose size is wrong fails
+here, in seconds, rather than after the embedding") — it earned its place before Stage C ran.
+
+**⇒ Stage A2 is: `dense_model = "google/embeddinggemma-300m"` and `dense_dim = 768`.** It must land
+**before** Stage B, because B creates the immutable schema.
+
+⚠️ **And it is not a one-line flip — three things must move in ONE window:**
+
+1. **`cfg.dense_dim` is 42 sites across 16 files** (`store.py`, `database.py`, `intent_router.py`,
+   `cluster_embedder.py`, `embed_cache.py`, `graph_builder.py`, `late_chunk_embedder.py`,
+   `raptor_tree.py`, and `scripts/{evaluate_rag,funnel_boundary_recall,index_derivative_artifacts,preflight,reset_derived_collections,train_intent_classifier,validate_embedders}.py`).
+   `embed_cache._FINGERPRINT_FIELDS` carries it, so the resume cache invalidates.
+2. **The derived collections are declared at `dense_dim`** (`concept_embeddings`,
+   `derivative_artifacts` — §I12 moved them onto the dense lane). Flipping to 768 makes
+   `GraphBuilder._assert_collection_dim` **refuse** against the existing 1024d collections — by
+   design (§I47). They must be reset/re-indexed as part of the same window, which Stage C already
+   lists but Stage A2 must not run ahead of.
+3. ⚠️ **The interim hazard: while the config says 768 and v2 is still the live collection, the
+   default product path produces 768d query vectors and `_dense_name_from` resolves v2's
+   `dense_1024` lane — a 768-vector against a 1024 slot, which Qdrant rejects.** v2 stays
+   *queryable* only by a caller that supplies the matching embedder per arm (which is what Stage F's
+   harness does explicitly). So the flip, the derived-collection reset and the re-embed belong to
+   **one co-ordinated window**, not to a lazy afternoon.
+
+**Verifier A2:** the resolved config prints `dense_model`/`dense_dim`; the cluster serves the model;
+`scripts/validate_embedders.py` passes; and **Stage B then produces `dense_full` at 768d** — read
+back from the LIVE collection, not from the code that created it.
+
 ### Stage B — create `knowledge_base_v3` with the §2 schema
 
 * **Do:** drop-and-create (a vector dimension is **immutable** — the store cannot resize in place,

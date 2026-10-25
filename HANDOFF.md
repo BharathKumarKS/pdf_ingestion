@@ -79,7 +79,23 @@
 > "verifier" reads a JSON nothing writes. **Arm 2 is NOT built.** The rule that earned its keep: *a
 > child's report is a self-report; require a verifiable handle and check it yourself.*
 >
-> **9. ▶ NEXT, IN ORDER.** (a) **Stage B** — create `knowledge_base_v3` with **four** lanes
+> **9a. ⚠️ A NEW STAGE, FOUND BY RUNNING STAGE B — and it gates the re-ingest.** **No stage in the
+> plan assigns `dense_model` / `dense_dim`.** Stage A lists only `dense_dim_low = 128`, and §2
+> declares `dense_full` at **768** — but `config.py:72-73` still reads `Qwen/Qwen3-Embedding-0.6B` /
+> `1024`. **Measured:** running Stage B created v3 with **`dense_full` at 1024d** — a dimension is
+> **immutable**, so it can never hold gemma's 768d vectors. v3 was empty, so it was **dropped** and
+> v2 verified untouched (3,869). **Stage B's own gate caught it**, which is what it is for.
+> **⇒ Stage A2 = `dense_model = google/embeddinggemma-300m`, `dense_dim = 768`, and it must land
+> BEFORE Stage B.** ⚠️ **It is not a one-line flip:** `cfg.dense_dim` is **42 sites / 16 files**;
+> `embed_cache._FINGERPRINT_FIELDS` carries it (cache invalidates); and the **derived collections are
+> declared at `dense_dim`**, so `_assert_collection_dim` will **refuse** against the existing 1024d
+> ones (§I47, by design) until they are reset — the flip, the reset and the re-embed belong to
+> **one co-ordinated window**. ⚠️ **Interim hazard:** with the config at 768 and v2 still live, the
+> default path produces 768d query vectors against v2's `dense_1024` slot → Qdrant rejects. v2 stays
+> queryable only via a caller that supplies the matching embedder per arm. **Full note: the plan's
+> Stage A2.** **OWNER DECISION, NOT TAKEN.**
+>
+> **9. ▶ NEXT, IN ORDER.** (a) **Stage A2** (above) — the gemma embedder config, before B. (b) **Stage B** — create `knowledge_base_v3` with **four** lanes
 > (`dense_full` 768, `dense_128` 128, `colbert`, `sparse`); seconds. (b) **Stage C0** — time the
 > late-chunk pass on **~20 PARENTS** (not chunks) and record the unit; this confirms signoff 4. (c)
 > Stage C (the re-embed, Shape B), then D (classifier retrain), E (preflight), F (the ONE
