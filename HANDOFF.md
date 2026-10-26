@@ -4,10 +4,75 @@
 > `ARCHITECTURE.md` (read **§8 Invariants and traps** before your first change); the backlog is
 > `IMPROVEMENTS.md`. Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-25, session 18 (S1–S4 ALL DONE AND COMMITTED: `knowledge_base_v3` POPULATED
-> at 3,796 points / 4 lanes, the classifier retrained at 768, the derived collections re-indexed at
-> 768, and **the preflight exits 0**. Next session: S5 — the §I68 fix, then the ONE pre-registered
-> product-endpoint run).**
+> **Last updated: 2026-10-25, session 19 (S5 HALF-DONE AND COMMITTED: the §I68 client-side-RRF fix is
+> LANDED, the funnel is DETERMINISTIC and the swap is ENDPOINT-IDENTICAL (ΔR@20 = 0.0 on 133 queries);
+> Stage F's pre-registration is written and committed ALONE. ⚠️ **Stage F itself has NOT run.**)**
+>
+> ## ▶ SESSION 19 — WHAT HAPPENED, AND WHAT IS NEXT
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 19, then the Stage F pre-registration
+> (`.hermes/plans/2026-10-25-p1-stageF-product-endpoint-preregistration.md`) and `IMPROVEMENTS.md`
+> §I84. I am running Stage F: the ONE product-endpoint run, nomic/v3 vs qwen3/v2, 133 queries, HyDE ON
+> and frozen. Assert the per-arm env first, retrieval-only, and the full synthesis+judge run only if
+> the retrieval endpoint resolves."*
+>
+> **1. ✅ §I68 IS LANDED AND COMMITTED (`939beae`) — read `IMPROVEMENTS.md` §I84.** The funnel no longer
+> uses Qdrant's server-side `FusionQuery`; it issues **one `query_points` per lane** and fuses
+> client-side with `store._rrf_merge(..., rrf_k=1)`. ⚠️ **`rrf_k=1` is MEASURED, not chosen** — the
+> live server's RRF is exactly `Σ_lanes 1/(1+rank)` (probed; `_rrf_merge`'s own default is 60 and would
+> have rescaled every score ~60×). The fused result is returned in the `.points[i].score/.id/.payload`
+> shape `search()` reads, so **`search()` is unchanged**.
+>
+> **2. ✅ THE SWAP IS ENDPOINT-IDENTICAL.** Before/after harness `logs/p1/step10/i68_rrf_swap_ab.{py,json}`
+> (sha256 `6609a64e…`), 133 queries, HyDE off, **5/5 guards pass**: determinism fixed (before 2/6, 6/6,
+> 6/6, 4/6 distinct → **after 1/6 on all four**), and **R@20 `0.41049414968626663` in BOTH arms — Δ 0.0,
+> CI [0,0], W/L/T 0/0/133**. ⚠️ The artifact is **NOT byte-reproducible** (one arm IS the
+> nondeterministic one), so the BEFORE-derived counts wobble between runs; the **endpoint fields are
+> identical to the last digit** — quote those, never the wobble counts.
+>
+> **3. ⚠️ TWO REAL DEFECTS WERE FOUND BY RUNNING IT (not by review), both fixed.** (a) `_rrf_merge`
+> keyed on `chunk_id` alone and **silently DROPPED** the 73 `raptor_summary` nodes, which carry none,
+> while Qdrant keyed on the point id and kept them — fixed with a `qdrant_point_id` fallback (the
+> product was masked by `search()`'s `_NOT_RAPTOR` filter, the only reason it was not a live recall
+> loss). (b) The harness's filter omitted `_NOT_RAPTOR`/`is_content`, so it compared on a pool the
+> product never sees — **that was the whole of a spurious +0.0040 delta**, which became 0.0 once fixed.
+>
+> **4. ⚠️ BLAST RADIUS CORRECTED: THREE test files break by construction, not the two §I68 §4a
+> recorded** — `test_lane_resolution.py` was missed. All three are rewritten to the new call shape;
+> mutation-proved (reverting the mechanism fails **16** tests, all on `AssertionError`, 0
+> collection/syntax errors). `scripts/funnel_boundary_recall.py` moved **with** the product (it claims
+> to mirror `_qdrant_search` exactly); `scripts/why_colbert.py` is deliberately left as a one-off.
+> Suite **685 passed / 4 failed / 6 skipped**; the 4 are the documented pre-existing set, **proved** by
+> stashing `store.py` to HEAD. ruff: 39 errors, **all pre-existing (0 introduced)**.
+>
+> **5. ✅ STAGE F'S PRE-REGISTRATION IS WRITTEN AND COMMITTED ALONE (`51de3f2`)** — the file named in
+> the opening prompt. Arms **A = v2/Qwen3-1024 (control)**, **B = v3/nomic-768 (treatment)**; HyDE ON
+> and frozen via `data/hyde_cache/` (the existing file resolves — `OPENAI_MODEL=openai/gpt-oss-20b`,
+> queries digest `18ece9b9404688c8`, prompt digest `ab681b8e43855a46`; a miss RAISES, never a live LLM
+> call); endpoint **P1 paired ceiling-normalised R@20**, ⚠️ **product convention = pages of the top-k
+> CHUNKS** (§I72's VOID was exactly this confusion); 8 guards, **E4** (bit-exact negative control — now
+> legitimate because §I68 landed) and **E8** (arm A must reproduce a §I64/§I57 row, or the harness is
+> not the product path) are load-bearing. ⚠️ The intent router is **not** on the eval path, so the
+> classifier's dimension does not confound the arms.
+>
+> **6. ⚠️ THE DIFF VERDICT, AND WHY `[verified]` IS OFF.** Reviewer `deleg_dc2675b3`
+> (`openai/gpt-oss-20b`, read-only, cross-family) returned **7/7 CONFIRMED, no silent wrong answer** —
+> but it is a **CHEAP verdict (19 calls, 33.6 s) whose cited line numbers do not resolve**, so it is
+> **not banked**. The substantive half is the author's mechanical evidence: the live determinism
+> measurement, ΔR@20 = 0.0, the two mutation proofs, the suite. `939beae`'s body says exactly this.
+>
+> **7. ▶ NEXT, IN ORDER.** (a) **Stage F, retrieval-only** — assert the per-arm env (pre-registration
+> §3: `DENSE_MODEL`/`DENSE_DIM`/`DENSE_DIM_LOW`/`QUERY_INSTRUCTION`/`DOCUMENT_PREFIX` + `QDRANT_HOST` +
+> `QDRANT_COLLECTION`) and run it; the full synthesis+judge run (**~70 min, 5,434 judge calls**) only
+> if the retrieval endpoint resolves. (b) **Stage G** — the §I66 stage decomposition, alongside it.
+> (c) Then **S6, the fine-tune** (signoff 6 open). ⚠️ Still carried: **signoff 4** (accept §I79's
+> measurement), **signoff 3** (re-confirm Shape B), the **A2 `.env` flip** (owner action, still open),
+> the **arm-2 harness** — the two untracked `min_chunk_tokens_ab*.py` are a **fragment** and arm 2 is
+> **NOT built** — §I56's DA lane, §G2's V5 build, §G5/§I2.
+>
+> **8. ⚠️ WORKING TREE.** Everything above is committed (`51de3f2`, `939beae`, `9b7920a`); the branch is
+> **ahead of origin and nothing is pushed**. The only untracked files are the arm-2 fragment, left out
+> deliberately.
 >
 > ## ▶ SESSION 18 — WHAT HAPPENED, AND WHAT IS NEXT
 >
