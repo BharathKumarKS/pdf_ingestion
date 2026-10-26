@@ -35,7 +35,7 @@ query (§I12 update: 768-vs-1024)"*, 152 DA-lane skips across 166 non-visual que
 the same; only the direction of the mismatch has flipped (then the index was 768 and the query 1024;
 now the DA collection is 768 and arm A's query is 1024).
 
-## 2. The re-registration — two changes
+## 2. The re-registration — three changes
 
 **(a) The DA lane is OFF in both arms** (`DA_ENABLED=false`, exported by `run_stageF.sh` and
 **asserted** in the harness — a run that forgets it aborts, E2′). With the lane off, the arms differ
@@ -64,6 +64,20 @@ resolution floor** (`1.96·SD/√133 ≈ 0.020`, §0's doctrine) — a **pre-exi
 **not** a number chosen to fit this run. **Arm A is the control and the instrument check**; if it does
 not reproduce §3d, the harness has drifted from the registered instrument and the run is **VOID**.
 
+**(c) The GRAPH lane is OFF in both arms** (the harness patches `graph_builder.get_graph_builder` to
+a no-op; asserted in `meta.graph_lane`). ⚠️ **The same defect class as (a), found the same way — by
+running.** `graph_search` (`graph_builder.py:504`) ranks concepts through `_find_concepts_scored`,
+which queries **`concept_embeddings`** — and §I83 re-embedded **that** collection at **768d** too. So
+arm A's 1024d query 400s, `_find_concepts_scored` catches it and returns `[]`
+(`graph_builder.py:686`), and the lane is **dead in A, live in B** — the DA-lane asymmetry again, on
+the multihop path. ⚠️ Measured: the failure **does not** call an LLM (the warning text *"falling back
+to LLM"* is misleading — the handler returns `[]`), so it introduces no nondeterminism; it is an
+**asymmetry**, not a noise source. Off in both arms.
+
+⚠️ **Together (a) and (c) mean the whole DERIVED layer (DA + graph) is nomic-only right now** — both
+collections are 768d after §I83. That is a fact about the environment, not a choice: a 1024d arm
+cannot query either. The base lanes (dense + sparse + colbert) are what this A/B measures.
+
 ⚠️ **§3d's own confounds are carried, and they are small but real** (§D15 lists four; the two that
 bear here): §3d **predates §I68's funnel swap** — which §I84 proved **endpoint-identical** (ΔR@20 =
 0.0 on all 133 queries), so it cannot move R@20 — and it **predates the §I58 label re-points** (1–3
@@ -78,8 +92,8 @@ floor, and the residual is **reported**, not assumed away.
 * **HyDE ON and frozen** (§4) — served from `data/hyde_cache/` by monkeypatching `call_llm`; a miss
   raises.
 * The **product retrieval path**: each arm calls the product's own `evaluate_rag.run_retrieval`
-  verbatim (embed → HyDE → `store.search_with_das` → graph lane for multihop → shipped cross-encoder)
-  and scores with the product's own `evaluate_rag.compute_retrieval_metrics`.
+  verbatim (embed → HyDE → `store.search_with_das` → [graph lane, now patched off, §2c] → shipped
+  cross-encoder) and scores with the product's own `evaluate_rag.compute_retrieval_metrics`.
 * The **endpoints** (§5): **P1** = paired Δ cR@20 ceiling-normalised (§I58), **P2** = paired Δ R@20
   raw, both **B − A**; S1 secondaries; S2 per-type. ⚠️ The **page convention is the PRODUCT's — pages
   of the top-k CHUNKS** (`evaluate_rag.py:333-341`), not §I70's top-k PAGES. ⚠️ The **ceiling
@@ -113,5 +127,6 @@ that hurt. It is a **cross-check on the re-registration's premise**, reported ei
   (`search_with_das` → `search()`) **does not read RAPTOR at all** (`search()` excludes
   `raptor_summary`; the RAPTOR lane is a separate `search_raptor`), so its absence **does not touch
   this A/B** — recorded so it is not mis-attributed later.
-* **The graph lane** fires on multihop only; per-type numbers are reported.
+* **The graph lane is off** too (§2c), for the same reason as the DA lane. So the multihop numbers are
+  measured **without** the concept-graph lane; per-type numbers are reported.
 * **One document, one day, one funnel.** No causal claim beyond these two indexes.
