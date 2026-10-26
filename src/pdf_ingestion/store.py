@@ -41,6 +41,31 @@ _UPSERT_MAX_POINTS = 256                 # never let a batch grow unbounded on t
 _JSON_BYTES_PER_FLOAT = 24
 
 
+# ── The client-side fusion's response shape (§I68) ─────────────────────────
+
+# `_qdrant_search` fuses the live lanes in Python (see the method), not via Qdrant's server-side
+# fusion. `search()` only ever reads `.points[i].score/.id/.payload` off the result, so the fused
+# result is returned as these two minimal stand-ins rather than a real Qdrant `QueryResponse`.
+class _FusedPoint:
+    """One fused candidate, in the shape ``search()`` reads off a Qdrant ``ScoredPoint``."""
+
+    __slots__ = ("score", "id", "payload")
+
+    def __init__(self, score, id, payload):
+        self.score = score
+        self.id = id
+        self.payload = payload
+
+
+class _FusedResponse:
+    """Minimal stand-in for a Qdrant ``QueryResponse`` — only ``.points`` is read."""
+
+    __slots__ = ("points",)
+
+    def __init__(self, points):
+        self.points = points
+
+
 def _estimate_point_bytes(point) -> int:
     """Rough serialised size of one point — vectors dominate, so payload is counted crudely.
 
@@ -504,7 +529,7 @@ class DocumentStore:
         Legacy fallback for old single-vector collections.
         Local file Qdrant skips ColBERT (Python MaxSim bug on real collections).
         """
-        from qdrant_client.models import Fusion, FusionQuery, Prefetch
+        from qdrant_client.models import Prefetch
 
         cfg = self._cfg
 
@@ -593,15 +618,45 @@ class DocumentStore:
             )
 
         # Fuse whatever lanes are live by reciprocal rank; plain dense if it is alone.
+        #
+        # ⚠️ §I68 — the fusion is CLIENT-SIDE (`_rrf_merge`), NOT Qdrant's server-side
+        # `FusionQuery(fusion=Fusion.RRF)`. Measured 2026-10-24: the server-side fusion is
+        # NON-DETERMINISTIC — identical inputs and identical per-lane results returned different
+        # fused candidate sets on consecutive calls (`gold-052`: 6 distinct sets in 6 runs), while
+        # every individual lane is perfectly deterministic. Fusing in Python removes the only
+        # non-deterministic step in the funnel.
+        #
+        # `rrf_k=1` is measured, not chosen: probing the live server showed its fused score is
+        # exactly `sum_over_lanes 1/(1 + rank)` — reproduced to 6 dp on every candidate — so k=1
+        # makes this swap score-preserving. `_rrf_merge`'s own default (60, Cormack's classic) would
+        # rescale every score ~60x and change the ranking. The lanes are queried individually below
+        # (each already deterministic), then merged here.
         if len(prefetches) > 1:
-            return self._qdrant.query_points(
-                collection_name=cfg.qdrant_collection,
-                prefetch=prefetches,
-                query=FusionQuery(fusion=Fusion.RRF),
-                query_filter=filter_,
-                limit=limit,
-                with_payload=True,
-            )
+            lane_lists: list[list[dict]] = []
+            for pf in prefetches:
+                # The dense lane carries an inner low-dim prefetch (low lane -> full-dim rescore);
+                # the sparse/ColBERT lanes are leaves, for which `Prefetch.prefetch` is None.
+                resp = self._qdrant.query_points(
+                    collection_name=cfg.qdrant_collection,
+                    prefetch=pf.prefetch,
+                    query=pf.query,
+                    using=pf.using,
+                    query_filter=filter_,
+                    limit=pf.limit,
+                    with_payload=True,
+                )
+                lane_lists.append([
+                    {"chunk_id": h.payload.get("chunk_id"),
+                     "score": h.score,
+                     "qdrant_point_id": str(h.id),
+                     "payload": dict(h.payload)}
+                    for h in resp.points
+                ])
+            merged = self._rrf_merge(*lane_lists, rrf_k=1)[:limit]
+            return _FusedResponse([
+                _FusedPoint(score=e["rrf_score"], id=e["qdrant_point_id"], payload=e["payload"])
+                for e in merged
+            ])
 
         return self._qdrant.query_points(
             collection_name=cfg.qdrant_collection,
@@ -725,13 +780,21 @@ class DocumentStore:
     def _rrf_merge(*result_lists: list[dict], rrf_k: int = 60) -> list[dict]:
         """
         Client-side Reciprocal Rank Fusion over multiple ranked result lists.
-        Each item must have a 'chunk_id'. Returns merged list by descending RRF score.
+        Each item is keyed on its 'chunk_id', falling back to 'qdrant_point_id'. Returns merged
+        list by descending RRF score.
+
+        ⚠️ The fallback matters: a candidate is **never silently dropped** for lacking a
+        `chunk_id`. Measured on `knowledge_base_v2`, the 73 `raptor_summary` nodes carry no
+        `chunk_id`, and Qdrant's server-side RRF (which this replaces, §I68) keys on the point id
+        and keeps them — so keying on `chunk_id` alone would have dropped them here while the
+        server did not. The product's `search()` filter excludes RAPTOR anyway, which is the only
+        reason this is not a live recall loss; the fallback removes that hidden coupling.
         """
         scores: dict[str, float] = {}
         best: dict[str, dict] = {}
         for result_list in result_lists:
             for rank, item in enumerate(result_list, start=1):
-                cid = item.get("chunk_id")
+                cid = item.get("chunk_id") or item.get("qdrant_point_id")
                 if not cid:
                     continue
                 scores[cid] = scores.get(cid, 0.0) + 1.0 / (rrf_k + rank)

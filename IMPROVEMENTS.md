@@ -6841,3 +6841,110 @@ batching.
 **Register against:** §I12/§I13/§I47 (the dim mismatch these two collections carried), §I26 (the
 trap that surfaced it), §I82 (S4's first half), §I75 (the graph is up and valid), §I81 (why the graph
 survived).
+
+---
+
+### I84. 2026-10-25 — ✅ §I68's client-side-RRF fix is LANDED: the funnel is DETERMINISTIC, and the swap is **endpoint-identical** (ΔR@20 = **0.0** on all 133 queries). ⚠️ Blast radius was **THREE** test files, not two, and the merge silently DROPPED chunk_id-less candidates
+
+**The fix.** `store._qdrant_search`'s multi-lane branch no longer calls
+`query_points(query=FusionQuery(fusion=Fusion.RRF))`. It issues **one `query_points` per lane** (the
+dense lane keeps its nested low→full prefetch; sparse/ColBERT are leaves) and fuses them in Python
+with `store._rrf_merge`. The fused result is returned as `_FusedResponse`/`_FusedPoint` — the minimal
+`.points[i].score/.id/.payload` shape `search()` reads — so `search()` is unchanged.
+
+**1. ⚠️ THE MERGE CONSTANT IS MEASURED, NOT CHOSEN — Qdrant's RRF uses `k = 1`.** A scratch probe
+(`~/.hermes/cache/scratch/i68_rrf_k_probe.py`, run against `knowledge_base_v2`) solved
+`fused_score = Σ_lanes 1/(k + rank)` for the live server's own output: **implied k = 1.000 on every
+one of the top 10 candidates** of `vec-001`. Hand-check: dense rank 119 → 1/120, sparse rank 2 → 1/3,
+colbert rank 1 → 1/2, sum = **0.841667** = the server's returned score exactly. So the funnel calls
+`_rrf_merge(..., rrf_k=1)`. ⚠️ **`_rrf_merge`'s own default is 60 (Cormack's classic)** — using it
+would have rescaled every score ~60× and changed the ranking. The function's default is left at 60
+(it is a general utility); the funnel passes `rrf_k=1` explicitly with the measurement in a comment.
+
+**2. ✅ THE BEFORE/AFTER — `logs/p1/step10/i68_rrf_swap_ab.py` → `i68_rrf_swap_ab.json`
+(sha256 `6609a64e…`), 133 queries, HyDE off, all five guards pass.** BEFORE = the retired server-side
+fused call; AFTER = `store._qdrant_search` (the live product path).
+
+| probe | BEFORE (server RRF) | AFTER (client merge) |
+|---|---|---|
+| determinism, 6 identical repeats | `ovw-041` **2/6**, `gold-004` **6/6**, `gold-078` **6/6**, `gold-052` **4/6** distinct | **1/6** on all four |
+| top-100 id-sequence identical | — | **60 / 133** |
+| top-100 mean Jaccard | — | **0.99955** (the BEFORE arm against *itself*: **0.99926**) |
+| **R@20** (product convention) | **0.41049414968626663** | **0.41049414968626663** — **Δ 0.0**, CI [0, 0], **W/L/T 0/0/133** |
+
+**The swap is score-preserving and endpoint-identical**: the page-level R@20 is bit-identical on
+every one of the 133 queries, and the residual candidate-set difference (Jaccard 0.99955) is the
+**same magnitude as the defect's own noise** (0.99926) — i.e. tie-breaking, not a behavioural change.
+**The defect is removed and the endpoint did not move.** ⚠️ **Not production numbers** (HyDE off,
+`fetch_k` 100) — the **delta** is the result.
+
+⚠️ **The artifact is NOT byte-reproducible, and that is by construction**: one arm *is* the
+nondeterministic one, so the BEFORE-derived counts move run to run — across the two runs, the
+determinism counts read `gold-052` **5/6** then **4/6**, `identical_id_sequences` **65** then **60**,
+`before_self_jaccard` **0.99955** then **0.99926**. **The endpoint fields did not move**: `r20_before`
+and `r20_after` are **identical to the last digit in both runs** (0.41049414968626663, Δ 0.0). Quote
+the endpoint; treat the wobble counts as the defect being measured, not as a statistic.
+
+**3. ⚠️ BLAST RADIUS: THREE test files break by construction, not the two §I68 §4a recorded.**
+`test_dense_prefetch_limit.py` and `test_downstream_widths.py` were named; **`test_lane_resolution.py`
+was missed** — its `_inner()` reads `kwargs["prefetch"][0].prefetch[0]` and its two funnel tests read
+`calls[0]["prefetch"][0]` for the full-dim lane, both of which the per-lane call shape removes. All
+three are **rewritten to the new shape**, not deleted. `tests/test_backmatter_gate.py` monkeypatches
+`_qdrant_search` by name only and is unaffected. **Proved, not asserted:** reverting the mechanism
+(putting the server-side fusion back) fails **16** tests across the three files, **all on
+`AssertionError`** (0 collection/syntax errors), including the new
+`test_the_funnel_queries_each_lane_separately`; the source was restored byte-identically
+(sha256 `625e2241…`).
+
+**4. ⚠️ NEW FINDING, FOUND BY RUNNING IT — `_rrf_merge` silently DROPPED candidates with no
+`chunk_id`, and Qdrant did not.** The first before/after run reported a **0.930** Jaccard and a
+**+0.0040** endpoint delta. Root-caused, both were artifacts:
+* **`_rrf_merge` keyed on `chunk_id` alone.** A scratch probe scrolled the whole collection: the
+  **only** points with no `chunk_id` are the **73 `raptor_summary` nodes** (62/8/3 at levels 1/2/3);
+  all **3,796** `base_textbook` chunks carry one. The retired server-side RRF keys on the **point
+  id** and kept them; the merge dropped them. **Fixed** at the root: `cid = item.get("chunk_id") or
+  item.get("qdrant_point_id")`, pinned by
+  `test_rrf_merge_keeps_items_without_chunk_id_but_with_a_point_id` (mutation-proven — reverting the
+  fallback fails it on its own assertion, other 15 pass). ⚠️ **The product was never at risk** —
+  `search()`'s `_NOT_RAPTOR` filter excludes those nodes — but the drop was a **silent** one and the
+  coupling was implicit.
+* **The harness's filter was not the product's.** `i68_rrf_swap_ab.py` built a filter with page
+  bounds + tenant but **omitted `_NOT_RAPTOR`** and the `is_content` exclusion, so it compared on a
+  pool the product never sees. Corrected to mirror `search()` exactly; the endpoint delta went from
+  +0.0040 to **0.0** and the Jaccard from 0.930 to 0.9997. ⚠️ **A harness that does not reproduce
+  the product's own filter is not measuring the product.**
+
+**5. ✅ THE HARNESS MOVED WITH THE PRODUCT (owner decision, on an independent verdict).**
+`scripts/funnel_boundary_recall.py` claims to *"mirror store._qdrant_search exactly"*, so leaving it
+on server-side RRF would have falsified that claim and made its B4/B5 numbers non-product numbers.
+Its two RRF sites (B4 @~249, `rrf3` @~281) now call a local `fuse_lanes()` that mirrors the product
+(`_rrf_merge`, `rrf_k=1`); the docstring says so. ⚠️ **`scripts/why_colbert.py` is deliberately LEFT
+as-is** — a one-off diagnostic whose artifact is already written, not a product path and not a gate.
+⚠️ **Pre-existing and NOT fixed (out of scope):** the harness's default `--merge colbert` uses ColBERT
+as an outer query, which is *not* what the product does (the product fuses three lanes) — recorded so
+it is not mistaken for a §I68 consequence.
+
+**6. ⚠️ THE INDEPENDENT VERDICT, AND WHAT IT IS WORTH.** Reviewer `deleg_f6742a1d`
+(`openai/gpt-oss-20b`, read-only, cross-family from the author's DeepSeek) returned **8/8 confirmed,
+no refutations** — but it is a **cheap verdict (22 calls, 28.8 s)**, so it is **not banked**. Six of
+its claims (C1–C6) are source claims it read itself and cited by identifier, and they agree with the
+author's own reads; **C7/C8 were the author's own probe output handed over as data**, which a
+read-only child can only check for internal consistency — those remain **author's mechanical
+evidence, not a second opinion**. ⚠️ The reviewer's *own* premise for D1/D2 is what decided the
+harness disposition; it did **not** catch the `_NOT_RAPTOR` filter omission or the `chunk_id` drop —
+those were found by **running** the harness and root-causing its first numbers.
+
+**7. Suite: 685 passed / 4 failed / 6 skipped.** The 4 are the documented pre-existing set
+(`test_phase1` ×1, `test_phase2` ×1, `test_splade` ×2) — ⚠️ **proved, not assumed**: `store.py` was
+stashed to HEAD and the same 4 fail. `_rrf_merge`'s 4 original tests still pass (an item with
+*neither* id is still skipped).
+
+**8. ⚠️ WHAT IS NOT DONE.** The **independent verifier for THIS landed fix has not returned** — the
+verdict above covers the *decision premises*, not the diff (per the standing rule the fix is
+**unverified** until its own reviewer reports). `why_colbert.py` is untouched by design. The
+**pre-registration** for the ONE product-endpoint run (Stage F) is a separate deliverable.
+
+**Register against:** §I68 (the defect and its measured blast radius — corrected here), §I67 (the
+VOID it caused, and the A/B it blocked), §I66 (the fusion stage), §I61/§I76 (the lane shape and the
+`sparse` lane the per-lane calls preserve), §I33 (a gate that reads the thing it asserts), §I44 (a
+guard that passed once is not a guard that holds), §I47 (a mismatch must name its remedy).

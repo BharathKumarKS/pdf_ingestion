@@ -6,9 +6,10 @@ recall@100 and recall@20. Two points cannot tell you WHICH stage loses the relev
 pages — and that decides whether the fix is chunking (loss at the wide end) or ranking
 (loss at the narrow end).
 
-The funnel is executed server-side as ONE nested Qdrant prefetch, so intermediate pools
-are invisible from a single call. This script replays each stage as its own query,
-mirroring store._qdrant_search exactly:
+Each lane is executed as its own Qdrant query, so intermediate pools are visible. The
+stages below mirror store._qdrant_search exactly — ⚠️ including its §I68 change: the lanes
+are now fused CLIENT-SIDE with store._rrf_merge (rrf_k=1), not by Qdrant's server-side
+FusionQuery(fusion=Fusion.RRF), which was measured non-deterministic:
 
   B1  dense_64            @1000   the only stage that faces the whole corpus
   B2  dense_64 -> dense_768 @500  full-resolution rescore of B1
@@ -31,6 +32,7 @@ import json
 import statistics
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -38,6 +40,29 @@ import numpy as np
 from loguru import logger
 
 TOP_K = 20
+
+
+def fuse_lanes(q, coll, prefetches, filt, limit):
+    """Client-side RRF over the lanes — mirrors ``store._qdrant_search`` exactly (§I68).
+
+    Qdrant's server-side ``FusionQuery(fusion=Fusion.RRF)`` is NON-DETERMINISTIC (the same query
+    returns a different fused set on consecutive calls), so the product — and therefore this
+    harness, which must mirror it — queries each lane individually and fuses them in Python with
+    ``DocumentStore._rrf_merge``. ``rrf_k=1`` reproduces the server's own score (measured), so the
+    swap does not rescale the scores. Returns lightweight objects with ``.score``/``.payload``, the
+    only attributes this script reads off a point.
+    """
+    from src.pdf_ingestion.store import DocumentStore
+
+    lane_lists = []
+    for pf in prefetches:
+        pts = q.query_points(
+            collection_name=coll, prefetch=pf.prefetch, query=pf.query, using=pf.using,
+            query_filter=filt, limit=pf.limit, with_payload=True).points
+        lane_lists.append([{"chunk_id": p.payload.get("chunk_id"), "score": p.score,
+                            "payload": dict(p.payload)} for p in pts])
+    merged = DocumentStore._rrf_merge(*lane_lists, rrf_k=1)[:limit]
+    return [SimpleNamespace(score=e["rrf_score"], payload=e["payload"]) for e in merged]
 
 
 def pages_of(points) -> set[int]:
@@ -105,7 +130,7 @@ def main() -> int:
     if args.no_colbert:
         args.merge = "rrf2"
 
-    from qdrant_client.models import Fusion, FusionQuery, Prefetch
+    from qdrant_client.models import Prefetch
 
     from src.core.config import get_settings
     from src.pdf_ingestion.cluster_embedder import get_cluster_embedder
@@ -245,13 +270,10 @@ def main() -> int:
                                with_payload=True).points
             row["pages"]["B3_sparse_250"] = pages_of(post(r))
 
-        # B4 RRF union @100 (merge WITHOUT late interaction)
+        # B4 RRF union @100 (merge WITHOUT late interaction) — client-side, mirroring the product
         rrf_points = []
         if len(prefetches) > 1:
-            rrf_points = q.query_points(
-                collection_name=coll, prefetch=prefetches,
-                query=FusionQuery(fusion=Fusion.RRF), query_filter=filt,
-                limit=100, with_payload=True).points
+            rrf_points = fuse_lanes(q, coll, prefetches, filt, 100)
             row["pages"]["B4_rrf_union_100"] = pages_of(post(rrf_points))
 
         # B5 — the merge. Three modes:
@@ -278,10 +300,7 @@ def main() -> int:
                 with_payload=True).points
         elif args.merge == "rrf3" and cq is not None:
             pre3 = prefetches + [Prefetch(query=cq.tolist(), using="colbert", limit=250)]
-            merge_points = q.query_points(
-                collection_name=coll, prefetch=pre3,
-                query=FusionQuery(fusion=Fusion.RRF), query_filter=filt,
-                limit=100, with_payload=True).points
+            merge_points = fuse_lanes(q, coll, pre3, filt, 100)
         else:  # rrf2, or ColBERT unavailable
             merge_points = rrf_points
 

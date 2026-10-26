@@ -7,7 +7,7 @@ the fusion's own loss *grows* (0.143 -> 0.222), because feeding the fusion more 
 grow its output. The product endpoint cannot be tested on that lever unless the widths are config
 values (a one-variable A/B, and a revert, rather than a code edit). These tests pin the wiring:
 
-  * the dense funnel's OUTPUT width is ``cfg.mmr_candidates`` (its final ``query_points(limit=...)``);
+  * the dense funnel's OUTPUT width is ``cfg.mmr_candidates`` (the client-side slice of the fused list);
   * the full-dimension re-score cut is ``cfg.dense_rescore_limit``;
   * the DA lane's depth is its OWN setting ``cfg.da_fetch_k`` — NOT ``fetch_k``;
   * ``reranker_fetch_k`` truncates the pool, so raising ``mmr_candidates`` alone does NOT widen the
@@ -16,6 +16,12 @@ values (a one-variable A/B, and a revert, rather than a code edit). These tests 
 
 The discriminating tests are the ones that fail against the old code: with the hardcoded ``500``
 the re-score-cut tests fail; with the DA lane reading ``fetch_k`` the decoupling test fails.
+
+⚠️ §I68 CHANGED TWO THINGS THESE TESTS INSPECT. (a) The lanes are now queried individually and fused
+client-side with ``store._rrf_merge``, so the DENSE lane is the FIRST call and its re-score cut is
+that call's own ``limit`` — no longer ``calls[0]["prefetch"][0].limit``. (b) The fusion's OUTPUT
+width is no longer a server-side ``limit``: it is the ``[:limit]`` slice of the merged list, so the
+width tests assert on the returned point count.
 """
 from __future__ import annotations
 
@@ -26,10 +32,15 @@ import pytest
 
 
 class _CapturingQdrant:
-    """Named-vector collection + records every ``query_points`` call."""
+    """Named-vector collection + records every ``query_points`` call.
 
-    def __init__(self):
+    ``n_points`` > 0 makes each lane return that many (capped at the lane's own limit) synthetic
+    hits, so the client-side fusion has something to merge and the output width is observable.
+    """
+
+    def __init__(self, n_points: int = 0):
         self.calls: list[dict] = []
+        self._n = n_points
 
     def get_collection(self, _name):
         return SimpleNamespace(config=SimpleNamespace(params=SimpleNamespace(
@@ -37,43 +48,53 @@ class _CapturingQdrant:
 
     def query_points(self, **kwargs):
         self.calls.append(kwargs)
-        return SimpleNamespace(points=[])
+        if not self._n:
+            return SimpleNamespace(points=[])
+        lane = len(self.calls) - 1
+        k = min(self._n, kwargs.get("limit") or self._n)
+        return SimpleNamespace(points=[
+            SimpleNamespace(id=f"p{lane}-{i}", score=1.0 - i * 1e-6,
+                            payload={"chunk_id": f"c{lane}-{i}", "page_number": i,
+                                     "text": f"passage {lane}-{i}"})
+            for i in range(k)])
 
     def close(self):
         pass
 
 
-def _run_funnel(settings, monkeypatch, **overrides):
-    """Drive ``_qdrant_search`` once and return the recorded ``query_points`` kwargs."""
+def _run_funnel(settings, monkeypatch, n_points: int = 0, **overrides):
+    """Drive ``_qdrant_search`` once; return (cfg, recorded calls, the fused response)."""
     from src.pdf_ingestion.store import DocumentStore
 
     cfg = settings.model_copy(update=overrides) if overrides else settings
     store = DocumentStore(cfg)
-    fake = _CapturingQdrant()
+    fake = _CapturingQdrant(n_points)
     monkeypatch.setattr(store, "_qdrant", fake)
 
-    store._qdrant_search(
+    resp = store._qdrant_search(
         np.ones(cfg.dense_dim, dtype=np.float32),
         filter_=None,
         limit=cfg.mmr_candidates,
         query_text="what is kinetic energy",
     )
     assert fake.calls, "the funnel issued no query_points call"
-    return cfg, fake.calls
+    return cfg, fake.calls, resp
+
+
+def _dense_lane(calls: list[dict]) -> dict:
+    """The dense lane is the FIRST call — the only one carrying a nested low->full prefetch."""
+    assert calls[0].get("prefetch"), "the dense lane must carry its low-dim inner prefetch"
+    return calls[0]
 
 
 def _inner_prefetch_limit(kwargs: dict) -> int:
-    prefetches = kwargs.get("prefetch") or []
-    assert prefetches, "no prefetch list on the query"
-    inner = prefetches[0].prefetch
-    assert inner, "the dense prefetch carries no inner 64d stage"
-    return inner[0].limit
+    """The 64d lane's own depth — the leaf inside the dense lane's ``prefetch``."""
+    return kwargs["prefetch"][0].limit
 
 
 def _outer_rescore_limit(kwargs: dict) -> int:
-    prefetches = kwargs.get("prefetch") or []
-    assert prefetches, "no prefetch list on the query"
-    return prefetches[0].limit
+    """The dense lane's full-dimension re-score cut — the lane call's own ``limit``."""
+    return kwargs["limit"]
 
 
 def _fake_hits(n: int) -> list[dict]:
@@ -119,61 +140,61 @@ def test_defaults_are_the_shipped_values():
 # ── the full-dimension re-score cut is a setting ──────────────────────────────
 
 def test_outer_rescore_cut_is_read_from_config(settings, monkeypatch):
-    cfg, calls = _run_funnel(settings, monkeypatch)
-    assert _outer_rescore_limit(calls[0]) == cfg.dense_rescore_limit == 500
+    cfg, calls, _resp = _run_funnel(settings, monkeypatch)
+    assert _outer_rescore_limit(_dense_lane(calls)) == cfg.dense_rescore_limit == 500
 
 
 def test_raising_the_rescore_cut_raises_the_outer_prefetch(settings, monkeypatch):
     """§I66's L-arm: 500 -> 2000 must reach Qdrant. Fails if the value is hardcoded."""
-    cfg, calls = _run_funnel(settings, monkeypatch, dense_rescore_limit=2000)
+    cfg, calls, _resp = _run_funnel(settings, monkeypatch, dense_rescore_limit=2000)
     assert cfg.dense_rescore_limit == 2000
-    assert _outer_rescore_limit(calls[0]) == 2000
+    assert _outer_rescore_limit(_dense_lane(calls)) == 2000
 
 
 # ── the fusion output width is mmr_candidates ─────────────────────────────────
 
 def test_dense_funnel_output_width_is_mmr_candidates(settings, monkeypatch):
-    """The funnel's final ``limit`` is ``cfg.mmr_candidates`` — the RRF fusion's output width."""
-    cfg, calls = _run_funnel(settings, monkeypatch)
-    assert calls[0]["limit"] == cfg.mmr_candidates == 100
+    """The fused list is sliced to ``cfg.mmr_candidates`` — the RRF fusion's output width."""
+    cfg, _calls, resp = _run_funnel(settings, monkeypatch, n_points=1000)
+    assert len(resp.points) == cfg.mmr_candidates == 100
 
 
 def test_raising_mmr_candidates_raises_the_funnel_output(settings, monkeypatch):
-    cfg, calls = _run_funnel(settings, monkeypatch, mmr_candidates=300)
+    cfg, _calls, resp = _run_funnel(settings, monkeypatch, n_points=1000, mmr_candidates=300)
     assert cfg.mmr_candidates == 300
-    assert calls[0]["limit"] == 300
+    assert len(resp.points) == 300
 
 
 # ── nothing else scales with any of them ──────────────────────────────────────
 
 def test_the_rest_of_the_funnel_is_pinned(settings, monkeypatch):
     """Single-variable: the widths move; the inner lane and depth do not."""
-    _cfg, base = _run_funnel(settings, monkeypatch)
-    _cfg, raised = _run_funnel(
-        settings, monkeypatch, mmr_candidates=300, dense_rescore_limit=2000)
+    _cfg, base, base_resp = _run_funnel(settings, monkeypatch, n_points=1000)
+    _cfg, raised, raised_resp = _run_funnel(
+        settings, monkeypatch, n_points=1000, mmr_candidates=300, dense_rescore_limit=2000)
 
-    for kwargs in (base[0], raised[0]):
-        assert kwargs["prefetch"][0].prefetch[0].using == "dense_64", \
-            "the inner stage must stay the 64d lane"
-        assert _inner_prefetch_limit(kwargs) == settings.dense_prefetch_limit == 1000, \
+    for calls in (base, raised):
+        dense = _dense_lane(calls)
+        assert dense["prefetch"][0].using == "dense_64", "the inner stage must stay the 64d lane"
+        assert _inner_prefetch_limit(dense) == settings.dense_prefetch_limit == 1000, \
             "the 64d prefetch depth must not scale with the downstream widths"
 
-    assert _outer_rescore_limit(base[0]) == 500
-    assert _outer_rescore_limit(raised[0]) == 2000
-    assert base[0]["limit"] == 100
-    assert raised[0]["limit"] == 300
+    assert _outer_rescore_limit(_dense_lane(base)) == 500
+    assert _outer_rescore_limit(_dense_lane(raised)) == 2000
+    assert len(base_resp.points) == 100
+    assert len(raised_resp.points) == 300
 
 
 @pytest.mark.parametrize("limit", [500, 1000, 2000])
 def test_every_rescore_arm_is_reachable(settings, monkeypatch, limit):
-    _cfg, calls = _run_funnel(settings, monkeypatch, dense_rescore_limit=limit)
-    assert _outer_rescore_limit(calls[0]) == limit
+    _cfg, calls, _resp = _run_funnel(settings, monkeypatch, dense_rescore_limit=limit)
+    assert _outer_rescore_limit(_dense_lane(calls)) == limit
 
 
 @pytest.mark.parametrize("width", [100, 300, 500])
 def test_every_width_arm_is_reachable(settings, monkeypatch, width):
-    _cfg, calls = _run_funnel(settings, monkeypatch, mmr_candidates=width)
-    assert calls[0]["limit"] == width
+    _cfg, _calls, resp = _run_funnel(settings, monkeypatch, n_points=1000, mmr_candidates=width)
+    assert len(resp.points) == width
 
 
 # ── the DA lane is decoupled from the fusion width ────────────────────────────

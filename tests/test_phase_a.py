@@ -54,6 +54,20 @@ def test_rrf_merge_skips_items_without_chunk_id():
     assert len(merged) == 1
 
 
+def test_rrf_merge_keeps_items_without_chunk_id_but_with_a_point_id():
+    """§I68 — a candidate must not be dropped for lacking `chunk_id`; fall back to the point id.
+
+    Measured on `knowledge_base_v2`: the 73 `raptor_summary` nodes carry no `chunk_id`, and the
+    server-side RRF this replaces keyed on the point id and kept them.
+    """
+    items = [
+        {"chunk_id": "a", "score": 0.9, "text": "alpha"},
+        {"qdrant_point_id": "pt-1", "score": 0.8, "text": "raptor node, no chunk_id"},
+    ]
+    merged = DocumentStore._rrf_merge(items)
+    assert len(merged) == 2, "an item with a point id but no chunk_id must survive the merge"
+
+
 # ── MMR tests ─────────────────────────────────────────────────────────────────
 
 def _make_candidates(texts: list[str], scores: list[float]) -> list[dict]:

@@ -67,8 +67,13 @@ def _run_funnel(settings, monkeypatch, vectors_cfg, **overrides):
 
 
 def _inner(kwargs: dict):
-    """The funnel's first prefetch stage — the low-dimension lane."""
-    return kwargs["prefetch"][0].prefetch[0]
+    """The dense lane's inner low-dimension stage — a leaf ``Prefetch`` on the dense call.
+
+    ⚠️ §I68 — the funnel now queries each lane individually and fuses them client-side, so the
+    dense lane is the first ``query_points`` call and its low-dim stage is the leaf
+    ``calls[0]["prefetch"][0]`` (no longer ``["prefetch"][0].prefetch[0]``).
+    """
+    return kwargs["prefetch"][0]
 
 
 # ── 1. The resolver ─────────────────────────────────────────────────────────
@@ -125,11 +130,10 @@ def test_v3_is_queried_by_its_own_names(settings, monkeypatch):
     inner = _inner(calls[0])
     assert inner.using == "dense_128"
     assert len(inner.query) == 128, "the low lane must be sliced to the LANE's width"
-    # The full-dimension lane is the OUTER prefetch's `using` (the funnel fuses the prefetches,
-    # so the top-level call carries `prefetch=` + a FusionQuery, not `using=`).
-    outer = calls[0]["prefetch"][0]
-    assert outer.using == "dense_full"
-    assert len(outer.query) == 768
+    # §I68 — the full-dimension lane is the dense call's OWN `using`/`query`: the lanes are queried
+    # individually and fused client-side, so there is no outer prefetch carrying the full dim.
+    assert calls[0]["using"] == "dense_full"
+    assert len(calls[0]["query"]) == 768
 
 
 def test_v2_is_queried_at_its_own_64d_width(settings, monkeypatch):
@@ -142,9 +146,8 @@ def test_v2_is_queried_at_its_own_64d_width(settings, monkeypatch):
     assert len(inner.query) == 64, (
         "v2's low lane is 64d — slicing to cfg.dense_dim_low (128) would send the wrong width"
     )
-    outer = calls[0]["prefetch"][0]
-    assert outer.using == "dense_1024"
-    assert len(outer.query) == 1024
+    assert calls[0]["using"] == "dense_1024"
+    assert len(calls[0]["query"]) == 1024
 
 
 # ── 3. The write guard ──────────────────────────────────────────────────────
