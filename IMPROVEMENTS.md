@@ -6939,10 +6939,26 @@ those were found by **running** the harness and root-causing its first numbers.
 stashed to HEAD and the same 4 fail. `_rrf_merge`'s 4 original tests still pass (an item with
 *neither* id is still skipped).
 
-**8. ⚠️ WHAT IS NOT DONE.** The **independent verifier for THIS landed fix has not returned** — the
-verdict above covers the *decision premises*, not the diff (per the standing rule the fix is
-**unverified** until its own reviewer reports). `why_colbert.py` is untouched by design. The
-**pre-registration** for the ONE product-endpoint run (Stage F) is a separate deliverable.
+**8. ⚠️ THE DIFF VERDICT, AND WHY THE COMMIT CARRIES NO `[verified]`.** Reviewer `deleg_dc2675b3`
+(`openai/gpt-oss-20b`, read-only, cross-family) was given the 596-line diff by path and 7 claims, and
+returned **7/7 CONFIRMED, no silent wrong answer** — ⚠️ but it is a **CHEAP verdict (19 calls,
+33.6 s)** whose cited **line numbers do not resolve** (`_rrf_merge` "lines 212-213" — it sits near
+780; `test_dense_prefetch_limit.py` "lines 247-266" — the file is ~110 lines; the harness mis-pathed
+as `src/pdf_ingestion/scripts/…`). Its **identifiers** do resolve and are correct, so the verdict is
+consistent with the code but **its citations are not evidence**, and per the standing rule it is
+**not banked**. The substantive half is the author's **mechanical evidence**: the live determinism
+measurement, ΔR@20 = 0.0, the two mutation proofs and the suite. **`[verified]` is deliberately OFF**
+on commit `939beae`, and the commit body says exactly what was and was not established.
+
+**9. ✅ COMMITTED `939beae`** (the fix, the three rewritten test files, the new guards,
+`scripts/funnel_boundary_recall.py`, the harness + artifact, this entry). ⚠️ The only untracked files
+left are the **arm-2 fragment** (`min_chunk_tokens_ab*.py`), deliberately out — the known-broken
+fragment the brief says to treat as **arm 2 unstarted**.
+
+**10. ⚠️ WHAT IS NOT DONE.** `why_colbert.py` is untouched by design. The **Stage F run itself has not
+run** — its pre-registration is committed alone (`51de3f2`) and is the next step. ⚠️ **Do not run F on
+top of an uncommitted product-path change** — that precondition is now satisfied (the fix is
+committed), but F's own preconditions (§3's per-arm env, the HyDE cache) still apply.
 
 **Register against:** §I68 (the defect and its measured blast radius — corrected here), §I67 (the
 VOID it caused, and the A/B it blocked), §I66 (the fusion stage), §I61/§I76 (the lane shape and the
