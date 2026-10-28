@@ -33,12 +33,17 @@ never calls it. In v1, DA and the graph lane are **off**; everything else is ide
 n = 133. `coverage` = share of a query's **reachable** labelled pages present at that stage (the ceiling
 check). `pool` = pages available at that stage. All metrics page-deduped.
 
-| stage | coverage | pool | R@20 | R@100 | P@20 | F1@20 | nDCG@20 | MAP | MRR | Hit@20 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| base — dense 64d lane | **0.9190** | 512.8 | 0.3548 | **0.8979** | 0.1624 | 0.1333 | 0.3931 | 0.2315 | 0.5875 | 0.8872 |
-| full-dim re-score, cut 1000→500 | 0.8381 | 303.5 | 0.4242 | 0.8177 | 0.2049 | 0.1699 | 0.4919 | 0.2925 | 0.7242 | 0.9248 |
-| fusion pool | 0.6845 | 86.5 | **0.4491** | 0.6706 | **0.2447** | **0.1968** | **0.5506** | **0.3421** | **0.7687** | **0.9323** |
-| cross-encoder → top-20 | **0.4553** | 19.9 | 0.4442 | 0.4442 † | 0.2398 | 0.1911 | 0.4946 | 0.2789 | 0.6668 | 0.9173 |
+| stage | coverage | pool | R@20 | R@100 | P@20 | P-ceil | P@20 / ceil | F1@20 | nDCG@20 | MAP | MRR | Hit@20 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| base — dense 64d lane | **0.9190** | 512.8 | 0.3548 | **0.8979** | 0.1624 | 0.4846 | 34 % | 0.1333 | 0.3931 | 0.2315 | 0.5875 | 0.8872 |
+| full-dim re-score, cut 1000→500 | 0.8381 | 303.5 | 0.4242 | 0.8177 | 0.2049 | 0.4846 | 42 % | 0.1699 | 0.4919 | 0.2925 | 0.7242 | 0.9248 |
+| fusion pool | 0.6845 | 86.5 | **0.4491** | 0.6706 | **0.2447** | 0.4846 | **51 %** | **0.1968** | **0.5506** | **0.3421** | **0.7687** | **0.9323** |
+| cross-encoder → top-20 | **0.4553** | 19.9 | 0.4442 | 0.4442 † | 0.2398 | 0.4846 | 49 % | 0.1911 | 0.4946 | 0.2789 | 0.6668 | 0.9173 |
+
+`P-ceil` is the **precision ceiling** — the highest `P@20` this gold set can produce — and it is a property
+of the **labels**, not of the system, so it is **identical in every row and every arm**. The column beside
+it divides one by the other. ⚠️ **Read the ratio, never the raw precision:** 0.240 looks like failure and is
+actually **half of what is achievable**.
 
 † The cross-encoder stage holds only the 20 reranked chunks, so `R@100` there equals `R@20` **by
 construction**. The pool-recall figure comparable to v1's `R@100` is the **fusion row's 0.6706**.
@@ -65,9 +70,23 @@ drop as the **cut**, not as a cost of re-scoring.
 * **Recall@20 barely moves** (0.4491 → 0.4442) and **Hit@20 barely moves** (0.9323 → 0.9173). So a
   recall-only report would have called this stage a non-event. It is the worst stage in the funnel.
 
-**Precision@20 is ceiling-bound, not a quality signal.** It reads 0.240 at the endpoint against a
-**ceiling of 0.485** — the ceiling is a property of the gold labels (how many pages each query has), not
-of the system. It must always be quoted with the ceiling; on its own it looks like failure.
+**Precision@20 is ceiling-bound, not a quality signal — and the ceiling differs sharply by type.**
+
+| type | labelled pages per query (min / median / max) | P-ceil |
+|---|---|---|
+| factual | 1 / 3 / 134 | **0.3000** |
+| overview | **22 / 56.5 / 314** | **1.0000** |
+| multihop | 1 / 3 / 13 | **0.2137** |
+
+The ceiling is `min(labelled pages, 20) / 20`, averaged over the type — a property of the **gold labels**,
+not of the system, so it is **identical in every stage and every arm**. **Overview queries carry at least
+22 labelled pages each**, which is why their ceiling is a full 1.0 and why their raw `P@20` (0.51) looks
+far better than factual's (0.14) while both sit at about the same fraction of what is achievable.
+
+⚠️ **Read precision as a fraction of its ceiling, never raw.** Measured that way the system is remarkably
+uniform — **every type sits at roughly half its ceiling** (endpoint: factual 45 %, overview 51 %, multihop
+49 %; pool: 48 % / 53 % / 43 %). That is the honest reading: precision is **not** where the types differ,
+and it is **not** a lever, because the ceiling moves with the labels rather than with the system.
 
 ---
 
@@ -75,19 +94,19 @@ of the system. It must always be quoted with the ceiling; on its own it looks li
 
 **At the endpoint (cross-encoder top-20):**
 
-| type | n | coverage | R@20 | P@20 | F1@20 | nDCG@20 | MAP | MRR | Hit@20 |
-|---|---|---|---|---|---|---|---|---|---|
-| factual | 53 | 0.5577 | 0.5574 | 0.1358 | 0.1633 | 0.4524 | 0.3206 | 0.5178 | 0.8679 |
-| **overview** | 40 | **0.1937** | **0.1882** | 0.5125 | 0.2579 | 0.5379 | 0.1265 | **0.8021** | 1.0000 |
-| multihop | 40 | 0.5813 | 0.5500 | 0.1050 | 0.1612 | 0.5072 | 0.3761 | 0.7291 | 0.9000 |
+| type | n | coverage | R@20 | P@20 | P-ceil | P@20 / ceil | F1@20 | nDCG@20 | MAP | MRR | Hit@20 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| factual | 53 | 0.5577 | 0.5574 | 0.1358 | **0.3000** | 45 % | 0.1633 | 0.4524 | 0.3206 | 0.5178 | 0.8679 |
+| **overview** | 40 | **0.1937** | **0.1882** | 0.5125 | **1.0000** | 51 % | 0.2579 | 0.5379 | 0.1265 | **0.8021** | 1.0000 |
+| multihop | 40 | 0.5813 | 0.5500 | 0.1050 | **0.2137** | 49 % | 0.1612 | 0.5072 | 0.3761 | 0.7291 | 0.9000 |
 
 **At the fusion pool (the stage before it):**
 
-| type | n | coverage | R@20 | R@100 | P@20 | F1@20 | nDCG@20 | MAP | MRR | Hit@20 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| factual | 53 | 0.8115 | 0.5830 | 0.8110 | 0.1443 | 0.1733 | **0.5885** | **0.4689** | **0.7690** | 0.9057 |
-| overview | 40 | 0.5221 | 0.2103 | 0.5084 | 0.5312 | 0.2817 | 0.5750 | 0.1557 | 0.8723 | 1.0000 |
-| multihop | 40 | 0.6786 | 0.5106 | 0.6466 | 0.0912 | 0.1431 | 0.4761 | 0.3604 | 0.6646 | 0.9000 |
+| type | n | coverage | R@20 | R@100 | P@20 | P-ceil | P@20 / ceil | F1@20 | nDCG@20 | MAP | MRR | Hit@20 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| factual | 53 | 0.8115 | 0.5830 | 0.8110 | 0.1443 | 0.3000 | 48 % | 0.1733 | **0.5885** | **0.4689** | **0.7690** | 0.9057 |
+| overview | 40 | 0.5221 | 0.2103 | 0.5084 | 0.5312 | 1.0000 | 53 % | 0.2817 | 0.5750 | 0.1557 | 0.8723 | 1.0000 |
+| multihop | 40 | 0.6786 | 0.5106 | 0.6466 | 0.0912 | 0.2137 | 43 % | 0.1431 | 0.4761 | 0.3604 | 0.6646 | 0.9000 |
 
 **The pool → endpoint step, per type** — and the three types behave in **opposite directions**:
 
@@ -122,15 +141,17 @@ Same index, same queries, same instrument. **Only difference: DA and the graph l
 | endpoint **MRR** | 0.6668 | **0.7805** |
 | endpoint Hit@20 | 0.9173 | 0.9248 |
 | endpoint P@20 | 0.2398 | 0.2470 |
+| endpoint P-ceil (identical by construction) | 0.4846 | 0.4846 |
+| endpoint P@20 / ceil | 49 % | **51 %** |
 | endpoint **F1@20** | 0.1911 | **0.1957** |
 
 **v1 per query type:**
 
-| type | n | R@20 | R@100 | P@20 | F1@20 | nDCG@20 | MAP | MRR | Hit@20 |
-|---|---|---|---|---|---|---|---|---|---|
-| factual | 53 | 0.5782 | 0.7882 | 0.1415 | 0.1708 | 0.4641 | 0.3269 | 0.7693 | 0.8868 |
-| overview | 40 | 0.1947 | 0.4316 | 0.5312 | 0.2668 | 0.5519 | 0.1319 | 0.8958 | 1.0000 |
-| multihop | 40 | 0.5397 | 0.6120 | 0.1025 | 0.1575 | 0.5034 | 0.3751 | 0.6799 | 0.9000 |
+| type | n | R@20 | R@100 | P@20 | P-ceil | P@20 / ceil | F1@20 | nDCG@20 | MAP | MRR | Hit@20 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| factual | 53 | 0.5782 | 0.7882 | 0.1415 | 0.3000 | 47 % | 0.1708 | 0.4641 | 0.3269 | 0.7693 | 0.8868 |
+| overview | 40 | 0.1947 | 0.4316 | 0.5312 | 1.0000 | 53 % | 0.2668 | 0.5519 | 0.1319 | 0.8958 | 1.0000 |
+| multihop | 40 | 0.5397 | 0.6120 | 0.1025 | 0.2137 | 48 % | 0.1575 | 0.5034 | 0.3751 | 0.6799 | 0.9000 |
 
 **What the two extra lanes buy: more pages, worse ordering.** They raise pool recall (0.6279 → 0.6706)
 but the endpoint does not follow — and **MRR falls sharply (0.7805 → 0.6668)**. The mechanism is visible
@@ -182,7 +203,7 @@ action.**
 |---|---|---|
 | **coverage** | *Of the pages this stage could possibly reach, how many did it actually return?* | The ceiling check. It cannot exceed 1 and it never depends on the ordering. Use it to see **where pages are lost**; it says nothing about order. |
 | **recall@k** | *Of the pages that contain the answer, how many are inside the top k?* | **Inclusion.** Rises to 0.449 at the pool and flattens at 0.444 — recall alone would call the last stage harmless. Always report with k. |
-| **precision@k** | *Of the top k, how many are actually gold?* | The mirror of recall. **Must be quoted with its ceiling** (0.485 here), or it reads as failure when it is at capacity. |
+| **precision@k** | *Of the top k, how many are actually gold?* | The mirror of recall. **Must be quoted with its ceiling**, or it reads as failure when it is at capacity. The ceiling is `min(labelled pages, k)/k` — **0.4846 overall, but 0.3000 factual / 1.0000 overview / 0.2137 multihop**, because the types carry very different numbers of labelled pages. **Read the ratio:** every type sits at ~half its ceiling, so precision is uniform across types and is not a lever. |
 | **F1@k** | *What is the balance of precision and recall in the top k?* | The harmonic mean of the two. ⚠️ **Derived, so it cannot tell you which side moved** — here it is pinned by precision (F1 0.1911 sits next to P@20 0.2398 and R@20 0.4442, so precision is the limiting side). Read it as a **summary**, never as a diagnosis. |
 | **hit@k** | *Did the student get **anything** useful in the top k?* | The **floor**, not the quality: 0.92 here while coverage is 0.46. High hit@k means "never empty", not "answered". |
 | **MRR** | *How high is the **first** correct page?* | **Ordering, first answer only.** 0.769 at the pool → 0.667 at the endpoint. Sensitive to one good page; blind to everything after it. |
