@@ -7648,3 +7648,68 @@ refutes and whose *"the fusion destroys the advantage"* finding this does **not*
 width A/B at the endpoint — the null that makes this a re-targeting rather than a fix), §I66 (the 100-slot
 output as the binding *ceiling*), §I65 (a pool gain is not a recall gain), §I72 (the cross-encoder
 equaliser — now the prime suspect for the endpoint loss).
+
+#### I91a. ADDENDUM (2026-10-27, same session) — the T1 artifact RECORDED `map` / `precision@20` / `f1@20` per query but never AGGREGATED them. A real gap, now closed by re-derivation; plus a correction to the plan's precision-ceiling figure
+
+**⚠️ THE GAP, STATED PLAINLY.** Every T1 **per-arm** file records **all ten** metrics per query —
+`recall_at_20`, `recall_at_100`, `hit_at_20`, `context_precision`, `mrr`, `ndcg_at_20`, **`map`**,
+**`precision_at_20`**, **`precision_ceiling_at_20`**, **`f1_at_20`** (they come from the shared
+`compute_retrieval_metrics`, which §I90 extended). **nDCG@20 *is* reported** — it is in the artifact's
+`S1_secondary`. But **`map`, `precision@20` and `f1@20` were never aggregated into any endpoint or
+diagnostic**, so the combine artifact cannot answer a question about them. **Cause:** T1's
+pre-registration §5 adopted **Stage F's endpoint list verbatim**, and Stage F predates §I90's metric
+additions; `t1_base_lanes.py`'s `combine()` is a copy of Stage F's, so the new keys arrived in the
+per-query rows and **nothing summed them**. ⚠️ The gap was **noticed and worked around** — E9 excludes
+exactly those keys from its comparison, by name, to avoid an over-strict check — **without them being
+added to the endpoint set.** That is the error: the same fact was used to make one check safe and
+ignored where it would have made the artifact more complete.
+
+**The derived numbers** (⚠️ **re-derived from the registered per-query arrays — the same data, not a new
+measurement; they are NOT part of the pre-registered endpoint set and carry no ship decision**):
+
+| metric | arm A | arm B | Δ (B − A) | 95 % CI | W/L/T | floor |
+|---|---|---|---|---|---|---|
+| `ndcg_at_20` *(already reported)* | 0.5018 | 0.5023 | **+0.000559** | [−0.010599, +0.011717] | 38/49/46 | 0.0112 |
+| `map` | 0.2834 | 0.2828 | **−0.000686** | [−0.007906, +0.006533] | 41/47/45 | 0.0072 |
+| `precision_at_20` | 0.2459 | 0.2470 | **+0.001128** | [−0.005925, +0.008181] | 24/22/87 | 0.0071 |
+| `precision_ceiling_at_20` | 0.4846 | 0.4846 | **+0.000000** | [0, 0] | 0/0/133 | 0.0000 |
+| `f1_at_20` | 0.1957 | 0.1957 | **+0.000015** | [−0.005536, +0.005566] | 24/22/87 | 0.0056 |
+
+**All five unresolved, all below their own floors, all consistent with the T1 null.** ⚠️ The ceiling row
+is **exactly 0.000000, 0/0/133** — the correct behaviour for a quantity that is a property of the gold
+set, not of the arm, and a useful sanity check on the metric implementation.
+
+**⚠️ A CORRECTION TO THE PLAN'S §C PRECISION-CEILING FIGURE.** The plan argues that the removed
+`precision@top_k` "read as failure while sitting at its own ceiling", quoting a ceiling of **≈ 0.10** on
+the grounds of a **median 2 labelled pages**. **Measured on this gold set** (arm A, n=133):
+`precision_ceiling_at_20` **mean 0.4846, median 0.3000, min 0.0500, max 1.0000**; `n_relevant` **mean
+27.30, median 6, max 314**; **45 queries sit at a ceiling of 1.0** (≥ 20 labelled pages) and **35 sit at
+≤ 0.10** (≤ 2). ⇒ **the gold set is strongly BIMODAL, and the plan's ≈ 0.10 is not the ceiling of this
+population** — it is roughly the ceiling of its small-`|rel|` mode. **The conclusion the plan draws
+still holds** (a fixed-slot precision must travel with its ceiling), but **the number attached to it does
+not**, and the same §C text is the reason `f1` was called "low priority at fixed k". **Register the
+correction rather than the stale figure.**
+
+#### I92a. ADDENDUM (2026-10-27, same session) — the attribution recorded NO fixed-k metric at all, and the reason given for that was IMPRECISE. ⚠️ The width effect at the top-20 **with HyDE ON** is therefore still unmeasured
+
+**⚠️ WHAT WAS NOT RECORDED.** `fusion_attribution.json` carries, per query and per arm, only the **pool's
+page list**, the **pool size** and the derived **coverage**. **No `recall@20`, `nDCG@20`, `MAP`,
+`precision@20` or `f1@20`** — although every arm calls the product's own `run_retrieval`, which **does**
+compute a top-20 in every arm, so all of them were **available**. They cannot be recovered from the
+artifact (the reranked lists were not stored); recovering them needs a re-run.
+
+**⚠️ THE JUSTIFICATION IN THE PRE-REGISTRATION §4 WAS IMPRECISE, and the correction matters.** It said
+*"recall@k at a pool of width 500 would compare different k's across arms."* **That is wrong as stated.**
+What differs across arms is **`fetch_k`** (the pool width) — which **renames** the metric key
+`recall_at_{fetch_k}` and **changes `context_precision`'s denominator** (the returned count). The
+**top-20** metrics are computed at the **same k = 20 in every arm** and **are comparable**. So the
+pre-registered endpoint set could legitimately have included them, and the run would have answered a
+second question for free.
+
+**⚠️ WHY THAT IS MORE THAN A TIDINESS ISSUE.** §I67 measured the **same width change** at the endpoint
+and found a **null** — but §I67 ran **HyDE OFF**. This run ran **HyDE ON**. So a top-20 comparison here
+would have been a **NEW measurement** (the width effect at the endpoint under the product's own HyDE
+setting), not a re-derivation of §I67. **It is now a named follow-up**: *does the +0.1835 pool-coverage
+gain move the product's top-20 when HyDE is ON?* — cheap, one arm against T0's recorded fusion row.
+⚠️ **The registered finding is unaffected** (the pool-level attribution is complete and anchored), but
+**"§I67 already covers it" is a claim about a HyDE-off run**, and it should be stated that way.

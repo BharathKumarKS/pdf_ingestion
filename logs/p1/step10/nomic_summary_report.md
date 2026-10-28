@@ -142,7 +142,10 @@ anchors** — arm C reproduces T0's fusion coverage **0.684486** *and* T0's pool
 **The cap is recoverable at the pool — and §I67 already measured the SAME change at the product endpoint
 as a NULL** (W 100→300 and 100→500, both knobs together: Δ R@20 c-norm **+0.0032 / +0.0027**, both
 unresolved). ⇒ **A +0.1835 pool gain buys +0.003 at the endpoint.** That is *"a pool gain is not a recall
-gain"* measured with a very large pool gain.
+gain"* measured with a very large pool gain. ⚠️ **One caveat on that comparison, stated rather than
+buried:** §I67 ran with **HyDE OFF**; this attribution ran with **HyDE ON**. So the *pool-level* finding
+here is complete and anchored, but the **top-20 width effect under HyDE ON is still unmeasured** — a
+cheap named follow-up (§I92a), not a re-derivation of §I67.
 
 * **The fusion is NOT the binding constraint on the endpoint.** §I89's *"the fusion destroys the arm
   difference"* still stands — that is a different claim.
