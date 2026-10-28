@@ -4,7 +4,8 @@
 pages), one corpus (one undergraduate physics textbook), **133 labelled queries**, HyDE on and frozen,
 read-only. Two registered measurements:
 
-* **v0 = T0** — the **full funnel**: base lane → full-dim re-rank → fusion pool → cross-encoder top-20.
+* **v0 = T0** — the **full funnel**: base lane (64d) → full-dim re-score + cut to 500 → fusion pool →
+  cross-encoder top-20.
 * **v1 = T1** — the **product endpoint on the base lanes only** (same index, two fewer lanes).
 
 ⚠️ **Which lanes were actually live — stated because it is easy to assume otherwise.** The **dense**,
@@ -35,12 +36,21 @@ check). `pool` = pages available at that stage. All metrics page-deduped.
 | stage | coverage | pool | R@20 | R@100 | P@20 | F1@20 | nDCG@20 | MAP | MRR | Hit@20 |
 |---|---|---|---|---|---|---|---|---|---|---|
 | base — dense 64d lane | **0.9190** | 512.8 | 0.3548 | **0.8979** | 0.1624 | 0.1333 | 0.3931 | 0.2315 | 0.5875 | 0.8872 |
-| full-dim re-rank | 0.8381 | 303.5 | 0.4242 | 0.8177 | 0.2049 | 0.1699 | 0.4919 | 0.2925 | 0.7242 | 0.9248 |
+| full-dim re-score, cut 1000→500 | 0.8381 | 303.5 | 0.4242 | 0.8177 | 0.2049 | 0.1699 | 0.4919 | 0.2925 | 0.7242 | 0.9248 |
 | fusion pool | 0.6845 | 86.5 | **0.4491** | 0.6706 | **0.2447** | **0.1968** | **0.5506** | **0.3421** | **0.7687** | **0.9323** |
 | cross-encoder → top-20 | **0.4553** | 19.9 | 0.4442 | 0.4442 † | 0.2398 | 0.1911 | 0.4946 | 0.2789 | 0.6668 | 0.9173 |
 
 † The cross-encoder stage holds only the 20 reranked chunks, so `R@100` there equals `R@20` **by
 construction**. The pool-recall figure comparable to v1's `R@100` is the **fusion row's 0.6706**.
+
+**What the second row is, and what it is not.** It is a **coarse-to-fine cascade inside the dense lane**:
+shortlist 1,000 candidates at **64 dimensions** (the first 64 of the same 768-dim vector, re-normalised —
+a Matryoshka truncation), then **re-score those same 1,000 at all 768 dimensions** and keep the best 500.
+Same embedding twice at two widths — **not** a second model, and **not** the cross-encoder, which is the
+last row. ⚠️ **The row moves two things at once, in opposite directions:** the re-score **improves** the
+ordering (nDCG 0.3931 → 0.4919, MRR 0.5875 → 0.7242) and top-20 inclusion (R@20 0.3548 → 0.4242), while
+the **cut from 1,000 to 500 candidates is what costs the coverage** (0.9190 → 0.8381). Read the coverage
+drop as the **cut**, not as a cost of re-scoring.
 
 **Read the table in two halves, because they disagree — and that is the point of having both.**
 
