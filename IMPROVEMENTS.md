@@ -7713,3 +7713,32 @@ setting), not a re-derivation of §I67. **It is now a named follow-up**: *does t
 gain move the product's top-20 when HyDE is ON?* — cheap, one arm against T0's recorded fusion row.
 ⚠️ **The registered finding is unaffected** (the pool-level attribution is complete and anchored), but
 **"§I67 already covers it" is a claim about a HyDE-off run**, and it should be stated that way.
+
+#### I90a. ADDENDUM (2026-10-27) — T0's artifact OVERSTATES its page convention: boundaries 1, 2 and 5 are **top-k PAGES**, not "pages of the top-k CHUNKS". ⚠️ The funnel comparisons inside T0 are unaffected; a cross-run comparison is not
+
+**⚠️ THE INACCURACY.** T0's `meta.units.product_metrics` says *"pages of the top-k CHUNKS (product
+convention, evaluate_rag:333-341)"* — for **every** boundary. **It is true for boundaries 3 and 4 and
+false for 1, 2 and 5.** `_metrics_from_pages` (`t0_baseline.py:170-174`) builds `hits` from a **PAGE
+list** and passes `reranked = hits[:TOP_K]`, i.e. the **top-20 PAGES**:
+
+| boundary | what is ranked | convention |
+|---|---|---|
+| 1 base, 2 cut | a **page** list derived from an exact chunk ranking (`_dedup_pages`) | **top-k PAGES** |
+| 5 b5 | a **page** list derived from Qdrant's 500-chunk list (`_dedup_hits`) | **top-k PAGES** |
+| 3 fusion | the product's pool, which is **already page-deduped** (one chunk per page) | **the two coincide** |
+| 4 ce | `ret["reranked"][:20]` — **chunks**, then deduped to pages | **pages of the top-k CHUNKS** ✅ |
+
+**⚠️ Why it matters, and why it does NOT break T0.** The two conventions differ by ~**0.02** and caused
+**§I72's VOID run** — so they must never be mixed *within* a contrast. Inside T0 **they are not mixed**:
+boundaries 1→2→3 are all top-k-pages on both sides of each comparison, and boundary 3's rows are
+identical under both conventions, so **the funnel deltas, the ANN-vs-exact identity (G9/G10) and the
+aperture curve all stand**. What breaks is a **cross-run** comparison: **T0's base/cut/b5 R@20 (0.3548 /
+0.4242 / 0.4242) is NOT the same quantity as T1's or the product's R@20** (which is pages of the top-k
+chunks). ⚠️ **T0's own `ce` row IS comparable** to T1's arm B (0.4442 vs 0.4513 — the same convention,
+and the difference is the DA + graph lanes being ON in T0 and OFF in T1, consistent in sign with §I56's
+DA harm).
+
+**⇒ The rule this is an instance of (D4.1, one level down):** *a page-level metric must name its k-unit as
+well as its k* — "top-20 pages" and "pages of the top-20 chunks" are different metrics that share a name.
+⚠️ **Registering the metadata defect, not just the convention**, because the artifact's own `units` block
+is what a later reader will trust.
