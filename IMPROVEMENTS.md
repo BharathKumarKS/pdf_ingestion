@@ -6964,3 +6964,687 @@ committed), but F's own preconditions (§3's per-arm env, the HyDE cache) still 
 VOID it caused, and the A/B it blocked), §I66 (the fusion stage), §I61/§I76 (the lane shape and the
 `sparse` lane the per-lane calls preserve), §I33 (a gate that reads the thing it asserts), §I44 (a
 guard that passed once is not a guard that holds), §I47 (a mismatch must name its remedy).
+
+---
+
+### I85. 2026-10-25 — Stage F RAN: the index swap is a **NULL** at the product endpoint on the base lanes (ΔcR@20 = **−0.0012**, UNRESOLVED). The oracle screen's **+0.14** does **not** survive the funnel. ⚠️ Both derived lanes had to be turned OFF first — the whole derived layer is nomic-only
+
+**The question.** The nomic plan's §3 Stage F: *does the nomic-768 index (`knowledge_base_v3`, arm
+B) beat the incumbent qwen3-1024 index (`knowledge_base_v2`, arm A) at the **product retrieval
+endpoint**, on the same 133 gold queries?* This is the product-endpoint counterpart of §I74 (the
+cross-encoder on a fixed pool) and §I63/§I70 (the oracle screens). It is **the only stage whose
+result can license a ship** (plan §5).
+
+**⚠️ FIRST: the pre-registration could not be run as written, and the reason is a recurrence.**
+`store.search_da` (`store.py:722`) queries `cfg.da_collection` with the **DENSE query vector**, whose
+dimension **IS the arm's `dense_dim`** (1024 for A, 768 for B) — and `derivative_artifacts` is a
+**single 768d collection** (§I83). So arm A's DA lane returned **HTTP 400** and `store.py:748`
+**silently** logged a warning and returned `[]`, while arm B's was **live**: **not a single-variable
+A/B**, and arm A could no longer reproduce Phase E (which ran when that collection was 1024d). ⚠️
+**§D15/§I12 recorded the same 768-vs-1024 death in the §3d run** — the mechanism is not new; the
+mismatch has merely flipped direction. The **same defect hit the GRAPH lane**: `graph_search` ranks
+concepts through `concept_embeddings`, which §I83 also re-embedded at **768d**, so arm A's multihop
+concept search 400s and the lane returns `[]` (`graph_builder.py:686`) — dead in A, live in B.
+Measured: that handler does **not** call an LLM (the *"falling back to LLM"* text is misleading), so
+it is an **asymmetry**, not a noise source.
+
+**⇒ RE-REGISTERED (committed ALONE before the run: `e708784`, amended `a409d7d`;
+`.hermes/plans/2026-10-25-p1-stageF-product-endpoint-reregistration.md`).** Three changes: **(a)** the
+DA lane is **OFF in both arms**; **(b)** E8 is re-pointed from Phase E (DA ON) to **§3d** (the
+registered DA-off retrieval-only v2 row, R@20 **0.452**), tolerance = the n=133 resolution floor
+(±0.020), **not a fit**; **(c)** the GRAPH lane is **OFF in both arms**. ⚠️ **This NARROWS the
+question and it is stated, not hidden:** the run measures the **base lanes**
+(`dense(low→full) + sparse + colbert → RRF → page dedup → MMR → cross-encoder`) — the product funnel
+**minus both derived lanes**, which are nomic-only in the current environment. The full-funnel
+comparison is **unmeasured**.
+
+**The run** (`logs/p1/step10/stageF_product_endpoint.py`; artifact `stageF_product_endpoint.json`,
+sha256 `8ea21a83…`; per-arm `stageF_arm_{A1,A2,B1,B2}.json`; log `stageF_run_session20.txt`). Each arm
+calls the **product's own** `evaluate_rag.run_retrieval` (embed → HyDE → `search_with_das` → shipped
+cross-encoder) and scores with the product's own `compute_retrieval_metrics`. **HyDE ON and frozen**
+(§I73 cache, 93 entries served) — a miss **raises**, never a live call. **133 queries, 0 errors, per
+arm**; ~150 s/arm. Endpoints **P1** = paired Δ cR@20 (§I58), **P2** = paired Δ raw R@20, both **B − A**.
+
+| endpoint | arm A (qwen3-1024) | arm B (nomic-768) | Δ (B−A) | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|---|---|
+| **P1 cR@20** (PRIMARY) | — | — | **−0.001213** | [−0.023051, **+0.020626**] | 21/26/86 | **UNRESOLVED** |
+| **P2 raw R@20** (PRIMARY) | **0.4475** | **0.4463** | **−0.001185** | [−0.022523, **+0.020153**] | 21/26/86 | **UNRESOLVED** |
+| S1 R@100 | 0.6469 | 0.6115 | **−0.0354** | [−0.0517, −0.0191] | — | **RESOLVED −** |
+| S1 Hit@20 | 0.9173 | 0.9248 | +0.0075 | [−0.0181, +0.0331] | — | unresolved |
+| S1 MRR | 0.7515 | 0.7273 | −0.0242 | [−0.0531, +0.0048] | — | unresolved |
+| S1 Ctx.Prec | — | — | −0.0026 | [−0.0103, +0.0050] | — | unresolved |
+| S1 NDCG@20 | 0.5018 | 0.4980 | −0.0037 | [−0.0179, +0.0105] | — | unresolved |
+| S2 factual cR@20 | — | — | +0.0076 (n=53) | — | — | unresolved |
+| S2 multihop cR@20 | — | — | −0.0183 (n=40) | — | — | unresolved |
+| S2 overview cR@20 | — | — | +0.0042 (n=40) | — | — | unresolved |
+
+**The decision — per the pre-registered rule (§6), NOTHING SHIPS.** P1's CI **straddles 0** and the
+point estimate is **~18× below the run's own resolution floor** (`SD_d` 0.1285 → floor **0.021839**;
+the required n for δ = 0.05 is **25.4**, so power was **ample** — the limit is the effect, not the
+sample). Recorded **measured-and-unresolved**: **on the base lanes, at the product endpoint, the
+nomic-768 index is indistinguishable from qwen3-1024.** ⚠️ **The one RESOLVED secondary is NEGATIVE
+for nomic**: R@100 **−0.0354** [−0.0517, −0.0191] — nomic's fused pool covers **~3.5 pp fewer** labelled
+pages. And every per-type cut is unresolved.
+
+**⚠️ THE HEADLINE IS THE MECHANISM: the oracle gain does not survive the funnel.** §I63's oracle
+screen measured **nomic − qwen3 = +0.1400** R@20 on the base lane (exact cosine, fixed corpus), and
+§I74 measured **+0.068** at the cross-encoder on an oracle pool. Here, at the **product** endpoint, it
+is **−0.0012 and unresolved**. The reading is structural and consistent with §I72/§I74: (i) the
+**sparse and ColBERT lanes are model-independent**, so they contribute **identically** in both arms
+and **dilute** the dense-lane difference; and (ii) the **cross-encoder is a strong equaliser**
+(§I72: it lifted the *weaker* embedder ~44× more than the stronger). The dense-lane ranking advantage
+the oracle sees is absorbed before the product's top-20.
+
+**⚠️ A convention worth pinning, because it is scale-only here.** The §I58 divisor
+(`mean(achievable_max)`) measured **0.97707 in BOTH arms** — identical by construction (v3 is v2's
+chunks re-embedded, §I81), so **P1 = P2 / 0.97707** and the two primaries are the **same test up to
+scale**: the divisor cannot change the sign, the CI-exclusion or the verdict. ⚠️ Note this run's
+divisor (**0.97707**) differs from §I58's registered **0.9545** (a different instrument: a Qdrant
+scroll with the product filter vs §I58's SQLite computation) — recorded, and **immaterial to the
+verdict** for the reason above. ⚠️ Also not to be confused with §I84's `cr20` (≈4.44), a **per-query
+top-k-slot** normalisation, a different convention entirely.
+
+**✅ MECHANICAL EVIDENCE — all TEN guards pass, and the load-bearing two are the strongest.**
+* **E8 (the harness IS the registered instrument):** arm A reproduces §3d's DA-off v2 row — R@20
+  **0.4475** vs **0.452**, gap **−0.0045**, inside the ±0.020 floor. (The other four §3d columns:
+  R@100 +0.021, Hit@20 +0.007, MRR +0.024, NDCG@20 −0.006 — all small, all consistent with §3d
+  predating the §I68 swap and the §I58 label re-points.)
+* **E4 (negative control):** each arm was run **twice**; **bit-exact on every metric of every query**
+  in both arms (0 mismatches). This is a **legitimate** bit-exact control only because **§I68 landed**
+  (the funnel is deterministic) — the reason the pre-registration could assert it.
+* **E1/E2** (each arm's resolved config names its collection and a non-blank host, and matches
+  `Qwen3/1024/v2` vs `nomic/768/v3`), **E3** (133 in every arm), **E5** (aggregates re-derive),
+  **E6** (§I55 fallbacks named — **0 in both arms**), **E7** (min pool > 20 in both), plus
+  **E_da_off_both_arms** and **E_divisor_identical_across_arms**.
+* **A DA-gap cross-check on the re-registration's premise:** arm A is DA-OFF (R@20 **0.4475**),
+  Phase E is DA-ON (**0.4250**) → gap **+0.0225**, close to **§I56's** independently measured
+  **−0.0262** (the DA lane hurts). The premise holds.
+* **An independently-written stdlib verifier** (`logs/p1/step10/stageF_verifier.py --check`,
+  re-derives every aggregate from the raw per-query arrays): **V1–V8 ALL PASS**.
+* ✅ **Independent cross-family reviewer `deleg_e607dda1` (`openai/gpt-oss-20b`, read-only, model
+  resolved from `hermes config get delegation`) RETURNED: 7/7 CONFIRMED, no refutations — *"No claim
+  remains unverified"*.** It re-derived the means, the paired delta, the CI, the W/L/T and the R@100
+  row from the 34 KB compact extract **itself** (A_r20 0.4475, B_r20 0.4463, Δ −0.00118496, CI
+  [−0.02252, +0.02015], 21/26/86; R@100 −0.03540 [−0.05169, −0.01912]), and confirmed 0 rows with a
+  pool ≤ 20, all 133 ids present, no null metrics, 0 fallbacks. ⚠️ **NOT BANKED (4 API calls,
+  71 s — a cheap verdict)**: per the standing rule the substantive half is the author's mechanical
+  evidence (the ten guards, E4/E8, the stdlib verifier). It is corroboration, not a second opinion.
+
+**⚠️ WHAT IS *NOT* DECIDED, stated plainly.** (1) **The full product funnel is unmeasured** — DA +
+graph are off, so this run does **not** license a ship of the whole v3 stack; a resolved full-funnel
+result would need a 1024d DA collection *and* a 1024d `concept_embeddings` (both are a write, and the
+pre-registration forbade writes). (2) **The re-ingest remains a separate owner decision** (§I70/§I77):
+~58.6 min ingest + 8.9 h cards + 1 h 6 m graph + every derived collection + the classifier — and
+**this run gives it no support on the base lanes.** (3) **One corpus, one document, one day.** No
+causal claim beyond these two indexes. (4) The **§I74 gemma-vs-nomic margin** is untouched — this run
+compares nomic against the **incumbent**, not against gemma.
+
+**Register against:** §I74 (the oracle cross-encoder contrast this is the product-endpoint
+counterpart of), §I63/§I70 (the oracle screens whose +0.14 does not survive), §I72 (the cross-encoder
+equaliser), §I56 (the DA-lane effect the DA-gap cross-check reproduces), §I58 (the ceiling
+normalisation and its two conventions), §I83 (the 768 derived collections that forced the
+re-registration), §D15/§I12 (the *same* 768-vs-1024 DA death, recurred), §I84 (the §I68 fix that
+makes E4 a real control), §I73 (the HyDE cache), §I61/§I67/§I71 (the re-registration precedent).
+
+---
+
+### I86. 2026-10-25 — Stage G RAN: the stage decomposition on BOTH arms. ⚠️ It does **NOT** show "the fusion destroys nomic's advantage" — behind the 64d prefilter nomic's coverage is **worse at every stage**, and the only RESOLVED stage is the fusion pool
+
+**The question.** The nomic plan §3 Stage G: *did the embedder fix the full-dimension ranking lane, or
+just move the loss around?* Run on both arms after Stage F's null (§I85).
+
+**Instrument** (`logs/p1/step10/stageG_decomposition.py` → `stageG_decomposition.json`; per-arm
+`stageG_arm_{A,B}.json`; log `stageG_run_session20.txt`). Same two arms and the same DA-off /
+graph-off / HyDE-frozen config as Stage F. **133 queries, 0 errors, ~145 s/arm.** Unit = **coverage of
+a query's REACHABLE labelled pages** (§I66's unit), so rows compare across arms AND to §I66. Stages
+**1–2 are exact brute force** (§I66's method — no ANN, no Qdrant scoring); **stages 3–4 are the real
+product path**. Both collections hold the **identical corpus (3,489 in-chunk / 888 pages)** — asserted
+(G5), not assumed.
+
+**✅ THE KNOWN-ANSWER CHECK PASSES, and it is exact:** on arm A the probe reproduces §I66's exact-probe
+rows — base **0.815136** vs §I66's **0.8151** (gap 3.6e-05) and cut **0.747763** vs **0.7478** (gap
+−3.7e-05). So the instrument is anchored to §I66 before being trusted on v3. All five guards pass.
+
+| stage | A = v2 / qwen3-1024 | B = v3 / nomic-768 | Δ (B−A) | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|---|---|
+| base (64d lane @N=1000) | 0.8151 | 0.8000 | −0.0152 | [−0.0627, +0.0324] | 34/49/50 | unresolved |
+| after full-dim cut L=500 | 0.7478 | 0.6921 | **−0.0556** | [−0.1116, **+0.0004**] | 22/66/45 | unresolved (near) |
+| after fusion (pool=100) | 0.6605 | 0.6247 | **−0.0358** | [−0.0521, −0.0195] | 7/51/75 | **RESOLVED −** |
+| after cross-encoder (top-20) | 0.4588 | 0.4576 | −0.0012 | [−0.0226, +0.0202] | 21/26/86 | unresolved |
+
+**⚠️ THE READING — AND A CORRECTION TO THIS SESSION'S OWN FRAMING.** The prior hypothesis (stated
+before the run) was *"the oracle's +0.14 survives the base lane and the fusion destroys it."*
+**The run does NOT support that, and the correction is the finding.** Every stage is **≤ 0 for nomic**,
+the base stage is a **tie/negative (−0.0152, unresolved)**, and the **only resolved stage is the
+fusion pool (−0.0358)**. So there is **no nomic advantage at the base stage to destroy**.
+
+**⚠️ THE GAP ROW WAS THEN MEASURED, AND IT INVERTS §I63.** Added in the same session (the row §I86
+first named as a gap): **full-dim over ALL 3,489 chunks, NO 64d prefilter** — §I63's oracle
+configuration. It reproduces §I66's grid exactly on arm A (L=500 **0.828609** vs **0.8286**, gap
+9e-06; L=1000 0.926563 vs 0.9266; L=2000 0.977258 vs 0.9773 — guard **G6**).
+
+| full-dim, no prefilter | A = v2/qwen3 | B = v3/nomic | Δ (B−A) | 95 % CI | verdict |
+|---|---|---|---|---|---|
+| L=100 | 0.5192 | 0.4148 | −0.1044 | [−0.1559, −0.0530] | **RESOLVED −** |
+| **L=500** | **0.8286** | **0.6887** | **−0.1399** | [−0.1805, −0.0994] | **RESOLVED −** |
+| L=1000 | 0.9266 | 0.8257 | −0.1009 | [−0.1351, −0.0667] | **RESOLVED −** |
+| L=2000 | 0.9773 | 0.9488 | −0.0284 | [−0.0459, −0.0109] | **RESOLVED −** |
+
+**⇒ On the oracle's OWN configuration, v3's stored index is WORSE than v2 — by ≈ −0.14 at L=500, and
+RESOLVED at every L.** That is the opposite sign to §I63's oracle (**nomic +0.1400**) at almost the
+same magnitude.
+
+**⚠️ AND THE CAUSE IS IDENTIFIED BY SOURCE-READ, not inferred — the two are not the same object.**
+§I63's arm N built its corpus vectors with `cluster_embed([DOC_PREFIX + t for t in texts])`
+(`cross_embedder_experiment.py:295`) — **POOLED whole-chunk embeddings** — while §I63's arm Q used
+`scroll_pool`'s **stored** vectors (`:265`, `sims_q = m_q[:, :vq.shape[0]] @ vq`, `:329`). **So the
+oracle compared POOLED nomic against v2's STORED vectors** — two different constructions, and it had
+to: **v3 did not exist when it ran.** Measured live this session (12 in-window chunks per collection):
+**stored-vs-pooled cosine — v2 `dense_1024` 0.9559 (min 0.881); v3 `dense_full` 0.8153 (min 0.502).**
+So neither index stores pooled vectors, but **v3's late-chunked vectors sit much further from pooled
+than v2's do** — and §I63's N arm was the pooled one. ⚠️ **The register already flagged this
+distinction** (§I77: the §I70/§I72/§I74 gains *"embedded the text pooled, not late-chunked"*); Stage G
+is the first measurement that makes it **consequential**.
+
+**⇒ THE HONEST STATEMENT: the oracle's +0.14 was never about the index we built.** It is not that
+"the oracle's gain fails to survive the funnel" — it is that the oracle **measured a different vector
+construction**, and **v3 as built is worse than v2 at full-dim ranking coverage** (resolved), while the
+product endpoint **ties** because the cross-encoder absorbs it (Stage F).
+
+**⚠️ A NEW, CHEAP, UNRESOLVED QUESTION THIS OPENS.** Pooled nomic scored **well** (§I63, +0.14);
+late-chunked nomic (v3) scores **worse than qwen3** (−0.14). That is **consistent with late chunking
+being the cause** — but it is **NOT isolated**: no probe has yet compared pooled vs late-chunked
+nomic on the same corpus and instrument. If late chunking is the cause, the lever is the
+**ingestion (E3)**, not the embedder — a different fix with a different owner decision. **Named as the
+next cheap test, not as a finding.**
+
+**The mechanism that IS established:** the **cross-encoder equalises** — it shrinks the fused-pool gap
+from **−0.0358 (resolved)** to **−0.0012 (unresolved)** at the top-20, reproducing §I72's equaliser
+finding on the real funnel. And the fusion stage is where nomic's deficit becomes **resolved**.
+
+**What it means for the fine-tune (S6).** The loss that is *resolved* sits at the **fused pool**, and
+the cross-encoder **absorbs it before the product's cut** (R@20 is a tie). A better embedder therefore
+has **very little room at the product's endpoint** — its gains are consumed either by the 64d
+prefilter or by the cross-encoder. ⚠️ **This does not veto the fine-tune**, but it sets its ceiling
+low and says the lever, if any, is in the **funnel**, not the embedder. ⚠️ And it is consistent with
+§I66 (the 100-slot fusion output is the binding constraint) and §I67 (the width levers were nulls).
+
+**Register against:** §I85 (the Stage F null this decomposes), §I66 (the decomposition method and its
+known-answer rows — reproduced exactly here), §I63/§I70 (the full-dimension oracle whose +0.14 is NOT
+reproduced behind the prefilter), §I72 (the cross-encoder equaliser, reproduced on the real funnel),
+§I59 (the 64d lane as its own measurement), §I60 (the ANN loss excluded here by construction), §I58
+(the reachable-page unit).
+
+---
+
+### I87. 2026-10-25 — ⚠️ **LATE CHUNKING IS THE CAUSE.** Pooled nomic **beats** qwen3 at full-dim coverage; the **late-chunked** index we built (v3) is the **worst of the three** — late chunking costs **+0.1547** coverage, RESOLVED
+
+**The question §I86 opened.** §I86 measured v3 (late-chunked nomic) **worse** than v2 (qwen3) at
+full-dim, no-prefilter coverage (L=500: 0.6887 vs 0.8286, RESOLVED) — the opposite sign to §I63's
+oracle (**nomic +0.1400**), because §I63 embedded **POOLED** nomic while v3 stores **LATE-CHUNKED**
+ones. **Is late chunking what costs the coverage?**
+
+**Instrument** (`logs/p1/step10/pooled_vs_latechunk_nomic.py` → `pooled_vs_latechunk_nomic.json`,
+sha256 `f089317f…`). **Three arms, ONE instrument** — full-dim exact cosine, **NO prefilter**,
+coverage of a query's **REACHABLE** labelled pages, 133 gold queries:
+`qwen3_v2_stored` (v2's `dense_1024`) · `nomic_v3_stored` (v3's `dense_full` = **late-chunked**) ·
+`nomic_pooled` (nomic embedded **pooled** over each chunk's whole `text` with `search_document: ` —
+§I63's own N-arm construction). Read-only, no LLM, 22 s for the 3,489 pooled chunks.
+
+**✅ All four guards pass, and the two that anchor the instrument are exact:** `qwen3_v2_stored` L=500
+**0.828609** vs §I86's **0.8286**; `nomic_v3_stored` L=500 **0.688664** vs §I86's **0.6887** — plus
+one corpus and one page mapping across all three arms.
+
+| full-dim, no prefilter | L=100 | **L=500** | L=1000 | L=2000 |
+|---|---|---|---|---|
+| `qwen3_v2_stored` (late-chunked) | 0.5192 | 0.8286 | 0.9266 | 0.9773 |
+| `qwen3_pooled` | 0.5078 | 0.8071 | 0.9224 | 0.9766 |
+| **`nomic_pooled`** | **0.5913** | **0.8433** | **0.9336** | **0.9786** |
+| `nomic_v3_stored` (**late-chunked**) | 0.4148 | **0.6887** | 0.8257 | 0.9488 |
+
+**Paired contrasts at L=500 — each arm pair scored on the SAME 133 queries:**
+
+| contrast | Δ | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|
+| **`nomic_pooled` − `nomic` late-chunked** (THE isolation: same model, same corpus, only the construction differs) | **+0.154662** | [+0.112818, +0.196505] | 77/5/51 | **RESOLVED** |
+| `qwen3_pooled` − `qwen3` late-chunked | −0.021517 | [−0.051683, +0.008649] | 23/36/74 | **unresolved** |
+| **`nomic_pooled` − `qwen3_pooled`** (like-for-like, both pooled) | **+0.036233** | [+0.003382, +0.069084] | 38/29/66 | **RESOLVED** |
+| `nomic` late-chunked − `qwen3` late-chunked (like-for-like, both late-chunked) | **−0.139946** | [−0.180467, −0.099424] | 7/73/53 | **RESOLVED** |
+
+**⇒ THE READING — and the added `qwen3_pooled` arm is what makes it clean.** ⚠️ **The sign flip is an
+INTERACTION: late chunking × nomic.** Late chunking costs nomic **+0.1547** (RESOLVED) but qwen3 only
+**−0.0215** (unresolved, i.e. ≈ neutral). Like-for-like, **pooled nomic BEATS pooled qwen3 (+0.0362,
+RESOLVED)** — reproducing §I63's direction properly this time — while **late-chunked nomic LOSES to
+late-chunked qwen3 (−0.1399, RESOLVED)**. So **v3 as built is the worst of the four arms, and the
+reason is the ingestion, not the model.**
+
+⚠️ **AND THE INTERACTION POINTS AT H2, NOT H1.** If late chunking were simply bad, it would hurt qwen3
+too. **It does not.** A cost that appears **only for one model** is the signature of a **model-specific
+defect**, not of a general property of late chunking.
+* **H1 — late chunking genuinely degrades nomic on this corpus.** Not formally excluded, but it now has
+  to explain why the same operation is ≈neutral for qwen3.
+* **H2 — the nomic late-chunk path MIS-POOLS (a defect).** ⚠️ **The magnitude is the tell:** stored-vs-
+  pooled cosine is **v2 0.9559 (min 0.881)** but **v3 0.8153 (min 0.502)**. A correctly pooled child
+  should sit **close** to pooled(child text) — the parent's context perturbs it, it does not halve its
+  cosine. A child at **0.502** looks like the wrong token span, not like extra context.
+* ⚠️ **What was verified, and what was NOT.** §I80's C0-G2 confirmed the `(0,2)` alignment **count**
+  against the live endpoint, and §I81's V4 verified that a **Qwen3** recomputation reproduces v2's
+  stored vectors at **cos 1.000000**. **Neither verifies that a nomic child's late-chunked vector
+  equals a manual pooling of the parent's token vectors over that child's span** — a count is not a
+  span. That check does not exist in the repo. **It is the cheap next test, and it discriminates H1
+  from H2.**
+
+**⇒ WHAT IT MEANS FOR THE FINE-TUNE (S6).** ⚠️ **S6 is aimed at the embedder, but the measured lever is
+the INGESTION.** Fine-tuning nomic and then late-chunking it would run the fine-tune's gain through the
+same loss that currently costs 0.155 — and a fine-tune on late-chunked vectors would be training on the
+degraded construction. **Re-target before spending GPU hours.** ⚠️ And it is consistent with §I86's
+funnel finding: the resolved product-level loss is at the **fused pool**, and the cross-encoder
+absorbs it — so the ingestion loss is *masked* at the endpoint, which is why Stage F saw a null.
+
+**Register against:** §I86 (the deficit this explains, and whose guards anchor this instrument), §I63
+(the oracle whose N-arm construction is reproduced here — and whose direction survives), §I81 (Shape B
+late-chunked re-embed — the construction measured here), §I80/§I78 (the alignment declaration and the
+prefix/span work whose verification this shows is INCOMPLETE for nomic), §I77 (the pooled-vs-late-chunked
+distinction first flagged there), §I85 (the product null this is the masked version of), §I72 (the
+cross-encoder equaliser).
+
+---
+
+### I88. 2026-10-25 — H1 vs H2 RESOLVED: the late-chunk path is **FAITHFUL** (cos **1.000000** to an independent span-pooling). Late chunking genuinely costs nomic 0.155 — it is a METHOD choice, not a bug
+
+**The question §I87 left open.** §I87 measured late chunking costing nomic **+0.1547** (RESOLVED) while
+being ≈neutral for qwen3 (−0.0215, unresolved). **H1** = late chunking genuinely degrades nomic;
+**H2** = the nomic late-chunk path **mis-pools** (a defect). The tell for H2 was the magnitude
+(stored-vs-pooled cosine **v3 0.8153, min 0.502**).
+
+**Instrument** (`logs/p1/step10/latechunk_span_audit.py` → `latechunk_span_audit.json`). An
+**INDEPENDENT reimplementation** of the span math — it does **not** call `LateChunkEmbedder`: it
+tokenizes the prefixed parent itself, shifts the child's char span by `len(prefix)`, takes the
+endpoint's per-token vectors, drops the declared `(0,2)` specials, and mean-pools the tokens inside
+the span. 83 children across 6 parents, read-only, no LLM.
+
+**✅ RESULT — the shipped path reproduces it EXACTLY: `cos(manual, stored) = 1.000000` on all 83 rows
+(mean, median and min all 1.000000; 0 rows below 0.99).** ⇒ **H1. Late chunking is faithfully
+implemented.** The 0.155 coverage loss is a **genuine property of late chunking × nomic**, not a
+pooling defect. ⚠️ **This does not say late chunking is a good idea — it says the loss is real.**
+
+**⚠️ A minor defect FOUND and SIZED, and it is immaterial.** `char_end` runs **exactly one character
+past** the child's text (`span = text + 1 trailing char`; only 6/83 offsets reproduce the text
+byte-exactly). **Sized, not assumed:** pooling over the given offsets vs over the exact child text
+gives the **same token count on 83/83 rows** and **cos 1.000000 either way** — the extra character
+does not start a token. **Recorded, not fixed** (it cannot move a vector). ⚠️ It is why an
+`offset_exact` byte-equality check reads 6/83 and must not be mistaken for a span bug.
+
+**⇒ WHAT IT LICENSES (the cheap win).** Since the loss is a **method** choice, the fix is to **drop
+late chunking for nomic** and re-embed v3's **dense lanes pooled** — **Shape B** (§I81's own machinery:
+ids preserved, **no re-parse, no LLM, no cards, no graph**, ~10 min). ⚠️ **And pooled nomic already
+BEATS qwen3 (+0.0362, §I87), so this is the single cheapest path to an index that is better than the
+incumbent.** It is a **write** (v3's dense lanes) and therefore an **owner decision**.
+
+**Register against:** §I87 (the deficit and the H1/H2 fork this resolves), §I81 (the Shape B re-embed
+whose machinery the fix reuses), §I80/§I78 (the alignment work — now shown sufficient for the span
+math, with one cosmetic off-by-one), §I86 (the full-dim deficit), §I63 (the pooled construction this
+vindicates), §I77 (the pooled-vs-late-chunked distinction).
+
+---
+
+### I89. 2026-10-26 — Stage G RE-RUN on the POOLED index: the base-lane advantage is **LARGE** (+0.104, RESOLVED) and the **FUSION destroys it**. ⚠️ §I86's *"no base-lane advantage to destroy"* is **falsified**
+
+**The write that made it necessary.** §I88 resolved H1 — the nomic late-chunk path is **faithful**
+(cos 1.000000 to an independent span-pooling) — so the 0.155 coverage loss is a **METHOD** choice, and
+the treatment is to **drop late chunking for nomic**. Done via a new Shape B mode
+(`scripts/reembed_chunks.py --from-collection knowledge_base_v2 --pooled`, backed by
+`LateChunkEmbedder.embed_isolated_batch`): **3,796 points / 341 parents / 0 failures / 91.9 s**, point
+ids and the `chunk_id` set **byte-identical**, `colbert` + `sparse` + every payload key carried over
+from v2 **unchanged**, `knowledge_base_v2` **untouched (3,869)**.
+
+**Acceptance** (`logs/p1/step10/pooled_reembed_{pre,post,carryover}.py/.json`; post sha256
+`3d751cf9ce5a8d4f…`), all guards pass — the check §I88 said did not exist:
+
+| check | pre-write | post-write |
+|---|---|---|
+| cos(stored `dense_full`, a **fresh** pooled embedding) | **0.804564** (min 0.5949; 199/200 < 0.99) | **1.000000** (0/200 < 0.99) |
+| v3 coverage, full-dim, no prefilter, L=500 | 0.688664 *(= §I86's late-chunked row)* | **0.843325** *(= §I87's `nomic_pooled` row)* |
+| v3 coverage L=100 / 1000 / 2000 | 0.4148 / 0.8257 / 0.9488 | 0.591316 / 0.933638 / 0.978649 |
+| lane gate | — | all four lanes on all 3,796 points, exit 0 |
+
+⚠️ **A guard was mis-specified on the first draft and is recorded:** the collection holds **3,796** chunk
+points but the content window admits only **3,489**; a guard that asserted 3,796 against the *windowed*
+population read as a failure on a correct index. Split into `G1a_collection_points_total_3796` and
+`G1b_chunk_points_in_window_3489` (§I71/§I72's population-naming class).
+
+**The re-run.** Pre-registration
+`.hermes/plans/2026-10-26-p1-stageG-rerun-preregistration.md`, **committed ALONE as `3d3026e`** before
+the run. Same instrument and arms as §I86 — A = `knowledge_base_v2`/Qwen3-1024 (control), B =
+`knowledge_base_v3`/nomic-768 (**now pooled**) — four stages, DA and graph OFF (§I85's constraint),
+HyDE frozen from the §I73 cache. **All 8 guards pass**, including **two added by this re-registration**:
+**G7** (arm B's gap row reproduces §I87's `nomic_pooled` at L=500 — **gap 0.000000**) and **G8** (arm A
+**bit-exact** against §I86's arm-A rows — **all five gaps 0.000000000**). ⚠️ **G8 is the strongest
+control in the run**: arm A shares nothing with the treatment, so if it moved, nothing would be
+attributable. It did not move. Artifact `logs/p1/step10/stageG_decomposition.json`
+(sha256 `8a2fd64b317f2d22…`); the §I86 artifacts are preserved as `stageG_*_session20_latechunked.json`.
+
+**The result — coverage of a query's REACHABLE labelled pages (§I66's unit), paired Δ = B − A, n=133:**
+
+| stage | A (v2/qwen3) | B (v3/nomic pooled) | Δ | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|---|---|
+| base (64d lane @ N=1000) | 0.815136 | 0.918953 | **+0.103817** | [+0.0689, +0.1387] | 67/8/58 | **RESOLVED +** |
+| after full-dim cut L=500 | 0.747763 | 0.838136 | **+0.090373** | [+0.0479, +0.1329] | 60/19/54 | **RESOLVED +** |
+| after fusion (pool = 100) | 0.660452 | 0.641322 | **−0.019129** | [−0.0371, −0.0011] | 17/38/78 | **RESOLVED −** |
+| after cross-encoder (top-20) | 0.458824 | 0.462533 | +0.003709 | [−0.0206, +0.0280] | 24/22/87 | unresolved |
+
+Gap row (full-dim, all 3,489 chunks, no prefilter): L=100 **+0.072112 RESOLVED**, L=500 +0.014716, L=1000
++0.007076, L=2000 +0.001391 — the last three unresolved. Raw product metrics: R@100 (pool) A 0.646897 /
+B 0.627939; R@20 (top-20) A 0.447496 / B 0.451298.
+
+**⇒ THE READING, and it inverts §I86.** On the **late-chunked** index every stage was ≤ 0 and §I86
+concluded there was *"no base-lane advantage to destroy"*. On the **pooled** index the advantage is
+**large and resolved** — **+0.104** at the 64d lane (67 wins to 8 losses) and **+0.090** after the
+full-dim re-rank — and it is **destroyed at the fusion**: B's coverage falls **0.838 → 0.641** (−0.197)
+while A's falls 0.748 → 0.660 (−0.087), and the arm difference **flips to −0.019, RESOLVED negative**.
+At the product's top-20 the two indexes are **indistinguishable** (+0.004, unresolved) — which is exactly
+why Stage F (§I85) saw a null at the endpoint.
+
+⚠️ **Mechanism, stated as consistent-with and NOT proven:** the **sparse and ColBERT lanes are
+model-independent** and therefore identical in both arms, so RRF gives a better dense lane no extra
+weight — it dilutes it. §I85 named the same dilution; this measures it on a **fixed** index with a large
+upstream gain to lose. **The split between RRF, page-dedup and MMR remains UNATTRIBUTED** (§I66's own
+caveat), and **MMR is the leading suspect** — MMR penalises "redundant" candidates, and a page carrying
+many relevant chunks looks exactly like redundancy while our metric is **page-level**.
+
+⚠️ **A confound, stated not hidden:** the stage-1 comparison is **not like-for-like** — arm A is qwen3
+**late-chunked**, arm B is nomic **pooled**, two differences. The like-for-like pooled-vs-pooled contrast
+is §I87's (+0.0362, RESOLVED). And Stage G is **diagnostic**: it ships nothing; the ship decision is
+Stage F's.
+
+**⇒ THREE NEW FINDINGS, all of them plan-changing:**
+
+1. **The fusion is the binding constraint** — measured on a fixed index, with a large upstream gain to
+   destroy. **Not the embedder, not the ingestion.** ⇒ **S6 (the embedder fine-tune) is aimed at the
+   wrong stage** — it sharpens the lane the fusion discards.
+2. ⚠️ **A lane-complete v2-vs-v3 A/B is blocked by a DEFECT, not by physics.** `store.search_da` and
+   `graph_builder._find_concepts_scored` both take the **arm's** dense query vector and send it to a
+   768-dim collection, so a 1024-dim arm 400s, the lane's `except` swallows it and returns `[]` — the
+   lane is **silently skipped** (§D15/§I12's recorded defect). **The fix is one query vector per space**
+   (embed the lane's query with the model that BUILT the collection). It makes the derived layer a
+   **held-constant across arms** — which is what a clean A/B wants. ⚠️ Scope: production is 768-dim, so
+   **production is unaffected**; it is the v2/1024 *arm* that is broken.
+3. ⚠️ **The overview (RAPTOR) lane has NEVER been on the eval path.** `evaluate_rag.py` does not call
+   `search_raptor`; the only caller in the repo is `streamlit_app.py:589`. So any claim that "the funnel's
+   overview path reads RAPTOR" is **false as measured**. And v3 has **0** RAPTOR nodes (v2 has 73).
+
+⚠️ **Also stated:** the **visual (ColPali) lane cannot be measured with the current gold set** —
+`visual_knowledge_base` holds 1,033 points for the **old** doc `6d55c52b` only, and the **33 visual
+queries carry no `relevant_pages`** (which is why the gold set is 133, not 166).
+
+**⇒ THE PLAN THIS PRODUCES:** `.hermes/plans/2026-10-26-p1-nomic-full-lanes-and-fusion-plan.md` — the
+per-space query-vector fix, RAPTOR into v3 + wiring the overview lane, MRR/nDCG on the ladder, three
+measurement tracks (T1 base-lane A/B · T2 nomic-only lane ablation · T3 full-funnel A/B), then the
+fusion attribution. **Nothing in it is built or measured.**
+
+**Register against:** §I86 (the decomposition this re-runs, and whose headline it falsifies), §I88 (the
+write this measures), §I87 (the pooled row this reproduces exactly, and the like-for-like contrast),
+§I85 (the product null this explains), §I66 (the binding-constraint finding this confirms), §I67 (the
+width null this contextualises), §I72 (the cross-encoder equaliser), §D15/§I12 (the silent derived-lane
+death, now with a fix), §I55 (the reranker's swallowed failures), §I81 (the Shape B machinery reused).
+
+### I90. 2026-10-27 — T0 RAN: the full-funnel nomic BASELINE, and the aperture. ⚠️ The dense lane **through Qdrant is IDENTICAL to the exact computation** at L=500, and the aperture is **INERT until τ ≈ 0.7** because the K cap does the cutting
+
+**Instrument.** `.hermes/plans/2026-10-27-p1-t0-baseline-preregistration.md`, **re-registered** the same
+day (`.hermes/plans/2026-10-27-p1-t0-baseline-reregistration.md` — **boundary 5** = the product's dense
+lane *through Qdrant*, and `precision@k`/`F1` added to V4's re-derivation). ⚠️ **The re-registration was
+written BEFORE any number existed** — the first four attempts were blocked by the shared cluster (see
+`HANDOFF.md` session 22), so **no result was ever produced under the original registration.** 133 labelled
+queries, one arm (`knowledge_base_v3` / nomic-768, DA **and** graph **ON** — the product's real lane set),
+HyDE **ON and frozen**, **read-only**, wall **2,707.8 s**, **0 errors**.
+
+**ALL TEN harness guards pass** (G1–G10), and **the independent verifier passes V1–V6** on the real
+artifact. ⚠️ **G3 reproduces §I89's arm-B EXACT rows to 4.4e-07 and 5.1e-08** (cov_base **0.918953**,
+cov_cut **0.838136**) — the instrument IS the registered one. Artifact
+`logs/p1/step10/t0_baseline.json` (sha256 `9a5037308c71c02d…`, 11.5 MB).
+
+**The funnel** (coverage of a query's REACHABLE labelled pages, §I66's unit, n=133):
+
+| boundary | coverage | Δ vs previous | recall@20 | MAP | nDCG@20 |
+|---|---|---|---|---|---|
+| 1 base — exact 64d MRL @N=1000 | **0.918953** | — | 0.3548 | 0.2315 | 0.3931 |
+| 2 cut — exact full-dim @L=500 | **0.838136** | **−0.0808** | 0.4242 | 0.2925 | 0.4919 |
+| **5 b5 — the SAME lane through QDRANT (ANN)** | **0.838136** | **0.000000** | 0.4242 | 0.2925 | 0.4919 |
+| 3 fusion — product pool (≤100) | 0.684486 | −0.1537 | 0.4491 | 0.3421 | 0.5506 |
+| 4 ce — product reranked top-20 | 0.455330 | −0.2292 | 0.4442 | 0.2789 | 0.4946 |
+
+⚠️ **THE HEADLINE IS ROW 2 vs ROW 5: they are IDENTICAL on every metric, on every query.** G10's
+ANN-vs-exact page overlap is **1.000000**, and G9's mean score gap is **2e-06**. ⇒ **at L=500 the vector
+database's approximate search loses NOTHING against exhaustive arithmetic on this corpus** — the
+"exact vs real-world" distinction the exact boundaries were criticised for is, **at this limit, empty**.
+⚠️ **Scope: this is L=500.** The product's own dense call inside `search_with_das` uses `limit=100`
+(`mmr_candidates`), and the funnel's big losses are **downstream** (fusion −0.154, cross-encoder −0.229),
+not in the index.
+
+**The aperture (recall-vs-τ, K=100 PAGES, base and cut/b5).** τ ∈ {0.0 … 0.9}:
+
+| τ | base recall@K | base admission (uncapped) | cut/b5 recall@K | cut/b5 admission |
+|---|---|---|---|---|
+| 0.00–0.45 | 0.5563 | 513 | 0.6093 | 304 |
+| 0.60 | 0.5563 | 509 | 0.6060 | 247 |
+| 0.70 | 0.5558 | 414 | 0.3738 | 16 |
+| 0.80 | 0.3522 | 32 | 0.0782 | 0 |
+| 0.85 | 0.1564 | 2 | 0.0263 | 0 |
+| 0.90 | 0.0365 | 0 | 0.0000 | 0 |
+
+⚠️ **THE FINDING: the aperture is INERT until τ ≈ 0.7, because the K=100 cap — not a similarity bar —
+is doing the cutting.** 513 pages clear τ=0.0 at the base and 414 still clear τ=0.70, but only 100 are
+admitted, so recall@K does not move. That is **W1 §10.2.1's "blind K-NN" critique measured on our own
+system**, and it is why the historical `0.45` could never have been a real aperture (§C2). The knee sits
+between **0.70 and 0.80** for the base, and between **0.60 and 0.70** for the cut. ⚠️ **No τ is
+committed** — the curve is the result (pre-registration §8).
+
+**Per type, at the endpoint (cross-encoder).** coverage: factual **0.5577** · multihop **0.5812** ·
+overview **0.1937**. ⚠️ **Overview is the loss**, and the overview lane (RAPTOR) is **absent from v3 and
+not on the eval path** (B1/B2 unbuilt) — consistent with §I89 finding 3.
+
+**⚠️ TWO VERIFIER DEFECTS WERE FOUND BY RUNNING IT, both over-strict checks on correct data, both
+fixed and recorded** (`logs/p1/step10/t0_mutation_log.txt`): (a) **V3** asserted `da_live == n_queries`
+and failed on a correct run where the DA lane was live on **132/133** — G6 requires non-empty on *at
+least* the queries it should, so the bound is now `0 < live ≤ eligible` with the shortfall **reported**
+(`da_shortfall 1`); (b) **V4** reported a MAP mismatch on `gold-033` (**0.05625** vs recorded **0.0563**)
+— the **rounding boundary**, 1.4e-18 above a 5e-5 tolerance. ⚠️ **An over-strict check is worse than no
+check: it gets switched off.** ⚠️ A third defect was found earlier — **V6's `recall_at_100` compared the
+top-100 pages while the harness computes that key as the POOL recall** (gold-004: 0.0 vs 0.6667).
+
+**Mutation proof (V1–V6, 7 mutations, `t0_mutation_log.txt`):** each mutation turns **exactly** its own
+stage red; **MV5** reddens **both** V5 and V6 (the same recorded quantity exists at both swept
+boundaries); **MV7** isolates the V4 extension (only `precision@20`/`F1@20` are corrupted, and only
+those two checks fire); **MV6** is the case the harness's **own** guard cannot see — the record is
+corrupted while G9 is computed from the live variable, so only the verifier catches it. Source restored
+byte-identical (`bf313c4a…`) after every mutation.
+
+**⚠️ What T0 does NOT measure** (unchanged from the registration): the visual lane (no ColPali data for
+the new doc; the 33 `vis-*` carry no labels), RAPTOR (absent and off-path), the generator stage, and any
+cross-index (v2-vs-v3) claim — that is T1/T3. ⚠️ **T0 ships nothing**; it is the reference table.
+
+**⚠️ Independent reviewer (read-only, `openai/gpt-oss-20b`, cross-family, on the 26 KB compact extract —
+never the 11.5 MB artifact): 7/7 CONFIRMED, no refutations, no additional risks. NOT BANKED** — it is a
+**cheap verdict (2 API calls, 18.2 s)**. ⚠️ Its cited field paths DO resolve, spot-checked against the
+extract: `aperture.base.per_tau["0.70"].recall_at_K` 0.555753, `["0.60"].admission_uncapped_mean`
+509.045113, `["0.85"].recall_at_K` 0.156361, `guard_detail.G9_b5_mean_scale_gap_top20` 2e-06,
+`G10_b5_mean_overlap_with_exact` 1.0, `aggregate.ce.by_type.overview.coverage_reachable` 0.193733 —
+every one matches the quoted value. ⚠️ **The substantive half is the mechanical evidence, not the
+verdict:** the ten harness guards, **V1–V6 ALL PASS**, and the seven-mutation proof.
+
+**Register against:** §I89 (whose exact rows G3 reproduces, and whose fusion finding this confirms),
+§I66 (the coverage unit and the funnel decomposition), §I86 (the decomposition this supersedes on v3),
+§I67 (the width null — the K cap this now measures as inert), §I72 (the cross-encoder equaliser, visible
+again as ce < fusion on every metric except MRR), §C2 (the score-scale/aperture finding, now measured),
+§I55 (the reranker's swallowed failures — 0 fallbacks here), §I85 (the product null this explains).
+
+### I91. 2026-10-27 — T1 RAN: the BASE-LANE ship test on the **POOLED** index — a **NULL** at the product endpoint. ⚠️ A **+0.104** base-lane advantage is worth **+0.0039** at the endpoint, and **E9 proves arm A did not move**
+
+**Instrument.** `.hermes/plans/2026-10-27-p1-t1-base-lanes-preregistration.md`, **committed ALONE as
+`3ab62f7` before the run** (D6.1). **T1 is not a new instrument**: it is Stage F's **re-registered**
+instrument (`51de3f2` + `e708784`/`a409d7d`) re-run against the index that changed underneath it — the
+harness (`logs/p1/step10/t1_base_lanes.py`) is a deliberate **copy** of `stageF_product_endpoint.py`, so
+the only difference between the two runs is the treatment. 133 labelled queries, two arms (A =
+`knowledge_base_v2` / qwen3-1024, B = `knowledge_base_v3` / nomic-768 **pooled**), HyDE **ON and frozen**,
+**read-only**, wall A1 344.5 s / A2 1387.9 s / B1 359.4 s / B2 319.7 s, **0 errors**. Artifact
+`logs/p1/step10/t1_base_lanes.json` (sha256 `f84e4b6599ee1f99…`).
+
+**ALL ELEVEN GUARDS PASS**, and the two load-bearing ones are the point:
+
+* **E8 — arm A reproduces the registered §3d row:** aggregate R@20 **0.4475** vs **0.452**, gap
+  **−0.0045**, inside the ±0.020 floor. The harness **IS** the registered instrument.
+* **E9 (NEW) — arm A is BIT-EXACT against Stage F's recorded arm A** (`stageF_arm_A1.json`, session 20):
+  **133/133 compared, 0 mismatches** on all six endpoint metrics. ⚠️ **This is the strongest control in
+  the run**: arm A shares nothing with the treatment, so a bit-exact match across two different sessions
+  makes "the treatment is isolated to arm B" a **measurement**, not an assumption. ⚠️ Only those six keys
+  are compared **by name** — `compute_retrieval_metrics` gained `map`/`precision_at_k`/`f1_at_k` after
+  Stage F (§I90), so a whole-dict comparison would have been an over-strict check failing on correct data.
+* Plus E4 (A1 vs A2 bit-exact, 0 mismatches), E1/E2/E3/E5/E7, `E_da_off_both_arms`, divisor identical.
+
+**THE RESULT — a NULL, and the shape repeats Stage F.**
+
+| endpoint | Δ (B − A) | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|
+| **P1 cR@20 ceiling-normalised** (§I58, primary) | **+0.003894** | **[−0.020984, +0.028771]** | 24/22/87 | **UNRESOLVED** |
+| **P2 raw R@20** (primary) | **+0.003805** | [−0.020503, +0.028112] | 24/22/87 | **UNRESOLVED** |
+| S1 **R@100** | **−0.018953** | **[−0.036938, −0.000969]** | — | **RESOLVED NEGATIVE** |
+| S1 Hit@20 / MRR / Ctx.Prec / NDCG@20 | +0.0075 / +0.0289 / +0.0011 / +0.0006 | all straddle 0 | — | unresolved |
+| S2 factual (n=53) | +0.010310 | [−0.048981, +0.069601] | 6/7/40 | unresolved |
+| S2 multihop (n=40) | −0.003554 | [−0.029711, +0.022603] | 3/4/33 | unresolved |
+| S2 overview (n=40) | +0.002840 | [−0.004851, +0.010532] | 15/11/14 | unresolved |
+
+⚠️ **The point estimate is ~6× BELOW the run's own resolution floor (0.024878 at n=133).** Power was
+ample, not the limit (SD_d 0.1464 → **n = 33** would suffice for δ = 0.05). **Per the pre-registered rule
+NOTHING SHIPS**, and the honest statement is the registered one: the pooled nomic index does **not**
+beat the incumbent qwen3 index at the product retrieval endpoint on the base lanes — a **RESULT**, not
+merely an unresolved one.
+
+**⚠️ THE HEADLINE IS THE MECHANISM, AND IT IS THE THIRD TIME.** The pooled index's base-lane advantage is
+**large and resolved upstream** (§I89: **+0.104**; like-for-like **+0.0362**, §I87). At the endpoint it is
+**+0.0039, unresolved**. The chain is now: **+0.104 (base) → +0.090 (full-dim cut) → −0.019 RESOLVED NEG
+(fusion) → +0.0039 unresolved (endpoint)**. ⇒ **the funnel does not preserve the embedder's advantage; it
+discards it.** §I85's product null and §I89's Stage-G decomposition are both reproduced here on the pooled
+index, and the **diagnostic D1** says the same thing from the other side: **arm B pooled − arm B
+late-chunked = +0.004989, CI [−0.014788, +0.024767], UNRESOLVED** — i.e. the pooled re-embed, worth
+**+0.1547** at the base lane (§I87), is worth **+0.005** at the endpoint.
+
+⚠️ **The one RESOLVED secondary is NEGATIVE and replicates:** **R@100 −0.0190 [−0.0369, −0.0010]** —
+nomic's fused pool covers ~1.9 pp fewer pages at the `fetch_k` cut, against Stage F's **−0.0354
+[−0.0517, −0.0191]**. **Two independent runs, same sign, same order** — a real property of this index at
+this stage, and it is *not* the endpoint the student sees (top-20 is where they look).
+
+⚠️ **The DA lane and the graph lane are OFF in both arms** — both derived collections are 768d (§I83), so a 1024d
+arm 400s and the lane is **silently skipped**; leaving either on would be a non-single-variable A/B. The
+run is therefore the product funnel **minus two recall lanes**; the full-funnel comparison is **T3** and
+remains **unmeasured**. The **DA-gap cross-check** holds: arm A DA-off 0.4475 vs Phase E DA-on 0.4250 →
+**+0.0225**, close to §I56's **−0.0262**. RAPTOR is not in v3 and this path does not read it. The intent
+router is not on the eval path.
+
+**Mutation proof (V1–V9, `logs/p1/step10/t1_mutation_log.txt`, `t1_mutation_proof.py`):** **9 mutations,
+each reddens its intended check, and every check is reddened by at least one mutation — no inert check.**
+⚠️ **A DEVIATION, STATED PLAINLY:** the pre-registration's §9 required the proof **before** the run; it was
+performed **after**. It does not affect the run or the artifact (the verifier is a read-only checker of the
+written JSON, so mutating copies proves discrimination equally well), but the deviation is recorded rather
+than hidden. The verifier (`t1_verifier.py`, stdlib-only) reads only the written JSON and **ALL V1–V9 PASS**.
+
+**⚠️ An instrument finding worth carrying:** the 90 s `socket.setdefaulttimeout(90)` **did NOT bound a
+hang** — arm A rep 2 stalled **979 s** on one query before the retry raised `timed out`. The hardening
+copied from T0 is therefore **not** a bound on the cluster's worst case; a run can lose ~16 min to a
+single query. The retry worked (the query then succeeded), so the artifact is unaffected.
+
+**Register against:** §I90 (T0, the reference table), §I89 (the fusion destroys the advantage — this is
+its product-endpoint counterpart), §I87 (the like-for-like +0.0362 that D1 shows collapsing to +0.005),
+§I85 (the original product null, now reproduced on the pooled index), §I66/§I72 (the funnel's stage
+losses), §I68/§I84 (the determinism E4/E9 rest on), §D15/§I12 (the derived-lane dimension defect that
+forces DA and graph OFF).
+
+### I92. 2026-10-27 — THE FUSION LOSS IS ATTRIBUTED: it is the **100-slot CAP**, NOT MMR. ⚠️ §I89's *"leading suspect: MMR"* is **REFUTED**, and the cap is **already known to be inert at the endpoint** (§I67) — so the fusion is **not** the lever the endpoint responds to
+
+**Instrument.** `.hermes/plans/2026-10-27-p1-fusion-attribution-preregistration.md`, **committed ALONE as
+`e9c3a9f` before the run** (D6.1). One index (`knowledge_base_v3` / nomic-768), **T0's lane set** (DA ON
+and the graph lane ON), HyDE ON and frozen, **read-only**, 133 queries, **0 errors**, wall **2,629.2 s**.
+Artifact `logs/p1/step10/fusion_attribution.json` (sha256 `1a43f2d980183335…`). Only the product's own
+config knobs moved — never a re-implementation of the funnel.
+
+**ALL NINE GUARDS PASS, including all three anchors** — arm C reproduces T0's fusion coverage
+**0.684486** *and* T0's mean pool size **86.466165**; `D500_raw` reproduces T0's boundary 5
+**0.838136**; the reachable set is **identical to T0's** (888 pages, set equality, not just a count).
+Plus 133/0, page-dedup in every arm, arm C bit-exact on a repeat, `pages(C) ⊆ pages(W500)` on every
+query, and the two width knobs asserted to move together.
+
+**THE RESULT — the loss is one knob.**
+
+| arm | what it is | pool coverage | Δ vs arm C (paired) | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|---|---|
+| **C** | **the product as shipped** (cap 100, MMR on) | **0.684486** | — | — | — | the anchor |
+| **C_nommr** | cap 100, **MMR off** | 0.687664 | **+0.003178** | [−0.002242, +0.008598] | 6/3/124 | **unresolved** |
+| **W500** | **cap 500** (both knobs), MMR on | **0.868024** | **+0.183538** | **[+0.151074, +0.216001]** | **79/0/54** | **RESOLVED** |
+| **W500_nommr** | cap 500, MMR off | 0.868024 | **+0.000000** | [0.000000, 0.000000] | 0/0/133 | **exactly inert** |
+| D100 | dense lane alone @100, **arm C's own vector** | 0.630958 | C − D100 = **+0.053528** | [+0.020642, +0.086414] | 59/13/61 | RESOLVED |
+| D100_raw | dense lane alone @100, raw vector | 0.593164 | D100 − D100_raw = **+0.037794** | [+0.011527, +0.064061] | 51/12/70 | RESOLVED |
+| D500_raw | dense lane alone @500, raw vector (**= T0 b5**) | 0.838136 | D500_raw − D100_raw = **+0.244972** | [+0.205687, +0.284257] | 83/0/50 | RESOLVED |
+
+**⚠️ FINDING 1 — THE CAP IS THE ENTIRE LOSS, AND IT IS LARGE.** Raising `mmr_candidates` **and**
+`reranker_fetch_k` from 100 to 500 lifts pool coverage from **0.684486 to 0.868024**, **+0.183538
+[+0.151074, +0.216001], RESOLVED, 79 wins to 0 losses**. That is **larger than T0's whole fusion loss
+(−0.1537)** — because the widened **fused** pool (0.868) then also beats the **dense lane alone at the
+same width** (0.838). ⚠️ **The cap costs the dense lane alone +0.244972 too** (0.593164 → 0.838136), so
+this is a property of the width, not of fusing three lanes.
+
+**⚠️ FINDING 2 — MMR IS INNOCENT, AND IT IS NOT EVEN CLOSE.** `C_nommr − C = +0.003178
+[−0.002242, +0.008598]` — **unresolved**, and only **6 wins to 3 losses**. At the shipped width MMR costs
+at most ~0.3 pp of coverage. And at width 500 it is **EXACTLY inert**: `W500_nommr − W500 = 0.000000,
+0/0/133`. ⚠️ **This was PREDICTED from the code before the run** and is worth stating as such:
+`search_with_das` only calls `_mmr_select` when `len(deduped) > reranker_fetch_k` (`store.py:911`), and
+the pool after dedup is ≤ 389 at width 500, so **the branch is never taken**. ⇒ **§I89's "MMR is the
+leading suspect" is REFUTED**, and the mechanism it suspected (MMR penalising a page that carries many
+relevant chunks) **does not operate at this configuration at all**.
+
+**⚠️ FINDING 3 — PAGE DEDUP IS NOT THE CULPRIT EITHER, and that is a CODE fact, not a measurement.**
+Dedup keeps the highest-scoring chunk per page; it removes duplicate **chunks**, not **pages**, so under
+a page-level metric it **cannot lower coverage** — it can only free slots for the cap. No dedup-off arm
+was run because **the product has no such flag**; the claim rests on the code path plus the fact that the
+cap explains the loss on its own. ⚠️ Stated as a code-read, not as a measured contrast.
+
+**⚠️ FINDING 4 — HyDE is worth +0.037794 [+0.011527, +0.064061], RESOLVED (a new, clean measurement).**
+`D100 − D100_raw` isolates it for the first time: the same dense lane, the same limit, **the same code** —
+only the query vector differs (the HyDE hypothetical vs the raw query). It is the first **isolated** HyDE
+effect in the register. ⚠️ It is a **pool-coverage** number, not an endpoint number.
+
+**⚠️ FINDING 5 — fusing three lanes beats the dense lane alone at the same cap:** `C − D100 =
++0.053528 [+0.020642, +0.086414], RESOLVED` (0.684486 vs 0.630958). So the sparse and ColBERT lanes are
+**contributing**, not merely diluting — which is the first direct measurement bearing on §I89's
+"model-independent lanes dilute the dense lane" hypothesis. ⚠️ It bears on **coverage**, not on the
+endpoint, and it does **not** contradict §I89 (which is about the *arm difference*, not the level).
+
+**⚠️⚠️ THE READING THAT MATTERS, AND IT RE-TARGETS THE NEXT ACTION.** The fusion's loss is **fully
+attributed to the cap**, the cap is **recoverable at the pool**, and **§I67 already measured the SAME
+change (W 100→300 and 100→500, both knobs together) at the PRODUCT ENDPOINT as a NULL** (Δ R@20 c-norm
+**+0.0032 / +0.0027**, both UNRESOLVED). ⇒ **A +0.1835 pool gain buys +0.003 at the endpoint.** That is
+§I65's *"a pool gain is not a recall gain"* measured with a very large pool gain, and it means:
+
+* **The fusion is NOT the binding constraint on the endpoint.** §I89 named it as such on the strength of
+  the *arm difference* it destroys — which is a different claim, and both stand.
+* **The endpoint loss sits in the RANKING / top-k stage.** T0's funnel: fusion **0.684486** → cross-encoder
+  top-20 **0.455330**. The pool→top-20 step discards **0.2292** of reachable coverage, **and widening the
+  pool does not repair it**. That stage has **never been attributed** — no run has separated *"the
+  cross-encoder ranks the right page low"* from *"the 20-slot cut discards it"*.
+* ⚠️ **Do NOT read this as "widen the fusion".** The width change is measured, cheap and **inert at the
+  endpoint**; shipping it would be shipping a number that does not reach the student.
+
+**Mutation proof (V1–V10, `logs/p1/step10/fusion_attribution_mutation_log.txt`,
+`fusion_attribution_mutation_proof.py`): 10 mutations, each reddens its intended check, and every check is
+reddened by at least one mutation — no inert check.** The verifier (`fusion_attribution_verifier.py`,
+stdlib-only, reads only the written JSON) **PASSES V1–V10**. ⚠️ The paired CIs quoted above are
+**derived from the registered per-query arrays** (the harness recorded means); they are a re-derivation of
+the same data, not a new measurement.
+
+**⚠️ One identity, stated so it is not mistaken for an independent confirmation.** `D500_raw − C =
++0.153650` is numerically **the same as T0's cut−fusion gap (0.838136 − 0.684486)** — because `D500_raw`
+**IS** T0's boundary 5. It is an **identity**, not a second measurement.
+
+**Register against:** §I90 (T0 — the fusion boundary this decomposes), §I89 (whose MMR suspicion this
+refutes and whose *"the fusion destroys the advantage"* finding this does **not** contradict), §I67 (the
+width A/B at the endpoint — the null that makes this a re-targeting rather than a fix), §I66 (the 100-slot
+output as the binding *ceiling*), §I65 (a pool gain is not a recall gain), §I72 (the cross-encoder
+equaliser — now the prime suspect for the endpoint loss).

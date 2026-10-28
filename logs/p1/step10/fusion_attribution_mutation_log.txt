@@ -1,0 +1,57 @@
+Fusion attribution verifier — MUTATION PROOF (fusion_attribution_mutation_proof.py)
+
+BASELINE (no mutation): all_pass=True  failing=none
+
+MV1  intended=V1  -> RED (as intended)
+     mutation: drop one per-query row
+     checks red: ['V1_133_rows_0_errors_all_arms', 'V2_mean_coverage_rederives', 'V3_per_type_means_rederive', 'V4_G1_C_reproduces_T0_fusion', 'V5_G2_C_reproduces_T0_pool_mean', 'V6_G2b_D500_raw_reproduces_T0_b5', 'V10_deltas_rederive']
+
+MV2  intended=V2  -> RED (as intended)
+     mutation: aggregate.C.overall.coverage += 0.01
+     checks red: ['V2_mean_coverage_rederives']
+
+MV3  intended=V3  -> RED (as intended)
+     mutation: aggregate.C.by_type.factual.coverage += 0.01
+     checks red: ['V3_per_type_means_rederive']
+
+MV4  intended=V4  -> RED (as intended)
+     mutation: ANCHOR DRIFT: arm C's pages emptied on every 3rd query
+     checks red: ['V2_mean_coverage_rederives', 'V3_per_type_means_rederive', 'V4_G1_C_reproduces_T0_fusion', 'V10_deltas_rederive']
+
+MV5  intended=V5  -> RED (as intended)
+     mutation: arm C pool sizes +1 (pool mean moves off T0's 86.466165)
+     checks red: ['V5_G2_C_reproduces_T0_pool_mean']
+
+MV6  intended=V6  -> RED (as intended)
+     mutation: D500_raw pages emptied on every 4th query (b5 anchor drifts)
+     checks red: ['V2_mean_coverage_rederives', 'V3_per_type_means_rederive', 'V6_G2b_D500_raw_reproduces_T0_b5', 'V10_deltas_rederive']
+
+MV7  intended=V7  -> RED (as intended)
+     mutation: duplicate a page inside arm C's pool
+     checks red: ['V7_G4_pools_page_deduped', 'V9_G5_arm_C_bit_exact_repeat']
+
+MV8  intended=V8  -> RED (as intended)
+     mutation: remove arm C's pages from arm W500's pool (nesting broken)
+     checks red: ['V2_mean_coverage_rederives', 'V3_per_type_means_rederive', 'V8_G6_C_subset_of_W500', 'V10_deltas_rederive']
+
+MV9  intended=V9  -> RED (as intended)
+     mutation: arm C's repeat pages gain a phantom page
+     checks red: ['V9_G5_arm_C_bit_exact_repeat']
+
+MV10  intended=V10  -> RED (as intended)
+     mutation: deltas.W500_minus_C.mean += 0.01
+     checks red: ['V10_deltas_rederive']
+
+PER-CHECK COVERAGE (each check must be reddened by at least one mutation):
+  YES  V1_133_rows_0_errors_all_arms
+  YES  V2_mean_coverage_rederives
+  YES  V3_per_type_means_rederive
+  YES  V4_G1_C_reproduces_T0_fusion
+  YES  V5_G2_C_reproduces_T0_pool_mean
+  YES  V6_G2b_D500_raw_reproduces_T0_b5
+  YES  V7_G4_pools_page_deduped
+  YES  V8_G6_C_subset_of_W500
+  YES  V9_G5_arm_C_bit_exact_repeat
+  YES  V10_deltas_rederive
+
+VERDICT: ALL MUTATIONS FIRE AS INTENDED; every check is reddened

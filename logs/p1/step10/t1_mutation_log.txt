@@ -1,0 +1,56 @@
+T1 verifier — MUTATION PROOF (logs/p1/step10/t1_mutation_proof.py)
+
+⚠️ TIMING: performed AFTER the run, not before it as T1's pre-registration §9 required.
+   Recorded as a deviation. The verifier is a read-only checker of the written artifact,
+   so mutating copies proves discrimination equally well; nothing in the run is affected.
+
+BASELINE (no mutation): all_pass=True  failing=none
+
+MV1  intended=V1  -> RED (as intended)
+     mutation: drop one per-query row from arm A1
+     checks red: ['V1_133_scored_0_errors', 'V2_means_rederive', 'V3_P2_rederives', 'V4_P1_rederives', 'V8_divisor_identical_across_arms', 'V9_E9_arm_A_bit_exact_vs_stageF']
+
+MV2  intended=V2  -> RED (as intended)
+     mutation: artifact meta.mean_r20.A += 0.01
+     checks red: ['V2_means_rederive']
+
+MV3  intended=V3  -> RED (as intended)
+     mutation: artifact P2 mean_delta += 0.01
+     checks red: ['V3_P2_rederives']
+
+MV4  intended=V4  -> RED (as intended)
+     mutation: artifact P1 ci[0] -= 0.05
+     checks red: ['V4_P1_rederives']
+
+MV5  intended=V5  -> RED (as intended)
+     mutation: arm A2 row 0 recall_at_20 -> 0.25
+     checks red: ['V5_negative_control_bit_exact']
+
+MV6  intended=V6  -> RED (as intended)
+     mutation: INSTRUMENT DRIFT: A1+A2+StageF all +0.05, summary consistent
+     checks red: ['V3_P2_rederives', 'V4_P1_rederives', 'V6_E8_reproduces_section_3d']
+
+MV7  intended=V7  -> RED (as intended)
+     mutation: arm A1+A2 row 0 mrr -> None
+     checks red: ['V2_means_rederive', 'V7_no_silent_exclusions', 'V9_E9_arm_A_bit_exact_vs_stageF']
+
+MV8  intended=V8  -> RED (as intended)
+     mutation: arm B1 achievable_max += 0.1 (divisor differs across arms)
+     checks red: ['V8_divisor_identical_across_arms', 'V9_E9_arm_A_bit_exact_vs_stageF']
+
+MV9  intended=V9  -> RED (as intended)
+     mutation: Stage F arm A row 0 recall_at_20 -> 0.25 (A1 no longer matches Stage F)
+     checks red: ['V9_E9_arm_A_bit_exact_vs_stageF']
+
+PER-CHECK COVERAGE (each check must be reddened by at least one mutation):
+  YES  V1_133_scored_0_errors
+  YES  V2_means_rederive
+  YES  V3_P2_rederives
+  YES  V4_P1_rederives
+  YES  V5_negative_control_bit_exact
+  YES  V6_E8_reproduces_section_3d
+  YES  V7_no_silent_exclusions
+  YES  V8_divisor_identical_across_arms
+  YES  V9_E9_arm_A_bit_exact_vs_stageF
+
+VERDICT: ALL MUTATIONS FIRE AS INTENDED; every check is reddened
