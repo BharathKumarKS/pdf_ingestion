@@ -7797,3 +7797,67 @@ crossover n = k: perfect precision and perfect recall coincide."* That is the ge
 verified this session — **for a query with |rel| ≤ k, `P@k / P-ceil` is exactly `recall@k`** (0 violations
 over 88 queries × 4 stages, §I91a's addendum). ⚠️ Note the direction: the course states the crossover for
 **n = k**; ours holds for **all n ≤ k**, which is the same statement once the ceiling is divided out.
+
+### I94. 2026-10-27 — the TOC-label question, measured: **NO label is outside the content window**, 32 label instances sit ON contents pages, and **removing them in bulk would delete CORRECT labels** for a whole query family
+
+**The question raised.** *"Didn't we decide to remove labelled pages that are outside the content filter —
+e.g. an index/TOC page, which points to the answer rather than being it?"*
+
+**⚠️ Answer 1 — the premise is false, and it is worth correcting because it is the kind of thing that gets
+repeated.** **Every one of the 3,631 label instances is inside the content window `[30, 936]`**: measured,
+**0 labels below 30 and 0 above 936**, 0 on the index pages (937–968), 0 on the front matter (2–14).
+`min_content_page`/`max_content_page` are not excluding any labelled page. ⇒ **Nothing needs removing for
+being out of the window**, and the `achievable_max` construct (§I58) is not about TOC pages.
+
+**⚠️ Answer 2 — what we ACTUALLY decided (§I58), verbatim:** *"**re-point `gold-003` (and optionally the two
+±1 queries) and leave the set alone.** A full rebuild would cost a book-wide VLM scan (~36k judge calls)
+and would destroy comparability with every historical run, for a ~1 % label-reachability gain."* Codified
+as **D6.4 — the gold set is re-pointed, not rebuilt.** The re-point was applied: `gold-003` 30 → 34.
+
+**✅ Answer 3 — but there IS a real, nameable issue, and it is a DIFFERENT one.** 32 label instances sit on
+**pages 30–34**, and those pages **are contents pages** — verified by reading their chunk text in the live
+DB, not inferred from a page range: `p34` holds 21 chunks of which **18 are dot-leader TOC entries**
+(*"The Kinetic Theory of Gases … 39-3 Compressibility of radiation . . . 39-3"*), `p30` holds 38
+(*"Chapter 38. The Relation of Wave and Particle Viewpoints … 42-2 Thermionic emission . . ."*). Affected:
+**21 queries** — `gold-003`, `gold-004`, `gold-083/084/085`, and 16 `ovw-*`.
+
+**⚠️⚠️ AND HERE IS WHY BULK REMOVAL IS THE WRONG REPAIR.** Two of the material cases are queries **whose
+answer genuinely IS the contents page**:
+
+| query | question | label | verdict |
+|---|---|---|---|
+| `gold-003` | *"Which section number is titled 'Thermionic emission'?"* | `[34]` | **the TOC page lists "42-2 Thermionic emission" — the label is CORRECT, and its R@20 of 1.0 is a TRUE positive** |
+| `gold-004` | *"What is the title of section 42-4?"* | `[30, 86, 795]` | **the TOC page lists "42-4 Chemical kinetics" — CORRECT** |
+| `gold-083/084/085` | *"How does X relate to Y…"* (content questions) | `[30, 490, 921]` | ⚠️ **the TOC page is a POINTER, not the answer — these three are the defensible candidates for re-pointing** |
+
+⇒ **A blanket "drop contents pages" rule would silently delete correct labels for the entire "which section
+number / what is the title of section X" query family.** ⚠️ **This is §I58's own lesson one level down: a
+label is a property of the DOCUMENT, and for some questions the document's contents page is the answer.**
+
+**⚠️ The sensitivity, measured (T0's stored page lists, endpoint, TOC labels 30–34 removed):**
+
+| scope | R@20 as-is | R@20 with TOC labels removed | Δ |
+|---|---|---|---|
+| **all 133** | 0.4442 | 0.4471 | **+0.0030** — below the floor; **not a lever** |
+| factual (n=53) | 0.5574 | 0.5489 | **−0.0085** |
+| multihop (n=40) | 0.5500 | 0.5708 | **+0.0208** |
+| overview (n=40) | 0.1882 | 0.1911 | +0.0028 — immaterial (1 TOC page among 23–155 labels) |
+| ⚠️ **`gold-003`** | 1.0000 | **UNDEFINED — no labels left** | **the query becomes unscoreable** |
+
+⚠️ **`gold-003` is why "remove" is not a general repair: its ONLY label is the contents page.** Deleting it
+destroys the query; re-pointing it (what §I58 chose) preserved it, and the re-point 30 → 34 **followed the
+re-chunking rather than the semantics** — which is legitimate here only because **both pages carry the same
+TOC entry**, so the semantic content survived. Verified in the live DB: `p30` has chunks in the **old** doc
+only (`6d55c52b`), `p34` in the **new** doc only (`7ba61432`) — consistent with §I58's *"the new ingest has
+no chunk at page 30"*.
+
+**Recommendation, and it is an OWNER decision.** ⚠️ **Do NOT bulk-remove.** Triage the **5 material queries
+by hand** — `gold-083/084/085` are the defensible re-points; `gold-003`/`gold-004` are correct as they
+stand. Any change must be a **NEW label artifact beside the current one** (D6.4's comparability rule, and
+the same shape the plan's §C proposes for graded relevance), never a silent replacement — every historical
+run used these labels. **Cost of the triage: minutes. Cost of the bulk rule: a whole query family scored
+wrong, silently.**
+
+**Register against:** §I58 (the re-point decision and the reachability measurement), §I71 (the TOC/index
+page ranges, measured from the filter's rejects), D6.4 (re-point, do not rebuild), §I93 (the metric
+provenance this sits beside).
