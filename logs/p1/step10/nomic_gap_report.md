@@ -40,10 +40,18 @@ check). `pool` = pages available at that stage. All metrics page-deduped.
 | fusion pool | 0.6845 | 86.5 | **0.4491** | 0.6706 | **0.2447** | 0.4846 | **51 %** | **0.1968** | **0.5506** | **0.3421** | **0.7687** | **0.9323** |
 | cross-encoder → top-20 | **0.4553** | 19.9 | 0.4442 | 0.4442 † | 0.2398 | 0.4846 | 49 % | 0.1911 | 0.4946 | 0.2789 | 0.6668 | 0.9173 |
 
-`P-ceil` is the **precision ceiling** — the highest `P@20` this gold set can produce — and it is a property
-of the **labels**, not of the system, so it is **identical in every row and every arm**. The column beside
-it divides one by the other. ⚠️ **Read the ratio, never the raw precision:** 0.240 looks like failure and is
-actually **half of what is achievable**.
+`P-ceil` is the **precision ceiling** — `min(labelled pages, 20) / 20`, the highest `P@20` this query can
+produce — and it is a property of the **labels**, not of the system, so it is **identical in every row and
+every arm**. ⚠️ **Read precision against its ceiling, never raw:** 0.240 looks like failure and is actually
+**half of what is achievable**.
+
+⚠️ **A caveat on the `P@20 / ceil` column, because it is not one quantity.** Algebraically the ratio is
+`|relevant ∩ top-20| / min(|labelled|, 20)`, so it resolves to **two different metrics depending on the
+query**: for a query whose gold set is **smaller than 20**, `min(|labelled|, 20) = |labelled|` and the ratio
+**is exactly `recall@20`** (verified: 0 violations over the 88 such queries × 4 stages); for a query with
+**20 or more** labelled pages it **is precision itself**. ⇒ **the aggregate ratio mixes both regimes** and
+should be read per query, or not at all — the honest headline stays `P@20` against `P-ceil`, which is what
+the ratio column is there to make visible.
 
 † The cross-encoder stage holds only the 20 reranked chunks, so `R@100` there equals `R@20` **by
 construction**. The pool-recall figure comparable to v1's `R@100` is the **fusion row's 0.6706**.
