@@ -1,5 +1,9 @@
 # nomic retrieval evaluation — where the gap is
 
+> **FINAL — 2026-10-27.** Metrics with **both ceilings** (`P-ceil` and `R-ceil`), the per-type split, what
+> is not measured, and the decisions. Every figure re-verified against its artifact before this version.
+> Engineering record: `IMPROVEMENTS.md` §I89–§I94a · `DECISIONS.md` §8.
+
 **Scope.** One embedder (**nomic-embed-text-v1.5**), one index (`knowledge_base_v3`, 3,796 chunks / 888
 pages), one corpus (one undergraduate physics textbook), **133 labelled queries**, HyDE on and frozen,
 read-only. Two registered measurements:
@@ -46,6 +50,13 @@ check). `pool` = pages available at that stage. All metrics page-deduped.
 produce — and it is a property of the **labels**, not of the system, so it is **identical in every row and
 every arm**. ⚠️ **Read precision against its ceiling, never raw:** 0.240 looks like failure and is actually
 **half of what is achievable**.
+
+⚠️ **Recall carries a ceiling too — `R-ceil@20 = min(20, n)/n`, 0.7858 overall** — and it is the mirror of
+`P-ceil`: whichever of *n* (answers that exist) and *k* (slots you show) is **smaller** sets the cap.
+**45 of the 133 queries are recall-capped; 88 are precision-capped.** ⚠️ **This matters for how every
+`R@20` in this report is read** — raw, overview (0.188) looks 3× worse than factual (0.557), but against
+their own ceilings they are **47 % and 59 %**. The per-type table in §3 carries both. ⚠️ **Do not quote a
+recall without its ceiling** any more than a precision.
 
 ⚠️ **A caveat on the `P@20 / ceil` column, because it is not one quantity.** Algebraically the ratio is
 `|relevant ∩ top-20| / min(|labelled|, 20)`, so it resolves to **two different metrics depending on the
@@ -262,3 +273,62 @@ at this scope).
 chunks* — not "the top k pages". The two differ by ~0.02 and are not interchangeable. And at the
 cross-encoder stage the pool holds only 20 chunks, so `R@100` there equals `R@20` by construction; the
 pool-recall figure is the fusion row's.
+
+---
+
+## 7. What this report does NOT measure
+
+Stated so the boundaries are not read as coverage we do not have.
+
+* **The full funnel (v2 vs v3, all lanes).** Both measurements here are single-index. The cross-index
+  comparison needs the DA and graph lanes to be queryable by **both** arms, which needs the per-space
+  query-vector fix — the derived collections are 768d and a 1024d arm cannot query them.
+* **The overview lane (RAPTOR).** Absent from this index and **never called on the evaluation path** —
+  which is why the overview type's fix is a build, not a tuning.
+* **The graph lane's own contribution.** It is **appended after the fusion by construction**, so it is not
+  isolated by either run; the v0-vs-v1 difference measures the DA and graph lanes **together**.
+* **The visual (ColPali) lane.** No page data for this document, and the 33 visual queries carry no labels
+  (which is why the gold set is 133, not 166).
+* **The generator stage.** No synthesis, no judge, no answer quality — retrieval only.
+* **Graded relevance.** The labels are **binary**, so `nDCG` here is **rank-weighted recall**, not the
+  graded apex metric. A page-level 0/1/2 scheme would be a **new artifact beside** these labels.
+* **The label set is as-is.** 3 labels are contents-page *pointers* (measured effect below the floor);
+  they are **unrepaired**, and no metric here is adjusted for them.
+* **One document, one day, one funnel.** No claim beyond these two indexes.
+
+---
+
+## 8. Decisions
+
+**Settled by these measurements.**
+
+1. **The pooled index ships nothing at the endpoint.** Its base-lane advantage (+0.104; like-for-like
+   +0.0362) is worth **+0.0039, unresolved**, ~6× below the resolution floor. **The funnel discards it.**
+2. **The fusion's −0.154 loss is the 100-slot cap, and MMR is innocent** (MMR off at the shipped width:
+   +0.0032, unresolved; at width 500: **exactly 0.000000**). ⚠️ **Do not ship the width** — the same
+   change was already measured at the endpoint and returned no improvement.
+3. **`P-ceil` and `R-ceil` are the course's own metrics** (Week 7 §3.3; the deck's slide 25) and are
+   quoted beside every precision and recall. ⚠️ **`coverage` is ours** and must always be written in full
+   — *coverage of a query's reachable labelled pages* — because the course uses "coverage" for the
+   abstention rate.
+4. **No bulk label rule.** **26 of the 29** contents-page labels are **correct** (5 of them are questions
+   whose answer *is* the contents page); **3 are pointers**, and the measured effect of changing them is
+   below the floor. **Deferred as hygiene.**
+
+**Ranked next work.**
+
+| # | action | what it moves | status |
+|---|---|---|---|
+| 1 | **Attribute the pool → top-20 step for factual queries** — separate "the cross-encoder ranks the right page too low" from "the 20-slot cut discards it" | nDCG 0.589→0.452, MAP 0.469→0.321, MRR 0.769→0.518 on 53 queries | **the biggest loss, unattributed** — pre-register, commit alone, run |
+| 2 | **Per-space query-vector fix**, then RAPTOR into the index and wired into the eval | unblocks the cross-index comparison; targets overview (R@20 0.188, ceiling 0.399) | build |
+| 3 | **Lane ablation per type** | each lane's own contribution | pre-register |
+| 4 | **Lane weighting** in the fusion | the model-independent lanes' dilution | after 1–3 |
+
+**Explicitly no action:** precision and F1 (ceiling-bound — every type sits at ~half its ceiling, and the
+ceiling moves with the labels); the fusion width (measured inert at the endpoint); the DA/graph lanes *as
+currently wired* (they add pool pages and **lower MRR** 0.781 → 0.667 — the action is #2's re-placement,
+not a tuning).
+
+**Owner items still outstanding:** the `A2 .env` flip (every stage runs on env exports); signoff 3
+(re-confirm Shape B); signoff 4 (accept the MRL-convention null); whether to re-run this report if any
+label change is ever applied (comparability).

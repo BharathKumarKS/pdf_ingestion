@@ -7819,7 +7819,11 @@ as **D6.4 — the gold set is re-pointed, not rebuilt.** The re-point was applie
 DB, not inferred from a page range: `p34` holds 21 chunks of which **18 are dot-leader TOC entries**
 (*"The Kinetic Theory of Gases … 39-3 Compressibility of radiation . . . 39-3"*), `p30` holds 38
 (*"Chapter 38. The Relation of Wave and Particle Viewpoints … 42-2 Thermionic emission . . ."*). Affected:
-**21 queries** — `gold-003`, `gold-004`, `gold-083/084/085`, and 16 `ovw-*`.
+**29 queries** — `gold-003`, `gold-004`, `gold-083/084/085`, and **24** `ovw-*`.
+⚠️ **CORRECTED 2026-10-27:** this line first read *"21 queries … and 16 ovw-*"*. Both counts were wrong —
+the true split is **5 gold + 24 ovw = 29**, re-derived from `data/eval_queries_v2.json` during the
+pre-ship verification of the gap report. The claim it supports (a large majority of contents-page labels
+are correct) is unaffected and gets stronger.
 
 **⚠️⚠️ AND HERE IS WHY BULK REMOVAL IS THE WRONG REPAIR.** Two of the material cases are queries **whose
 answer genuinely IS the contents page**:
@@ -7862,13 +7866,13 @@ wrong, silently.**
 page ranges, measured from the filter's rejects), D6.4 (re-point, do not rebuild), §I93 (the metric
 provenance this sits beside).
 
-#### I94a. ADDENDUM (2026-10-27) — the classification is COMPLETE for all 21 queries, and it shrinks the issue to **3 label instances**: the other 18 contents-page labels are **CORRECT**
+#### I94a. ADDENDUM (2026-10-27) — the classification is COMPLETE for all 29 queries, and it shrinks the issue to **3 label instances**: the other **26** contents-page labels are **CORRECT**
 
 **⚠️ The earlier note triaged only the 5 material queries. The rule's own standard requires every selected
-item to be read and classified, so the remaining 16 `ovw-*` were read too.** The result changes the
-recommendation.
+item to be read and classified, so the remaining `ovw-*` were read too — 24 of them, not 16 (see the
+correction in §I94).** The result changes the recommendation.
 
-**What the 16 overview queries actually ask** — every one is a **whole-volume synthesis** question, and a
+**What the 24 overview queries actually ask** — every one is a **whole-volume synthesis** question, and a
 contents page is a legitimate part of answering it:
 
 * `ovw-001` — *"In what ways does Feynman use the principle of conservation of energy to bridge the
@@ -7891,9 +7895,9 @@ distort the metric.
 | `gold-003` (p34) | ✅ **correct** | *"Which section number is titled 'Thermionic emission'?"* — the TOC lists **42-2 Thermionic emission** |
 | `gold-004` (p30) | ✅ **correct** | *"What is the title of section 42-4?"* — the TOC lists **42-4 Chemical kinetics** |
 | **`gold-083` / `084` / `085` (p30)** | ⚠️ **pointer** | content questions (*"how does X relate to Y"*); the TOC names the sections without explaining the relation |
-| 16 × `ovw-*` (p30–33) | ✅ **correct** | whole-volume synthesis questions — the contents page is part of the answer |
+| **24 × `ovw-*` (p30–33)** | ✅ **correct** | whole-volume synthesis questions — the contents page is part of the answer |
 
-**⚠️ ⇒ The issue is 3 label instances across 3 queries, not 32 instances across 21.** And **none of the
+**⚠️ ⇒ The issue is 3 label instances across 3 queries, not 32 instances across 29.** And **none of the
 three is left unscoreable** — each keeps pages 490 and 921.
 
 **⚠️ And the measured effect of even that change is below the floor.** Re-pointing `gold-083/084/085` off
