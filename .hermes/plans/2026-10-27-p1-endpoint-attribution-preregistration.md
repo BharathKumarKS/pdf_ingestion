@@ -66,7 +66,7 @@ the gold labels**, identical in every arm.
 
 | # | check |
 |---|---|
-| **G1** | **arm C reproduces T0's `ce` row EXACTLY** — coverage 0.4553, R@20 0.4442, R@100 0.4442, P@20 0.2398, F1 0.1911, nDCG 0.4946, MAP 0.2789, MRR 0.6668, Hit 0.9173. Tolerance **1e-6** |
+| **G1** | **arm C reproduces T0's `ce` row EXACTLY** — coverage 0.4553, R@20 0.4442, P@20 0.2398, F1 0.1911, nDCG 0.4946, MAP 0.2789, MRR 0.6668, Hit 0.9173. Tolerance **1e-6**. ⚠️ **`R@100` is EXCLUDED from this comparison** — see §11 |
 | **G2** | ⚠️ **THE STRONG ONE — arm N reproduces T0's `fusion` row EXACTLY** — coverage 0.6845, R@20 0.4491, R@100 0.6706, P@20 0.2447, F1 0.1968, nDCG 0.5506, MAP 0.3421, MRR 0.7687, Hit 0.9323. Tolerance **1e-6**. With no CE the top-20 *is* the pool's top-20, and the pool is **page-deduped**, so the two conventions coincide — the reproduction should be exact |
 | **G3** | **133 scored / 0 errors** in every arm |
 | **G4** | **determinism: arm C run TWICE is bit-exact** on every metric of every query (§I68 landed) |
@@ -140,3 +140,29 @@ should be watched rather than assumed.**
   pre-registered before/after.
 * **It does not touch the labels** (§I94a: the 3 pointer labels are unrepaired and their effect is below
   the floor).
+
+## 11. ⚠️ AMENDED before the run — `R@100` is a CONVENTION TRAP in this run's anchors
+
+**Found while building the harness, and corrected here before anything was measured.** §4's G1 first
+listed **`R@100 0.4442`** among the fields arm C must reproduce. **That number cannot come from this
+harness**, and comparing against it would have been a check that fails on correct data:
+
+* **T0's `ce` row computes `R@100` over the ce page list** — which holds only the **20** reranked pages —
+  because T0 scores each boundary from that boundary's own ranked page list (`_metrics_from_pages`). So
+  T0's `ce` `R@100` is **equal to its `R@20` by construction** (0.4442), as T0's own note says.
+* **The product's `compute_retrieval_metrics` computes `R@100` over the POOL** (`retrieval["hits"]`), which
+  the cross-encoder does not change. So arm C's `R@100` is the **pool recall**, which is **T0's `fusion`
+  row's 0.6706** — *not* 0.4442.
+
+⇒ **The corrected anchor set:**
+
+| arm | `R@100` must equal | why |
+|---|---|---|
+| **C** | **0.6706** (T0's `fusion` `R@100`) | the CE reorders, it does not change the pool |
+| **N** | **0.6706** | same pool |
+| **Q** | **0.6706** | same pool |
+| **W50** | its own `k` — report `R@50`, never as `R@100` | the cut differs |
+
+⚠️ **And `R@100` is not an endpoint in this run at all** — it is a **pool** measurement, which is exactly
+why T0's `fusion` row carries it and its `ce` row cannot. Registered here rather than silently fixed, since
+a convention mismatch of this shape voided a run once (§I72).
