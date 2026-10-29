@@ -7861,3 +7861,51 @@ wrong, silently.**
 **Register against:** §I58 (the re-point decision and the reachability measurement), §I71 (the TOC/index
 page ranges, measured from the filter's rejects), D6.4 (re-point, do not rebuild), §I93 (the metric
 provenance this sits beside).
+
+#### I94a. ADDENDUM (2026-10-27) — the classification is COMPLETE for all 21 queries, and it shrinks the issue to **3 label instances**: the other 18 contents-page labels are **CORRECT**
+
+**⚠️ The earlier note triaged only the 5 material queries. The rule's own standard requires every selected
+item to be read and classified, so the remaining 16 `ovw-*` were read too.** The result changes the
+recommendation.
+
+**What the 16 overview queries actually ask** — every one is a **whole-volume synthesis** question, and a
+contents page is a legitimate part of answering it:
+
+* `ovw-001` — *"In what ways does Feynman use the principle of conservation of energy to bridge the
+  examination of mechanical systems, wave phenomena, and thermodynamic processes in Volume 1…"*
+* `ovw-004` — *"How does the Feynman Lectures on Physics, Volume 1, trace the evolution of symmetry
+  principles from classical mechanics to quantum mechanics…"*
+* `ovw-010` — *"In what way does Feynman build the concept of entropy from its statistical roots to its role
+  in thermodynamic processes throughout…"*
+* `ovw-019`, `ovw-034` — the same shape (uncertainty principle; Planck's constant, *"across the entire
+  volume"*).
+
+⇒ **For a question about how the book develops a theme across the whole volume, the contents page is where
+that structure is stated.** The label is **correct**, and each is 1 of 23–155 labels, so it also cannot
+distort the metric.
+
+**The completed classification:**
+
+| item | class | why |
+|---|---|---|
+| `gold-003` (p34) | ✅ **correct** | *"Which section number is titled 'Thermionic emission'?"* — the TOC lists **42-2 Thermionic emission** |
+| `gold-004` (p30) | ✅ **correct** | *"What is the title of section 42-4?"* — the TOC lists **42-4 Chemical kinetics** |
+| **`gold-083` / `084` / `085` (p30)** | ⚠️ **pointer** | content questions (*"how does X relate to Y"*); the TOC names the sections without explaining the relation |
+| 16 × `ovw-*` (p30–33) | ✅ **correct** | whole-volume synthesis questions — the contents page is part of the answer |
+
+**⚠️ ⇒ The issue is 3 label instances across 3 queries, not 32 instances across 21.** And **none of the
+three is left unscoreable** — each keeps pages 490 and 921.
+
+**⚠️ And the measured effect of even that change is below the floor.** Re-pointing `gold-083/084/085` off
+page 30 moves **multihop R@20 from 0.5500 to 0.5708 (+0.0208)** — real in direction, but **below the n=40
+resolution floor (~0.04)**, and it moves the **aggregate by +0.0030**. ⇒ **This is a hygiene item, not a
+lever.** ⚠️ **Recommendation: DEFER.** If it is ever done, it must be a **new label artifact beside the
+current one** (D6.4), never a silent replacement, and the re-point must be **checked against the section
+body** rather than the chunking (§I58's 30 → 34 re-point is the cautionary example: it followed the
+re-chunk while both pages happened to carry the same TOC entry).
+
+**Method note.** Steps followed: enumerate the rule → **count it** (32 instances, and the "outside the
+window" premise counted **zero**) → **read the source text** of every selected item (pages 30–34, not the
+page numbers) → classify correct / wrong / pointer → check the empty-label case (`gold-003`) → recompute
+the metrics per segment → write it as a register entry. ⚠️ **Two of the four steps that mattered here
+would have been skipped by acting on the remembered decision.**
