@@ -207,6 +207,22 @@ action.**
 
 ## 6. Glossary — the metrics this report turns on
 
+**Provenance, stated up front because two of these are not course metrics.** Checked against the course's
+own documents (`Week_Summary/*.pdf`, `Slides/*.pdf` — all 21 searched):
+
+* **`recall@k`, `precision@k`, `F1@k`, `MRR`, `MAP`, `nDCG@k` are the course's own metrics** — Week 7
+  §3.1 (precision and recall), §3.4 (F1), §4.3 (MRR), §4.6 (MAP), §5.5 (nDCG).
+* ⚠️ **`P-ceil` is also the course's** — Week 7 **§3.3 "The Mathematical Ceiling of Precision"**: *"when
+  n < k, Precision@k has a hard ceiling of n/k … the total population of relevant documents n must always
+  be reported alongside the metric."* Our ceiling is that quantity.
+* ⚠️ **`coverage` is NOT a course metric, and the course uses the same word for something else** — Week 8
+  §19.1: *"Coverage: The proportion of total user queries the system attempts to answer"* (the
+  risk–coverage curve of abstention). **Ours must always be written in full** — *coverage of a query's
+  reachable labelled pages* — never as bare "coverage".
+* **The concept behind `coverage` is the course's, under a different name** — Week 10 §7.1, *"The Recall
+  Ceiling"*: *"if the initial bucket scoop misses a marble entirely, absolutely no downstream sieve can
+  recover it."* Our `coverage` is that doctrine as a per-stage number.
+
 | metric | the question it answers | how to read it here |
 |---|---|---|
 | **coverage** | *Of the pages this stage could possibly reach, how many did it actually return?* | The ceiling check. It cannot exceed 1 and it never depends on the ordering. Use it to see **where pages are lost**; it says nothing about order. |

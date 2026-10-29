@@ -7742,3 +7742,58 @@ DA harm).
 well as its k* — "top-20 pages" and "pages of the top-20 chunks" are different metrics that share a name.
 ⚠️ **Registering the metadata defect, not just the convention**, because the artifact's own `units` block
 is what a later reader will trust.
+
+### I93. 2026-10-27 — METRIC PROVENANCE against the course material: **P-ceil IS the course's §3.3**, **"coverage" is NOT a course metric** (and the course's own "coverage" means something else), and our ceiling-ratio identity is the course's **crossover**
+
+**Why.** The gap report uses two metrics that do not look like the ones taught — `coverage` and `P-ceil`.
+Before either is defended to a reviewer, both were checked against the course's own documents.
+
+**Source, and where it lives.** ⚠️ **There is no "Beyond_RAG vault".** The only vault on this machine is
+the **AI Agents Bootcamp**'s (`~/repo/Support_Vectors/AI_Agents_Bootcamp/Vault`) — a **different course**,
+and `.hermes.md` forbids reading that tree unless pointed at a file. **The authoritative Beyond RAG
+material is in the tree itself**: `Week_Summary/*.pdf` (12) and `Slides/*.pdf` (9), which is what §C2 of
+the fusion plan already designates as the source. **All 21 documents were text-extracted and searched**
+(`pymupdf`; text in the scratch dir, not committed).
+
+**Verdict — which of our metrics are the course's, and which are ours:**
+
+| our metric | course status | evidence |
+|---|---|---|
+| `recall@k` | **the course's** | W7 §3.1: *"Recall evaluates completeness by comparing the returned bucket against the entire beach … if the child only finds 3, the recall is 3/5."* |
+| `precision@k` | **the course's** | W7 §3.1: *"Precision evaluates the internal purity of the returned results … If Sarah returns with 4 genuine seashells and 6 pebbles, her precision is 4/10."* |
+| **`P-ceil`** | ⚠️ **the course's — §3.3, verbatim** | W7 §3.3 *"The Mathematical Ceiling of Precision"*: *"Therefore, **when n < k, Precision@k has a hard ceiling of n/k**. Systems must only be compared at identical k values, and the total population of relevant documents n must always be reported alongside the metric."* Its worked example is **n=10, k=20 → ceiling 0.50** — the same construction as ours. The deck teaches it too (slide 25, *"if n < k, perfect precision is unreachable (max n/k)"*). |
+| `F1@k` | **the course's** | W7 §3.4: the harmonic mean, with the same imbalance argument. |
+| `MRR` | **the course's** | W7 §4.3 "Calculating Mean Reciprocal Rank (MRR)". |
+| `MAP` | **the course's** | W7 §4.6. |
+| `nDCG@k` | **the course's** | W7 §5.5, "The Apex Metric". |
+| **`coverage`** | ⚠️ **NOT a course metric** | **All 30 occurrences of "coverage" across the 21 documents are a different quantity.** The nearest is W8 §19.1: *"**Coverage: The proportion of total user queries the system attempts to answer.**"* — the **risk–coverage curve** of selective prediction / abstention, i.e. *how many queries you answer*, not *how many pages you returned*. The rest are subject/traffic/representation coverage. |
+| `cR@k` (ceiling-normalised recall, §I58) | **ours** | no course analogue. |
+
+**⚠️ ⇒ A NAME COLLISION, and it is worth stating in any submission.** Our `coverage` and the course's
+`coverage` are **different quantities with the same name**. Ours should always be written as what it is —
+*"coverage of a query's reachable labelled pages"* — never as bare "coverage", or a reader who knows the
+course will read it as the abstention metric.
+
+**⚠️ Why we need ours at all — the suspicion is CORRECT, and it is already measured.** §I58 measured it:
+the content filter (`page_number ∈ [30, 936]` and `is_content is not False`, `store.py:389-402`) makes a
+**non-trivial part of the gold set unreachable by any retriever**: **57 labels unreachable exactly, 26
+more within ±1** of 3,631 — and **by type, overwhelmingly overview: 46 exact / 21 near, against factual
+5/2 and multihop 6/3.** So a recall denominator of *all* labelled pages charges the system for pages the
+pipeline was never permitted to return, and **overview is the type it penalises most** — which is exactly
+the type the gap report flags. `achievable_max = |reachable| / |labelled|` (mean **0.9545** on the new
+index, **0.8806** on the old) is that correction, and it is a **gold-set property, identical in every arm**
+(T1 measured it at **0.97707 in both arms**).
+
+**✅ And the course has the same IDEA, under a different name — it just never gives it a metric.**
+**W10 §7.1 "The Recall Ceiling: Dictating Generation Limits"**: *"If the initial bucket scoop misses a
+marble entirely, absolutely no downstream sieve can recover it"*, with the **Scoop Wide Principle** and
+*"whatever recall the system captures during that initial scoop establishes an unbreakable hard ceiling."*
+**Our `coverage` is that doctrine operationalised as a per-stage number** — it is what makes "the page was
+never available" separable from "the page was available and ranked badly" (§I90a's distinction). ⇒ **Cite
+W10 §7.1 as the concept and present `coverage` as our instrument for it, not as a course metric.**
+
+**✅ BONUS — our ceiling-ratio identity is the course's crossover.** The deck's slide 25 states *"At the
+crossover n = k: perfect precision and perfect recall coincide."* That is the general case of the identity
+verified this session — **for a query with |rel| ≤ k, `P@k / P-ceil` is exactly `recall@k`** (0 violations
+over 88 queries × 4 stages, §I91a's addendum). ⚠️ Note the direction: the course states the crossover for
+**n = k**; ours holds for **all n ≤ k**, which is the same statement once the ceiling is divided out.
