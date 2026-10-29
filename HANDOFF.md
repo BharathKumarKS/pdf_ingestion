@@ -14,6 +14,54 @@
 > `.hermes/plans/2026-10-26-p1-nomic-full-lanes-and-fusion-plan.md` — **the ordered tasks for next
 > session**.)
 >
+> ## ▶ SESSION 24 — ▶ START HERE. **THE POOL → TOP-20 STEP IS THE GAP, AND T0 ALREADY SUGGESTS THE CROSS-ENCODER IS A NET HARM THERE.** The pre-registration is committed alone (`logs/p1/step10/…` → see below) and **NOT yet run**.
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 24, then
+> `.hermes/plans/2026-10-27-p1-endpoint-attribution-preregistration.md` and `IMPROVEMENTS.md` §I89–§I94a,
+> then `logs/p1/step10/nomic_gap_report.md` (the FINAL submission report). T4 is pre-registered and
+> committed ALONE — RUN IT: `bash logs/p1/step10/run_t4.sh`, then the verifier and the mutation proof."*
+>
+> **1. ⚠️ THE PLAN-CHANGING FACT, and it is already IN T0's artifact — check it before designing anything.**
+> T0's **fusion** row is the pool's OWN order (RRF), and T0's **cross-encoder** row is the CE's order. The
+> CE's top-20 is **worse on every metric**: nDCG **0.5506 → 0.4946**, MAP **0.3421 → 0.2789**, MRR
+> **0.7687 → 0.6668**, R@20 **0.4491 → 0.4442**. ⇒ **taking the top-20 in the fusion's own order beats the
+> cross-encoder's top-20.** The step loses **coverage 0.6845 → 0.4553 (−0.2292)** as well. **Three
+> candidate causes, with different fixes, and they have never been separated:** (a) the CE **reorders badly**,
+> (b) the **20-slot cut** discards pages, (c) ⚠️ **the CE is fed the HyDE HYPOTHETICAL as its query, not the
+> user's question** (`evaluate_rag.py:207` sets `rerank_query = hyp`) — a candidate nobody has tested.
+>
+> **2. ✅ T4 IS PRE-REGISTERED AND COMMITTED ALONE (D6.1), NOT RUN.** Four arms on one index, T0's lane set,
+> HyDE frozen, read-only: **C** the product; **N** no cross-encoder (the pool's own order); **Q** the CE
+> reranking against the **raw query** instead of the hypothetical; **W50** the CE with a wider cut. **TWO
+> EXACT ANCHORS:** arm C must reproduce T0's `ce` row and **arm N must reproduce T0's `fusion` row** (with
+> no CE the top-20 *is* the pool's top-20 — and the pool is page-deduped, so the two conventions coincide).
+> **Predictions, registered so they can be falsified: the CE is a net harm (N > C), part of the harm is the
+> hypothetical (Q > C), and the cut accounts for the coverage loss (W50 recovers toward 0.6845).**
+>
+> **3. ▶ THEN, IN ORDER.** **(a)** §A the per-space query-vector fix → unblocks the cross-index comparison ·
+> **(b)** B1/B2 RAPTOR into v3 + wire the overview lane (overview R@20 **0.1882**, its ceiling **0.3992** —
+> the worst type, and its lane is absent) · **(c)** T2 the lane ablation per type · **(d)** §E2 lane
+> weighting. ⚠️ **NO ACTION, and say so:** precision/F1 (ceiling-bound, every type at ~half its ceiling);
+> the fusion width (measured inert at the endpoint, §I67); the graph lane as wired (it adds pool pages and
+> **lowers MRR 0.781 → 0.667**). ⚠️ **S6 stays PARKED** — the embedder's advantage is +0.0039 unresolved.
+>
+> **4. ✅ THE FINAL REPORT IS SHIPPED — `logs/p1/step10/nomic_gap_report.md`** (334 lines, committed
+> `cd23c10`). Both ceilings (`P-ceil` and `R-ceil`) beside every precision and recall, the per-type split,
+> **§7 what is NOT measured**, **§8 the decisions**, and a **provenance block** naming which metrics are the
+> course's and which are ours. **137 quoted numbers re-verified against the artifacts — and the check
+> caught a real error** (the contents-page label count was 29, not the 21 first written; corrected in
+> §I94/§I94a and in §8).
+>
+> **5. ⚠️ THREE THINGS A FUTURE SESSION MUST NOT GET WRONG.** **(a) `coverage` is OURS**, and the course
+> uses the same word for the abstention rate — always write *coverage of a query's reachable labelled
+> pages*. **(b) `P-ceil` and `R-ceil` are the COURSE'S** (W7 §3.3, deck slide 25) — quote them, do not
+> re-derive them as novel. **(c) Recall has a ceiling too** (`min(k,n)/n`), and quoting a recall without it
+> overstates the overview gap ~3× (47 % of achievable, not the 3× the raw 0.188-vs-0.557 implies).
+>
+> **6. ⚠️ WORKING TREE.** Sessions 13–22 remain **uncommitted**; the branch is **ahead of origin, nothing
+> pushed** — **owner decision, outstanding.** Carried: signoff 3, signoff 4, the **A2 `.env` flip**, the
+> arm-2 harness (`min_chunk_tokens`, a fragment), §I56's DA lane, §G2's V5 build, §G5/§I2.
+>
 > ## ▶ SESSION 23 — ✅ T1 RAN (a NULL) AND THE FUSION LOSS IS **ATTRIBUTED**: it is the **100-slot CAP**, and **MMR IS INNOCENT**. ⚠️ **The cap is already known to be inert at the endpoint (§I67), so the next lever is the POOL → TOP-20 RANKING step, not the fusion.**
 >
 > **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 23, then `IMPROVEMENTS.md` §I91, §I92 and
