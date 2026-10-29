@@ -23,8 +23,10 @@ never calls it. In v1, DA and the graph lane are **off**; everything else is ide
    funnel.** The two big drops are the fusion pool (−0.154) and the last stage, pool → top-20 (−0.229).
 2. **The last stage also destroys ordering.** nDCG, MAP and MRR all **peak at the fusion pool and fall**
    at the cross-encoder — and that is not a uniform effect: it is driven by **factual** queries.
-3. **Overview is a different failure with a different fix.** It has the **worst recall** of the three
-   types and the **best ordering** — a missing-lane problem, not a ranking problem.
+3. **Overview is a different failure with a different fix** — and its raw number overstates it. It has the
+   **worst recall** of the three types and the **best ordering** (a missing-lane problem, not a ranking
+   problem) — but against its own recall ceiling it is at **47 % of achievable, not the 3× worse the raw
+   figures suggest** (see §3).
 
 ---
 
@@ -115,6 +117,24 @@ and it is **not** a lever, because the ceiling moves with the labels rather than
 | factual | 53 | 0.8115 | 0.5830 | 0.8110 | 0.1443 | 0.3000 | 48 % | 0.1733 | **0.5885** | **0.4689** | **0.7690** | 0.9057 |
 | overview | 40 | 0.5221 | 0.2103 | 0.5084 | 0.5312 | 1.0000 | 53 % | 0.2817 | 0.5750 | 0.1557 | 0.8723 | 1.0000 |
 | multihop | 40 | 0.6786 | 0.5106 | 0.6466 | 0.0912 | 0.2137 | 43 % | 0.1431 | 0.4761 | 0.3604 | 0.6646 | 0.9000 |
+
+⚠️ **Recall has its own ceiling, and we had been quoting only precision's.** Recall is capped whenever a
+query has **more** labelled pages than there are slots: `R-ceil@k = min(k, n)/n`. It stacks with
+reachability, so the honest denominator is `min(k, |reachable|) / |labelled|`:
+
+| type | R@20 | **R-ceil@20** | R@20 / R-ceil | P-ceil@20 |
+|---|---|---|---|---|
+| factual | 0.5574 | 0.9494 | **58.7 %** | 0.3000 |
+| multihop | 0.5500 | 0.9556 | **57.6 %** | 0.2137 |
+| **overview** | 0.1882 | **0.3992** | **47.2 %** | 1.0000 |
+| all 133 | 0.4442 | 0.7858 | 56.5 % | 0.4846 |
+
+⚠️ **This changes how overview's number must be read.** Raw, overview (0.188) looks ~3× worse than factual
+(0.557) — but its recall ceiling is 0.399 against factual's 0.949, because overview queries carry 22–314
+labelled pages and only 20 can be shown. **Against their own ceilings the three types are 47 %, 59 % and
+58 %.** Overview is still the worst, and still needs its lane — but **the raw figures overstate that gap
+by roughly 3×**, and any statement of the form "overview recall is 0.19" without the ceiling is
+misleading. **45 of the 133 queries are recall-capped this way; 88 are precision-capped.**
 
 **The pool → endpoint step, per type** — and the three types behave in **opposite directions**:
 
@@ -226,7 +246,7 @@ own documents (`Week_Summary/*.pdf`, `Slides/*.pdf` — all 21 searched):
 | metric | the question it answers | how to read it here |
 |---|---|---|
 | **coverage** | *Of the pages this stage could possibly reach, how many did it actually return?* | The ceiling check. It cannot exceed 1 and it never depends on the ordering. Use it to see **where pages are lost**; it says nothing about order. |
-| **recall@k** | *Of the pages that contain the answer, how many are inside the top k?* | **Inclusion.** Rises to 0.449 at the pool and flattens at 0.444 — recall alone would call the last stage harmless. Always report with k. |
+| **recall@k** | *Of the pages that contain the answer, how many are inside the top k?* | **Inclusion.** Rises to 0.449 at the pool and flattens at 0.444 — recall alone would call the last stage harmless. ⚠️ **It has a ceiling too**, `min(k, n)/n`, whenever a query has more labelled pages than slots: 0.9494 factual / 0.9556 multihop / **0.3992 overview**, so quote it against that. Always report with k. |
 | **precision@k** | *Of the top k, how many are actually gold?* | The mirror of recall. **Must be quoted with its ceiling**, or it reads as failure when it is at capacity. The ceiling is `min(labelled pages, k)/k` — **0.4846 overall, but 0.3000 factual / 1.0000 overview / 0.2137 multihop**, because the types carry very different numbers of labelled pages. **Read the ratio:** every type sits at ~half its ceiling, so precision is uniform across types and is not a lever. |
 | **F1@k** | *What is the balance of precision and recall in the top k?* | The harmonic mean of the two. ⚠️ **Derived, so it cannot tell you which side moved** — here it is pinned by precision (F1 0.1911 sits next to P@20 0.2398 and R@20 0.4442, so precision is the limiting side). Read it as a **summary**, never as a diagnosis. |
 | **hit@k** | *Did the student get **anything** useful in the top k?* | The **floor**, not the quality: 0.92 here while coverage is 0.46. High hit@k means "never empty", not "answered". |
