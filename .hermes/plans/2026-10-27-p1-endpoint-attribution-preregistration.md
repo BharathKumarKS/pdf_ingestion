@@ -166,3 +166,42 @@ harness**, and comparing against it would have been a check that fails on correc
 ⚠️ **And `R@100` is not an endpoint in this run at all** — it is a **pool** measurement, which is exactly
 why T0's `fusion` row carries it and its `ce` row cannot. Registered here rather than silently fixed, since
 a convention mismatch of this shape voided a run once (§I72).
+
+## 12. ⚠️ CORRECTION — §11's conclusion was WRONG, and the smoke test found a SECOND, REAL trap in its place
+
+**Written after the 8-query smoke test, before the full run.** The smoke's job was to prove the two anchors
+before spending 22 minutes; it did that, and it caught two things.
+
+**(a) §11 was wrong.** It claimed arm C's `R@100` must be **0.6706** and that comparing against T0's
+**0.4442** would "fail on correct data". **The opposite is true, and the original G1 was right as first
+written.** The harness scores each arm's **ENDPOINT page list** with **T0's own boundary convention** — the
+same call shape `t0_baseline._metrics_from_pages` uses (`hits = hits_above = that boundary's list`,
+`reranked = list[:k]`). Under that convention T0's `ce` row's `R@100` **is** its `R@20` (0.4442), and arm C
+reproduces it. §11 reasoned from the **product's** `run_retrieval` shape (where `hits` is the pool) and
+assumed the harness would inherit it. It does not.
+
+**(b) But the product's shape hides a real trap, and §11 walked past it.** `compute_retrieval_metrics`
+computes **`mrr` from `retrieval["hits"]` — the POOL** — and `recall_at_{fetch_k}` likewise. **Both are
+therefore POOL metrics that are IDENTICAL in every arm and cannot answer this run's MRR question at all.**
+⚠️ **The smoke proved it: the `P1_N_minus_C` and `P2_Q_minus_C` MRR deltas came back exactly `0.0` with
+`ci95 [0.0, 0.0]` — a registered prediction that the harness could not have falsified.**
+
+**⇒ The corrected structure, which is now the harness's:**
+
+| row | `mrr` | `recall_at_100` | the rest (`ndcg@20`, `map`, `recall@20`, `precision@20`, `hit@20`) |
+|---|---|---|---|
+| T0's **`ce`** row | **endpoint** (scores the ce list alone) | endpoint (= `R@20`) | endpoint |
+| T0's **`fusion`** row | **POOL** | **POOL** | endpoint (the pool's top-20) |
+
+⇒ **G1 now compares the ENDPOINT fields only** (`ENDPOINT_KEYS`), and **G2 compares those plus the two POOL
+fields** — which are valid for arm N precisely because its pool *is* T0's fusion pool. And the harness
+**adds `mrr_at_k`, computed over the endpoint list**, so the MRR question is answerable; **arm C must
+reproduce T0's `ce` `mrr` (0.6668) with it.**
+
+⚠️ **A product-path finding falls out of this and is registered separately (§I95):** the product's own
+evaluation reports **the pool's MRR under the name `mrr`**, so its endpoint MRR is **overstated by ~0.10**
+(0.7687 reported vs 0.6668 actually achieved at the endpoint).
+
+⚠️ **Two convention traps in one guard, found by an 8-query smoke that cost one minute.** Neither would
+have been visible in the full run's aggregate — (b) would have silently produced "the hypothetical does not
+affect MRR" from a metric that never measured the endpoint.

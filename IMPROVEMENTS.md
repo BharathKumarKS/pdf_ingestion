@@ -7913,3 +7913,42 @@ window" premise counted **zero**) → **read the source text** of every selected
 page numbers) → classify correct / wrong / pointer → check the empty-label case (`gold-003`) → recompute
 the metrics per segment → write it as a register entry. ⚠️ **Two of the four steps that mattered here
 would have been skipped by acting on the remembered decision.**
+
+#### I95. ⚠️ TWO ARTIFACTS REPORT AN "MRR" FOR THE SAME STAGE AND THEY ARE DIFFERENT NUMBERS — the product's `mrr` is MRR@fetch_k (a POOL metric); T0's `ce` MRR is the ENDPOINT's. The gap is ~0.10
+
+**Found by the T4 smoke test (§12 of T4's pre-registration), not by looking for it.**
+
+`compute_retrieval_metrics` computes `mrr` from `retrieval["hits"]` — **the POOL** — and its own comment
+says so: *"MRR@fetch_k (no threshold — measures rank of first relevant result)"*. That is **intentional**,
+not a bug. But the same function computes `ndcg_at_{k}`, `map`, `recall_at_{k}`, `precision_at_{k}` and
+`hit_at_{k}` from `retrieval["reranked"]` — **the ENDPOINT**. ⇒ **one metric in the set describes the pool
+and the rest describe the endpoint, and all of them are printed under one heading.**
+
+⚠️ **T0's artifact does the opposite, and both are self-consistent.** `t0_baseline._metrics_from_pages`
+scores **each boundary's own list** (`hits = hits_above = that list`), so:
+
+| row | `mrr` describes | value |
+|---|---|---|
+| T0's `fusion` row (the pool) | the **pool** | **0.7687** |
+| T0's `ce` row (the 20-page endpoint) | the **ENDPOINT** | **0.6668** |
+| the product's `mrr` at the endpoint | the **pool** | **0.7687** |
+
+⇒ **The product's evaluation reports 0.7687 as the endpoint MRR; the endpoint actually achieves 0.6668.**
+**Overstated by 0.10** — and MRR is exactly the metric a reader would take as "how high does the right page
+rank in what the student sees".
+
+⚠️ **Why it matters more than a naming quibble:** `mrr` is the one field in the product's metric set that is
+**identical in every arm of T4** (all four share a pool), so **it silently cannot falsify a ranking
+hypothesis.** The smoke proved it: the registered `P1`/`P2` MRR deltas returned **exactly `0.0` with
+`ci95 [0.0, 0.0]`** — a prediction the harness could never have falsified, from a metric that never
+measured the endpoint.
+
+**Fix (do NOT do it silently):** T4's harness **adds `mrr_at_k` over the endpoint list** and anchors it on
+T0's `ce` MRR. Any change to the product's `mrr` is a **product-path change** and needs its own
+pre-registration, because it moves a number in the evaluation report that every historical run quoted.
+**Until then: never quote the product's `mrr` as the endpoint's.**
+
+**Method note.** This was found by an **8-query smoke test costing one minute**, and it would have been
+**invisible in the full run's aggregate** — the full run would have reported "the hypothetical does not
+affect MRR" from a metric that never measured the endpoint. ⚠️ **The smoke's value was not "does the code
+run" but "is the instrument the one I think it is".**
