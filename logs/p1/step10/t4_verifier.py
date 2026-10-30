@@ -159,6 +159,28 @@ def main() -> int:
     if g7:
         bad(f"G7: n_reachable differs from T0 on {len(g7)} queries: {g7[:5]}")
 
+    # ── 4b. the guards added after the independent review (§13) ───────────────────────────────────
+    # G4b — arm C's REPEAT must produce the same RECORDED metrics. ⚠️ Deliberately compares the recorded
+    # dicts, NOT the re-derived ones: re-deriving both from the page lists would make this a consequence
+    # of G4 (page equality implies re-derived equality), i.e. a check that could never fire alone. The
+    # thing worth asserting is that the HARNESS's metric function is deterministic, which is only visible
+    # in what it recorded.
+    g4b = [r["id"] for r in rows if r.get("C2_metrics") != r.get("C_metrics")]
+    if g4b:
+        bad(f"G4b: arm C repeat recorded different metrics on {len(g4b)} queries: {g4b[:5]}")
+    # G5b — the override counter must equal the number of scored queries
+    if art["meta"].get("override_hits") != len(rows):
+        bad(f"G5b: override_hits {art['meta'].get('override_hits')} != {len(rows)} scored queries")
+    # G6b — pool CONTENT identical across C, N and Q
+    for a in ("N", "Q"):
+        mm = [r["id"] for r in rows if r.get(f"{a}_pool_sha") != r.get("C_pool_sha")]
+        if mm:
+            bad(f"G6b: arm {a} pool CONTENT differs from C on {len(mm)} queries: {mm[:5]}")
+    # G8 — fetch_k is 100 in every arm (what makes recall_at_100 the pool field G2 compares)
+    fks = art["meta"].get("fetch_k", {})
+    if not fks or any(v != 100 for v in fks.values()):
+        bad(f"G8: fetch_k is not 100 in every arm: {fks}")
+
     # ── 5. the deltas, recomputed ─────────────────────────────────────────────────────────────────
     def ci(ds: list[float]) -> dict:
         n = len(ds)

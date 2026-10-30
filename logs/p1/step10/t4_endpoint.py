@@ -86,14 +86,20 @@ RETRIES = 3
 
 # The ONE instrumentation: substitute the raw query at the reranker call (arm Q only).
 _RERANK_OVERRIDE: dict[str, str | None] = {"text": None}
+# ⚠️ G5's DIRECT proof (independent review, item 1): count the calls where the substitution actually
+# FIRED. Testing "arm Q differs from arm C somewhere" is not the same as proving the override was read on
+# every call — at n=133 a coincidence is implausible, but a counter is strictly better.
+_OVERRIDE_HITS: dict[str, int] = {"n": 0}
 
 
 def _install_rerank_wrapper(reranker):
     orig = reranker.rerank
 
     def _wrapped(query, chunks, top_k):
-        q = _RERANK_OVERRIDE["text"] or query
-        return orig(q, chunks, top_k)
+        if _RERANK_OVERRIDE["text"] is not None:
+            _OVERRIDE_HITS["n"] += 1        # the override was READ and USED, not merely set
+            return orig(_RERANK_OVERRIDE["text"], chunks, top_k)
+        return orig(query, chunks, top_k)
 
     reranker.rerank = _wrapped          # instance attribute shadows the class method
     return orig
@@ -259,6 +265,10 @@ def main() -> int:
                     pool_pages = _pages_of(ret["hits"])          # the POOL (unchanged by the CE)
                     rec[f"{arm}_pages"] = pages
                     rec[f"{arm}_pool_size"] = len(pool_pages)
+                    # ⚠️ G6b — a hash of the pool's PAGE LIST, so the guard can compare pool CONTENT and
+                    # not merely its length (independent review, item 3). Compact: 16 hex chars per arm.
+                    rec[f"{arm}_pool_sha"] = hashlib.sha256(
+                        ",".join(map(str, pool_pages)).encode()).hexdigest()[:16]
                     rec[f"{arm}_cov"] = _cov(pages, rq)
                     # ⚠️ §12 — the product's `mrr` is a POOL metric; inject the ENDPOINT MRR explicitly
                     m = compute_retrieval_metrics(ret, sorted(rel), cfg_arm)
@@ -270,7 +280,9 @@ def main() -> int:
                         ret2 = _retry(run_retrieval, text, store_arm, embedder, reranker, cfg_arm,
                                       "global", 0.0, query_type=qtype)
                         rec["C2_pages"] = _pages_of(ret2["reranked"])
-                        rec["C2_metrics"] = compute_retrieval_metrics(ret2, sorted(rel), cfg_arm)
+                        m2 = compute_retrieval_metrics(ret2, sorted(rel), cfg_arm)
+                        m2[f"mrr_at_{cfg_arm.reranker_top_k}"] = _endpoint_mrr(rec["C2_pages"], rel)
+                        rec["C2_metrics"] = m2
                 _RERANK_OVERRIDE["text"] = None
                 per_query.append(rec)
             except Exception as exc:  # noqa: BLE001
@@ -337,18 +349,29 @@ def main() -> int:
     g2_ok = all(near(v["got"], v["want"]) for v in g2_detail.values())
 
     c_vs_c2 = [r["id"] for r in ok if r.get("C2_pages") != r.get("C_pages")]
+    # ⚠️ G4b — the pre-registration says "bit-exact on every METRIC of every query", so compare the metric
+    # dicts too, not just the page lists (independent review, item 2). Page equality implies metric
+    # equality only if the metric function is deterministic — which is the thing being asserted.
+    c2_metric_mismatch = [r["id"] for r in ok if r.get("C2_metrics") != r.get("C_metrics")]
     q_vs_c = [r["id"] for r in ok if r.get("Q_pages") != r.get("C_pages")]
-    pool_mismatch = {a: [r["id"] for r in ok if r[f"{a}_pool_size"] != r["C_pool_size"]] for a in ARMS}
+    pool_size_mismatch = {a: [r["id"] for r in ok if r[f"{a}_pool_size"] != r["C_pool_size"]] for a in ARMS}
+    # ⚠️ G6b — pool CONTENT, not merely its length: two arms could return different pools of equal size.
+    pool_sha_mismatch = {a: [r["id"] for r in ok if r[f"{a}_pool_sha"] != r["C_pool_sha"]] for a in ("N", "Q")}
     reach_identical = (reach == t0_pages)
+    fetch_ks = {a: ARM_CFGS[a].reranker_fetch_k for a in ARMS}
 
     guards = {
         "G1_C_reproduces_T0_ce_row": g1_ok,
         "G2_N_reproduces_T0_fusion_row": g2_ok,
         "G3_133_scored_0_errors": (len(ok) == len(queries) and not errors),
         "G4_arm_C_bit_exact_on_repeat": not c_vs_c2,
+        "G4b_arm_C_METRICS_bit_exact_on_repeat": not c2_metric_mismatch,
         "G5_arm_Q_instrumentation_took_effect": bool(q_vs_c),
-        "G6_pools_identical_across_C_N_Q": all(not pool_mismatch[a] for a in ("N", "Q")),
+        "G5b_Q_override_fired_on_every_Q_call": _OVERRIDE_HITS["n"] == len(ok),
+        "G6_pools_identical_across_C_N_Q": all(not pool_size_mismatch[a] for a in ("N", "Q")),
+        "G6b_pool_CONTENT_identical_across_C_N_Q": all(not pool_sha_mismatch[a] for a in ("N", "Q")),
         "G7_reachable_set_matches_T0": reach_identical,
+        "G8_fetch_k_is_100_in_every_arm": all(v == 100 for v in fetch_ks.values()),
     }
 
     artifact = {
@@ -368,14 +391,27 @@ def main() -> int:
             "n_queries": len(queries), "n_errors": len(errors), "wall_seconds": round(wall, 1),
             "unit": "coverage of a query's REACHABLE labelled pages (T0's §I66 unit)",
             "note_ndcg_scale": "nDCG's IDCG uses min(n, reranker_top_k), so nDCG_at_50 is NOT comparable to nDCG_at_20; coverage and R@k-with-ceiling are the cut's honest comparisons",
+            "fetch_k": fetch_ks,
+            "override_hits": _OVERRIDE_HITS["n"],
+            # ⚠️ Which of these fields describe the ENDPOINT and which describe the POOL (independent
+            # review, item 6). Without this a reader takes `mrr` for the endpoint's — see §I95.
+            "field_conventions": {
+                "ENDPOINT": ["recall_at_k", "precision_at_k", "precision_ceiling_at_k", "f1_at_k",
+                             "ndcg_at_k", "hit_at_k", "mrr_at_k", "map", "coverage_reachable"],
+                "POOL": ["mrr", "recall_at_100"],
+                "warning": "`mrr` is MRR@fetch_k over the POOL (the product's own field); the ENDPOINT MRR "
+                           "is `mrr_at_k`. On T0's rows they are 0.7687 and 0.6668 — a ~0.10 gap. §I95.",
+            },
         },
         "aggregate": aggregate,
         "deltas": deltas,
         "guards": guards,
         "guard_detail": {"G1": g1_detail, "G2": g2_detail,
                          "C_vs_C2_page_mismatch_ids": c_vs_c2,
+                         "C_vs_C2_metric_mismatch_ids": c2_metric_mismatch,
                          "Q_vs_C_page_mismatch_ids": q_vs_c,
-                         "pool_size_mismatch_ids": pool_mismatch},
+                         "pool_size_mismatch_ids": pool_size_mismatch,
+                         "pool_sha_mismatch_ids": pool_sha_mismatch},
         "errors": errors,
         "per_query": per_query,
     }

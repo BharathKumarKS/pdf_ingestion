@@ -31,9 +31,13 @@ CHECKS = {
     "CHECK_G2":         "G2:",
     "CHECK_G3":         "G3:",
     "CHECK_G4":         "G4:",
+    "CHECK_G4B":        "G4b:",
     "CHECK_G5":         "G5:",
+    "CHECK_G5B":        "G5b:",
     "CHECK_G6":         "G6:",
+    "CHECK_G6B":        "G6b:",
     "CHECK_G7":         "G7:",
+    "CHECK_G8":         "G8:",
     "CHECK_I95":        "§I95",
     "CHECK_DELTA":      "deltas.",
 }
@@ -80,6 +84,24 @@ def m_g4(a):
     first_query(a)["C2_pages"] = [999]
 
 
+def m_g4b(a):
+    """Only the RECORDED repeat metrics change — the pages are untouched, so G4 stays green."""
+    m = first_query(a)["C2_metrics"]
+    m["ndcg_at_20"] = 0.9999
+
+
+def m_g5b(a):
+    a["meta"]["override_hits"] = 0
+
+
+def m_g6b(a):
+    first_query(a)["N_pool_sha"] = "deadbeefdeadbeef"
+
+
+def m_g8(a):
+    a["meta"]["fetch_k"]["N"] = 50
+
+
 def m_g5(a):
     for r in a["per_query"]:
         if "Q_pages" in r:
@@ -118,9 +140,13 @@ MUTATIONS = [
     ("G2 anchor (arm N)",   m_g2,           "CHECK_G2"),
     ("G3 error count",      m_g3,           "CHECK_G3"),
     ("G4 repeat",           m_g4,           "CHECK_G4"),
+    ("G4b repeat METRICS",  m_g4b,          "CHECK_G4B"),
     ("G5 Q == C (no-op)",   m_g5,           "CHECK_G5"),
-    ("G6 pool identity",    m_g6,           "CHECK_G6"),
+    ("G5b override count",  m_g5b,          "CHECK_G5B"),
+    ("G6 pool size",        m_g6,           "CHECK_G6"),
+    ("G6b pool CONTENT",    m_g6b,          "CHECK_G6B"),
     ("G7 reachable set",    m_g7,           "CHECK_G7"),
+    ("G8 fetch_k",          m_g8,           "CHECK_G8"),
     ("§I95 pool mrr",       m_i95,          "CHECK_I95"),
     ("delta mean",          m_delta,        "CHECK_DELTA"),
     ("page ORDER only",     m_page_order,   "CHECK_METRIC"),

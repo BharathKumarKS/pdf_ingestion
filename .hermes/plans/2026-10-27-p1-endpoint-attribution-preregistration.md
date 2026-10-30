@@ -66,13 +66,17 @@ the gold labels**, identical in every arm.
 
 | # | check |
 |---|---|
-| **G1** | **arm C reproduces T0's `ce` row EXACTLY** — coverage 0.4553, R@20 0.4442, P@20 0.2398, F1 0.1911, nDCG 0.4946, MAP 0.2789, MRR 0.6668, Hit 0.9173. Tolerance **1e-6**. ⚠️ **`R@100` is EXCLUDED from this comparison** — see §11 |
-| **G2** | ⚠️ **THE STRONG ONE — arm N reproduces T0's `fusion` row EXACTLY** — coverage 0.6845, R@20 0.4491, R@100 0.6706, P@20 0.2447, F1 0.1968, nDCG 0.5506, MAP 0.3421, MRR 0.7687, Hit 0.9323. Tolerance **1e-6**. With no CE the top-20 *is* the pool's top-20, and the pool is **page-deduped**, so the two conventions coincide — the reproduction should be exact |
+| **G1** | **arm C reproduces T0's `ce` row EXACTLY** — coverage 0.4553, R@20 0.4442, P@20 0.2398, F1 0.1911, nDCG 0.4946, MAP 0.2789, **endpoint MRR 0.6668**, Hit 0.9173. Tolerance **1e-4** — ⚠️ **not 1e-6 as first written**: every metric is `round(..., 4)`, so the values are quantised to 1e-4 and equality is exact; the tolerance is 1e-4 only so a legitimate future change to the rounding does not silently pass. (Independent review, item 4 — the document and the code disagreed.) |
+| **G2** | ⚠️ **THE STRONG ONE — arm N reproduces T0's `fusion` row EXACTLY** — coverage 0.6845, R@20 0.4491, **pool** R@100 0.6706, P@20 0.2447, F1 0.1968, nDCG 0.5506, MAP 0.3421, **pool** MRR 0.7687, Hit 0.9323. Tolerance **1e-4**. With no CE the top-20 *is* the pool's top-20, and the pool is **page-deduped**, so the two conventions coincide — the reproduction should be exact |
 | **G3** | **133 scored / 0 errors** in every arm |
 | **G4** | **determinism: arm C run TWICE is bit-exact** on every metric of every query (§I68 landed) |
+| **G4b** | ⚠️ **the same, on the METRIC DICTS** — G4 compares page lists, which implies metric equality only if the metric function is deterministic, i.e. the thing being asserted (independent review, item 2) |
 | **G5** | ⚠️ **arm Q's instrumentation TOOK EFFECT** — Q differs from C on **at least one** query. A silent no-op would make Q a duplicate of C and the run's central question unanswerable |
+| **G5b** | ⚠️ **the override FIRED on every Q call** — a counter inside the wrapper must equal the number of scored queries. "Q differs from C somewhere" is not the same claim (independent review, item 1) |
 | **G6** | **the pools are IDENTICAL across C, N and Q** — same lane set, same `fetch_k`; the treatment is the **ordering only**. Asserted per query |
+| **G6b** | ⚠️ **the same on pool CONTENT** — a hash of the pool's page list, not merely its length: two arms could return different pools of equal size and satisfy G6 (independent review, item 3) |
 | **G7** | the **reachable-pages set is identical to T0's** (888 pages, set equality) — the denominator did not move |
+| **G8** | **`fetch_k` is 100 in every arm** — which is what makes `recall_at_100` the POOL field G2 compares (independent review, item 7) |
 
 ⚠️ **G1 and G2 together are the instrument proof**: two *different* T0 boundaries reproduced by two
 *different* arms. If both hold, the harness is T0's and the comparison between them is meaningful.
@@ -205,3 +209,35 @@ evaluation reports **the pool's MRR under the name `mrr`**, so its endpoint MRR 
 ⚠️ **Two convention traps in one guard, found by an 8-query smoke that cost one minute.** Neither would
 have been visible in the full run's aggregate — (b) would have silently produced "the hypothetical does not
 affect MRR" from a metric that never measured the endpoint.
+
+## 13. INDEPENDENT REVIEW — `openai/gpt-oss-20b` (a different model family) read this document and the harness's guard logic and returned **SPECIFIC CONCERNS**
+
+**Method (§7):** a compact extract — this document verbatim (13.4 k chars) plus the harness's arms, guards,
+delta and `_cov`/`_endpoint_mrr` sections (14.9 k chars) — sent read-only with an adversarial brief:
+find guards that cannot fail, metrics that do not measure what is claimed, arms that are not different,
+predictions the harness cannot falsify, and unit/convention mismatches. **Run before the full run, after the
+smoke.** Log: `logs/p1/step10/t4_independent_review_log.txt`.
+
+⚠️ **The review's value is that 5 of its 8 items were acted on — and that 2 were WRONG, which is recorded
+rather than quietly dropped.**
+
+| # | the reviewer's claim | verdict | action |
+|---|---|---|---|
+| 1 | **G5 is over-strict** — if the hypothetical equals the raw query, the guard fails on a benign coincidence | **weak in principle, adequate at n=133** — but a *direct* proof is strictly better | **FIXED** → **G5b**: a counter inside the wrapper must equal the number of scored queries, i.e. the override was *read*, not merely set |
+| 2 | **G4 does not match its description** — §4 says "bit-exact on every metric" but only page lists are compared | ✅ **VALID** | **FIXED** → **G4b** compares the metric dicts too |
+| 3 | **G6 checks pool SIZE, not pool CONTENT** — two arms could return different pools of equal length | ✅ **VALID** | **FIXED** → **G6b** compares a 16-hex-char hash of the pool's page list per query per arm |
+| 4 | **G1/G2's 1e-6 tolerance will fail on rounding noise** | ✅ **PARTLY VALID** — the noise claim is wrong (the metrics are `round(..., 4)`, so equality is exact), **but the document said 1e-6 while the harness used 1e-4** | **FIXED** → §4 now says **1e-4** with the reason |
+| 5 | **nothing proves the cross-encoder ran** — a mis-configured CE would still pass | ❌ **WRONG** — **G1 is that guard**: if the CE no-op'd in arm C, arm C would equal arm N and G1 would fail against T0's `ce` row | recorded, no change |
+| 6 | the aggregate still carries the pool `mrr` under the bare name | ✅ **VALID as a labelling hazard** | **FIXED** → the artifact's `meta.field_conventions` now names every ENDPOINT field and every POOL field, with the ~0.10 gap stated |
+| 7 | **`recall_at_fetch_k` is a pool metric and nothing asserts `fetch_k`** | ✅ **VALID** | **FIXED** → **G8** asserts `fetch_k = 100` in every arm |
+| 8 | **`coverage_reachable` uses the corpus-wide denominator**, so drift would be masked | ❌ **WRONG** — it is `\|pages ∩ (rel ∩ reach)\| / \|rel ∩ reach\|`, per query; ⚠️ **the reviewer misread because the compact extract cut the call site and showed only the generic `_cov(pages, reach)` signature** | recorded, no change |
+
+⚠️ **Item 8 is the method's own limitation and is worth keeping:** a **compact** extract hides call sites,
+and a reviewer that cannot see the caller will infer the unit from the signature. **The extract traded
+token cost for a false positive — and the false positive was cheap to adjudicate, which is the right trade,
+but it must be stated rather than hidden.**
+
+⚠️ **Consequence for the run:** the full run was **killed ~5 minutes in** and restarted, so the committed
+artifact carries the strengthened guards (G4b, G5b, G6b, G8) and the labelled field conventions. **Cost:
+one five-minute run. Benefit: four guards that can now fail where three previously could not, and one
+document/code disagreement removed.**

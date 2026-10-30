@@ -1,0 +1,35 @@
+reviewer: openai/gpt-oss-20b
+
+1. **G5 is over‑strict** – it only checks that `Q_pages != C_pages`.  
+   *Why wrong:* If the HyDE hypothesis happens to be identical to the raw query for a query, the CE will rank the same 20 pages and the guard will fail even though the instrumentation worked.  
+   *Consequence:* A perfectly valid run could be rejected for a benign coincidence.
+
+2. **G4 does not match its description** – the guard claims “bit‑exact on every metric” but only compares the page lists (`C2_pages` vs `C_pages`).  
+   *Why wrong:* Any metric drift (e.g., a tiny floating‑point change in precision) would go unnoticed.  
+   *Consequence:* The harness could silently accept a run that is not truly deterministic.
+
+3. **G6 only checks pool size, not pool content** – it verifies that `pool_size` is identical across arms but does not compare the actual hit lists.  
+   *Why wrong:* Two arms could return different pools of the same length and still satisfy the guard.  
+   *Consequence:* The attribution analysis could be based on mismatched pools, invalidating the comparison.
+
+4. **G1/G2 use a 1e‑6 tolerance on floating‑point metrics** – the harness compares every field of the T0 rows with `abs(a‑b) <= 1e‑6`.  
+   *Why wrong:* Even a single rounding difference (e.g., 0.449100 vs 0.449099) will cause the guard to fail, even though the results are effectively identical.  
+   *Consequence:* The run may be aborted unnecessarily; the guard cannot tolerate normal numerical noise.
+
+5. **The harness never verifies that the CE is actually re‑ranking** – it only checks that the page lists differ (`Q_pages != C_pages`).  
+   *Why wrong:* If the CE is mis‑configured and returns the same list as the pool, the guard will still pass because the lists differ in order but not in content.  
+   *Consequence:* The run could attribute a loss to the CE when in fact the CE did nothing.
+
+6. **The `mrr` field in the aggregate is a POOL metric** – the harness adds `mrr_at_k` for the endpoint but still includes the original `mrr` (pool MRR) in the aggregate.  
+   *Why wrong:* The guard `G2` compares this pool `mrr` to T0’s fusion `mrr`, which is correct, but the documentation and predictions refer to endpoint MRR.  
+   *Consequence:* Users may misinterpret the reported `mrr` as the endpoint MRR, leading to incorrect conclusions about the CE’s impact.
+
+7. **The `recall_at_fetch_k` metric is computed from the pool hits** – the harness includes it in the aggregate but the guard `G2` only checks `recall_at_100` (pool recall).  
+   *Why wrong:* If the fetch_k differs from 100, the guard does not verify that the pool recall matches T0’s fusion recall.  
+   *Consequence:* A mismatch in the pool recall could go unnoticed, compromising the attribution.
+
+8. **The `coverage_reachable` metric uses the same denominator as T0** – the harness computes it as `|pages ∩ reach| / |reach|`.  
+   *Why wrong:* If the set of reachable pages (`reach`) changes between T0 and the run, the guard `G7` will fail, but the metric itself will still be computed with the new denominator, potentially masking a drift.  
+   *Consequence:* The coverage metric may be misleading if the reachable set is not truly identical.
+
+**Verdict:** SPECIFIC CONCERNS.
