@@ -120,24 +120,37 @@ def main() -> int:
         covs = [r[f"{a}_cov"] for r in rows]
         if abs(art["aggregate"][a]["overall"]["coverage_reachable"] - statistics.mean(covs)) > 1e-9:
             bad(f"aggregate.{a}.coverage mismatch")
+        pcovs = [r[f"{a}_pool_cov"] for r in rows]
+        if abs(art["aggregate"][a]["overall"]["pool_cov"] - statistics.mean(pcovs)) > 1e-9:
+            bad(f"aggregate.{a}.pool_cov mismatch")
+        # ⚠️ the POOL coverage must re-derive from the pool, not be a copy of the endpoint's. Recompute it
+        # independently: |pool_pages ∩ (rel ∩ reach)| / |rel ∩ reach|. The pool page list is not stored in
+        # full, so this is checked through the pool SHA's own consistency instead — see G6b below.
+        if all(r[f"{a}_pool_size"] == len(r[f"{a}_pages"]) for r in rows):
+            # every arm's pool equals its endpoint list only when the pool is <= k; assert the converse
+            # is NOT silently true across the board (which would mean pool_cov was copied from cov).
+            if all(r[f"{a}_pool_cov"] == r[f"{a}_cov"] for r in rows) and \
+               any(r[f"{a}_pool_size"] > len(r[f"{a}_pages"]) for r in rows):
+                bad(f"aggregate.{a}.pool_cov: pool_cov equals cov everywhere although pools exceed the "
+                    f"endpoint — the pool coverage was not measured from the pool")
 
     # ── 3. G1 / G2 — the two exact anchors ────────────────────────────────────────────────────────
-    EP = ("recall_at_20", "precision_at_20", "f1_at_20", "ndcg_at_20", "map", "hit_at_20", "mrr_at_20")
-    # ⚠️ T0's `ce` row names its ENDPOINT MRR `mrr` (its own list is both hits and reranked). Ours is
-    # `mrr_at_20`. Same quantity, different key — mapped here, not silently skipped.
-    T0_KEY = {"mrr_at_20": "mrr"}
-    for field, t0row, arm in (("G1", t0["aggregate"]["ce"]["overall"], "C"),
-                              ("G2", t0["aggregate"]["fusion"]["overall"], "N")):
-        for key in EP + ("coverage_reachable",):
-            got = art["aggregate"][arm]["overall"].get(key)
-            want = t0row.get(T0_KEY.get(key, key))
+    # ⚠️ §12/§14 — the pairs are (arm_field, T0_field) and they are EXPLICIT, because the two T0 rows are
+    # built differently and a shared key name would hide it. T0's `ce` row is all-endpoint (its R@100 IS
+    # its R@20, its `mrr` IS the endpoint MRR). T0's `fusion` row scores the POOL for hits — so its `mrr`
+    # and `recall_at_100` are pool metrics AND its `coverage_reachable` is the POOL's coverage, which must
+    # be compared against our `pool_cov` and NOT our endpoint coverage.
+    EP = ("recall_at_20", "precision_at_20", "f1_at_20", "ndcg_at_20", "map", "hit_at_20")
+    G1_PAIRS = (("coverage_reachable", "coverage_reachable"),) + tuple((k, k) for k in EP) + (("mrr_at_20", "mrr"),)
+    G2_PAIRS = (("pool_cov", "coverage_reachable"),) + tuple((k, k) for k in EP) + \
+               (("mrr", "mrr"), ("recall_at_100", "recall_at_100"))
+    for field, t0row, arm, pairs in (("G1", t0["aggregate"]["ce"]["overall"], "C", G1_PAIRS),
+                                     ("G2", t0["aggregate"]["fusion"]["overall"], "N", G2_PAIRS)):
+        for ak, tk in pairs:
+            got = art["aggregate"][arm]["overall"].get(ak)
+            want = t0row.get(tk)
             if got is None or want is None or abs(got - want) > ANCHOR_TOL:
-                bad(f"{field}: arm {arm} {key}: {got} != T0 {want}")
-        if field == "G2":     # the two POOL fields, valid only where the pool is T0's fusion pool
-            for key in ("mrr", "recall_at_100"):
-                got = art["aggregate"]["N"]["overall"].get(key)
-                if got is None or t0row.get(key) is None or abs(got - t0row[key]) > ANCHOR_TOL:
-                    bad(f"G2: arm N {key}: {got} != T0 {t0row.get(key)}")
+                bad(f"{field}: arm {arm} {ak}->T0 {tk}: {got} != {want}")
 
     # ── 4. G3–G7, recomputed from the per-query arrays ────────────────────────────────────────────
     if not (len(rows) == art["meta"]["n_queries"] and not art["errors"]):
@@ -180,6 +193,17 @@ def main() -> int:
     fks = art["meta"].get("fetch_k", {})
     if not fks or any(v != 100 for v in fks.values()):
         bad(f"G8: fetch_k is not 100 in every arm: {fks}")
+    # G9/G9b/G10 — ⚠️ §14 LANE HEALTH. A call whose ColBERT lane dropped was fused from a REDUCED lane
+    # set, so its pool is not the treatment's. Found by the first full run losing G6 to exactly one such
+    # dropout, which the run log revealed and nothing in the artifact recorded.
+    drops = [f"{r['id']}/{a}" for r in rows for a in arms if r.get(f"{a}_colbert_drop")]
+    if drops:
+        bad(f"G9: ColBERT lane dropped in ACCEPTED calls ({len(drops)}): {drops[:5]}")
+    if [r["id"] for r in rows if r.get("C2_colbert_drop")]:
+        bad("G9b: the arm C repeat had a lane dropout — G4's determinism claim is void")
+    falls = [f"{r['id']}/{a}" for r in rows for a in ("C", "Q", "W50") if r.get(f"{a}_reranker_fallback")]
+    if falls:
+        bad(f"G10: the reranker fell back in a CE arm ({len(falls)}): {falls[:5]}")
 
     # ── 5. the deltas, recomputed ─────────────────────────────────────────────────────────────────
     def ci(ds: list[float]) -> dict:

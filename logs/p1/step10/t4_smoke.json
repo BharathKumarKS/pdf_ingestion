@@ -42,7 +42,7 @@
     "t0_reachable_pages_set_sha": "d806ff5f89673164",
     "n_queries": 8,
     "n_errors": 0,
-    "wall_seconds": 133.9,
+    "wall_seconds": 177.2,
     "unit": "coverage of a query's REACHABLE labelled pages (T0's \u00a7I66 unit)",
     "note_ndcg_scale": "nDCG's IDCG uses min(n, reranker_top_k), so nDCG_at_50 is NOT comparable to nDCG_at_20; coverage and R@k-with-ceiling are the cut's honest comparisons",
     "fetch_k": {
@@ -52,6 +52,12 @@
       "W50": 100
     },
     "override_hits": 8,
+    "lane_health": {
+      "colbert_dropouts_total": 0,
+      "lane_retries_used": 0,
+      "lane_retries_allowed_per_call": 3,
+      "note": "a ColBERT dropout changes the RRF fusion's lane set, so it changes the POOL; the first full run lost G6 to exactly one such dropout (gold-029)"
+    },
     "field_conventions": {
       "ENDPOINT": [
         "recall_at_k",
@@ -76,6 +82,7 @@
       "overall": {
         "n": 8,
         "coverage_reachable": 0.625,
+        "pool_cov": 0.625,
         "pool_mean": 89.875,
         "recall_at_20": 0.625,
         "precision_at_20": 0.03125,
@@ -92,6 +99,7 @@
         "factual": {
           "n": 6,
           "coverage_reachable": 0.6666666666666666,
+          "pool_cov": 0.6666666666666666,
           "pool_mean": 93,
           "recall_at_20": 0.6666666666666666,
           "precision_at_20": 0.03333333333333333,
@@ -107,6 +115,7 @@
         "multihop": {
           "n": 2,
           "coverage_reachable": 0.5,
+          "pool_cov": 0.5,
           "pool_mean": 80.5,
           "recall_at_20": 0.5,
           "precision_at_20": 0.025,
@@ -122,6 +131,7 @@
         "overview": {
           "n": 0,
           "coverage_reachable": null,
+          "pool_cov": null,
           "pool_mean": null,
           "recall_at_20": null,
           "precision_at_20": null,
@@ -140,6 +150,7 @@
       "overall": {
         "n": 8,
         "coverage_reachable": 0.625,
+        "pool_cov": 0.625,
         "pool_mean": 89.875,
         "recall_at_20": 0.625,
         "precision_at_20": 0.03125,
@@ -156,6 +167,7 @@
         "factual": {
           "n": 6,
           "coverage_reachable": 0.6666666666666666,
+          "pool_cov": 0.6666666666666666,
           "pool_mean": 93,
           "recall_at_20": 0.6666666666666666,
           "precision_at_20": 0.03333333333333333,
@@ -171,6 +183,7 @@
         "multihop": {
           "n": 2,
           "coverage_reachable": 0.5,
+          "pool_cov": 0.5,
           "pool_mean": 80.5,
           "recall_at_20": 0.5,
           "precision_at_20": 0.025,
@@ -186,6 +199,7 @@
         "overview": {
           "n": 0,
           "coverage_reachable": null,
+          "pool_cov": null,
           "pool_mean": null,
           "recall_at_20": null,
           "precision_at_20": null,
@@ -204,6 +218,7 @@
       "overall": {
         "n": 8,
         "coverage_reachable": 0.625,
+        "pool_cov": 0.625,
         "pool_mean": 89.875,
         "recall_at_20": 0.625,
         "precision_at_20": 0.03125,
@@ -220,6 +235,7 @@
         "factual": {
           "n": 6,
           "coverage_reachable": 0.6666666666666666,
+          "pool_cov": 0.6666666666666666,
           "pool_mean": 93,
           "recall_at_20": 0.6666666666666666,
           "precision_at_20": 0.03333333333333333,
@@ -235,6 +251,7 @@
         "multihop": {
           "n": 2,
           "coverage_reachable": 0.5,
+          "pool_cov": 0.5,
           "pool_mean": 80.5,
           "recall_at_20": 0.5,
           "precision_at_20": 0.025,
@@ -250,6 +267,7 @@
         "overview": {
           "n": 0,
           "coverage_reachable": null,
+          "pool_cov": null,
           "pool_mean": null,
           "recall_at_20": null,
           "precision_at_20": null,
@@ -268,6 +286,7 @@
       "overall": {
         "n": 8,
         "coverage_reachable": 0.625,
+        "pool_cov": 0.625,
         "pool_mean": 89.875,
         "recall_at_50": 0.625,
         "precision_at_50": 0.0125,
@@ -284,6 +303,7 @@
         "factual": {
           "n": 6,
           "coverage_reachable": 0.6666666666666666,
+          "pool_cov": 0.6666666666666666,
           "pool_mean": 93,
           "recall_at_50": 0.6666666666666666,
           "precision_at_50": 0.013333333333333334,
@@ -299,6 +319,7 @@
         "multihop": {
           "n": 2,
           "coverage_reachable": 0.5,
+          "pool_cov": 0.5,
           "pool_mean": 80.5,
           "recall_at_50": 0.5,
           "precision_at_50": 0.01,
@@ -314,6 +335,7 @@
         "overview": {
           "n": 0,
           "coverage_reachable": null,
+          "pool_cov": null,
           "pool_mean": null,
           "recall_at_50": null,
           "precision_at_50": null,
@@ -445,81 +467,80 @@
     "G6_pools_identical_across_C_N_Q": true,
     "G6b_pool_CONTENT_identical_across_C_N_Q": true,
     "G7_reachable_set_matches_T0": true,
-    "G8_fetch_k_is_100_in_every_arm": true
+    "G8_fetch_k_is_100_in_every_arm": true,
+    "G9_no_colbert_lane_dropout_in_accepted_calls": true,
+    "G9b_arm_C_repeat_had_no_lane_dropout": true,
+    "G10_no_reranker_fallback_in_the_CE_arms": true
   },
   "guard_detail": {
     "G1": {
-      "coverage_reachable": {
+      "coverage_reachable->coverage_reachable": {
         "got": 0.625,
         "want": 0.45533
       },
-      "recall_at_20": {
+      "recall_at_20->recall_at_20": {
         "got": 0.625,
         "want": 0.444152
       },
-      "precision_at_20": {
+      "precision_at_20->precision_at_20": {
         "got": 0.03125,
         "want": 0.23985
       },
-      "f1_at_20": {
+      "f1_at_20->f1_at_20": {
         "got": 0.059500000000000004,
         "want": 0.191114
       },
-      "ndcg_at_20": {
+      "ndcg_at_20->ndcg_at_20": {
         "got": 0.426225,
         "want": 0.494618
       },
-      "map": {
+      "map->map": {
         "got": 0.365525,
         "want": 0.278931
       },
-      "hit_at_20": {
+      "hit_at_20->hit_at_20": {
         "got": 0.625,
         "want": 0.917293
       },
-      "mrr_at_20": {
+      "mrr_at_20->mrr": {
         "got": 0.365525,
-        "want": null
+        "want": 0.666825
       }
     },
     "G2": {
-      "coverage_reachable": {
+      "pool_cov->coverage_reachable": {
         "got": 0.625,
         "want": 0.684486
       },
-      "recall_at_20": {
+      "recall_at_20->recall_at_20": {
         "got": 0.625,
         "want": 0.449138
       },
-      "precision_at_20": {
+      "precision_at_20->precision_at_20": {
         "got": 0.03125,
         "want": 0.244737
       },
-      "f1_at_20": {
+      "f1_at_20->f1_at_20": {
         "got": 0.059500000000000004,
         "want": 0.196773
       },
-      "ndcg_at_20": {
+      "ndcg_at_20->ndcg_at_20": {
         "got": 0.625,
         "want": 0.550629
       },
-      "map": {
+      "map->map": {
         "got": 0.625,
         "want": 0.342068
       },
-      "hit_at_20": {
+      "hit_at_20->hit_at_20": {
         "got": 0.625,
         "want": 0.932331
       },
-      "mrr_at_20": {
-        "got": 0.625,
-        "want": null
-      },
-      "mrr": {
+      "mrr->mrr": {
         "got": 0.625,
         "want": 0.768656
       },
-      "recall_at_100": {
+      "recall_at_100->recall_at_100": {
         "got": 0.625,
         "want": 0.670575
       }
@@ -543,7 +564,11 @@
     "pool_sha_mismatch_ids": {
       "N": [],
       "Q": []
-    }
+    },
+    "colbert_drop_ids": [],
+    "colbert_drop_ids_C_repeat": [],
+    "reranker_fallback_ids": [],
+    "lane_retried_ids": []
   },
   "errors": [],
   "per_query": [
@@ -578,6 +603,10 @@
         690
       ],
       "C_pool_size": 98,
+      "C_pool_cov": 1.0,
+      "C_colbert_drop": false,
+      "C_lane_retries": 0,
+      "C_reranker_fallback": false,
       "C_pool_sha": "8a661ae536ebabde",
       "C_cov": 1.0,
       "C_metrics": {
@@ -593,6 +622,8 @@
         "map": 1.0,
         "mrr_at_20": 1.0
       },
+      "C2_colbert_drop": false,
+      "C2_reranker_fallback": false,
       "C2_pages": [
         34,
         757,
@@ -651,6 +682,10 @@
         198
       ],
       "N_pool_size": 98,
+      "N_pool_cov": 1.0,
+      "N_colbert_drop": false,
+      "N_lane_retries": 0,
+      "N_reranker_fallback": false,
       "N_pool_sha": "8a661ae536ebabde",
       "N_cov": 1.0,
       "N_metrics": {
@@ -689,6 +724,10 @@
         757
       ],
       "Q_pool_size": 98,
+      "Q_pool_cov": 1.0,
+      "Q_colbert_drop": false,
+      "Q_lane_retries": 0,
+      "Q_reranker_fallback": false,
       "Q_pool_sha": "8a661ae536ebabde",
       "Q_cov": 1.0,
       "Q_metrics": {
@@ -757,6 +796,10 @@
         947
       ],
       "W50_pool_size": 98,
+      "W50_pool_cov": 1.0,
+      "W50_colbert_drop": false,
+      "W50_lane_retries": 0,
+      "W50_reranker_fallback": false,
       "W50_pool_sha": "8a661ae536ebabde",
       "W50_cov": 1.0,
       "W50_metrics": {
@@ -806,6 +849,10 @@
         486
       ],
       "C_pool_size": 86,
+      "C_pool_cov": 0.0,
+      "C_colbert_drop": false,
+      "C_lane_retries": 0,
+      "C_reranker_fallback": false,
       "C_pool_sha": "591de7446d8c8fb3",
       "C_cov": 0.0,
       "C_metrics": {
@@ -821,6 +868,8 @@
         "map": 0.0,
         "mrr_at_20": 0.0
       },
+      "C2_colbert_drop": false,
+      "C2_reranker_fallback": false,
       "C2_pages": [
         246,
         593,
@@ -879,6 +928,10 @@
         257
       ],
       "N_pool_size": 86,
+      "N_pool_cov": 0.0,
+      "N_colbert_drop": false,
+      "N_lane_retries": 0,
+      "N_reranker_fallback": false,
       "N_pool_sha": "591de7446d8c8fb3",
       "N_cov": 0.0,
       "N_metrics": {
@@ -917,6 +970,10 @@
         739
       ],
       "Q_pool_size": 86,
+      "Q_pool_cov": 0.0,
+      "Q_colbert_drop": false,
+      "Q_lane_retries": 0,
+      "Q_reranker_fallback": false,
       "Q_pool_sha": "591de7446d8c8fb3",
       "Q_cov": 0.0,
       "Q_metrics": {
@@ -985,6 +1042,10 @@
         796
       ],
       "W50_pool_size": 86,
+      "W50_pool_cov": 0.0,
+      "W50_colbert_drop": false,
+      "W50_lane_retries": 0,
+      "W50_reranker_fallback": false,
       "W50_pool_sha": "591de7446d8c8fb3",
       "W50_cov": 0.0,
       "W50_metrics": {
@@ -1032,6 +1093,10 @@
         50
       ],
       "C_pool_size": 100,
+      "C_pool_cov": 1.0,
+      "C_colbert_drop": false,
+      "C_lane_retries": 0,
+      "C_reranker_fallback": false,
       "C_pool_sha": "028866766dc9a358",
       "C_cov": 1.0,
       "C_metrics": {
@@ -1047,6 +1112,8 @@
         "map": 1.0,
         "mrr_at_20": 1.0
       },
+      "C2_colbert_drop": false,
+      "C2_reranker_fallback": false,
       "C2_pages": [
         52,
         169,
@@ -1105,6 +1172,10 @@
         674
       ],
       "N_pool_size": 100,
+      "N_pool_cov": 1.0,
+      "N_colbert_drop": false,
+      "N_lane_retries": 0,
+      "N_reranker_fallback": false,
       "N_pool_sha": "028866766dc9a358",
       "N_cov": 1.0,
       "N_metrics": {
@@ -1143,6 +1214,10 @@
         467
       ],
       "Q_pool_size": 100,
+      "Q_pool_cov": 1.0,
+      "Q_colbert_drop": false,
+      "Q_lane_retries": 0,
+      "Q_reranker_fallback": false,
       "Q_pool_sha": "028866766dc9a358",
       "Q_cov": 1.0,
       "Q_metrics": {
@@ -1211,6 +1286,10 @@
         233
       ],
       "W50_pool_size": 100,
+      "W50_pool_cov": 1.0,
+      "W50_colbert_drop": false,
+      "W50_lane_retries": 0,
+      "W50_reranker_fallback": false,
       "W50_pool_sha": "028866766dc9a358",
       "W50_cov": 1.0,
       "W50_metrics": {
@@ -1257,6 +1336,10 @@
         237
       ],
       "C_pool_size": 84,
+      "C_pool_cov": 1.0,
+      "C_colbert_drop": false,
+      "C_lane_retries": 0,
+      "C_reranker_fallback": false,
       "C_pool_sha": "9b839515a5bd1258",
       "C_cov": 1.0,
       "C_metrics": {
@@ -1272,6 +1355,8 @@
         "map": 0.5,
         "mrr_at_20": 0.5
       },
+      "C2_colbert_drop": false,
+      "C2_reranker_fallback": false,
       "C2_pages": [
         78,
         79,
@@ -1329,6 +1414,10 @@
         62
       ],
       "N_pool_size": 84,
+      "N_pool_cov": 1.0,
+      "N_colbert_drop": false,
+      "N_lane_retries": 0,
+      "N_reranker_fallback": false,
       "N_pool_sha": "9b839515a5bd1258",
       "N_cov": 1.0,
       "N_metrics": {
@@ -1366,6 +1455,10 @@
         237
       ],
       "Q_pool_size": 84,
+      "Q_pool_cov": 1.0,
+      "Q_colbert_drop": false,
+      "Q_lane_retries": 0,
+      "Q_reranker_fallback": false,
       "Q_pool_sha": "9b839515a5bd1258",
       "Q_cov": 1.0,
       "Q_metrics": {
@@ -1433,6 +1526,10 @@
         288
       ],
       "W50_pool_size": 84,
+      "W50_pool_cov": 1.0,
+      "W50_colbert_drop": false,
+      "W50_lane_retries": 0,
+      "W50_reranker_fallback": false,
       "W50_pool_sha": "9b839515a5bd1258",
       "W50_cov": 1.0,
       "W50_metrics": {
@@ -1480,6 +1577,10 @@
         273
       ],
       "C_pool_size": 92,
+      "C_pool_cov": 1.0,
+      "C_colbert_drop": false,
+      "C_lane_retries": 0,
+      "C_reranker_fallback": false,
       "C_pool_sha": "99c5f7d7e65a26d1",
       "C_cov": 1.0,
       "C_metrics": {
@@ -1495,6 +1596,8 @@
         "map": 0.3333,
         "mrr_at_20": 0.3333
       },
+      "C2_colbert_drop": false,
+      "C2_reranker_fallback": false,
       "C2_pages": [
         720,
         821,
@@ -1553,6 +1656,10 @@
         753
       ],
       "N_pool_size": 92,
+      "N_pool_cov": 1.0,
+      "N_colbert_drop": false,
+      "N_lane_retries": 0,
+      "N_reranker_fallback": false,
       "N_pool_sha": "99c5f7d7e65a26d1",
       "N_cov": 1.0,
       "N_metrics": {
@@ -1591,6 +1698,10 @@
         733
       ],
       "Q_pool_size": 92,
+      "Q_pool_cov": 1.0,
+      "Q_colbert_drop": false,
+      "Q_lane_retries": 0,
+      "Q_reranker_fallback": false,
       "Q_pool_sha": "99c5f7d7e65a26d1",
       "Q_cov": 1.0,
       "Q_metrics": {
@@ -1659,6 +1770,10 @@
         724
       ],
       "W50_pool_size": 92,
+      "W50_pool_cov": 1.0,
+      "W50_colbert_drop": false,
+      "W50_lane_retries": 0,
+      "W50_reranker_fallback": false,
       "W50_pool_sha": "99c5f7d7e65a26d1",
       "W50_cov": 1.0,
       "W50_metrics": {
@@ -1706,6 +1821,10 @@
         399
       ],
       "C_pool_size": 82,
+      "C_pool_cov": 1.0,
+      "C_colbert_drop": false,
+      "C_lane_retries": 0,
+      "C_reranker_fallback": false,
       "C_pool_sha": "716f305c33495ed9",
       "C_cov": 1.0,
       "C_metrics": {
@@ -1721,6 +1840,8 @@
         "map": 0.0909,
         "mrr_at_20": 0.0909
       },
+      "C2_colbert_drop": false,
+      "C2_reranker_fallback": false,
       "C2_pages": [
         261,
         353,
@@ -1779,6 +1900,10 @@
         97
       ],
       "N_pool_size": 82,
+      "N_pool_cov": 1.0,
+      "N_colbert_drop": false,
+      "N_lane_retries": 0,
+      "N_reranker_fallback": false,
       "N_pool_sha": "716f305c33495ed9",
       "N_cov": 1.0,
       "N_metrics": {
@@ -1817,6 +1942,10 @@
         589
       ],
       "Q_pool_size": 82,
+      "Q_pool_cov": 1.0,
+      "Q_colbert_drop": false,
+      "Q_lane_retries": 0,
+      "Q_reranker_fallback": false,
       "Q_pool_sha": "716f305c33495ed9",
       "Q_cov": 1.0,
       "Q_metrics": {
@@ -1885,6 +2014,10 @@
         718
       ],
       "W50_pool_size": 82,
+      "W50_pool_cov": 1.0,
+      "W50_colbert_drop": false,
+      "W50_lane_retries": 0,
+      "W50_reranker_fallback": false,
       "W50_pool_sha": "716f305c33495ed9",
       "W50_cov": 1.0,
       "W50_metrics": {
@@ -1934,6 +2067,10 @@
         124
       ],
       "C_pool_size": 100,
+      "C_pool_cov": 0.0,
+      "C_colbert_drop": false,
+      "C_lane_retries": 0,
+      "C_reranker_fallback": false,
       "C_pool_sha": "a156b0c03525eaf1",
       "C_cov": 0.0,
       "C_metrics": {
@@ -1949,6 +2086,8 @@
         "map": 0.0,
         "mrr_at_20": 0.0
       },
+      "C2_colbert_drop": false,
+      "C2_reranker_fallback": false,
       "C2_pages": [
         285,
         678,
@@ -2007,6 +2146,10 @@
         253
       ],
       "N_pool_size": 100,
+      "N_pool_cov": 0.0,
+      "N_colbert_drop": false,
+      "N_lane_retries": 0,
+      "N_reranker_fallback": false,
       "N_pool_sha": "a156b0c03525eaf1",
       "N_cov": 0.0,
       "N_metrics": {
@@ -2045,6 +2188,10 @@
         678
       ],
       "Q_pool_size": 100,
+      "Q_pool_cov": 0.0,
+      "Q_colbert_drop": false,
+      "Q_lane_retries": 0,
+      "Q_reranker_fallback": false,
       "Q_pool_sha": "a156b0c03525eaf1",
       "Q_cov": 0.0,
       "Q_metrics": {
@@ -2113,6 +2260,10 @@
         337
       ],
       "W50_pool_size": 100,
+      "W50_pool_cov": 0.0,
+      "W50_colbert_drop": false,
+      "W50_lane_retries": 0,
+      "W50_reranker_fallback": false,
       "W50_pool_sha": "a156b0c03525eaf1",
       "W50_cov": 0.0,
       "W50_metrics": {
@@ -2160,6 +2311,10 @@
         236
       ],
       "C_pool_size": 77,
+      "C_pool_cov": 0.0,
+      "C_colbert_drop": false,
+      "C_lane_retries": 0,
+      "C_reranker_fallback": false,
       "C_pool_sha": "4855b1cc0eb033c5",
       "C_cov": 0.0,
       "C_metrics": {
@@ -2175,6 +2330,8 @@
         "map": 0.0,
         "mrr_at_20": 0.0
       },
+      "C2_colbert_drop": false,
+      "C2_reranker_fallback": false,
       "C2_pages": [
         148,
         140,
@@ -2233,6 +2390,10 @@
         909
       ],
       "N_pool_size": 77,
+      "N_pool_cov": 0.0,
+      "N_colbert_drop": false,
+      "N_lane_retries": 0,
+      "N_reranker_fallback": false,
       "N_pool_sha": "4855b1cc0eb033c5",
       "N_cov": 0.0,
       "N_metrics": {
@@ -2271,6 +2432,10 @@
         236
       ],
       "Q_pool_size": 77,
+      "Q_pool_cov": 0.0,
+      "Q_colbert_drop": false,
+      "Q_lane_retries": 0,
+      "Q_reranker_fallback": false,
       "Q_pool_sha": "4855b1cc0eb033c5",
       "Q_cov": 0.0,
       "Q_metrics": {
@@ -2339,6 +2504,10 @@
         473
       ],
       "W50_pool_size": 77,
+      "W50_pool_cov": 0.0,
+      "W50_colbert_drop": false,
+      "W50_lane_retries": 0,
+      "W50_reranker_fallback": false,
       "W50_pool_sha": "4855b1cc0eb033c5",
       "W50_cov": 0.0,
       "W50_metrics": {

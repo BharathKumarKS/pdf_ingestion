@@ -38,6 +38,9 @@ CHECKS = {
     "CHECK_G6B":        "G6b:",
     "CHECK_G7":         "G7:",
     "CHECK_G8":         "G8:",
+    "CHECK_G9":         "G9:",
+    "CHECK_G9B":        "G9b:",
+    "CHECK_G10":        "G10:",
     "CHECK_I95":        "§I95",
     "CHECK_DELTA":      "deltas.",
 }
@@ -102,6 +105,23 @@ def m_g8(a):
     a["meta"]["fetch_k"]["N"] = 50
 
 
+def m_pool_cov(a):
+    """The POOL coverage is a separate quantity from the endpoint coverage — it must be its own field."""
+    first_query(a)["N_pool_cov"] = 0.9999
+
+
+def m_g9(a):
+    first_query(a)["N_colbert_drop"] = True
+
+
+def m_g9b(a):
+    first_query(a)["C2_colbert_drop"] = True
+
+
+def m_g10(a):
+    first_query(a)["C_reranker_fallback"] = True
+
+
 def m_g5(a):
     for r in a["per_query"]:
         if "Q_pages" in r:
@@ -147,6 +167,10 @@ MUTATIONS = [
     ("G6b pool CONTENT",    m_g6b,          "CHECK_G6B"),
     ("G7 reachable set",    m_g7,           "CHECK_G7"),
     ("G8 fetch_k",          m_g8,           "CHECK_G8"),
+    ("G9 lane dropout",     m_g9,           "CHECK_G9"),
+    ("G9b repeat dropout",  m_g9b,          "CHECK_G9B"),
+    ("G10 reranker fallbk", m_g10,          "CHECK_G10"),
+    ("pool_cov field",      m_pool_cov,     "CHECK_AGG"),
     ("§I95 pool mrr",       m_i95,          "CHECK_I95"),
     ("delta mean",          m_delta,        "CHECK_DELTA"),
     ("page ORDER only",     m_page_order,   "CHECK_METRIC"),

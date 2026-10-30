@@ -7952,3 +7952,44 @@ pre-registration, because it moves a number in the evaluation report that every 
 **invisible in the full run's aggregate** — the full run would have reported "the hypothetical does not
 affect MRR" from a metric that never measured the endpoint. ⚠️ **The smoke's value was not "does the code
 run" but "is the instrument the one I think it is".**
+
+#### I96. ⚠️ THE COLBERT LANE CAN DROP OUT **SILENTLY** AND CHANGE THE POOL — the store catches the failure, logs it, and fuses from a REDUCED LANE SET, and **there is no counter anywhere**
+
+**Found by T4's first full run failing G6/G6b on exactly one query, then reading the run log** (T4
+pre-registration §14).
+
+**What happens.** `store._qdrant_search` (line ~598) wraps the ColBERT query in a `try`, and on ANY exception
+it logs an **ERROR** and simply **omits the ColBERT `Prefetch`** — the RRF fusion then runs over
+**dense + SPLADE only**. Its own log line says so: *"the colbert lane is inactive and results use
+dense+SPLADE only"*.
+
+**⚠️ Why it matters: the pool is a different pool.** The lane set is an input to the fusion, so a dropout
+changes which chunks are shortlisted, hence which PAGES come back, hence every pool-dependent number —
+T0's `fusion` row, the funnel's coverage, and the reachable-page denominators the project reports against.
+**Nothing in the artifact records that it happened.**
+
+**The evidence.** T4's full run: `gold-029` under arm N returned **86 pages** where arms C, Q, W50 **and
+T0** all say **92** — with this in the log at that moment:
+```
+ERROR | src.pdf_ingestion.store:_qdrant_search:606 - ColBERT query FAILED (timed out);
+        the colbert lane is inactive and results use dense+SPLADE only
+```
+A probe re-ran `gold-029` under arm N four times: **92, 92, 92, 92 — stable**, so the 86 was a transient
+dropout, not a structural difference. **Rate: 1 call in 665 (~0.15 %)** on this run.
+
+**⚠️ Contrast with the reranker, which the project already handled.** `reranker.fallbacks` exists precisely
+because §I55 found that the CE *swallows its failures and returns the pool unranked while the artifact still
+records `enabled=true`*. **The ColBERT lane has no equivalent counter**, so the same class of silent
+degradation is invisible to every run-integrity block written so far — including T0's.
+
+**Recommended fix (small, no re-ingest — it is query-time only):** add a counter beside
+`_warned_colbert_local` (e.g. `self.colbert_dropouts`) incremented in that `except`, expose it the way
+`reranker.fallbacks` is, and have run-integrity blocks **assert lane health per query** rather than
+assuming the configured lane set was the executed one. **Until then, any pool-dependent number in any
+artifact may have been taken from a reduced lane set, and the only way to know is to grep the run log for
+that ERROR line.**
+
+**What T4 did in the meantime:** counted the failure at the embedder (a watcher that only counts and
+re-raises, changing no behaviour), **retried the call** because a lane-reduced call is not the treatment,
+and recorded both — plus guards **G9/G9b/G10**. ⚠️ **A guard added at an independent reviewer's request two
+hours earlier (G6b, pool CONTENT) is what caught it.**

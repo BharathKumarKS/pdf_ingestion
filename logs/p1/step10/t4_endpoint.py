@@ -68,14 +68,19 @@ ARMS = {
     "W50": dict(reranker_enabled=True,  reranker_top_k=50, rerank_query="product"),
 }
 # §4 G1 — arm C vs T0's `ce` row; G2 — arm N vs T0's `fusion` row.
-# ⚠️ §12 — T0's `ce` row scores the ce LIST alone, so every field of it is an ENDPOINT metric (its
-# `recall_at_100` equals its `recall_at_20` by construction, and its `mrr` is the ce list's). T0's
-# `fusion` row scores the full pool for `hits`, so its `mrr` and `recall_at_100` are POOL metrics while
-# the rest are endpoint metrics. Hence the two key sets differ.
-ENDPOINT_KEYS = ("coverage_reachable", "recall_at_20", "precision_at_20", "f1_at_20",
-                 "ndcg_at_20", "map", "hit_at_20", "mrr_at_20")
-G1_KEYS = ENDPOINT_KEYS
-G2_KEYS = ENDPOINT_KEYS + ("mrr", "recall_at_100")   # the two POOL fields, valid only for arm N
+# ⚠️ §12/§14 — the two T0 rows are NOT built the same way, so the anchor pairs are explicit
+# (arm_field, T0_field) rather than a shared key list:
+#   * T0's `ce` row scores the ce LIST alone, so every field is an ENDPOINT metric — its `recall_at_100`
+#     equals its `recall_at_20` by construction and its `mrr` IS the endpoint MRR (our `mrr_at_20`).
+#   * T0's `fusion` row scores the full POOL for `hits`, so its `mrr` and `recall_at_100` are POOL
+#     metrics AND ⚠️ its `coverage_reachable` is the POOL's coverage — which is why G2 pairs that field
+#     against our `pool_cov`, not our endpoint coverage. (§14: comparing the endpoint coverage against
+#     T0's pool coverage is what made the first full run's G2 fail by 0.2251.)
+ENDPOINT_KEYS = ("recall_at_20", "precision_at_20", "f1_at_20", "ndcg_at_20", "map", "hit_at_20")
+G1_PAIRS = ((("coverage_reachable"), ("coverage_reachable")),) + \
+           tuple((k, k) for k in ENDPOINT_KEYS) + (("mrr_at_20", "mrr"),)
+G2_PAIRS = (("pool_cov", "coverage_reachable"),) + \
+           tuple((k, k) for k in ENDPOINT_KEYS) + (("mrr", "mrr"), ("recall_at_100", "recall_at_100"))
 # The metric fields the harness computes, keyed by the arm's own k.
 def _mkeys(k: int) -> tuple[str, ...]:
     return (f"recall_at_{k}", f"precision_at_{k}", f"precision_ceiling_at_{k}", f"f1_at_{k}",
@@ -83,6 +88,7 @@ def _mkeys(k: int) -> tuple[str, ...]:
 
 socket.setdefaulttimeout(90)
 RETRIES = 3
+LANE_RETRIES = 3        # bounded retries when a lane silently drops (see _install_colbert_watch)
 
 # The ONE instrumentation: substitute the raw query at the reranker call (arm Q only).
 _RERANK_OVERRIDE: dict[str, str | None] = {"text": None}
@@ -103,6 +109,33 @@ def _install_rerank_wrapper(reranker):
 
     reranker.rerank = _wrapped          # instance attribute shadows the class method
     return orig
+
+
+# ⚠️ LANE-HEALTH WATCHERS. The full run's G6 failed on ONE query (gold-029, arm N: 86 pages vs 92 in
+# every other arm and in T0) — and the run log held the cause:
+#   ERROR | store:_qdrant_search:606 - ColBERT query FAILED (timed out); the colbert lane is inactive and
+#                                         results use dense+SPLADE only
+# The store CATCHES that exception, logs it, and fuses from a REDUCED LANE SET — so the pool is built
+# differently, and unlike the reranker (`reranker.fallbacks`) there is NO COUNTER for it. Nothing outside
+# the log can see it. Both watchers below only COUNT; they change no behaviour and re-raise untouched.
+_COLBERT_DROP: dict[str, int] = {"n": 0}
+
+
+def _install_colbert_watch() -> None:
+    """Count ColBERT query failures (which silently drop the lane from the RRF fusion)."""
+    from src.pdf_ingestion import colbert_embedder as ce
+
+    for cls in (ce.StubColBERTEmbedder, ce.ClusterColBERTEmbedder, ce.FastembedColBERTEmbedder):
+        orig = cls.embed_query
+
+        def wrap(self, text, _o=orig):
+            try:
+                return _o(self, text)
+            except Exception:
+                _COLBERT_DROP["n"] += 1     # the store will swallow this; we count it first
+                raise
+
+        cls.embed_query = wrap
 
 
 def _load_queries() -> list[dict]:
@@ -213,6 +246,7 @@ def main() -> int:
     embedder = get_cluster_embedder(cfg)
     reranker = get_reranker(cfg)
     _install_rerank_wrapper(reranker)
+    _install_colbert_watch()
 
     queries = _load_queries()
     if args.limit:
@@ -255,16 +289,41 @@ def main() -> int:
             rec: dict = {"id": qid, "query_type": qtype, "n_relevant": len(rel), "n_reachable": len(rq),
                          "relevant_pages": sorted(rel)}
             try:
+                def _call(cfg_arm, store_arm):
+                    """One retrieval, with a bounded retry when a LANE silently dropped.
+
+                    ⚠️ A call whose ColBERT lane failed is NOT the treatment: the pool is fused from a
+                    reduced lane set, so the arm is no longer comparable to the others. Retry it and
+                    record both the retry count and whether a dropout survived to the accepted call.
+                    """
+                    retries, dropped, fb = 0, False, False
+                    while True:
+                        cb_before = _COLBERT_DROP["n"]
+                        fb_before = getattr(reranker, "fallbacks", 0)
+                        r = _retry(run_retrieval, text, store_arm, embedder, reranker, cfg_arm,
+                                   "global", 0.0, query_type=qtype)
+                        dropped = _COLBERT_DROP["n"] > cb_before
+                        fb = getattr(reranker, "fallbacks", 0) > fb_before
+                        if not dropped or retries >= LANE_RETRIES:
+                            return r, dropped, fb, retries
+                        retries += 1
+                        logger.warning("[{}] arm {}: ColBERT lane dropped — retry {}/{}",
+                                       qid, arm, retries, LANE_RETRIES)
+
                 for arm, spec in ARMS.items():
                     cfg_arm, store_arm = ARM_CFGS[arm], ARM_STORES[arm]
                     # ⚠️ set the override BEFORE the call: arm Q reranks against the raw query
                     _RERANK_OVERRIDE["text"] = text if spec["rerank_query"] == "raw" else None
-                    ret = _retry(run_retrieval, text, store_arm, embedder, reranker, cfg_arm,
-                                 "global", 0.0, query_type=qtype)
+                    ret, dropped, fb, lane_retries = _call(cfg_arm, store_arm)
                     pages = _pages_of(ret["reranked"])          # the ENDPOINT list (top-k), page-deduped
                     pool_pages = _pages_of(ret["hits"])          # the POOL (unchanged by the CE)
                     rec[f"{arm}_pages"] = pages
                     rec[f"{arm}_pool_size"] = len(pool_pages)
+                    rec[f"{arm}_pool_cov"] = _cov(pool_pages, rq)   # ⚠️ the POOL's coverage — T0's
+                    # `fusion` row reports the pool's coverage, not the endpoint's (see §14)
+                    rec[f"{arm}_colbert_drop"] = dropped
+                    rec[f"{arm}_lane_retries"] = lane_retries
+                    rec[f"{arm}_reranker_fallback"] = fb
                     # ⚠️ G6b — a hash of the pool's PAGE LIST, so the guard can compare pool CONTENT and
                     # not merely its length (independent review, item 3). Compact: 16 hex chars per arm.
                     rec[f"{arm}_pool_sha"] = hashlib.sha256(
@@ -275,10 +334,11 @@ def main() -> int:
                     m[f"mrr_at_{cfg_arm.reranker_top_k}"] = _endpoint_mrr(pages, rel)
                     rec[f"{arm}_metrics"] = m
                     if arm == "C":
-                        # determinism (G4) — arm C run a SECOND time
+                        # determinism (G4) — arm C run a SECOND time, with the same lane-health retry
                         _RERANK_OVERRIDE["text"] = None
-                        ret2 = _retry(run_retrieval, text, store_arm, embedder, reranker, cfg_arm,
-                                      "global", 0.0, query_type=qtype)
+                        ret2, drop2, fb2, _lr2 = _call(cfg_arm, store_arm)
+                        rec["C2_colbert_drop"] = drop2
+                        rec["C2_reranker_fallback"] = fb2
                         rec["C2_pages"] = _pages_of(ret2["reranked"])
                         m2 = compute_retrieval_metrics(ret2, sorted(rel), cfg_arm)
                         m2[f"mrr_at_{cfg_arm.reranker_top_k}"] = _endpoint_mrr(rec["C2_pages"], rel)
@@ -304,6 +364,8 @@ def main() -> int:
         k = ARM_CFGS[arm].reranker_top_k
         covs = [r[f"{arm}_cov"] for r in rows if r.get(f"{arm}_cov") is not None]
         out["coverage_reachable"] = statistics.mean(covs) if covs else None
+        pcovs = [r[f"{arm}_pool_cov"] for r in rows if r.get(f"{arm}_pool_cov") is not None]
+        out["pool_cov"] = statistics.mean(pcovs) if pcovs else None
         out["pool_mean"] = statistics.mean([r[f"{arm}_pool_size"] for r in rows]) if rows else None
         for key in _mkeys(k) + (f"recall_at_{ARM_CFGS[arm].reranker_fetch_k}",):
             vals = [r[f"{arm}_metrics"][key] for r in rows
@@ -341,10 +403,12 @@ def main() -> int:
     def near(a, b, tol=ANCHOR_TOL):
         return a is not None and b is not None and abs(a - b) <= tol
 
-    g1_detail = {k: {"got": aggregate["C"]["overall"].get(k), "want": t0_ce.get(k)}
-                 for k in G1_KEYS}
-    g2_detail = {k: {"got": aggregate["N"]["overall"].get(k), "want": t0_fus.get(k)}
-                 for k in G2_KEYS}
+    # ⚠️ explicit (arm_field -> T0_field) pairs, so a convention difference cannot be hidden by a shared
+    # key name — that is exactly how the first full run's G2 failed (§14).
+    g1_detail = {f"{ak}->{tk}": {"got": aggregate["C"]["overall"].get(ak), "want": t0_ce.get(tk)}
+                 for ak, tk in G1_PAIRS}
+    g2_detail = {f"{ak}->{tk}": {"got": aggregate["N"]["overall"].get(ak), "want": t0_fus.get(tk)}
+                 for ak, tk in G2_PAIRS}
     g1_ok = all(near(v["got"], v["want"]) for v in g1_detail.values())
     g2_ok = all(near(v["got"], v["want"]) for v in g2_detail.values())
 
@@ -359,6 +423,13 @@ def main() -> int:
     pool_sha_mismatch = {a: [r["id"] for r in ok if r[f"{a}_pool_sha"] != r["C_pool_sha"]] for a in ("N", "Q")}
     reach_identical = (reach == t0_pages)
     fetch_ks = {a: ARM_CFGS[a].reranker_fetch_k for a in ARMS}
+    # ⚠️ §14 — lane health. A call whose ColBERT lane dropped was fused from a REDUCED lane set, so it is
+    # not the treatment; the harness retried it (bounded). These record what survived and what was retried.
+    drops = [f"{r['id']}/{a}" for r in ok for a in ARMS if r.get(f"{a}_colbert_drop")]
+    falls = [f"{r['id']}/{a}" for r in ok for a in ("C", "Q", "W50") if r.get(f"{a}_reranker_fallback")]
+    retried = [f"{r['id']}/{a}" for r in ok for a in ARMS if r.get(f"{a}_lane_retries")]
+    # ⚠️ the C repeat is part of the instrument too — if it dropped a lane, G4's determinism claim is void
+    drops2 = [r["id"] for r in ok if r.get("C2_colbert_drop")]
 
     guards = {
         "G1_C_reproduces_T0_ce_row": g1_ok,
@@ -372,6 +443,9 @@ def main() -> int:
         "G6b_pool_CONTENT_identical_across_C_N_Q": all(not pool_sha_mismatch[a] for a in ("N", "Q")),
         "G7_reachable_set_matches_T0": reach_identical,
         "G8_fetch_k_is_100_in_every_arm": all(v == 100 for v in fetch_ks.values()),
+        "G9_no_colbert_lane_dropout_in_accepted_calls": not drops,
+        "G9b_arm_C_repeat_had_no_lane_dropout": not drops2,
+        "G10_no_reranker_fallback_in_the_CE_arms": not falls,
     }
 
     artifact = {
@@ -393,6 +467,16 @@ def main() -> int:
             "note_ndcg_scale": "nDCG's IDCG uses min(n, reranker_top_k), so nDCG_at_50 is NOT comparable to nDCG_at_20; coverage and R@k-with-ceiling are the cut's honest comparisons",
             "fetch_k": fetch_ks,
             "override_hits": _OVERRIDE_HITS["n"],
+            # ⚠️ §14 — the store SWALLOWS a ColBERT query failure and fuses from a REDUCED lane set, with
+            # no counter anywhere (unlike the reranker's `fallbacks`). The harness counts it at the
+            # embedder and retries the call, because such a call is not the treatment.
+            "lane_health": {
+                "colbert_dropouts_total": _COLBERT_DROP["n"],
+                "lane_retries_used": len(retried),
+                "lane_retries_allowed_per_call": LANE_RETRIES,
+                "note": "a ColBERT dropout changes the RRF fusion's lane set, so it changes the POOL; "
+                        "the first full run lost G6 to exactly one such dropout (gold-029)",
+            },
             # ⚠️ Which of these fields describe the ENDPOINT and which describe the POOL (independent
             # review, item 6). Without this a reader takes `mrr` for the endpoint's — see §I95.
             "field_conventions": {
@@ -411,7 +495,11 @@ def main() -> int:
                          "C_vs_C2_metric_mismatch_ids": c2_metric_mismatch,
                          "Q_vs_C_page_mismatch_ids": q_vs_c,
                          "pool_size_mismatch_ids": pool_size_mismatch,
-                         "pool_sha_mismatch_ids": pool_sha_mismatch},
+                         "pool_sha_mismatch_ids": pool_sha_mismatch,
+                         "colbert_drop_ids": drops,
+                         "colbert_drop_ids_C_repeat": drops2,
+                         "reranker_fallback_ids": falls,
+                         "lane_retried_ids": retried},
         "errors": errors,
         "per_query": per_query,
     }

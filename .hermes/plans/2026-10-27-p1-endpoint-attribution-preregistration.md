@@ -241,3 +241,51 @@ but it must be stated rather than hidden.**
 artifact carries the strengthened guards (G4b, G5b, G6b, G8) and the labelled field conventions. **Cost:
 one five-minute run. Benefit: four guards that can now fail where three previously could not, and one
 document/code disagreement removed.**
+
+## 14. ⚠️ THE FIRST FULL RUN **FAILED FOUR GUARDS** — its deltas are NOT reportable. Three causes, one of them a SILENT LANE FAILURE the artifact could not see
+
+**Artifact `9fa21d6cf641199f…`, 133/133 scored, 0 errors, and `GUARD FAILURE: G1, G2, G6, G6b`.** ⚠️ **A
+run that fails its anchors does not get to report an effect**, so none of its numbers are quoted anywhere.
+The three causes are separable and all three are fixed:
+
+**(a) G1 failed on ONE field, and it was a HARNESS BUG.** Arm C reproduced T0's `ce` row **exactly on all
+seven comparable fields (Δ 0.0000)** — coverage, R@20, P@20, F1, nDCG, MAP, Hit. It failed only on
+`mrr_at_20`, because **T0's `ce` row names its endpoint MRR `mrr`** and the harness's key list compared the
+names instead of mapping them. §12 had fixed exactly this mapping **in the verifier and not in the
+harness** — the same fix applied to one of two call sites, which is the defect pattern this project keeps
+re-learning. ⇒ **G1_PAIRS/G2_PAIRS now carry explicit `(arm_field, T0_field)` pairs**, so a convention
+difference cannot hide behind a matching key name.
+
+**(b) G2 failed on coverage by 0.2251 — a CONVENTION error in the anchor.** T0's `fusion` row reports the
+**POOL's** coverage (0.6845); the harness compared it against the arm's **ENDPOINT** coverage (0.4594).
+Both numbers are correct; they are different quantities. ⇒ **a new `{arm}_pool_cov` field** is measured from
+the pool pages, and **G2 pairs `pool_cov` against T0's `coverage_reachable`** while G1 keeps the endpoint
+coverage. Verified per query on the smoke: arm N's `pool_cov` equals T0's `cov_fusion` **8/8 exactly**.
+⚠️ **G2's residual differences (nDCG −0.0028, MAP −0.0038, pool-MRR −0.0038) all traced to cause (c).**
+
+**(c) ⚠️ G6/G6b failed on ONE query — `gold-029`, arm N: 86 pages against 92 in arms C, Q, W50 AND T0 —
+and the cause is a SILENT LANE FAILURE.** The run log held it:
+
+```
+ERROR | store:_qdrant_search:606 - ColBERT query FAILED (timed out);
+                                     the colbert lane is inactive and results use dense+SPLADE only
+```
+
+**The store CATCHES that exception, logs it, and fuses from a REDUCED LANE SET** — so the pool is built
+differently and is no longer the treatment. ⚠️ **Unlike the reranker (`reranker.fallbacks`) there is NO
+COUNTER for it: nothing outside the log text can see it, and the harness could not.** A probe re-ran
+`gold-029` under arm N's config four times: **92, 92, 92, 92 — stable**, confirming the 86 was a transient
+dropout and not structural. ⇒ **three fixes:** the harness now **counts ColBERT query failures at the
+embedder**, **retries the call** (bounded, 3) because such a call is not the treatment, and **records both**
+(`{arm}_colbert_drop`, `{arm}_lane_retries`). **New guards: G9** (no dropout in any accepted call),
+**G9b** (the arm C repeat had none — otherwise G4's determinism claim is void) and **G10** (the reranker did
+not fall back in a CE arm, which would leave that arm's top-k unranked, §I55).
+
+⚠️ **What this says about the whole run-integrity story:** the anchor that mattered most — arm C against
+T0's `ce` row — **was exact**, and the guard that failed most informatively was **G6, a guard added two
+hours earlier at an independent reviewer's request.** Without G6b the confounded query would have entered
+the deltas silently, and **its bias runs AGAINST the finding**: a lane-reduced arm N is a *handicapped* arm
+N, and it still out-ordered arm C.
+
+⇒ **The full run was relaunched on the fixed harness.** The artifact this document's results come from is
+the one that passes all thirteen guards.
