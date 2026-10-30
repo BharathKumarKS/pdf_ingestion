@@ -2,7 +2,9 @@
 
 > **FINAL — 2026-10-27.** Metrics with **both ceilings** (`P-ceil` and `R-ceil`), the per-type split, what
 > is not measured, and the decisions. Every figure re-verified against its artifact before this version.
-> Engineering record: `IMPROVEMENTS.md` §I89–§I94a · `DECISIONS.md` §8.
+> Engineering record: `IMPROVEMENTS.md` §I89–§I97 · `DECISIONS.md` §8.
+> **§4 is the attribution of the last step (T4) — the one section whose result is a measurement, not a
+> description: it says where the loss is and what to do about it.**
 
 **Scope.** One embedder (**nomic-embed-text-v1.5**), one index (`knowledge_base_v3`, 3,796 chunks / 888
 pages), one corpus (one undergraduate physics textbook), **133 labelled queries**, HyDE on and frozen,
@@ -167,7 +169,85 @@ which is the obvious candidate cause.
 
 ---
 
-## 4. v1 — the endpoint on the base lanes (and what the two extra lanes do)
+## 4. The last step, attributed — T4
+
+**The pipeline, in stages.** A student's question is answered in steps, and quality falls at each one:
+
+```
+question
+  → search returns ~86 candidate pages                      coverage 0.6845
+  → a cross-encoder re-orders them and keeps the best 20     coverage 0.4553   ← the big drop
+  → those 20 go to the LLM
+```
+
+Two terms, because the finding turns on them:
+
+* the **cross-encoder (CE)** — a second, slower model that re-reads each candidate against the query and
+  re-scores it. It is the last step before the LLM sees anything.
+* **HyDE** — before searching, an LLM writes a *fake answer passage*, and the system searches and re-ranks
+  using **that instead of the student's question**.
+
+**What was unknown.** The last step loses the most (coverage 0.6845 → 0.4553; nDCG 0.55 → 0.49) and nothing
+had separated its causes. Three were candidates, with **different fixes**:
+
+1. the CE **re-orders badly** — *fix: replace or bypass it*
+2. the **20-slot cut** discards the pages — *fix: widen it*
+3. ⚠️ the CE is fed the **HyDE fake passage instead of the question** — *fix: one line*
+
+**The experiment (T4).** Four versions of the same retrieval, identical except for that last step:
+
+| arm | what it does |
+|---|---|
+| **C** | the product as shipped (CE + fake passage) |
+| **N** | **no cross-encoder** — take the pool's own order |
+| **Q** | the CE, given the **student's raw question** instead of the fake passage |
+| **W50** | the CE, keeping 50 results instead of 20 |
+
+**Checks before believing it.** Arm C had to reproduce T0's `ce` row and arm N T0's `fusion` row —
+**field by field, per query**. **14/14 checks passed**, and an independent verifier re-derived **5,852
+metric values** from the raw page lists and labels rather than trusting the recorded ones.
+
+**The results** (n = 133, paired; bold = the 95 % confidence interval excludes zero):
+
+| change | nDCG | MAP | MRR | recall |
+|---|---|---|---|---|
+| **remove the cross-encoder** | **+0.0560** | **+0.0631** | **+0.1011** | +0.0050 |
+| **give it the raw question instead of the fake passage** | **+0.0430** | **+0.0561** | **+0.0699** | +0.0099 |
+| keep 50 instead of 20 | — | — | — | coverage **+0.1451** |
+
+⚠️ **The recall column is flat, and that is the point.** The cross-encoder is not failing to find the right
+pages — it **pushes the right page further down the list**. And giving it the student's real question
+recovers about three-quarters of that **without removing anything**.
+
+**The fix is per query type**, because the three types behave differently:
+
+| type | n | remove the CE | raw question instead |
+|---|---|---|---|
+| **factual** | 53 | **+0.1361** resolved | **+0.1397** resolved |
+| multihop | 40 | −0.0311 unresolved | **exactly 0** |
+| overview | 40 | +0.0371 unresolved | −0.0420 unresolved |
+
+* **Factual** — the fake passage is essentially the whole problem, so **feeding the CE the real question
+  fixes it** (+0.14 nDCG, +0.26 MRR).
+* **Multihop** — HyDE is not used here, so "raw question instead" is a no-op: it came out **exactly 0.0000
+  on all 40 queries**. A free proof that the experiment did what it claimed.
+* **Overview** — the fake passage is **better** here. **Do not apply the factual fix to overview.**
+
+**The decision.** ⚠️ **Adopt a per-type rerank-query policy: the raw question for factual, the HyDE passage
+for overview.** It is the largest measured improvement in the programme — **+0.14 nDCG and +0.26 MRR on
+factual queries** — with **no embedder, index, or re-ingest change**. ⚠️ **Nothing in the product has been
+changed**: a confirmed attribution licenses its own pre-registered before/after, which is the next task, and
+a one-line edit to a live pipeline off the back of an attribution run is what the project's own D6.1 rule
+forbids.
+
+⚠️ **Caveats that bound the claim.** One textbook, one day, one funnel. Per-type samples are 40–53, so
+**only the factual effects are resolved** — multihop and overview are reported as *directions*, not effects.
+The re-ranker here is one specific model; a different one is a different question. Full record:
+`IMPROVEMENTS.md` §I97.
+
+---
+
+## 5. v1 — the endpoint on the base lanes (and what the two extra lanes do)
 
 Same index, same queries, same instrument. **Only difference: DA and the graph lane are off.**
 
@@ -205,25 +285,12 @@ finding that the DA lane is a **harm** on top-20 recall.
 
 ---
 
-## 5. Where the gap is — focus areas, in order
+## 6. Where the gap is — focus areas, in order
 
-**1. ✅ ATTRIBUTED (T4, §I97) — the pool → top-20 step: it is the cross-encoder, and on factual queries
-it is the HyDE hypothetical being used as the cross-encoder's query.**
-The step's loss (nDCG 0.5885 → 0.4524, MAP 0.4689 → 0.3206, MRR 0.7690 → 0.5178 on 53 factual queries,
-recall flat) has been separated into its three candidate causes, all measured, all resolved:
-
-| cause | evidence | fix |
-|---|---|---|
-| **the CE reorders worse than the pool's own order** | removing it: nDCG **+0.0560**, MAP **+0.0631**, MRR **+0.1011** (n=133, all resolved); **recall and hit unchanged** | — |
-| ⚠️ **the CE is fed the HyDE hypothetical, not the question** | the raw query instead: nDCG **+0.0430**, MAP **+0.0561**, MRR **+0.0699** (resolved) | **one line, `evaluate_rag.py:206`** |
-| the 20-slot cut | widening to 50: coverage **+0.1451** (resolved) | a deliberate context budget — **no action** (§I67) |
-
-⚠️ **And the fix is PER TYPE.** On **factual** queries the hypothetical is essentially the whole cause
-(N−C nDCG +0.1361 and Q−C +0.1397, both resolved — Q ≈ N), so **feeding the CE the raw query recovers it
-without removing the CE**. On **overview** the hypothetical is the *better* query (Q−C negative,
-unresolved at n=40), so **do not apply the factual fix there**. On **multihop** HyDE is not used at all —
-Q ≡ C **exactly, 40/40**, a free internal consistency check the run passed.
-**Next action: a pre-registered before/after for the per-type rerank-query policy. No `src/` change yet.**
+**1. ✅ ATTRIBUTED — the last step (see §4).** The pool → top-20 loss is the **cross-encoder**, and on
+factual queries it is the **HyDE fake passage being used as the cross-encoder's query**. **Next action: a
+pre-registered before/after for the per-type rerank-query policy** (the raw question for factual, the fake
+passage for overview). **No `src/` change yet.**
 
 **2. Overview queries — a missing lane, not a ranking problem.**
 R@20 0.1882 against 0.5574 (factual) and 0.5500 (multihop); coverage 0.1937. Its nDCG and MRR are
@@ -247,7 +314,7 @@ action.**
 
 ---
 
-## 6. Glossary — the metrics this report turns on
+## 7. Glossary — the metrics this report turns on
 
 **Provenance, stated up front because two of these are not course metrics.** Checked against the course's
 own documents (`Week_Summary/*.pdf`, `Slides/*.pdf` — all 21 searched):
@@ -287,7 +354,7 @@ pool-recall figure is the fusion row's.
 
 ---
 
-## 7. What this report does NOT measure
+## 8. What this report does NOT measure
 
 Stated so the boundaries are not read as coverage we do not have.
 
@@ -309,7 +376,7 @@ Stated so the boundaries are not read as coverage we do not have.
 
 ---
 
-## 8. Decisions
+## 9. Decisions
 
 **Settled by these measurements.**
 
