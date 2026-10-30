@@ -1,0 +1,33 @@
+mutation proof on logs/p1/step10/t4_smoke.json (8 queries)
+
+  OK metric value           aimed CHECK_METRIC     -> fired ['CHECK_AGG', 'CHECK_DELTA', 'CHECK_G1', 'CHECK_G2', 'CHECK_METRIC']
+  OK coverage value         aimed CHECK_COVERAGE   -> fired ['CHECK_AGG', 'CHECK_COVERAGE', 'CHECK_G1', 'CHECK_G2', 'CHECK_METRIC']
+  OK n_reachable            aimed CHECK_NREACHABLE -> fired ['CHECK_G1', 'CHECK_G2', 'CHECK_G7', 'CHECK_NREACHABLE']
+  OK aggregate mean         aimed CHECK_AGG        -> fired ['CHECK_AGG', 'CHECK_G1', 'CHECK_G2']
+  OK G1 anchor (arm C)      aimed CHECK_G1         -> fired ['CHECK_AGG', 'CHECK_G1', 'CHECK_G2']
+  OK G2 anchor (arm N)      aimed CHECK_G2         -> fired ['CHECK_G1', 'CHECK_G2']
+  OK G3 error count         aimed CHECK_G3         -> fired ['CHECK_G1', 'CHECK_G2', 'CHECK_G3']
+  OK G4 repeat              aimed CHECK_G4         -> fired ['CHECK_G1', 'CHECK_G2', 'CHECK_G4']
+  OK G5 Q == C (no-op)      aimed CHECK_G5         -> fired ['CHECK_G1', 'CHECK_G2', 'CHECK_G5', 'CHECK_METRIC']
+  OK G6 pool identity       aimed CHECK_G6         -> fired ['CHECK_G1', 'CHECK_G2', 'CHECK_G6']
+  OK G7 reachable set       aimed CHECK_G7         -> fired ['CHECK_G1', 'CHECK_G2', 'CHECK_G7', 'CHECK_NREACHABLE']
+  OK §I95 pool mrr          aimed CHECK_I95        -> fired ['CHECK_G1', 'CHECK_G2', 'CHECK_I95']
+  OK delta mean             aimed CHECK_DELTA      -> fired ['CHECK_DELTA', 'CHECK_G1', 'CHECK_G2']
+  OK page ORDER only        aimed CHECK_METRIC     -> fired ['CHECK_G1', 'CHECK_G2', 'CHECK_G4', 'CHECK_METRIC']
+
+per-check coverage:
+  CHECK_METRIC        4 mutation(s)  ['metric value', 'coverage value', 'G5 Q == C (no-op)']
+  CHECK_COVERAGE      1 mutation(s)  ['coverage value']
+  CHECK_NREACHABLE    2 mutation(s)  ['n_reachable', 'G7 reachable set']
+  CHECK_AGG           4 mutation(s)  ['metric value', 'coverage value', 'aggregate mean']
+  CHECK_G1           14 mutation(s)  ['metric value', 'coverage value', 'n_reachable']
+  CHECK_G2           14 mutation(s)  ['metric value', 'coverage value', 'n_reachable']
+  CHECK_G3            1 mutation(s)  ['G3 error count']
+  CHECK_G4            2 mutation(s)  ['G4 repeat', 'page ORDER only']
+  CHECK_G5            1 mutation(s)  ['G5 Q == C (no-op)']
+  CHECK_G6            1 mutation(s)  ['G6 pool identity']
+  CHECK_G7            2 mutation(s)  ['n_reachable', 'G7 reachable set']
+  CHECK_I95           1 mutation(s)  ['§I95 pool mrr']
+  CHECK_DELTA         2 mutation(s)  ['metric value', 'delta mean']
+
+MUTATION PROOF: every mutation fires and every check is reachable
