@@ -14,7 +14,60 @@
 > `.hermes/plans/2026-10-26-p1-nomic-full-lanes-and-fusion-plan.md` — **the ordered tasks for next
 > session**.)
 >
-> ## ▶ SESSION 24 — ▶ START HERE. **THE POOL → TOP-20 STEP IS THE GAP, AND T0 ALREADY SUGGESTS THE CROSS-ENCODER IS A NET HARM THERE.** The pre-registration is committed alone (`logs/p1/step10/…` → see below) and **NOT yet run**.
+> ## ▶ SESSION 25 — ▶ START HERE. **T4 RAN AND ANSWERED IT: THE CROSS-ENCODER IS A NET HARM AT THE ENDPOINT, AND ON FACTUAL QUERIES THE CAUSE IS THE HyDE HYPOTHETICAL BEING USED AS ITS QUERY.** ⚠️ **NOTHING IN `src/` HAS BEEN CHANGED — the fix is attributed, not shipped.**
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 25, then `IMPROVEMENTS.md` §I97 (T4's
+> result) and §I96 (the silent ColBERT lane dropout), then the FINAL report
+> `logs/p1/step10/nomic_gap_report.md`. **The next task is the per-type rerank-query policy's
+> before/after**: pre-register it, commit the pre-registration ALONE (D6.1), then run it."*
+>
+> **1. ✅ T4's RESULT (§I97).** Artifact `logs/p1/step10/t4_endpoint.json` sha256 `3db7c697a5bb0fec…`,
+> 133/133, **14/14 guards PASS**, verifier **5,852 metric fields re-derived independently**, mutation proof
+> 20 checks. **All three registered predictions confirmed:**
+> * **P1 — removing the cross-encoder:** nDCG **+0.0560 [+0.0195, +0.0925]**, MAP **+0.0631**, MRR@20
+>   **+0.1011** (n=133, all RESOLVED) — and **R@20 and Hit@20 UNCHANGED**. It does not lose pages; it
+>   **demotes the right page**.
+> * **P2 — the raw query instead of the HyDE hypothetical:** nDCG **+0.0430**, MAP **+0.0561**, MRR
+>   **+0.0699** (all RESOLVED) ⇒ **one line at `evaluate_rag.py:206` recovers 77 % of the harm without
+>   removing the CE.**
+> * **P3 — the 20-slot cut:** coverage **+0.1451 [+0.1125, +0.1777]** RESOLVED. A deliberate context
+>   budget — **no action** (§I67).
+> * ⚠️ **PER TYPE, and the fix is per type:** **factual** (n=53) N−C nDCG **+0.1361** and Q−C **+0.1397**,
+>   both RESOLVED — Q ≈ N, so **the hypothetical is essentially the whole cause**. **multihop** Q ≡ C
+>   **EXACTLY, 40/40** (HyDE is not used there — a free internal consistency check). **overview** Q−C is
+>   **negative and unresolved**, so the hypothetical is *better* there — **do NOT apply the factual fix to
+>   overview.**
+>
+> **2. ▶ THE NEXT TASK, and it is the largest measured lever in the programme: the per-type rerank-query
+> policy's before/after** — raw query for factual, keep the hypothetical for overview, either for multihop.
+> Worth **+0.14 nDCG and +0.26 MRR on factual (n=53)** at **zero recall cost**, with **no embedder, index
+> or re-ingest change**. ⚠️ **Pre-register it and commit the pre-registration ALONE first (D6.1)** — a
+> one-line change to the live pipeline off the back of an attribution run is what D6.1 exists to prevent.
+>
+> **3. ⚠️ §I96 — A SILENT LANE FAILURE, FOUND BY A GUARD ADDED AT AN INDEPENDENT REVIEWER'S REQUEST.**
+> `store._qdrant_search` **catches** a ColBERT query failure, logs an ERROR, and fuses from **dense+SPLADE
+> only** — so the POOL is built from a reduced lane set. **There is no counter for it** (unlike
+> `reranker.fallbacks`), so nothing outside the log text can see it. It cost T4's first full run G6/G6b on
+> one query. **Recommended fix, no re-ingest needed:** a counter beside `_warned_colbert_local`, exposed
+> like `reranker.fallbacks`, so run-integrity blocks can assert **lane health per query**.
+> ⚠️ **Until then, any pool-dependent number in any artifact — T0 included — may have been taken from a
+> reduced lane set.**
+>
+> **4. ▶ THEN, IN ORDER.** **(a)** §A the per-space query-vector fix → unblocks the cross-index comparison ·
+> **(b)** B1/B2 RAPTOR into v3 + wire the overview lane (overview R@20 **0.1882**, ceiling **0.3992**) ·
+> **(c)** T2 the lane ablation per type · **(d)** §E2 lane weighting. ⚠️ **NO ACTION:** precision/F1
+> (ceiling-bound); the fusion width (§I67); the graph lane as wired (adds pool pages, **lowers MRR**).
+>
+> **5. ⚠️ THREE THINGS A FUTURE SESSION MUST NOT GET WRONG.** **(a) `coverage` is OURS** — the course uses
+> the word for the abstention rate; always write *coverage of a query's reachable labelled pages*.
+> **(b) `P-ceil` and `R-ceil` are the COURSE'S** (W7 §3.3, deck slide 25). **(c) Recall has a ceiling too**
+> (`min(k,n)/n`) — quoting it bare overstates the overview gap ~3×.
+>
+> **6. ⚠️ WORKING TREE.** Sessions 13–22 remain **uncommitted**; the branch is **ahead of origin, nothing
+> pushed** — **owner decision, outstanding.** Carried: signoff 3, signoff 4, the **A2 `.env` flip**, the
+> arm-2 harness, §I56's DA lane, §G2's V5 build, §G5/§I2.
+>
+> ## ▶ SESSION 24 — ✅ T4 BUILT, INDEPENDENTLY REVIEWED, AND RUN; ⚠️ THE FIRST FULL RUN FAILED FOUR GUARDS (silent ColBERT lane dropout) AND WAS FIXED AND RE-RUN. **THE POOL → TOP-20 STEP IS THE GAP, AND T0 ALREADY SUGGESTS THE CROSS-ENCODER IS A NET HARM THERE.**
 >
 > **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 24, then
 > `.hermes/plans/2026-10-27-p1-endpoint-attribution-preregistration.md` and `IMPROVEMENTS.md` §I89–§I94a,

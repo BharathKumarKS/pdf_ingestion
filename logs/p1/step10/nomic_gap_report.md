@@ -207,12 +207,23 @@ finding that the DA lane is a **harm** on top-20 recall.
 
 ## 5. Where the gap is — focus areas, in order
 
-**1. The pool → top-20 step, for factual queries. This is the biggest single loss and it is
-unattributed.**
-nDCG 0.5885 → 0.4524, MAP 0.4689 → 0.3206, MRR 0.7690 → 0.5178, while recall is flat. Two candidate
-causes, with **different fixes**: the **cross-encoder ranks the right page too low**, or the **20-slot
-cut discards it**. Nothing measured so far separates them. **Next action: one run that separates them.**
-This is the highest-value work in the programme.
+**1. ✅ ATTRIBUTED (T4, §I97) — the pool → top-20 step: it is the cross-encoder, and on factual queries
+it is the HyDE hypothetical being used as the cross-encoder's query.**
+The step's loss (nDCG 0.5885 → 0.4524, MAP 0.4689 → 0.3206, MRR 0.7690 → 0.5178 on 53 factual queries,
+recall flat) has been separated into its three candidate causes, all measured, all resolved:
+
+| cause | evidence | fix |
+|---|---|---|
+| **the CE reorders worse than the pool's own order** | removing it: nDCG **+0.0560**, MAP **+0.0631**, MRR **+0.1011** (n=133, all resolved); **recall and hit unchanged** | — |
+| ⚠️ **the CE is fed the HyDE hypothetical, not the question** | the raw query instead: nDCG **+0.0430**, MAP **+0.0561**, MRR **+0.0699** (resolved) | **one line, `evaluate_rag.py:206`** |
+| the 20-slot cut | widening to 50: coverage **+0.1451** (resolved) | a deliberate context budget — **no action** (§I67) |
+
+⚠️ **And the fix is PER TYPE.** On **factual** queries the hypothetical is essentially the whole cause
+(N−C nDCG +0.1361 and Q−C +0.1397, both resolved — Q ≈ N), so **feeding the CE the raw query recovers it
+without removing the CE**. On **overview** the hypothetical is the *better* query (Q−C negative,
+unresolved at n=40), so **do not apply the factual fix there**. On **multihop** HyDE is not used at all —
+Q ≡ C **exactly, 40/40**, a free internal consistency check the run passed.
+**Next action: a pre-registered before/after for the per-type rerank-query policy. No `src/` change yet.**
 
 **2. Overview queries — a missing lane, not a ranking problem.**
 R@20 0.1882 against 0.5574 (factual) and 0.5500 (multihop); coverage 0.1937. Its nDCG and MRR are
@@ -314,12 +325,18 @@ Stated so the boundaries are not read as coverage we do not have.
 4. **No bulk label rule.** **26 of the 29** contents-page labels are **correct** (5 of them are questions
    whose answer *is* the contents page); **3 are pointers**, and the measured effect of changing them is
    below the floor. **Deferred as hygiene.**
+5. ✅ **The endpoint's loss is the cross-encoder, and on factual queries the cause is its query text**
+   (T4, §I97, 14/14 guards, all three predictions confirmed). Removing the CE improves nDCG +0.056,
+   MAP +0.063 and MRR +0.101 at **no recall cost**; feeding it the **raw query** instead of the HyDE
+   hypothetical recovers 77 % of that on its own. ⚠️ **The fix is per type** — raw for factual, keep the
+   hypothetical for overview — and **nothing in `src/` has been changed**: this licenses a separately
+   pre-registered before/after, not an edit.
 
 **Ranked next work.**
 
 | # | action | what it moves | status |
 |---|---|---|---|
-| 1 | **Attribute the pool → top-20 step for factual queries** — separate "the cross-encoder ranks the right page too low" from "the 20-slot cut discards it" | nDCG 0.589→0.452, MAP 0.469→0.321, MRR 0.769→0.518 on 53 queries | **the biggest loss, unattributed** — pre-register, commit alone, run |
+| 1 | **Ship the per-type rerank-query policy** — the raw query for factual, keep the HyDE hypothetical for overview | **nDCG +0.14, MRR +0.26 on factual (n=53, resolved)**; overall +0.043 nDCG | **attributed by T4 (§I97); the largest measured lever so far.** Pre-register the before/after — **no `src/` change yet** |
 | 2 | **Per-space query-vector fix**, then RAPTOR into the index and wired into the eval | unblocks the cross-index comparison; targets overview (R@20 0.188, ceiling 0.399) | build |
 | 3 | **Lane ablation per type** | each lane's own contribution | pre-register |
 | 4 | **Lane weighting** in the fusion | the model-independent lanes' dilution | after 1–3 |

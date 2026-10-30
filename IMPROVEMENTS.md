@@ -7993,3 +7993,68 @@ that ERROR line.**
 re-raises, changing no behaviour), **retried the call** because a lane-reduced call is not the treatment,
 and recorded both — plus guards **G9/G9b/G10**. ⚠️ **A guard added at an independent reviewer's request two
 hours earlier (G6b, pool CONTENT) is what caught it.**
+
+#### I97. ✅ T4 RAN — **THE CROSS-ENCODER IS A NET HARM AT THE ENDPOINT, AND ON FACTUAL QUERIES THE CAUSE IS THE HyDE HYPOTHETICAL BEING USED AS ITS QUERY.** All 14 guards pass; all three registered predictions confirmed
+
+**Instrument:** `logs/p1/step10/t4_endpoint.json`, sha256 `3db7c697a5bb0fec…`, 133/133 scored, 0 errors,
+**14/14 guards PASS**, wall ~52 min. Independent verifier: **5,852 metric fields re-derived from the page
+lists and labels**, all pass (4 deferred as a unit difference, max gap 0.0011, §15). Mutation proof: 20
+checks, every one reddenable. Pre-registration
+`.hermes/plans/2026-10-27-p1-endpoint-attribution-preregistration.md` (committed ALONE before the run, D6.1).
+
+**THE ANSWER TO THE QUESTION.** Three candidate causes were separated: (a) the CE reorders badly, (b) the
+20-slot cut discards pages, (c) ⚠️ the CE is fed the HyDE hypothetical instead of the user's question. **All
+three are real, and (c) is the biggest actionable one.**
+
+**P1 — REMOVING the cross-encoder (arm N vs arm C), n=133 paired:**
+
+| metric | mean | 95 % CI | verdict |
+|---|---|---|---|
+| nDCG@20 | **+0.0560** | [+0.0195, +0.0925] | **RESOLVED** |
+| MAP | **+0.0631** | [+0.0269, +0.0993] | **RESOLVED** |
+| MRR@20 (endpoint) | **+0.1011** | [+0.0327, +0.1695] | **RESOLVED** |
+| R@20 | +0.0050 | [−0.0289, +0.0389] | spans 0 |
+| Hit@20 | +0.0150 | [−0.0144, +0.0445] | spans 0 |
+
+⚠️ **The CE costs ordering and costs nothing on recall** — recall and hit are unchanged. It is not failing
+to find the pages; it is **demoting the right page within the top-20**. On 52 of 133 queries the relevant
+pages found are identical and only their order differs.
+
+**P2 — the CE reranking against the RAW QUERY instead of the hypothetical (arm Q vs arm C), n=133:**
+
+| metric | mean | 95 % CI | verdict |
+|---|---|---|---|
+| nDCG@20 | **+0.0430** | [+0.0080, +0.0781] | **RESOLVED** |
+| MAP | **+0.0561** | [+0.0215, +0.0907] | **RESOLVED** |
+| MRR@20 | **+0.0699** | [+0.0097, +0.1301] | **RESOLVED** |
+| R@20 | +0.0099 | [−0.0199, +0.0398] | spans 0 |
+
+⇒ **Changing only the CE's QUERY TEXT — one line, `evaluate_rag.py:206` — recovers 77 % of the nDCG the
+cross-encoder is costing.** The CE does not have to be removed to fix most of this.
+
+**P3 — the 20-slot cut (arm W50 vs arm C): coverage +0.1451 [+0.1125, +0.1777] RESOLVED.** The cut is a
+real cost, and it is a **deliberate context budget**, not a bug — the same widening was already measured
+inert at the endpoint (§I67).
+
+**⚠️ PER TYPE — the harm is CONCENTRATED, and the fix is PER TYPE:**
+
+| type | n | N−C nDCG | Q−C nDCG | reading |
+|---|---|---|---|---|
+| **factual** | 53 | **+0.1361 [+0.0684, +0.2037] R** | **+0.1397 [+0.0676, +0.2119] R** | ⚠️ **the CE badly hurts factual, and the hypothetical is essentially the whole cause** — Q ≈ N, so feeding the CE the raw query recovers it **without removing the CE**. MRR: N−C +0.2496, Q−C +0.2631, both RESOLVED |
+| multihop | 40 | −0.0311, spans 0 | **+0.0000 [0,0]** | ⚠️ **Q ≡ C EXACTLY, by construction** — HyDE is not used for multihop, so `rerank_query` is *already* the raw query. **A free internal consistency check the run passed 40/40**, and it proves the instrumentation does exactly what it claims |
+| overview | 40 | +0.0371, spans 0 (MAP +0.0292 R) | −0.0420, spans 0 | ⚠️ **the hypothetical is the BETTER query for overview** (Q−C is negative). **Do NOT apply the factual fix here.** Unresolved at n=40 — stated as unresolved, not as an effect |
+
+**⇒ THE ACTION, and it is the largest measured lever in this project so far: a PER-TYPE rerank-query
+policy** — the **raw query for factual**, the **HyDE hypothetical for overview**, and either for multihop
+(no HyDE is used). Estimated on this corpus: **+0.14 nDCG and +0.26 MRR on factual queries**, at zero
+recall cost, with **no embedder, index, or re-ingest change**.
+
+⚠️ **NOTHING WAS CHANGED IN `src/`.** Per the pre-registration's reading rule, a confirmed P1/P2 is a
+**product-path defect that licenses its own before/after, pre-registered separately** — and a one-line
+change to the live pipeline off the back of an attribution run is exactly what D6.1 exists to prevent.
+
+**⚠️ Caveats, stated because they bound the claim.** One corpus, one document, one day, one funnel. The
+per-type n is 40–53, so **only the factual per-type effects are resolved** — the multihop and overview point
+estimates are reported as *unresolved directions*, not effects. The overall effects are n=133 and resolved.
+And the CE here is `BAAI/bge-reranker-v2-m3` as served by the cluster — a different re-ranker is a different
+question.

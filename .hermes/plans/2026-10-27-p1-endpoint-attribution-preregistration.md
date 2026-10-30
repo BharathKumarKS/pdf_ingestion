@@ -289,3 +289,33 @@ N, and it still out-ordered arm C.
 
 ⇒ **The full run was relaunched on the fixed harness.** The artifact this document's results come from is
 the one that passes all thirteen guards.
+
+## 15. ⚠️ THE ONE LEGITIMATE UNIT DIFFERENCE — the product's metric function scores CHUNKS, our re-derivation scores PAGES
+
+**Found by the verifier on the PASSING artifact: 4 of 5,852 re-derived fields disagreed** — `gold-068` and
+`gold-072`, arm **W50**, `ndcg_at_50` and `map`, by **≤ 0.0011**.
+
+**The mechanism, measured.** For `gold-068` the pool holds **83 chunks but only 80 distinct pages**, and the
+cross-encoder's top-50 contains **one chunk with no `page_number`**. The product's
+`compute_retrieval_metrics` builds its **gains list over the CHUNK list**, so that page-less chunk
+**contributes 0 but still consumes a slot**, shifting every later gain by one position. Our verifier
+re-derives from the **PAGE list** (`_pages_of`, which drops it) — which is **T0's convention**
+(`_metrics_from_pages` passes a page list).
+
+⇒ **Both are correct; they are different units.** It cannot bite at k=20 on this corpus (the page-less
+chunks are appended by the graph lane and never enter the top-20 — which is why all 133 queries of arms C,
+N and Q re-derived **exactly**), and it bites only in the k=50 arm, whose `nDCG@50`/`MAP` **enter no
+registered prediction** (P3 uses coverage).
+
+**Three things done about it, and none of them is to call a correct artifact wrong:**
+1. ⚠️ **The harness now records `{arm}_slots`** — the endpoint chunk list **with page-less entries preserved
+   as `None`** — so the verifier can reconstruct the gains list exactly. *This artifact predates the change,
+   so its 4 fields are deferred rather than exact; a future run verifies them exactly.*
+2. ⚠️ **The verifier DEFERS those fields explicitly** (with the mechanism named and the gap bounded at
+   5e-3), rather than reporting a false failure — the same false-positive failure mode as the independent
+   reviewer's item 8, and treated the same way: stated, not hidden.
+3. ⚠️ **Registered here rather than silently tolerated**, because it is the **third** time in this run that
+   the product's metric function turned out to mix units (§I95's pool `mrr`, §14's pool coverage, this).
+
+⚠️ **The honest summary of this artifact's verification: 5,848 of 5,852 fields re-derived exactly, 4
+deferred as a stated unit difference in a field no conclusion uses.**

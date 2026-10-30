@@ -318,6 +318,13 @@ def main() -> int:
                     pages = _pages_of(ret["reranked"])          # the ENDPOINT list (top-k), page-deduped
                     pool_pages = _pages_of(ret["hits"])          # the POOL (unchanged by the CE)
                     rec[f"{arm}_pages"] = pages
+                    # ⚠️ §15 — the ENDPOINT list with page-less chunks PRESERVED (as None). The product's
+                    # `compute_retrieval_metrics` builds its gains over the CHUNK list, so a chunk with no
+                    # `page_number` still consumes a slot and shifts every later position. Our page list
+                    # drops it, which is why W50's nDCG@50/MAP could not be re-derived exactly from pages.
+                    # Recording the slots makes every field re-derivable. (No effect at k=20 on this
+                    # corpus: the page-less chunks are appended by the graph lane and never enter the top-20.)
+                    rec[f"{arm}_slots"] = [h.get("page_number") for h in ret["reranked"]]
                     rec[f"{arm}_pool_size"] = len(pool_pages)
                     rec[f"{arm}_pool_cov"] = _cov(pool_pages, rq)   # ⚠️ the POOL's coverage — T0's
                     # `fusion` row reports the pool's coverage, not the endpoint's (see §14)
