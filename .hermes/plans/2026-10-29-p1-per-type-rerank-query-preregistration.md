@@ -75,7 +75,9 @@ the gold labels**, identical in every arm.
 |---|---|
 | **G1** | **the composition is wired correctly, exactly:** `P_gold`'s **factual** rows equal T4's **arm Q** factual rows, and its **overview + multihop** rows equal T4's **arm C** rows — field by field, tolerance **1e-4** (the metrics are `round(..., 4)`) |
 | **G2** | **internal consistency:** the **multihop** policy ≡ `C` **exactly, 40/40** — the same free check T4 passed, because HyDE is not used for multihop |
-| **G3** | **the treatment is the ORDERING only:** per query, `pool_size`, pool-page content and `R@20` / `Hit@20` are **identical** between the policy arm and `C`. ⚠️ **If any moves, the run is VOID** — a pool difference is a confound, not an effect |
+| **G3a** | **the POOL is identical** per query between the policy arm and `C` — `pool_size` **and** pool-page content (`pool_sha`). ⚠️ **If either moves, the run is VOID** — the change is downstream of the pool, so a pool difference is a confound, not an effect |
+| **G3b** | **the wiring is exact where the policy == C:** on **overview and multihop**, **every** metric is identical between the policy arm and `C` (true by construction — a selection bug breaks it) |
+| **G3c** | ⚠️ **`R@20` / `Hit@20` on FACTUAL are MEASURED, NOT held.** The CE **re-selects** its top-20 when its query text changes, so a different page can enter the top-20 and `R@20` **may legitimately move**. T4 measured Q−C `R@20` **+0.0099, CI spanning 0**, so a per-query movement is expected. **Asserting invariance of a quantity the treatment can change is the over-strict-check trap (§I90); it is recorded here rather than asserted.** |
 | **G4** | **`P_router` uses the ROUTER's output, not gold:** its per-query arm selection reproduces the router's own predicted class for that query (a mismatch on any query fails) |
 | **G5** | **the re-derivation models the SHIPPED code:** for every query, the CE query text the policy would send is the string the one-line change would produce (raw for factual, `hyp` for overview) — a static check against the source |
 | **G6** | **133 queries, 0 errors**, and every per-query row carries both `C_metrics` and `Q_metrics` |
@@ -93,8 +95,9 @@ the gold labels**, identical in every arm.
 4. **`P_router` ≤ `P_gold` on the factual and overall effect**, by the router's misclassification rate — the
    product-realistic number is the attenuated one. ⚠️ **The SIZE is unregistered** (the router's per-type
    accuracy is not yet measured); only the direction is.
-5. **Zero recall cost:** `R@20` and `Hit@20` are unchanged between the policy and C — the change is the CE's
-   input, not the pool.
+5. **Near-zero recall cost:** `R@20` and `Hit@20` move **only marginally** between the policy and C and their
+   aggregate CI **spans 0** — the change is the CE's input, not the pool. ⚠️ **A per-query movement is
+   expected and is not a violation** (G3c): the CE re-selects its top-20, so a different page can enter.
 6. **On overview, the policy changes nothing** (`P_gold` ≡ `C` there by construction) — a guard, not a
    prediction, but stated so a movement would be read as a wiring error.
 
@@ -157,3 +160,24 @@ minutes a fresh 4-arm run cost T4.
 * **It does not decide the SHIP.** A confirmed policy is a product-path finding that licenses §8, nothing
   more.
 * **It does not touch the pool, the lanes or the labels.**
+
+## 13. ⚠️ AMENDED before the run — G3 was an over-strict check, found while building the harness
+
+**Written 2026-10-29, before any number of this run exists.** §5's original **G3** asserted that `R@20` and
+`Hit@20` are **identical** between the policy arm and `C` per query, and that a movement is a VOID. **That
+check would fail on correct data.**
+
+**Why.** The cross-encoder **re-selects** its top-20 — it scores the whole pool and returns the best 20, so
+when its **query text changes** a different page can enter the top-20 and `R@20` **legitimately moves**. T4
+measured exactly this: **Q−C `R@20` +0.0099, CI spanning 0**. So per-query movement is the **expected**
+behaviour of the treatment, not a confound. (The invariant quantity is the **pool**, which is upstream of the
+CE.)
+
+**Corrected to:** **G3a** (pool `size` + `sha` identical — the real VOID condition), **G3b** (exact equality
+where the policy *is* `C` — overview and multihop), and **G3c** (a statement that `R@20`/`Hit@20` on factual
+are **measured, not held**). §6's prediction 5 is restated to match.
+
+⚠️ **Recorded rather than silently edited**, per §I90's lesson that an over-strict check is worse than no
+check because it gets switched off — and per T4's §11/§12, which amended two convention traps in the same
+place before that run. **The pre-registration's §1–§12 were committed ALONE as `cb2f99f`; this amendment is a
+separate, pre-run commit.**
