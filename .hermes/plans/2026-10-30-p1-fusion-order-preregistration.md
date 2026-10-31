@@ -137,3 +137,47 @@ inertness test. ⚠️ Serialize against other cluster work.
   That needs cross-lane score normalisation across incomparable scores (cosine / SPLADE / maxsim)
   and is a separate design, named here as the next candidate if O4 moves.
 * **It does not claim `waste_order` is fully recoverable** — the oracle in §I99 is an upper bound.
+
+---
+
+## 11. ⚠️ AMENDED BEFORE THE RUN — the G2 anchor is STALE, and a guard arm is added
+
+> ⚠️ **Written 2026-10-30, BEFORE any number of this run exists.** Both findings are from re-reading
+> the existing artifacts, not from a run. Placed here because it CORRECTS §2/§4.
+
+**11a. ⚠️ §4's G2 anchor cannot hold: T4's arm C is a DIFFERENT PRODUCT from today's.**
+§4 G2 said *"O0 reproduces T4's arm C per type"*. T4's arm C was measured **before the per-type
+rerank-query policy shipped**, so it is the *pre-policy* product — its `rerank_query: "product"` label
+resolved to the old behaviour (the HyDE hypothetical for every type). Measured, overall:
+
+| arm | coverage | R@20 | nDCG@20 | MAP | MRR@20 |
+|---|---|---|---|---|---|
+| T4 arm C (pre-policy) | 0.4553 | 0.4442 | 0.4946 | 0.2789 | 0.6668 |
+| **today's product** (`lane_inclusion.json` F0) | **0.4675** | **0.4563** | **0.5503** | **0.3406** | **0.7717** |
+
+Anchoring O0 on T4's C would fail on correct data — the over-strict-check class (§I90, §I98 §11g).
+**Corrected to:** G2 is asserted against **`lane_inclusion.json`'s arm F0** — the same index, the same
+day, the same code path — **per type, tolerance 1e-4**, and the comparison against `policy_confirm.json`
+(the independent shipped-product run) is **REPORTED**, not asserted.
+
+**11b. ⚠️ A GUARD ARM IS ADDED — `O0w`, proving the O4 code change is inert IN-RUN.**
+§4 G7 was written as a separate unit test. A unit test on a fake client is weaker than the live path,
+so an **extra guard arm** is added: **`O0w` = the reference with `lane_weights={}`** — an empty dict,
+which `_qdrant_search` expands to `[1.0] * n`, i.e. exactly the unweighted call.
+**G7 is restated:** `O0w` must be **bit-identical to `O0` on every query** — the pool sha256, the page
+list and every endpoint metric. This is a **guard arm, not a treatment**: it is excluded from the
+delta table, and a mismatch **VOIDs the run** (it would mean the O4 code change is not inert and every
+O4 number is uninterpretable). The unit test (`tests/test_qdrant_search_lane_weights.py`) is kept as
+well — it is the cheap half; `O0w` is the live half.
+
+**11c. A COUNTER IS ADDED — `DocumentStore.mmr_selections`.**
+§4 G3 asserts that O1 (`mmr_enabled=False`) has an **identical page SET** to O0 *on the queries MMR
+did not fire on*. `_mmr_select` returns `top_k` **selected** candidates, so MMR changes pool
+**membership**, not only order — and nothing could observe whether it fired. The counter follows
+`colbert_dropouts`'s pattern (§I96): a run total, read per query as a delta. Pinned by
+`tests/test_mmr_selection_counter.py` (4 tests). ⚠️ This is the same class of addition §I96 was, and
+it is named here rather than left in the diff.
+
+⚠️ **Neither the arms, the predictions (§5) nor the reading rule (§6) is changed.** §11a corrects an
+anchor; §11b adds a guard arm; §11c adds an instrument.
+
