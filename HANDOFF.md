@@ -6,8 +6,61 @@
 > was chosen and **why not** the others, with the backing number (for defence and later recall).
 > Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-31, session 30 (✅ **4B RAN (read-only) — THE ENDPOINT CUT AS nDCG@k: the cut is MONOTONE and CANNOT change the top-20 (the CE's top-20 is a PREFIX of its top-50, 133/133). It adds RECALL only; the apparent nDCG gain (+0.0233) is a CONSTRUCTION artifact — on the 45 comparable queries it is UNRESOLVED (−0.0078).** Verifier 33/33, mutation 31 mutations / 33 checks reddened / NO inert check. Read `IMPROVEMENTS.md` §I102. Next: 4A.)**
-> Session 29's note follows, still true: (✅ **5A RAN (read-only) — THE OVERVIEW-METRIC DIAGNOSIS: the "broken measuring stick" is REFUTED STRUCTURALLY. For overview, recall and precision have IDENTICAL capture (0.527) and EVERY type is RANKER-limited. ⇒ 5B (graded labels) is HYGIENE, not a fix.**)
+> **Last updated: 2026-11-01, session 31 (✅ **4A RAN — SCORE FUSION IS NOT A LEVER: unresolved everywhere overall, a small RESOLVED HARM on multihop (S1 −0.0112, S2 −0.0212 nDCG@20). Rank RRF is earning its place.** ✅ **§A LANDED — THE PER-SPACE QUERY-VECTOR FIX: a 1024-dim arm's DA/graph lanes go 0 → 5 hits; a 768-dim arm is a BIT-EXACT no-op.** Read `IMPROVEMENTS.md` §I103 and §I104.)**
+> Session 30's note follows, still true: (✅ **4B RAN (read-only) — THE ENDPOINT CUT AS nDCG@k: the cut is MONOTONE and CANNOT change the top-20; it adds RECALL only; the apparent nDCG gain (+0.0233) is a CONSTRUCTION artifact.** Verifier 33/33, mutation 31/33 checks, no inert check.)
+>
+> ## ▶ SESSION 31 — ▶ START HERE. **4A RAN (§I103) and §A LANDED (§I104).**
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 31, then `IMPROVEMENTS.md` §I103 (the
+> score-fusion run) and §I104 (the per-space query-vector fix). ⚠️ §I103 §6 registers a NEW instrument
+> finding: the store's vector-lane query is NONDETERMINISTIC in its low-ranked tail (it is inert at the
+> pool, but it is a §I68-class hazard for every run that re-queries lanes per arm). §A unblocks T3 —
+> the lane-complete v2-vs-v3 A/B (§I89). Continue the ordered plan: **T3** (the full-funnel v2-vs-v3
+> ship test §I85 left unmeasured), then the **pool → top-20 ranking attribution** (§I100/§I103 both
+> point there). Pre-register each and commit the pre-registration ALONE first (D6.1)."*
+>
+> **1. ✅ 4A RAN — read `IMPROVEMENTS.md` §I103.** Artifact `logs/p1/step10/score_fusion.json` (sha256
+> `83933c365f6728f0…`), 133 queries, 0 errors, wall 620.3 s, read-only. Pre-registration `32f6c5f` +
+> its **pre-run amendment §9** `047e292` (D6.1). Verifier **291 checks PASS**; mutation proof all-hit,
+> **no inert check**.
+> **THE RESULT:** S1 (min-max) ΔnDCG@20 **−0.0037 [−0.0125, +0.0040]**, S2 (z-score) **−0.0044
+> [−0.0138, +0.0040]** — both **UNRESOLVED**, every key ≤ 0.005. ⚠️ **But both RESOLVE NEGATIVE on
+> multihop** (S1 −0.0112, S2 −0.0212). Composition changes on **133/133**. ⇒ **§I100's last
+> "not measured" item is closed: the score magnitude carries nothing the rank sum does not order, and
+> on multihop it costs.** Rank RRF is earning its place.
+>
+> **2. ⚠️⚠️ §I103 §6 — A NEW INSTRUMENT FINDING, and it is NOT confined to 4A.** The store's
+> **vector-lane query is nondeterministic in its low-ranked tail**: 4 identical calls (same query, same
+> arm) return **2 distinct lane digests but 1 distinct pool SHA** (`score_fusion_determinism_probe.json`).
+> The lane **set** never moves and the fused result is **inert** — but the first run's G3 (a
+> digest-equality guard) failed on 5/133, and the guard was **restated** (lane-set identity asserted +
+> a G3b inertness control), not weakened. **Any run that re-queries lanes per arm carries this**; the
+> determinism guards used so far were at the **metric** level, not the lane level.
+>
+> **3. ✅ §A LANDED — read `IMPROVEMENTS.md` §I104.** The DA and graph lanes took the **arm's** dense
+> vector to a **768-dim** collection, so a **1024-dim arm 400'd and the lane was silently skipped**
+> (§I12/§D15, recorded but never fixed). The fix: **one query vector per space**, resolved **off the
+> COLLECTION**, with each lane's **TEXT input preserved** (DA = the HyDE hypothetical, graph = the raw
+> query) and the model swapped. Probe (`per_space_probe.json`): **A1** 0 → 5 hits on both lanes, 3/3;
+> **A2** widths switched, 3/3; **A3** a 768-dim arm is a **bit-exact no-op** (resolver returns the same
+> vector object; DA ids identical). Verifier **21 checks PASS**; mutation **21/21 reddened, no inert
+> check**. Tests `tests/test_per_space_query_vector.py` (9).
+>
+> **4. ⚠️ WORKING TREE / COMMITS.** Committed this session: **`e0f1616`** (the accumulated
+> uncommitted retrieval-path work, sessions ~18–28 — a session-28-only isolation was impossible, its
+> edits share hunks with the §I96 counters and the lane-inclusion work), **`b04e404`** (4A's
+> `_score_merge` + `fusion=` + test + the width-stub fix), **`047e292`** (the §9 amendment, alone),
+> **`6462145`** (§A's pre-registration, alone). ⚠️ **Sessions 13–27 remain uncommitted; the branch is
+> ahead of origin and nothing is pushed — owner decision, outstanding.**
+> ⚠️ **Suite: 4 failed / 736 passed / 6 skipped** after the 4A commits (the documented pre-existing
+> set, 0 new).
+>
+> **5. ▶ NEXT, IN ORDER.** **(a) T3** — the lane-complete v2-vs-v3 A/B, now **unblocked by §A** (the
+> only controlled test of whether the embedder or the ingestion moved reachability). **(b) The
+> pool → top-20 ranking attribution** — §I99, §I100 and §I103 all agree the loss is there. **(c) ⚠️
+> Register the lane-tail nondeterminism as its own entry** + add a lane-digest stability control to the
+> shared harness. ⚠️ **5B (graded labels) stays DEMOTED** (§I101).
+
 >
 > ## ▶ SESSION 30 — ▶ START HERE. **4B RAN (read-only): THE ENDPOINT CUT AS nDCG@k. The cut is MONOTONE and CANNOT move the top-20 — the CE's top-20 is a PREFIX of its top-50 (133/133). It adds recall only; the apparent nDCG gain is a construction artifact (unresolved on the comparable queries).**
 >

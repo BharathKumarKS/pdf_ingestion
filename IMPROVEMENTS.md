@@ -8467,5 +8467,95 @@ generator stage is being measured.
 
 **Read-only. Nothing written to any collection. No run, no re-ingest.**
 
+---
+
+#### I103. ✅ 4A — SCORE-BASED FUSION vs RANK-BASED RRF. ⚠️ **Score fusion is NOT a lever: it is a small RESOLVED HARM on multihop (S1 −0.0112, S2 −0.0212 nDCG@20) and UNRESOLVED everywhere else. Rank RRF is earning its place. It DOES change the pool's composition on 133/133 — the composition trap, measured.**
+
+**The question** (§I100 item 9's own "NOT measured" list). Every fusion test so far kept the **rank** mechanism and moved a knob around it (§I92 the cap and MMR, §I67 the width, §I100 the ORDER). Rank fusion **discards the score magnitude**; score fusion keeps it. **Does replacing `Σ 1/(rrf_k + rank)` with a normalised score sum change the pool's coverage, or the endpoint's nDCG@20?**
+
+**Read-only. No collection write, no re-ingest** — one new, **additive, inert-by-default** merge (`store._score_merge`), reached through a `fusion=` kwarg on `search` / `search_with_das` / `_qdrant_search`. Harness `logs/p1/step10/score_fusion.py` → `score_fusion.json` (sha256 `83933c365f6728f0…`, 133 queries, 0 errors, wall **620.3 s**, reachable pages **888**); independent stdlib verifier `score_fusion_verifier.py` (**279 checks PASS**, every cell re-derived from the raw per-query page lists); mutation proof `score_fusion_mutation.py` (**item 7**). Pre-registration `.hermes/plans/2026-10-31-p1-score-fusion-preregistration.md`, committed **ALONE** as `32f6c5f`; its **pre-run amendment §9** committed **ALONE** as `047e292` (D6.1).
+
+**1. THE ARMS.** The three lanes produce **incomparable** scores (dense cosine, SPLADE sparse dot, ColBERT MaxSim), so the normalisation **is** the experiment. Each lane is normalised **per query, over that lane's own candidate set**, then summed (unweighted):
+
+| arm | merge | formula |
+|---|---|---|
+| **S0** | **the product** — rank RRF, `rrf_k=1` | `Σ_lanes 1/(1 + rank)` |
+| **S1** | min-max score sum | `Σ_lanes (s − min)/(max − min)` |
+| **S2** | z-score score sum | `Σ_lanes (s − mean)/std` |
+
+**2. ⚠️ THE HEADLINE — score fusion is NOT a lever.** Paired vs S0, n=133, **10,000 bootstrap resamples, seed 20261031**; RESOLVED iff the paired 95 % CI excludes 0:
+
+| arm | nDCG@20 | MAP | MRR@20 | R@20 | R@100 | P@20 | Hit@20 | pool_cov |
+|---|---|---|---|---|---|---|---|---|
+| **S0** | 0.5503 | 0.3406 | 0.7717 | 0.4563 | 0.6706 | 0.2372 | 0.9323 | 0.6845 |
+| S1 | 0.5466 | 0.3371 | 0.7737 | 0.4437 | 0.6657 | 0.2376 | 0.9323 | 0.6797 |
+| S2 | 0.5459 | 0.3350 | 0.7716 | 0.4455 | 0.6700 | 0.2391 | 0.9323 | 0.6839 |
+
+| arm | ΔnDCG@20 | 95 % CI | ΔMAP | ΔMRR@20 | ΔR@20 | verdict |
+|---|---|---|---|---|---|---|
+| **S1** | **−0.0037** | [−0.0125, **+0.0040**] | −0.0035 | +0.0021 | −0.0126 | **UNRESOLVED** |
+| **S2** | **−0.0044** | [−0.0138, **+0.0040**] | −0.0056 | −0.0001 | −0.0108 | **UNRESOLVED** |
+
+**Every overall key is unresolved, and every point estimate is ≤ 0.005.** ⇒ **Prediction 2 CONFIRMED** (|ΔnDCG@20| < 0.01, unresolved). The register has found **no fusion-side lever**, and this closes §I100's last "not measured" item: the score magnitude carries nothing the rank sum does not already order.
+
+**3. ⚠️ BUT IT IS A RESOLVED HARM ON MULTIHOP — the one place it resolves.** Per type, nDCG@20:
+
+| arm | factual (n=53) | **multihop (n=40)** | overview (n=40) |
+|---|---|---|---|
+| **S1** | −0.0017 unresolved | **−0.0112 [−0.0260, −0.0004] RESOLVED NEGATIVE** | +0.0011 unresolved |
+| **S2** | +0.0016 unresolved | **−0.0212 [−0.0405, −0.0049] RESOLVED NEGATIVE** | +0.0044 unresolved |
+
+⇒ **On the one type where it resolves, score fusion LOSES.** §8's falsification clause reads *"If S1/S2 RESOLVES NEGATIVE, the rank fusion is earning its place and the question is closed."* **That is what happened.** ⚠️ Mechanism stated as **consistent-with, not proven**: the multihop pool is the one whose gold set is thin and whose appended graph lane already injects unordered candidates, so a merge that re-weights by **magnitude** (SPLADE's raw dot products are ~10², dense cosines ~10⁰) can demote a page the rank sum would have kept. The overall effect is unresolved because the other two types are exactly flat.
+
+**4. ✅ PREDICTION 3 CONFIRMED — the composition trap, MEASURED.** S1 and S2 change the surviving pool **SET** on **133 of 133** queries (`frac 1.0`). ⇒ as §3 of the pre-registration stated, this is a **composition change as well as an order change** (exactly §I100 item 5's O4 flaw). It is stated so the near-null is **not** later read as a pure order test: the score sum **re-orders AND re-selects**, and the re-selection is not an improvement.
+
+**5. ✅ THE ANCHOR HOLDS — S0 IS the shipped product.** G2: S0 reproduces `lane_inclusion.json`'s arm F0 (session 27, same index, same code path, post-policy) on **every key the anchor carries**, per type, within **1e-4**. The §9 amendment's cross-day check holds exactly: T0's fusion-row pool coverage **0.684486** == S0's **0.6844860103**. **Prediction 1 CONFIRMED.**
+
+**6. ⚠️⚠️ A NEW INSTRUMENT FINDING — the store's vector-lane query is NONDETERMINISTIC in its low-ranked tail.** The first run's G3 (registered as *"the three arms' input lane lists are identical, asserted on a lane digest"*) **FAILED on 5 of 133 queries** — yet every arm's per-lane `min`/`max`/`n` was identical. A dedicated read-only probe (`score_fusion_determinism_probe.py` → `score_fusion_determinism_probe.json`) settled it: on **all 5** flagged queries, **4 identical calls (same query, same arm) return 2 distinct lane digests but 1 distinct pool SHA**, and the endpoint pages are **reproducible**. ⇒ the lane **content** flips in its tail; the lane **set** never moves and the **fused result is inert**. A random 15-query sample showed **0/15** flips — so it is **query-specific**, not a per-call coin toss.
+**Guard restated, not weakened (the §I100 pattern):** **G3** now asserts the lane **SET** identity (candidate count per lane, **0 mismatches on 133/133**), and a new **G3b** asserts the digest flip is **pool-inert** — it re-queries each flagged query and requires the pool SHA **and** the endpoint pages to be reproducible (**6/6 flagged queries: pool_sha_stable and pages_stable both True**). The digest mismatches are **reported** (`n_digest_mismatch: 6`), not asserted.
+⚠️ **This is a §I68-class finding and it is NOT confined to 4A.** Any run that compares two retrieval paths whose lanes are re-queried per arm (T0, T4, §I98, §I100) carries the same tail nondeterminism; the determinism guards those runs used were at the **metric** level, not the **lane** level. **Recommended follow-up: register the lane-tail nondeterminism as its own entry and add a lane-digest stability control to the shared harness.**
+
+**7. ✅ THE VERIFIER AND MUTATION PROOF.** `score_fusion_verifier.py` — **stdlib only**, re-derives every aggregate, delta, CI (same seed) and guard from the artifact's raw per-query page lists, including re-implementing the endpoint metrics: **279 checks, 0 failed**. `score_fusion_mutation.py` — one mutation per check over every recorded cell: **307 mutations, 279/279 checks reddened, NO inert check, every mutation reddens its intended check** (log: `score_fusion_mutation_log.txt`).
+⚠️ **The first mutation run failed its own bar and the two causes are recorded, not buried.** (a) **Two mutations were MIS-TARGETED**: they perturbed S0's `recall_at_100` and `coverage_reachable`, which the corrected G2 does **not** compare (the anchor lacks the first; the second is not in G2's key set) — they reddened the V2 aggregate check instead. Retargeted to the keys V8 actually compares. (b) **A duplicate check name** in the verifier (`precision_ceiling_at_20` was emitted twice, once via `ENDPOINT_KEYS` and once explicitly) made the enumerated count **291** while the unique-name count was **279** — deduplicated. Both are the **over-strict / mis-scoped-check class**; neither changed a number.
+
+**8. ⚠️ DEVIATIONS, stated.**
+* **A harness bug, found by the first run and fixed.** G2 compared **every** endpoint key against the F0 anchor, but F0 carries no `recall_at_100`; `ref.get(k) or 0` read a missing key as **0** and reddened the guard on **correct** data (gap 0.6706). Fixed to compare only the keys the anchor carries; the absent keys are **reported** (`G2_anchor_missing_keys: ["recall_at_100"]`). The first-run artifact is preserved as `score_fusion_firstrun_G2G3_failed.json`.
+* **G3 restated** (item 6) — set identity asserted, digest flip reported + inertness asserted.
+* **The run was executed TWICE.** The first run (artifact preserved) is the one that exposed the two guard anomalies; the second, with the corrected harness, is the registered artifact. Its aggregates reproduce the first to **4 decimal places** (S0 nDCG 0.5503, S1 0.5466, S2 0.5459; ΔS1 −0.0037, ΔS2 −0.0044) — the tail nondeterminism does **not** move the answer.
+* **The "one lane pass per query" cost model was not used.** §3 of the pre-registration expected one lane pass + three merges; the harness instead runs the product entry point **once per arm** (three lane passes + three CE passes), so the run cost ~3× that estimate (620 s). The arms still differ only in the merge — G3/G3b **measure** that rather than assume it.
+
+**9. ⚠️ What this does NOT license.** One corpus, one document, one funnel, one CE model. It says **score fusion is not a retrieval lever here**, and that on multihop it is a small resolved harm — it does not say no score fusion could ever help (a learned per-lane calibration is a different object and is unmeasured). ⚠️ It does **not** re-open the fusion as the endpoint's binding constraint: §I100's ORDER result and this one agree that the **pool → top-20 ranking step** remains the loss.
+
+**Read-only. Nothing written to any collection. No run, no re-ingest.**
+
+---
+
+#### I104. ✅ §A — THE PER-SPACE QUERY-VECTOR FIX. The DA and graph lanes now embed their **own** query in the **collection's** space: a **1024-dim arm's** lanes go **0 → 5 hits**, and a **768-dim arm is a BIT-EXACT no-op** (A3). This unblocks the lane-complete v2-vs-v3 A/B (§I89's T3).
+
+**The defect** (§I12/§D15, recorded but never fixed). Both derived lanes took the **arm's** dense vector and sent it verbatim to a collection built in a **different space**: `store.search_da` → `derivative_artifacts` and `graph_builder._find_concepts_scored` → `concept_embeddings`, both re-created at **768d** by §I83. A **1024-dim arm** therefore sent a 1024-vector to a 768-slot, **Qdrant 400'd**, the caller's `except` swallowed it, and the lane was **silently skipped** — indistinguishable from a lane that legitimately returned nothing. **Production (768) was unaffected**; the **v2/1024 *arm*** was broken, which is why Stage F had to turn both lanes **off** and narrow its question (§I89).
+
+**The fix.** One query vector **per space**, resolved **off the COLLECTION**: if the arm's vector width already matches the collection's, it is used **unchanged** (bit-exact, A3); otherwise the lane's **TEXT** is re-embedded with the **derived** embedder (`cluster_embedder.get_derived_embedder` → `derived_dense_model`/`derived_dense_dim`, new config fields); if there is no text, or the derived embedder's width also differs, it **RAISES** naming the lane, both widths and the remedy. ⚠️ **The TEXT INPUT of each lane is preserved exactly** — the DA lane's is the **HyDE hypothetical** (`evaluate_rag` now threads `da_text`), the graph lane's the **raw query** — only the MODEL changes, so the lane's *meaning* is untouched and only its *space* moves.
+
+**Read-only at run time. No collection write, no re-ingest.** Pre-registration `.hermes/plans/2026-11-01-p1-per-space-query-vector-preregistration.md`, committed **ALONE** as `6462145` (D6.1). Probe `logs/p1/step10/per_space_probe.py` → `per_space_probe.json` (3 queries, live cluster); independent stdlib verifier `per_space_verifier.py` (**21 checks, 0 failed**); mutation proof `per_space_mutation.py` (**21 mutations, 21/21 checks reddened, NO inert check**).
+
+**1. ✅ A1 — the lane goes 0 → N.** A **1024-dim arm** (Qwen3) against the 768-dim collections: **before**, the raw call **400s on every query** (`da` and `graph` both, error recorded); **after**, both lanes return **5 hits on 3/3 queries**.
+
+**2. ✅ A2 — the space actually switched.** The resolved lane vector's width (**768**) differs from the arm's (**1024**) on **3/3** for both lanes.
+
+**3. ✅ A3 — the discriminating control holds.** For a **768-dim arm** (whose space already matches), the resolver returns the arm's **own vector object, unchanged** (`is` identity) on **3/3** for both lanes, **and** the DA lane's returned `chunk_id`s equal the raw call's **id for id** on **3/3**. ⇒ the fix is a **bit-exact no-op** where the space already matched — it changed the space, not the lane.
+
+**4. ✅ A4 is closed by the unit tests, not the probe.** `tests/test_per_space_query_vector.py` (9 tests) pins: the mismatch with **no text RAISES**; a derived embedder of the wrong width **RAISES**; the width is read **off the collection** (a 512-wide collection resolves to 512 with `dense_dim=1024`); an unreadable schema falls back to today's behaviour; and `search_da` **sends** the resolved vector and **raises** on a mismatch with no text. ⚠️ **A4 is the point of the fix's error path**: a mismatch is never a silent `[]`.
+
+**5. ⚠️ THREE DEVIATIONS, stated.**
+* **A4 needs the lane's TEXT, so the raise is a behaviour change on the mismatched path only.** The pre-registration's *"`None` preserves today's behaviour exactly"* holds when the widths **match** (the production case, and A3 measures it). Where they **differ**, today's behaviour was a **silent `[]`** and the fix now **RAISES** — that change **is** A4, not a regression.
+* **`graph_builder._find_concepts_scored` resolves OUTSIDE its query `try`.** Its `except` returns `[]` (the LLM fallback), which would have swallowed the §A raise — so the resolve was moved above it. A Qdrant **client** failure still falls back as before.
+* **The signature change has a blast radius, and the full suite found it.** `search_da` gained `query_text`; `search_with_das` now falls back to `query_text` when no hypothetical is supplied; the `_derived_embedder` singleton needed a **conftest reset** (the existing fixture reset the cluster embedder but not this one, so a derived embedder built under one test's config leaked into later tests — **order-dependent failures**); and **two tests hardcoded a 768 query vector against a collection created at `dense_dim` (1024)**, which the new resolve correctly refuses — they now use the config's dim. ⚠️ **None of these changed a number**: the fix is a no-op where the spaces match (A3).
+
+**6. ⚠️ A STALE COMMENT, recorded not silently fixed.** `config.embedding_model`/`embedding_dim` describe themselves as the derived collections' model, but **both derived writers call `get_cluster_embedder`** (`index_derivative_artifacts.py:111`, `graph_builder.py:360`) — so the derived space is the **dense lane at build time**, and §I83's 768 is that space. The new `derived_dense_model`/`derived_dense_dim` name it **explicitly**; the legacy block's comment is left for its own change (§I44's class).
+
+**7. ▶ WHAT THIS UNBLOCKS.** **T3 — the lane-complete v2-vs-v3 A/B** (§I89 left it unmeasured because a 1024-dim arm could not query the derived lanes at all). ⚠️ **It is a DEFECT FIX, not a retrieval improvement**: nothing here says the endpoint improves — it says the derived lanes are **reachable from either arm**, so the comparison is now like-for-like.
+
+**Read-only at run time. No collection write, no re-ingest.**
+
 
 
