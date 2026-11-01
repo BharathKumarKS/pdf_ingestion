@@ -202,6 +202,10 @@ def run_retrieval(
     # HyDE: generate a hypothetical passage and embed it — better matches Feynman's phrasing
     search_vec = q_vec
     rerank_query = query_text
+    # §A — the DA lane's TEXT. It follows `search_vec` exactly: the hypothetical when HyDE fires,
+    # the raw query otherwise. The DA lane re-embeds THIS text when the arm's dense space differs
+    # from the DA collection's; the lane's text input is never changed by the fix.
+    da_text = query_text
     if cfg.hyde_enabled and query_type in ("factual", "overview"):
         try:
             from src.core.llm import call_llm
@@ -224,6 +228,7 @@ def run_retrieval(
                 # Measured (T4): factual nDCG +0.1397 / MRR@20 +0.2631 at no recall cost; the
                 # per-type policy's aggregate is +0.0557 nDCG (pre-registered re-derivation).
                 rerank_query = hyp if query_type == "overview" else query_text
+                da_text = hyp
                 logger.debug("HyDE: generated hypothetical ({} chars)", len(hyp))
         except Exception as exc:
             logger.warning("HyDE failed ({}), using raw query vector", exc)
@@ -236,6 +241,10 @@ def run_retrieval(
             fetch_k=cfg.reranker_fetch_k,
             lane_weights=lane_weights,
             fusion=fusion,
+            # ⚠️ §A — the DA lane's TEXT is the HyDE hypothetical (it is fused with the dense lane);
+            # `search_vec` is that hypothetical's embedding. When the arm's dense space differs from
+            # the DA collection's, the lane re-embeds THIS text in the collection's space.
+            da_query_text=da_text,
         )
 
         # Graph lane for multihop queries — same logic as the Streamlit app

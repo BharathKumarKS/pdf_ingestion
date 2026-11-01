@@ -535,7 +535,8 @@ class GraphBuilder:
             return []
 
         if query_vector is not None:
-            scored_concepts = self._find_concepts_scored(query_vector, top_k=8)
+            scored_concepts = self._find_concepts_scored(query_vector, top_k=8,
+                                                         query_text=query_text)
         else:
             scored_concepts = [(n, 1.0) for n in self._extract_query_concepts(query_text)]
 
@@ -664,6 +665,7 @@ class GraphBuilder:
         self,
         query_vector: np.ndarray,
         top_k: int = 8,
+        query_text: str | None = None,
     ) -> list[tuple[str, float]]:
         """Top-k concepts by similarity to the query, WITH their scores.
 
@@ -673,13 +675,29 @@ class GraphBuilder:
         "Earth's orbit" / "Earth's orbital motion") that are separate Concept nodes,
         so almost every chunk ties at 1 and an ORDER BY cannot discriminate. Ranking
         on the similarity of the best-matched concept does.
+
+        ⚠️ §A — the query must be in the CONCEPT collection's space. `concept_embeddings` was built
+        at 768 (§I83) while an arm's dense model may be 1024; handing the arm's vector straight to
+        Qdrant 400s and the lane silently returned []. `query_text` (the RAW query) lets the lane be
+        re-embedded in the collection's space; a mismatch with no text RAISES (§A guard A4).
         """
         try:
             from src.core.database import get_qdrant
             qdrant = get_qdrant(self._cfg)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Concept Qdrant client unavailable ({}), falling back to LLM", exc)
+            return []
+        # ⚠️ §A — resolved OUTSIDE the query's `try`: a dimension mismatch must RAISE (guard A4),
+        # not be swallowed into an empty lane by the fallback below.
+        from src.pdf_ingestion.store import resolve_space_query_vector
+        qv = resolve_space_query_vector(self._cfg, qdrant, query_vector, query_text,
+                                        self._cfg.concept_collection, "graph")
+        if qv is None:          # unreachable: the caller always supplies the arm's vector
+            raise RuntimeError("§A: the 'graph' lane has no query vector to send")
+        try:
             response = qdrant.query_points(
                 collection_name=self._cfg.concept_collection,
-                query=query_vector.tolist(),
+                query=qv.tolist(),
                 limit=top_k,
                 with_payload=True,
             )

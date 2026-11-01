@@ -198,6 +198,73 @@ def _assert_lane_width(low, low_name: str, low_size: int, cfg) -> None:
         )
 
 
+def _collection_dense_width(qdrant, collection: str) -> int | None:
+    """The width of a collection's dense vector, read OFF THE COLLECTION, or None if unreadable.
+
+    ``None`` is the honest answer for an absent collection or an unreadable schema; callers fall
+    back to today's behaviour rather than guessing (the ``_lane_size`` convention).
+    """
+    try:
+        info = qdrant.get_collection(collection_name=collection)
+        vectors = info.config.params.vectors
+    except Exception:  # noqa: BLE001
+        return None
+    if vectors is None:
+        return None
+    size = getattr(vectors, "size", None)
+    if size:
+        return int(size)
+    if isinstance(vectors, dict):
+        for v in vectors.values():
+            if getattr(v, "size", None):
+                return int(v.size)
+    return None
+
+
+def resolve_space_query_vector(cfg, qdrant, arm_vector, text, collection: str,
+                               lane_name: str) -> np.ndarray | None:
+    """§A — the query vector for a DERIVED lane, in the COLLECTION's space.
+
+    The DA (`derivative_artifacts`) and graph (`concept_embeddings`) lanes are built by the DENSE
+    lane, so they live in the dense lane's space **at build time** — §I83 re-created both at 768.
+    Handing them the ARM's vector 400s on any arm whose dense model differs (v2/Qwen3-1024), the
+    caller's ``except`` swallows it, and the lane is **silently skipped** (§I12/§D15).
+
+    Rule, in order — the width is read OFF THE COLLECTION, never from config:
+      1. unreadable schema  -> keep the arm's vector (today's behaviour);
+      2. arm width == collection width -> keep the arm's vector — ⚠️ this is what makes the fix a
+         **bit-exact no-op** when the arm already lives in the lane's space (guard A3);
+      3. widths differ and the lane's TEXT is available -> embed it with the DERIVED embedder;
+      4. widths differ, no text, or the derived embedder's width also differs -> **RAISE**, naming
+         the lane, both widths and the remedy — never a silent ``[]`` (guard A4).
+    """
+    width = _collection_dense_width(qdrant, collection)
+    if width is None:
+        return arm_vector
+    got = None if arm_vector is None else int(np.asarray(arm_vector).shape[0])
+    if got == width:
+        return arm_vector
+    if text is None:
+        raise RuntimeError(
+            f"§A: the '{lane_name}' lane's collection '{collection}' is {width}d, but the arm's "
+            f"query vector is {got}d and no query TEXT was supplied to re-embed it in the "
+            f"collection's space. Pass the lane's text (the DA lane takes the HyDE hypothetical, "
+            f"the graph lane the raw query), or point the lane at a collection whose width matches "
+            f"the arm's dense lane."
+        )
+    from src.pdf_ingestion.cluster_embedder import get_derived_embedder
+    emb = get_derived_embedder(cfg)
+    emb_dim = int(getattr(emb, "_dim", None) or getattr(emb, "dim", 0) or cfg.derived_dense_dim)
+    if emb_dim != width:
+        raise RuntimeError(
+            f"§A: the '{lane_name}' lane's collection '{collection}' is {width}d, but the derived "
+            f"embedder '{cfg.derived_dense_model}' is {emb_dim}d — it cannot produce a query in that "
+            f"space. Set derived_dense_model/derived_dense_dim to the model that BUILT the "
+            f"collection, or re-index it. Nothing was queried."
+        )
+    return emb.embed_query(text)
+
+
 def _dense_vectors(ec, dim_low: int | None = None) -> tuple[np.ndarray, np.ndarray]:
     """``(full-dim, low-dim)`` dense vectors from either chunk shape.
 
@@ -794,10 +861,21 @@ class DocumentStore:
         query_vector: np.ndarray,
         tenant_id: str,
         limit: int = 20,
+        query_text: str | None = None,
     ) -> list[dict]:
-        """Search the derivative_artifacts collection."""
+        """Search the derivative_artifacts collection.
+
+        ⚠️ §A — `query_text` is the text this lane is asked about (the HyDE hypothetical on the eval
+        path), and it is what lets the lane be queried in the COLLECTION's space when the arm's
+        dense model differs. Without it, a mismatched arm RAISES rather than silently returning [].
+        """
         if not self._cfg.da_enabled:
             return []
+        # ⚠️ Resolved OUTSIDE the try: a §A dimension mismatch must RAISE, not be swallowed into [].
+        qv = resolve_space_query_vector(self._cfg, self._qdrant, query_vector, query_text,
+                                        self._cfg.da_collection, "da")
+        if qv is None:          # unreachable: the caller always supplies the arm's vector
+            raise RuntimeError("§A: the 'da' lane has no query vector to send")
         filter_ = Filter(
             should=[
                 Filter(must=[FieldCondition(key="tenant_id",
@@ -809,7 +887,7 @@ class DocumentStore:
         try:
             response = self._qdrant.query_points(
                 collection_name=self._cfg.da_collection,
-                query=query_vector.tolist(),
+                query=qv.tolist(),
                 query_filter=filter_,
                 limit=limit,
                 with_payload=True,
@@ -989,6 +1067,7 @@ class DocumentStore:
         source_type: str | None = None,
         lane_weights: dict[str, float] | None = None,
         fusion: str = "rrf",
+        da_query_text: str | None = None,
     ) -> list[dict]:
         """
         Multi-lane retrieval: dense (+SPLADE) → MMR → DA expansion for recall.
@@ -1023,7 +1102,9 @@ class DocumentStore:
                 # DA lane depth is its OWN setting (`da_fetch_k`), not `fetch_k`: `fetch_k` is the
                 # fusion-output width, and coupling them meant a width A/B moved this stage too.
                 da_hits    = self.search_da(query_vector, tenant_id=tenant_id,
-                                            limit=self._cfg.da_fetch_k)
+                                            limit=self._cfg.da_fetch_k,
+                                            query_text=da_query_text if da_query_text is not None
+                                            else query_text)
                 da_parents = self._resolve_da_parents(da_hits)
                 existing   = {c.get("chunk_id") for c in dense_hits}
                 for p in da_parents:
@@ -1069,6 +1150,7 @@ class DocumentStore:
         weights: dict[str, float] | None = None,
         graph_vector: np.ndarray | None = None,
         raptor_vector: np.ndarray | None = None,
+        da_query_text: str | None = None,
     ) -> list[dict]:
         """
         ONE fusion over every lane, so each lane competes on RANK instead of being appended.
@@ -1102,7 +1184,9 @@ class DocumentStore:
 
         if "da" in lanes and self._cfg.da_enabled:
             da_hits = self.search_da(query_vector, tenant_id=tenant_id,
-                                     limit=self._cfg.da_fetch_k)
+                                     limit=self._cfg.da_fetch_k,
+                                     query_text=da_query_text if da_query_text is not None
+                                     else query_text)
             contributors.append(("da", self._resolve_da_parents(da_hits)))
 
         if "graph" in lanes and query_text:

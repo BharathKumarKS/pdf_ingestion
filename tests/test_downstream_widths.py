@@ -116,7 +116,7 @@ def _run_search_with_das(settings, monkeypatch, **overrides):
         seen["dense_limit"] = limit
         return _fake_hits(limit)
 
-    def fake_da(_vec, tenant_id="global", limit=None):
+    def fake_da(_vec, tenant_id="global", limit=None, query_text=None):
         seen["da_limit"] = limit
         return []
 

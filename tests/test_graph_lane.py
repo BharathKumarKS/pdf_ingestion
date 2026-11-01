@@ -43,7 +43,9 @@ def test_graph_search_fails_fast_when_memgraph_unreachable(monkeypatch):
     out = builder.graph_search(
         "why does a satellite stay in orbit?",
         "global",
-        query_vector=np.zeros(768, dtype=np.float32),
+        # ⚠️ the vector's width must be the CONCEPT collection's — it is created at `dense_dim`,
+        # and §A now raises on a width that matches neither the arm nor the derived space.
+        query_vector=np.zeros(builder._cfg.dense_dim, dtype=np.float32),
         limit=3,
     )
     elapsed = time.monotonic() - t0

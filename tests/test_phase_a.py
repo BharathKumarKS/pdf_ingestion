@@ -143,7 +143,7 @@ def stub_store(tmp_path, monkeypatch):
 
 
 def test_search_with_das_returns_list(stub_store):
-    q_vec = np.random.rand(768).astype(np.float32)
+    q_vec = np.random.rand(stub_store._cfg.dense_dim).astype(np.float32)
     results = stub_store.search_with_das(q_vec, query_text="kinetic energy", tenant_id="global")
     assert isinstance(results, list)
 

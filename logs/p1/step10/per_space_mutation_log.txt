@@ -1,0 +1,25 @@
+MV_V1_population                    V1_population                       YES
+MV_V4_spaces                        V4_arm_and_collection_spaces_differ  YES
+MV_V5_derived                       V5_derived_space_is_the_registered_one  YES
+MV_A1_da_before                     V_A1_da_empty_before                YES   (+1 other)
+MV_A1_da_err                        V_A1_da_before_errored              YES
+MV_A1_da_after                      V_A1_da_nonempty_after              YES   (+1 other)
+MV_A2_da                            V_A2_da_width_switched              YES   (+1 other)
+MV_A3_da                            V_A3_da_pass_through                YES   (+1 other)
+MV_A1_graph_before                  V_A1_graph_empty_before             YES   (+1 other)
+MV_A1_graph_err                     V_A1_graph_before_errored           YES
+MV_A1_graph_after                   V_A1_graph_nonempty_after           YES   (+1 other)
+MV_A2_graph                         V_A2_graph_width_switched           YES   (+1 other)
+MV_A3_graph                         V_A3_graph_pass_through             YES   (+1 other)
+MV_A3_da_ids                        V_A3_da_result_ids_identical        YES   (+1 other)
+MV_summary_A1_da_nonempty_after     V_summary_A1_da_nonempty_after      YES
+MV_summary_A1_graph_nonempty_after  V_summary_A1_graph_nonempty_after   YES
+MV_summary_A1_da_empty_before       V_summary_A1_da_empty_before        YES
+MV_summary_A1_graph_empty_before    V_summary_A1_graph_empty_before     YES
+MV_summary_A2_both_lanes_switched   V_summary_A2_both_lanes_switched    YES
+MV_summary_A3_da_bit_exact          V_summary_A3_da_bit_exact           YES
+MV_summary_A3_graph_pass_through    V_summary_A3_graph_pass_through     YES
+
+mutations 21  checks 21  reddened 21
+INERT checks     : none
+all mutations hit: True

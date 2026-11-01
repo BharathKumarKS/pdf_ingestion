@@ -94,6 +94,17 @@ class Settings(BaseSettings):
     # raised ceiling is not recall, so it is a hypothesis, not a shipped change. Kept a setting so
     # the raise is a one-variable A/B (and revert) rather than a code edit.
     dense_rescore_limit: int = 500       # full-dim re-score cut (the outer prefetch's limit)
+    # §A — THE DERIVED SPACE. The two DERIVED collections (`derivative_artifacts` = the DA cards,
+    # `concept_embeddings` = the graph lane's concept names) are built by the DENSE lane
+    # (`index_derivative_artifacts.py` / `graph_builder` both call `get_cluster_embedder`), so their
+    # space is whatever the dense lane was at BUILD time — §I83 re-created both at **768** (the
+    # nomic/v3 space). A query against them must be embedded in THAT space, not the arm's.
+    # ⚠️ This is the §A defect: both lanes used to be handed the ARM's dense vector, so a 1024-dim
+    # arm sent a 1024-vector to a 768-slot, Qdrant 400'd, and the lane was SILENTLY skipped.
+    # The WIDTH is still resolved off the COLLECTION (`store.resolve_space_query_vector`); these are
+    # the model and the fallback width, and a disagreement RAISES rather than guessing.
+    derived_dense_model: str = "nomic-ai/nomic-embed-text-v1.5"
+    derived_dense_dim: int = 768
     # Qwen3 is instruction-aware: the model card measures a ~1-5% retrieval drop without a
     # query-side instruction. Documents need none. The query path must match the index, so this
     # is applied in store.search / evaluate_rag / funnel_boundary_recall alike.

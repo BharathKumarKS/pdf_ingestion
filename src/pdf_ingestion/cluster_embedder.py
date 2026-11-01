@@ -388,3 +388,39 @@ def get_query_vector(text: str, settings: Settings | None = None) -> np.ndarray:
     query side cannot drift apart. The instruction is prepended by ``embed_query``.
     """
     return get_cluster_embedder(settings).embed_query(text)
+
+
+# -- §A: the DERIVED space -----------------------------------------------------
+# The DA and concept collections are built by the DENSE lane, so they live in the dense lane's
+# space AT BUILD TIME (§I83 rebuilt both at 768). An arm whose dense model differs (v2/Qwen3-1024)
+# cannot query them with its own vector — it 400s and the lane is silently skipped (§I12/§D15).
+# ⚠️ Built DIRECTLY, not via `get_cluster_embedder`: that factory is a memoised singleton keyed on
+# nothing, so a second call would hand back the ARM's embedder and the space would silently not
+# switch. This is the "one process, two models" trap recorded in §I81's V4.
+_derived_embedder: StubClusterEmbedder | ClusterDenseEmbedder | None = None
+
+
+def get_derived_embedder(
+    settings: Settings | None = None,
+) -> StubClusterEmbedder | ClusterDenseEmbedder:
+    """The embedder for the DERIVED collections — the model that BUILT them, not the arm's."""
+    global _derived_embedder
+    if _derived_embedder is None:
+        cfg = settings or get_settings()
+        sub = cfg.model_copy(update={"dense_model": cfg.derived_dense_model,
+                                     "dense_dim": cfg.derived_dense_dim})
+        if cfg.use_stub_embedder:
+            _derived_embedder = StubClusterEmbedder(
+                dim=cfg.derived_dense_dim, dim_low=cfg.dense_dim_low,
+                document_prefix=cfg.document_prefix,
+            )
+        else:
+            _derived_embedder = ClusterDenseEmbedder(settings=sub)
+            logger.info("Derived-space embedder: '{}' @{}d", cfg.derived_dense_model,
+                        cfg.derived_dense_dim)
+    return _derived_embedder
+
+
+def reset_derived_embedder() -> None:
+    global _derived_embedder
+    _derived_embedder = None

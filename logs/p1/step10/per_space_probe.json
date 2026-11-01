@@ -1,0 +1,107 @@
+{
+ "meta": {
+  "arm_a": {
+   "dim": 1024,
+   "model": "Qwen/Qwen3-Embedding-0.6B"
+  },
+  "arm_b": {
+   "dim": 768,
+   "model": "nomic-ai/nomic-embed-text-v1.5"
+  },
+  "collection": "knowledge_base_v3",
+  "concept_collection": "concept_embeddings",
+  "da_collection": "derivative_artifacts",
+  "derived": {
+   "dim": 768,
+   "model": "nomic-ai/nomic-embed-text-v1.5"
+  },
+  "n_queries": 3,
+  "prereg": ".hermes/plans/2026-11-01-p1-per-space-query-vector-preregistration.md (committed ALONE as 6462145)",
+  "qdrant_host": "10.0.10.65",
+  "read_only": true,
+  "what": "\u00a7A \u2014 the per-space query-vector fix, before/after (read-only)"
+ },
+ "per_query": [
+  {
+   "arm_a_dim": 1024,
+   "arm_b_dim": 768,
+   "da": {
+    "a2_width_switched": true,
+    "a3_arm_b_pass_through": true,
+    "a3_da_result_identical": true,
+    "after_n": 5,
+    "arm_b_n": 5,
+    "before_error": "UnexpectedResponse: Unexpected Response: 400 (Bad Request)\nRaw response content:\nb'{\"status\":{\"error\":\"Wrong input: Vector dimension error: expected dim: 768, got 1024\"},\"time\":0.000359274}'",
+    "before_n": 0
+   },
+   "derived_dim": 768,
+   "graph": {
+    "a2_width_switched": true,
+    "a3_arm_b_pass_through": true,
+    "a3_da_result_identical": null,
+    "after_n": 5,
+    "arm_b_n": 5,
+    "before_error": "UnexpectedResponse: Unexpected Response: 400 (Bad Request)\nRaw response content:\nb'{\"status\":{\"error\":\"Wrong input: Vector dimension error: expected dim: 768, got 1024\"},\"time\":0.000068499}'",
+    "before_n": 0
+   },
+   "id": "gold-003"
+  },
+  {
+   "arm_a_dim": 1024,
+   "arm_b_dim": 768,
+   "da": {
+    "a2_width_switched": true,
+    "a3_arm_b_pass_through": true,
+    "a3_da_result_identical": true,
+    "after_n": 5,
+    "arm_b_n": 5,
+    "before_error": "UnexpectedResponse: Unexpected Response: 400 (Bad Request)\nRaw response content:\nb'{\"status\":{\"error\":\"Wrong input: Vector dimension error: expected dim: 768, got 1024\"},\"time\":0.000147557}'",
+    "before_n": 0
+   },
+   "derived_dim": 768,
+   "graph": {
+    "a2_width_switched": true,
+    "a3_arm_b_pass_through": true,
+    "a3_da_result_identical": null,
+    "after_n": 5,
+    "arm_b_n": 5,
+    "before_error": "UnexpectedResponse: Unexpected Response: 400 (Bad Request)\nRaw response content:\nb'{\"status\":{\"error\":\"Wrong input: Vector dimension error: expected dim: 768, got 1024\"},\"time\":0.000057367}'",
+    "before_n": 0
+   },
+   "id": "gold-004"
+  },
+  {
+   "arm_a_dim": 1024,
+   "arm_b_dim": 768,
+   "da": {
+    "a2_width_switched": true,
+    "a3_arm_b_pass_through": true,
+    "a3_da_result_identical": true,
+    "after_n": 5,
+    "arm_b_n": 5,
+    "before_error": "UnexpectedResponse: Unexpected Response: 400 (Bad Request)\nRaw response content:\nb'{\"status\":{\"error\":\"Wrong input: Vector dimension error: expected dim: 768, got 1024\"},\"time\":0.00016556}'",
+    "before_n": 0
+   },
+   "derived_dim": 768,
+   "graph": {
+    "a2_width_switched": true,
+    "a3_arm_b_pass_through": true,
+    "a3_da_result_identical": null,
+    "after_n": 5,
+    "arm_b_n": 5,
+    "before_error": "UnexpectedResponse: Unexpected Response: 400 (Bad Request)\nRaw response content:\nb'{\"status\":{\"error\":\"Wrong input: Vector dimension error: expected dim: 768, got 1024\"},\"time\":0.000072246}'",
+    "before_n": 0
+   },
+   "id": "gold-005"
+  }
+ ],
+ "summary": {
+  "A1_da_empty_before": 3,
+  "A1_da_nonempty_after": 3,
+  "A1_graph_empty_before": 3,
+  "A1_graph_nonempty_after": 3,
+  "A2_both_lanes_switched": 3,
+  "A3_da_bit_exact": 3,
+  "A3_graph_pass_through": 3
+ }
+}
