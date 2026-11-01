@@ -533,3 +533,69 @@ def test_live_late_chunked_vector_differs_from_its_isolation_twin():
     assert late.dense_64.shape == (cfg.dense_dim_low,)
     cos = float(np.dot(late.dense_1024, isolated.dense_1024))
     assert cos < 0.999, f"late-chunked vector is not distinguishable from isolation (cos={cos})"
+
+
+# ── The isolation twin, BATCHED — the Shape B `--pooled` re-embed path (§I88) ─
+
+def test_isolated_batch_is_pooled_over_each_chunks_own_text():
+    """``embed_isolated_batch`` IS the pooled construction: whole-chunk text, prefixed, pooled.
+
+    This is the path ``reembed_chunks.py --pooled`` writes into v3's dense lanes, so the guard is
+    that each vector equals a manual pooled mean of the chunk's **own** text — not of its parent's
+    span. Dropping the document prefix on the batch path, or the wrong special-token count,
+    changes it.
+    """
+    cfg = _cfg(document_prefix="search_document: ")
+    parent = _parent()
+    children = [
+        _child(0, "The lever is a rigid bar.", 0, 26, parent),
+        _child(1, "The mechanical advantage equals the ratio.", 60, 99, parent),
+    ]
+
+    out = _embedder(cfg).embed_isolated_batch(children)
+
+    assert [ec.chunk.chunk_id for ec in out] == ["c0", "c1"]
+    for ec, child in zip(out, children):
+        assert ec.late_chunked is False and ec.token_span == (0, 0)
+        assert ec.dense_1024.shape == (DIM,) and ec.dense_64.shape == (DIM_LOW,)
+        expected = _expected_matrix(cfg.document_prefix + child.text)[:-1].mean(axis=0)
+        expected = expected / (np.linalg.norm(expected) + 1e-9)
+        assert float(np.dot(ec.dense_1024, expected)) > 0.999999
+
+
+def test_isolated_batch_ignores_the_parent_span():
+    """Pooled ignores ``char_start``/``char_end``: the same text pooled twice is the same vector.
+
+    This is the whole of the *drop late chunking* treatment — the late-chunk path pools the
+    parent's tokens **inside the child's span**, so the same text at two different spans yields two
+    different vectors. Under this path they must be identical.
+    """
+    cfg = _cfg(document_prefix="search_document: ")
+    parent = _parent()
+    a = _child(0, "The mechanical advantage", 60, 84, parent)
+    b = _child(1, "The mechanical advantage", 0, 24, parent)   # same text, different span
+
+    out = _embedder(cfg).embed_isolated_batch([a, b])
+
+    assert float(np.dot(out[0].dense_1024, out[1].dense_1024)) > 0.999999
+
+
+def test_isolated_batch_equals_isolated_one_at_a_time():
+    """Batching changes only the request count, never a vector — the claim ``--pooled`` rests on."""
+    cfg = _cfg(document_prefix="search_document: ")
+    parent = _parent()
+    children = [_child(i, t, 0, len(t), parent) for i, t in
+                enumerate(["alpha beta gamma", "delta epsilon", "zeta eta theta"])]
+    emb = _embedder(cfg)
+
+    batched = emb.embed_isolated_batch(children)
+    singles = [emb.embed_isolated(c) for c in children]
+
+    assert len(batched) == len(singles) == 3
+    for b, s in zip(batched, singles):
+        assert np.allclose(b.dense_1024, s.dense_1024, atol=1e-6)
+        assert np.allclose(b.dense_64, s.dense_64, atol=1e-6)
+
+
+def test_isolated_batch_empty_is_empty():
+    assert _embedder(_cfg()).embed_isolated_batch([]) == []

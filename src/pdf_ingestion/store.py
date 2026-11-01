@@ -265,6 +265,26 @@ class DocumentStore:
         self._qdrant = get_qdrant(self._cfg)
         self._engine = get_engine(self._cfg)
         self._warned_colbert_local = False  # log the inactive-lane warning once
+        # §I96 — the swallow count for the ColBERT LANE, the counterpart of `reranker.fallbacks`.
+        # The `except` below OMITS the ColBERT Prefetch and fuses from dense+SPLADE only, so the
+        # pool is built from a reduced lane set — and until now nothing outside the log text could
+        # see it. Never reset implicitly: a run's total is `colbert_dropouts`, and a per-query delta
+        # is what tells one query's call apart from the run's.
+        self.colbert_dropouts: int = 0
+        self.last_colbert_dropout: str | None = None
+        # §I96's class, extended to the other lanes that can drop out silently: the DA lane
+        # (`search_da` catches and returns []) and the RAPTOR lane (the caller catches). Without a
+        # counter, a run cannot tell a lane that returned nothing from a lane that was never live.
+        self.da_dropouts: int = 0
+        self.last_da_dropout: str | None = None
+        self.raptor_dropouts: int = 0
+        self.last_raptor_dropout: str | None = None
+        # ⚠️ §I99's fusion-order run needs to know, PER QUERY, whether MMR actually fired: MMR
+        # SELECTS a subset (`_mmr_select` returns `top_k`), so a query it fired on has a different
+        # pool MEMBERSHIP, not just a different order. Without this counter the run's G3 cannot tell
+        # an order-only contrast from a composition change, and would assert an invariance it did
+        # not have. Same class as `colbert_dropouts` (§I96).
+        self.mmr_selections: int = 0
 
     # ── Collection schema ─────────────────────────────────────────────────
 
@@ -429,6 +449,7 @@ class DocumentStore:
         source_type: Optional[str] = None,
         limit: int = 10,
         query_text: str | None = None,
+        lane_weights: dict[str, float] | None = None,
     ) -> list[dict]:
         """
         Semantic search with multi-tenant scoping.
@@ -487,6 +508,7 @@ class DocumentStore:
             query_text=query_text,
             filter_=filter_,
             limit=limit,
+            lane_weights=lane_weights,
         )
         results = [{"score": h.score, "qdrant_point_id": str(h.id), **h.payload} for h in response.points]
 
@@ -514,6 +536,7 @@ class DocumentStore:
         filter_,
         limit: int,
         query_text: str | None = None,
+        lane_weights: dict[str, float] | None = None,
     ):
         """
         Notebook-style retrieval funnel (see retrieval_funnel.ipynb):
@@ -569,6 +592,10 @@ class DocumentStore:
             limit=cfg.dense_rescore_limit,
         )
         prefetches = [dense_prefetch]
+        # Lane names, in `prefetches` order — needed only to map `lane_weights` onto the lists.
+        # ⚠️ The names are the LANE names, not the collection's vector names: `dense` is the
+        # low→full dense funnel, `sparse` is SPLADE, `colbert` is MaxSim.
+        lane_names = ["dense"]
 
         # Stage 3: SPLADE parallel lane (if enabled)
         if cfg.splade_enabled and query_text:
@@ -576,6 +603,7 @@ class DocumentStore:
                 from src.pdf_ingestion.splade_embedder import get_splade_embedder
                 sv = get_splade_embedder(cfg).encode_sparse(query_text)
                 prefetches.append(Prefetch(query=sv.to_qdrant(), using="sparse", limit=250))
+                lane_names.append("sparse")
             except Exception as exc:
                 logger.warning("SPLADE encode failed ({}), skipping sparse lane", exc)
 
@@ -602,10 +630,17 @@ class DocumentStore:
                 prefetches.append(
                     Prefetch(query=colbert_q.tolist(), using="colbert", limit=250)
                 )
+                lane_names.append("colbert")
             except Exception as exc:
+                # §I96 — COUNT it. A lane-reduced call is a different pool, so a run-integrity
+                # block must be able to assert lane health per query rather than assume the
+                # configured lane set was the executed one.
+                self.colbert_dropouts += 1
+                self.last_colbert_dropout = f"{type(exc).__name__}: {exc}"
                 logger.error(
                     "ColBERT query FAILED ({}); the colbert lane is inactive and "
-                    "results use dense+SPLADE only", exc,
+                    "results use dense+SPLADE only [dropout #{}, last={}]",
+                    exc, self.colbert_dropouts, self.last_colbert_dropout,
                 )
         elif cfg.colbert_enabled and query_text and not self._warned_colbert_local:
             # Enabled in config but never attempted: file-backed Qdrant has no Rust
@@ -652,7 +687,12 @@ class DocumentStore:
                      "payload": dict(h.payload)}
                     for h in resp.points
                 ])
-            merged = self._rrf_merge(*lane_lists, rrf_k=1)[:limit]
+            # ⚠️ `lane_weights=None` is the DEFAULT and is inert: `_rrf_merge(weights=None)` expands
+            # to `[1.0] * n`, which is exactly the unweighted call this replaces. Pinned by
+            # tests/test_qdrant_search_lane_weights.py::test_default_path_is_inert.
+            wts = (None if lane_weights is None
+                   else [float(lane_weights.get(n, 1.0)) for n in lane_names])
+            merged = self._rrf_merge(*lane_lists, rrf_k=1, weights=wts)[:limit]
             return _FusedResponse([
                 _FusedPoint(score=e["rrf_score"], id=e["qdrant_point_id"], payload=e["payload"])
                 for e in merged
@@ -675,7 +715,17 @@ class DocumentStore:
         source_type_filter: Optional[str] = None,
         limit: int = 2,
     ) -> list[dict]:
-        """Fetch RAPTOR cluster-summary vectors, respecting study-mode filter."""
+        """Fetch RAPTOR cluster-summary vectors, respecting study-mode filter.
+
+        ⚠️ `qdrant_point_id` is carried EXPLICITLY, and it is load-bearing. A RAPTOR summary's
+        payload has no `chunk_id`, and `_rrf_merge` keys a candidate on `chunk_id` falling back to
+        `qdrant_point_id` (§I84 — added because keying on `chunk_id` alone silently DROPPED the 73
+        chunk_id-less summary nodes). Returning payload keys alone therefore made every RAPTOR
+        candidate vanish inside `search_fused`'s fusion — the lane was wired and contributed
+        NOTHING, so an arm that "adds the RAPTOR lane" was a copy of its control. Measured live
+        2026-10-30 on `knowledge_base_v3` (`lane_inclusion_s3_live_probe.json`): 0 of 2 RAPTOR
+        candidates survived the fusion before this line, 2 of 2 after.
+        """
         raptor_must = [FieldCondition(
             key="source_type", match=MatchValue(value="raptor_summary")
         )]
@@ -707,15 +757,27 @@ class DocumentStore:
                 self._cfg.qdrant_collection, type(vectors_cfg).__name__,
             )
 
-        response = self._qdrant.query_points(
-            collection_name=self._cfg.qdrant_collection,
-            query=query_vector.tolist(),
-            using=using,
-            query_filter=filter_,
-            limit=limit,
-            with_payload=True,
-        )
-        return [{"score": h.score, **h.payload} for h in response.points]
+        try:
+            response = self._qdrant.query_points(
+                collection_name=self._cfg.qdrant_collection,
+                query=query_vector.tolist(),
+                using=using,
+                query_filter=filter_,
+                limit=limit,
+                with_payload=True,
+            )
+        except Exception as exc:
+            # §I96 — COUNT and RE-RAISE. The callers swallow this (evaluate_rag / streamlit), so
+            # behaviour is unchanged, but the lane's health is now visible to run-integrity.
+            self.raptor_dropouts += 1
+            self.last_raptor_dropout = f"{type(exc).__name__}: {exc}"
+            logger.error("RAPTOR lane query FAILED ({}); the overview lane returns nothing "
+                         "[dropout #{}]", exc, self.raptor_dropouts)
+            raise
+        # ⚠️ `qdrant_point_id` — see the docstring: without it `_rrf_merge` silently DROPS every
+        # RAPTOR candidate, so the lane is wired and contributes nothing.
+        return [{"score": h.score, "qdrant_point_id": str(h.id), **h.payload}
+                for h in response.points]
 
     # ── Phase A: DA + RRF + MMR ───────────────────────────────────────────────
 
@@ -746,7 +808,11 @@ class DocumentStore:
             )
             return [{"score": h.score, **h.payload} for h in response.points]
         except Exception as exc:
-            logger.warning("DA search failed ({}), skipping DA lane", exc)
+            # §I96 — COUNT it, so a lane-reduced pool is visible outside the log text.
+            self.da_dropouts += 1
+            self.last_da_dropout = f"{type(exc).__name__}: {exc}"
+            logger.warning("DA search failed ({}), skipping DA lane [dropout #{}]",
+                           exc, self.da_dropouts)
             return []
 
     def _resolve_da_parents(self, da_hits: list[dict]) -> list[dict]:
@@ -777,7 +843,8 @@ class DocumentStore:
         return resolved
 
     @staticmethod
-    def _rrf_merge(*result_lists: list[dict], rrf_k: int = 60) -> list[dict]:
+    def _rrf_merge(*result_lists: list[dict], rrf_k: int = 60,
+                   weights: list[float] | None = None) -> list[dict]:
         """
         Client-side Reciprocal Rank Fusion over multiple ranked result lists.
         Each item is keyed on its 'chunk_id', falling back to 'qdrant_point_id'. Returns merged
@@ -789,15 +856,23 @@ class DocumentStore:
         and keeps them — so keying on `chunk_id` alone would have dropped them here while the
         server did not. The product's `search()` filter excludes RAPTOR anyway, which is the only
         reason this is not a live recall loss; the fallback removes that hidden coupling.
+
+        `weights` (optional) scales each list's contribution `w / (rrf_k + rank)` — a per-lane
+        weight for the fused entry point (`search_fused`). A length mismatch RAISES rather than
+        silently mis-assigning weights to lanes.
         """
+        wts = list(weights) if weights is not None else [1.0] * len(result_lists)
+        if len(wts) != len(result_lists):
+            raise ValueError(
+                f"weights has {len(wts)} entries but there are {len(result_lists)} lane lists")
         scores: dict[str, float] = {}
         best: dict[str, dict] = {}
-        for result_list in result_lists:
+        for w, result_list in zip(wts, result_lists):
             for rank, item in enumerate(result_list, start=1):
                 cid = item.get("chunk_id") or item.get("qdrant_point_id")
                 if not cid:
                     continue
-                scores[cid] = scores.get(cid, 0.0) + 1.0 / (rrf_k + rank)
+                scores[cid] = scores.get(cid, 0.0) + w / (rrf_k + rank)
                 if cid not in best or item.get("score", 0) > best[cid].get("score", 0):
                     best[cid] = item
         merged = []
@@ -852,6 +927,7 @@ class DocumentStore:
         tenant_id: str = "global",
         fetch_k: int | None = None,
         source_type: str | None = None,
+        lane_weights: dict[str, float] | None = None,
     ) -> list[dict]:
         """
         Multi-lane retrieval: dense (+SPLADE) → MMR → DA expansion for recall.
@@ -873,7 +949,8 @@ class DocumentStore:
                 query_vector, tenant_id=tenant_id,
                 limit=pool, query_text=query_text,
                 source_type=source_type,
-            )
+                lane_weights=lane_weights,
+                )
             telemetry.set_attr(vs_span, "hits", len(dense_hits))
 
         # DA lane: merge resolved parent chunks into the pool BEFORE dedup/MMR
@@ -909,6 +986,7 @@ class DocumentStore:
         # MMR: diversity-aware selection from combined (dense + DA) pool
         with telemetry.span("retrieval.mmr", {"enabled": self._cfg.mmr_enabled}):
             if self._cfg.mmr_enabled and len(deduped) > fetch_k:
+                self.mmr_selections += 1
                 candidates = self._mmr_select(
                     deduped, top_k=fetch_k, lambda_=self._cfg.mmr_lambda
                 )
@@ -916,6 +994,105 @@ class DocumentStore:
                 candidates = deduped[:fetch_k]
 
         return candidates
+
+    def search_fused(
+        self,
+        query_vector: np.ndarray,
+        query_text: str | None = None,
+        tenant_id: str = "global",
+        fetch_k: int | None = None,
+        source_type: str | None = None,
+        *,
+        lanes: tuple[str, ...] = ("da", "graph", "raptor"),
+        weights: dict[str, float] | None = None,
+        graph_vector: np.ndarray | None = None,
+        raptor_vector: np.ndarray | None = None,
+    ) -> list[dict]:
+        """
+        ONE fusion over every lane, so each lane competes on RANK instead of being appended.
+
+        Today's wiring inserts lanes at three different depths (plan §0): the vector lanes are
+        fused inside `_qdrant_search`; the **DA** lane is appended *after* that fusion (so it never
+        participates in RRF); the **graph** lane is appended by the CALLER after dedup/MMR, with a
+        fabricated `score` default (`evaluate_rag.py:240`) that lets it pass any threshold. **A lane
+        that is appended can never displace a fused hit** — it can only ever add unordered
+        candidates, which is why the graph lane as wired lowers MRR.
+
+        This entry point collects each lane's RANKED list and fuses them all with `_rrf_merge`,
+        applying `weights` per lane, then dedup → MMR exactly as `search_with_das` does. A lane with
+        weight 0 is omitted entirely (it contributes nothing, rather than contributing zeroes).
+
+        ⚠️ The VECTOR lanes (dense+sparse+colbert) enter as **ONE** contributor — the list `search()`
+        already fused — so this is a **two-level RRF**, not a flat one. A flat fusion would need
+        `_qdrant_search` to expose its per-lane lists; that refactor is NOT done here, and is stated
+        rather than implied.
+        """
+        fetch_k = fetch_k or self._cfg.reranker_fetch_k
+        pool = self._cfg.mmr_candidates
+        w = {"vector": 1.0, "da": 1.0, "graph": 1.0, "raptor": 1.0}
+        if weights:
+            w.update(weights)
+
+        contributors: list[tuple[str, list[dict]]] = [
+            ("vector", self.search(query_vector, tenant_id=tenant_id, limit=pool,
+                                   query_text=query_text, source_type=source_type)),
+        ]
+
+        if "da" in lanes and self._cfg.da_enabled:
+            da_hits = self.search_da(query_vector, tenant_id=tenant_id,
+                                     limit=self._cfg.da_fetch_k)
+            contributors.append(("da", self._resolve_da_parents(da_hits)))
+
+        if "graph" in lanes and query_text:
+            try:
+                from src.pdf_ingestion.graph_builder import get_graph_builder
+                gh = get_graph_builder(self._cfg).graph_search(
+                    query_text=query_text, tenant_id=tenant_id,
+                    query_vector=graph_vector if graph_vector is not None else query_vector,
+                    limit=5,
+                )
+                # Normalise to the dense-hit schema HERE (the caller used to do this): the graph
+                # lane returns `page_num` / `text_preview`, and a fabricated `score` is NOT set —
+                # under RRF the score is irrelevant, which is the point.
+                for h in gh:
+                    if "page_number" not in h:
+                        h["page_number"] = h.get("page_num")
+                    if "text" not in h:
+                        h["text"] = h.get("text_preview", "")
+                contributors.append(("graph", gh))
+            except Exception as exc:
+                logger.warning("graph lane failed ({}), omitted from the fusion", exc)
+
+        if "raptor" in lanes and raptor_vector is not None:
+            try:
+                contributors.append(("raptor", self.search_raptor(
+                    query_vector=raptor_vector, tenant_id=tenant_id,
+                    source_type_filter=source_type, limit=2)))
+            except Exception as exc:
+                logger.warning("raptor lane failed ({}), omitted from the fusion", exc)
+
+        # A zero-weight lane is REMOVED, not merely scored zero — otherwise its candidates would
+        # still occupy slots in the output.
+        active = [(n, lst) for n, lst in contributors if w.get(n, 0.0) > 0]
+        if len(active) == 1:
+            fused = active[0][1]
+        else:
+            fused = self._rrf_merge(*[lst for _, lst in active], rrf_k=1,
+                                    weights=[w[n] for n, _ in active])
+
+        # dedup → MMR (identical to `search_with_das`)
+        seen_pages: dict[int, bool] = {}
+        deduped: list[dict] = []
+        for hit in fused:
+            pg = hit.get("page_number")
+            if pg is None or pg not in seen_pages:
+                deduped.append(hit)
+                if pg is not None:
+                    seen_pages[pg] = True
+        if self._cfg.mmr_enabled and len(deduped) > fetch_k:
+            self.mmr_selections += 1
+            return self._mmr_select(deduped, top_k=fetch_k, lambda_=self._cfg.mmr_lambda)
+        return deduped[:fetch_k]
 
     def get_document_stats(self, document_id: str) -> dict:
         with Session(self._engine) as session:

@@ -15,6 +15,15 @@ Two modes:
     unchanged vectors — plan §2), and upserts into the destination collection **preserving every
     point id**. This is the nomic re-ingest into ``knowledge_base_v3`` (plan §3 Stage C).
 
+    ``--pooled`` swaps the dense construction from **late-chunked** to **pooled**: each child is
+    embedded from its own ``text`` alone (``LateChunkEmbedder.embed_isolated_batch``) instead of
+    mean-pooled from its parent's token vectors. §I87 measured late chunking costing nomic
+    **+0.1547** coverage (RESOLVED) and §I88 established it is a **method** choice, not a pooling
+    defect — so dropping it is a same-corpus, same-model, ids-preserved rewrite of the dense lanes
+    only. ⚠️ ``mode`` is part of the checkpoint identity: a pooled run and a late-chunked run against
+    the same ``src``/``dst`` must not resume each other's parents, or the second run skips all of
+    them and reports success having written nothing.
+
     ⚠️ Shape B is reproducible **without re-parsing**: the source payloads carry ``text`` /
     ``parent_text`` / ``char_start`` / ``char_end`` / ``parent_id`` / ``chunk_index`` / ``page_number``,
     so the parent→child hierarchy and each child's span are reconstructed exactly. That is why the
@@ -33,6 +42,11 @@ Usage:
            QUERY_INSTRUCTION="search_query: " DOCUMENT_PREFIX="search_document: "
     uv run python -u scripts/reembed_chunks.py --from-collection knowledge_base_v2 \
         --checkpoint logs/p1/step10/reembed_v3_checkpoint.json
+
+    # Shape B, POOLED (drop late chunking — §I88's treatment; its own checkpoint, never the
+    # late-chunked one, or the run resumes parents it never embedded):
+    uv run python -u scripts/reembed_chunks.py --from-collection knowledge_base_v2 --pooled \
+        --checkpoint logs/p1/step10/reembed_v3_pooled_checkpoint.json
 
     # a smoke test on N parents (still writes):
     uv run python -u scripts/reembed_chunks.py --from-collection knowledge_base_v2 --limit-parents 2
@@ -71,6 +85,8 @@ def parse_args():
                    help="Shape B: process only the first N parents (smoke test; still writes)")
     p.add_argument("--checkpoint", default=None,
                    help="Shape B: JSON checkpoint path; a re-run resumes past completed parents")
+    p.add_argument("--pooled", action="store_true",
+                   help="Shape B: embed each child POOLED from its own text (drop late chunking)")
     p.add_argument("--dry-run", action="store_true", help="Shape B: count and validate, write nothing")
     args = p.parse_args()
     if not (args.tenant or args.doc_id or args.from_collection):
@@ -228,8 +244,12 @@ def _scroll_all(client, collection: str, *, with_vectors: bool, payload_keys=Non
 
 
 def reembed_shape_b(src_collection: str, *, batch_size: int, limit_parents: int | None,
-                    checkpoint_path: Path | None, dry_run: bool) -> dict:
-    """Recompute the dense lanes into the destination collection, carrying colbert/sparse over."""
+                    checkpoint_path: Path | None, dry_run: bool, pooled: bool = False) -> dict:
+    """Recompute the dense lanes into the destination collection, carrying colbert/sparse over.
+
+    ``pooled`` selects the dense construction: ``False`` (default) = late-chunked via
+    ``embed_parent``; ``True`` = pooled per child via ``embed_isolated_batch`` (§I88's treatment).
+    """
     import numpy as np
     from qdrant_client.models import PointStruct, SparseVector as QSparseVector
 
@@ -253,9 +273,10 @@ def reembed_shape_b(src_collection: str, *, batch_size: int, limit_parents: int 
     dst_params = client.get_collection(dst).config.params
     dense_name = _dense_name_from(dst_params.vectors) or "dense_full"
     low_name, low_size = _resolve_low_lane(dst_params.vectors, cfg)
-    logger.info("Shape B: {} -> {} | dense='{}' low='{}'({}d) model='{}' prefix='{}'",
+    mode = "pooled" if pooled else "late_chunked"
+    logger.info("Shape B: {} -> {} | dense='{}' low='{}'({}d) model='{}' prefix='{}' mode='{}'",
                 src_collection, dst, dense_name, low_name, low_size,
-                cfg.dense_model, cfg.document_prefix)
+                cfg.dense_model, cfg.document_prefix, mode)
 
     src_points = _scroll_all(client, src_collection, with_vectors=True)
     chunks_pts = [p for p in src_points if p.payload.get("raptor_level") is None]
@@ -276,12 +297,17 @@ def reembed_shape_b(src_collection: str, *, batch_size: int, limit_parents: int 
     done: set[str] = set()
     if checkpoint_path and checkpoint_path.exists():
         ck = json.loads(checkpoint_path.read_text())
-        if ck.get("src") == src_collection and ck.get("dst") == dst:
+        # ⚠️ `mode` is part of the identity: a pooled run must not resume a late-chunked one (or vice
+        # versa) — it would skip every parent and report success having written nothing.
+        if ck.get("src") == src_collection and ck.get("dst") == dst and ck.get("mode") == mode:
             done = set(ck.get("done_parents", []))
             logger.info("checkpoint: resuming, {} parents already done", len(done))
+        else:
+            logger.info("checkpoint ignored: identity mismatch (src/dst/mode) — starting fresh")
 
     lce = LateChunkEmbedder(cfg)
-    _ = lce._get_tokenizer()          # load once, before the loop (never race a lazy load)
+    if not pooled:
+        _ = lce._get_tokenizer()      # load once, before the loop (never race a lazy load)
 
     total_children = sum(len(groups[k]) for k in order)
     logger.info("Shape B: {} parents / {} children to process", len(order), total_children)
@@ -321,7 +347,8 @@ def reembed_shape_b(src_collection: str, *, batch_size: int, limit_parents: int 
 
         t0 = time.time()
         try:
-            enriched = lce.embed_parent(parent, children)
+            enriched = (lce.embed_isolated_batch(children) if pooled
+                        else lce.embed_parent(parent, children))
         except Exception as exc:                       # noqa: BLE001 — one bad parent must not kill the run
             failures.append({"parent": ckey, "error": f"{type(exc).__name__}: {exc}"})
             logger.error("parent {} FAILED: {} — {}", ckey, type(exc).__name__, exc)
@@ -372,14 +399,16 @@ def reembed_shape_b(src_collection: str, *, batch_size: int, limit_parents: int 
 
         if checkpoint_path:
             checkpoint_path.write_text(json.dumps({
-                "src": src_collection, "dst": dst, "done_parents": sorted(done),
+                "src": src_collection, "dst": dst, "mode": mode, "done_parents": sorted(done),
                 "upserted": upserted, "updated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
             }))
 
     elapsed = time.time() - started
-    logger.success("Shape B done: {:,} points upserted in {:.1f}s ({:.1f} pts/s), {} parents, {} failures",
-                   upserted, elapsed, (upserted / elapsed) if elapsed else 0.0, len(done), len(failures))
-    return {"upserted": upserted, "parents": len(done), "failures": failures,
+    logger.success("Shape B done ({}): {:,} points upserted in {:.1f}s ({:.1f} pts/s), "
+                   "{} parents, {} failures",
+                   mode, upserted, elapsed, (upserted / elapsed) if elapsed else 0.0,
+                   len(done), len(failures))
+    return {"upserted": upserted, "parents": len(done), "failures": failures, "mode": mode,
             "elapsed_s": round(elapsed, 1), "src": src_collection, "dst": dst,
             "children_expected": total_children}
 
@@ -397,9 +426,9 @@ def main():
         ck = Path(args.checkpoint) if args.checkpoint else None
         res = reembed_shape_b(
             args.from_collection, batch_size=args.batch, limit_parents=args.limit_parents,
-            checkpoint_path=ck, dry_run=args.dry_run,
+            checkpoint_path=ck, dry_run=args.dry_run, pooled=args.pooled,
         )
-        console.print(f"\n[bold green]Shape B:[/] {res['upserted']:,} points into "
+        console.print(f"\n[bold green]Shape B ({res['mode']}):[/] {res['upserted']:,} points into "
                       f"'{res['dst']}' from '{res['src']}' ({res['parents']} parents, "
                       f"{res['elapsed_s']}s)")
         if res["failures"]:

@@ -175,6 +175,10 @@ class GraphBuilder:
     def __init__(self, settings: Settings | None = None) -> None:
         self._cfg = settings or get_settings()
         self._driver = None
+        # §I96 — the graph lane also swallows its failure (`graph_search` returns [] when Memgraph
+        # is unreachable), so a multihop arm can silently run without its lane. Count it.
+        self.graph_dropouts: int = 0
+        self.last_graph_dropout: str | None = None
 
     def _get_driver(self):
         """Return the shared Memgraph driver.
@@ -520,9 +524,13 @@ class GraphBuilder:
         try:
             driver = self._get_driver()
         except Exception as exc:
+            # §I96 — COUNT it: a multihop arm that silently ran without its lane is not the
+            # treatment, and nothing outside the log text could see it before this.
+            self.graph_dropouts += 1
+            self.last_graph_dropout = f"{type(exc).__name__}: {exc}"
             logger.error(
                 "GRAPH SEARCH UNAVAILABLE — Memgraph connect failed ({}); the "
-                "multihop lane returns no results", exc,
+                "multihop lane returns no results [dropout #{}]", exc, self.graph_dropouts,
             )
             return []
 

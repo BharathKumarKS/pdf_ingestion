@@ -553,7 +553,10 @@ with tab_search:
                                 import numpy as np
                                 search_vec = np.array(embedder.embed_query(hyp), dtype=np.float32)
                                 raptor_vec = search_vec
-                                rerank_query = hyp  # richer signal for cross-encoder
+                                # ⚠️ PER-TYPE rerank-query policy (§I97 / T4): the hypothetical is
+                                # the better CE query for OVERVIEW but a harm for FACTUAL — feed the
+                                # CE the raw question there, keep the hypothetical for overview.
+                                rerank_query = hyp if intent == "overview" else query
                         except Exception:
                             pass  # fall back to raw query vector
 

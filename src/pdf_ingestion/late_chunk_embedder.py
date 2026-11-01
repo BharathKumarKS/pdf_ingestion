@@ -511,5 +511,23 @@ class LateChunkEmbedder:
 
     def embed_isolated(self, chunk: TextChunk) -> EnrichedChunk:
         """The twin: the same child embedded alone, with no parent context (the E3 control)."""
-        vec = self._embedder.embed_documents([chunk.text])[0]
-        return self._finish(np.asarray(vec, dtype=np.float32), chunk, (0, 0), late=False)
+        return self.embed_isolated_batch([chunk])[0]
+
+    def embed_isolated_batch(self, chunks: list[TextChunk]) -> list[EnrichedChunk]:
+        """The isolation twin, **batched**: pooled over each chunk's own ``text``, no parent context.
+
+        ⚠️ This IS the *pooled* construction — ``ClusterDenseEmbedder.embed_documents`` applies the
+        document-side prefix (``search_document: `` for nomic) and L2-normalises, so the vector this
+        returns is the same object §I63/§I87 measured as ``nomic_pooled``: whole-chunk text,
+        prefixed, pooled. It is the drop-late-chunking treatment (§I88) — the re-embed script's
+        ``--pooled`` mode calls this instead of :meth:`embed_parent`.
+
+        ⚠️ Batching changes only the request count, never a vector: the endpoint returns one pooled
+        vector per input, independent of how the inputs are grouped. The write's acceptance check
+        (stored vs a fresh pooled call at cos 1.0) is what holds that claim, not this docstring.
+        """
+        if not chunks:
+            return []
+        vecs = self._embedder.embed_documents([c.text for c in chunks])
+        return [self._finish(np.asarray(v, dtype=np.float32), c, (0, 0), late=False)
+                for c, v in zip(chunks, vecs)]

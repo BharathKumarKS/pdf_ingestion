@@ -180,8 +180,22 @@ def run_retrieval(
     tenant_id: str,
     threshold: float,
     query_type: str = "factual",
+    lanes: tuple[str, ...] | None = None,
+    lane_weights: dict[str, float] | None = None,
 ) -> dict:
-    """Embed + search + rerank. Adds graph lane for multihop queries."""
+    """Embed + search + rerank. Adds graph lane for multihop queries.
+
+    `lanes` — the lane-inclusion arm selector (lane plan S3/S4). `None` is TODAY'S WIRING: the
+    vector lanes are fused, the DA lane is appended *after* that fusion, the graph lane is appended
+    by this caller *after* dedup/MMR with a fabricated `score`, and RAPTOR is never called. A tuple
+    routes the pool through `store.search_fused(lanes=...)` instead, so every named lane competes on
+    RANK inside ONE RRF fusion.
+
+    ⚠️ Two facts this selector must state rather than leave to be discovered:
+    * the **RAPTOR** lane is gated on `query_type == "overview"` — the lane targets that type; and
+    * a RAPTOR candidate carries **no `page_number`**, so at the page-level unit it can only
+      DISPLACE a page, never add coverage. Its effect is measurable only as displacement.
+    """
     q_vec = np.array(embedder.embed_query(query_text), dtype=np.float32)
 
     # HyDE: generate a hypothetical passage and embed it — better matches Feynman's phrasing
@@ -203,45 +217,68 @@ def run_retrieval(
             )
             if hyp:
                 search_vec = np.array(embedder.embed_query(hyp), dtype=np.float32)
-                rerank_query = hyp  # richer signal for cross-encoder reranker
+                # ⚠️ PER-TYPE rerank-query policy (§I97 / T4). The HyDE hypothetical is a BETTER
+                # cross-encoder query for OVERVIEW queries but a HARM for FACTUAL ones: the CE
+                # re-selects its top-20 against a fake passage and demotes the right page.
+                # Measured (T4): factual nDCG +0.1397 / MRR@20 +0.2631 at no recall cost; the
+                # per-type policy's aggregate is +0.0557 nDCG (pre-registered re-derivation).
+                rerank_query = hyp if query_type == "overview" else query_text
                 logger.debug("HyDE: generated hypothetical ({} chars)", len(hyp))
         except Exception as exc:
             logger.warning("HyDE failed ({}), using raw query vector", exc)
 
-    hits = store.search_with_das(
-        search_vec,
-        query_text=query_text,
-        tenant_id=tenant_id,
-        fetch_k=cfg.reranker_fetch_k,
-    )
+    if lanes is None:
+        hits = store.search_with_das(
+            search_vec,
+            query_text=query_text,
+            tenant_id=tenant_id,
+            fetch_k=cfg.reranker_fetch_k,
+            lane_weights=lane_weights,
+        )
 
-    # Graph lane for multihop queries — same logic as the Streamlit app
-    if query_type == "multihop":
-        try:
-            from src.pdf_ingestion.graph_builder import get_graph_builder
-            graph = get_graph_builder(cfg)
-            graph_hits = graph.graph_search(
-                query_text=query_text,
-                tenant_id=tenant_id,
-                query_vector=q_vec,
-                limit=5,
-            )
-            # Normalise graph hits to match dense hit schema, then merge
-            existing_ids = {h.get("chunk_id") for h in hits}
-            for gh in graph_hits:
-                cid = gh.get("chunk_id")
-                if cid and cid not in existing_ids:
-                    # graph_search returns text_preview; reranker needs text
-                    if "text" not in gh:
-                        gh["text"] = gh.get("text_preview", "")
-                    # ensure page_number exists (compute_retrieval_metrics needs it)
-                    if "page_number" not in gh:
-                        gh["page_number"] = gh.get("page_num")
-                    gh.setdefault("score", 1.0)
-                    hits.append(gh)
-                    existing_ids.add(cid)
-        except Exception as exc:
-            logger.warning("Graph search failed for eval query ({})", exc)
+        # Graph lane for multihop queries — same logic as the Streamlit app
+        if query_type == "multihop":
+            try:
+                from src.pdf_ingestion.graph_builder import get_graph_builder
+                graph = get_graph_builder(cfg)
+                graph_hits = graph.graph_search(
+                    query_text=query_text,
+                    tenant_id=tenant_id,
+                    query_vector=q_vec,
+                    limit=5,
+                )
+                # Normalise graph hits to match dense hit schema, then merge
+                existing_ids = {h.get("chunk_id") for h in hits}
+                for gh in graph_hits:
+                    cid = gh.get("chunk_id")
+                    if cid and cid not in existing_ids:
+                        # graph_search returns text_preview; reranker needs text
+                        if "text" not in gh:
+                            gh["text"] = gh.get("text_preview", "")
+                        # ensure page_number exists (compute_retrieval_metrics needs it)
+                        if "page_number" not in gh:
+                            gh["page_number"] = gh.get("page_num")
+                        gh.setdefault("score", 1.0)
+                        hits.append(gh)
+                        existing_ids.add(cid)
+            except Exception as exc:
+                logger.warning("Graph search failed for eval query ({})", exc)
+    else:
+        # ⚠️ LANE-INCLUSION ARM (lane plan S3/S4). ONE RRF fusion over every named lane, so a lane's
+        # candidates compete on RANK instead of being appended after the fusion (DA) or after
+        # dedup/MMR with a fabricated `score` (graph, `:245`). `graph_vector=q_vec` reproduces the
+        # graph lane's own query vector exactly as the append path uses it (`:231`), so this arm
+        # isolates PLACEMENT and not the vector; the dense and RAPTOR lanes share `search_vec`.
+        lane_set = tuple(l for l in lanes if l != "raptor" or query_type == "overview")
+        hits = store.search_fused(
+            search_vec,
+            query_text=query_text,
+            tenant_id=tenant_id,
+            fetch_k=cfg.reranker_fetch_k,
+            lanes=lane_set,
+            graph_vector=q_vec,
+            raptor_vector=search_vec,
+        )
 
     hits_above = [h for h in hits if h.get("score", 1.0) >= threshold]
 
@@ -370,6 +407,33 @@ def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -
     idcg = sum(1.0 / np.log2(i + 2) for i in range(ideal_hits))
     ndcg = dcg / idcg if idcg > 0 else 0.0
 
+    # ── Precision@k — re-added ONLY with its ceiling beside it (W7 §3.3) ───────
+    # The removed `precision@top_k` was the same ratio as `context_precision` but divided by the
+    # FIXED slot count, so it was capped at `min(|relevant|, top_k)/top_k` ≈ 0.10 here (median 2
+    # labelled pages) and read as failure while sitting at its own ceiling. It is reported again
+    # because W7 §3.3's staircase needs it — but the ceiling is emitted as its own key, so the
+    # number can never be read as a bare quality signal. Both are page-deduped like `recall_top`.
+    k = cfg.reranker_top_k
+    precision_top     = (n_relevant_hits / k) if k else None
+    precision_ceiling = (min(len(relevant), k) / k) if k else None
+    if precision_top and recall_top and (precision_top + recall_top) > 0:
+        f1_top = 2 * precision_top * recall_top / (precision_top + recall_top)
+    else:
+        f1_top = 0.0
+
+    # ── MAP — binary, page-deduped, over the reranked list (W7 §6.1) ───────────
+    # AP = (1/|relevant|) * Σ over relevant positions of precision@that-position. The denominator
+    # is the FULL ground-truth size, so a page the ranking discarded lowers MAP — which is what
+    # makes it a ranking metric rather than a pool metric.
+    ap = 0.0
+    if relevant:
+        running = 0
+        for i, g in enumerate(gains, start=1):
+            if g:
+                running += 1
+                ap += running / i
+        ap /= len(relevant)
+
     return {
         f"recall_at_{cfg.reranker_fetch_k}": round(recall, 4) if recall is not None else None,
         f"recall_at_{cfg.reranker_top_k}":   round(recall_top, 4) if recall_top is not None else None,
@@ -377,6 +441,10 @@ def compute_retrieval_metrics(retrieval: dict, relevant_pages: list[int], cfg) -
         "context_precision":                 round(context_precision, 4) if context_precision is not None else None,
         "mrr":                               round(mrr, 4),
         f"ndcg_at_{cfg.reranker_top_k}":      round(ndcg, 4),
+        f"precision_at_{cfg.reranker_top_k}":          round(precision_top, 4) if precision_top is not None else None,
+        f"precision_ceiling_at_{cfg.reranker_top_k}":  round(precision_ceiling, 4) if precision_ceiling is not None else None,
+        f"f1_at_{cfg.reranker_top_k}":       round(f1_top, 4),
+        "map":                               round(ap, 4) if relevant else None,
     }
 
 

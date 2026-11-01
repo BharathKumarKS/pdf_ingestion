@@ -62,10 +62,40 @@ def test_hit_at_top_k_zero_when_nothing_relevant(ev, cfg):
     assert m["recall_at_20"] == 0.0
 
 
-def test_precision_is_no_longer_emitted(ev, cfg):
+def test_precision_is_emitted_only_with_its_ceiling(ev, cfg):
+    """Precision@k is back, but NEVER without ``precision_ceiling_at_k`` beside it.
+
+    The removed metric divided by a fixed ``top_k``, so it sat at its own ceiling
+    ``min(|relevant|, top_k)/top_k`` (~0.10 here) and read as failure. Re-adding it
+    is only safe if the ceiling travels with it (W7 §3.3) — this pins both keys.
+    """
     m = ev.compute_retrieval_metrics(_retrieval([5]), [5], cfg)
-    assert "precision_at_20" not in m
-    assert {"recall_at_100", "recall_at_20", "hit_at_20", "mrr", "ndcg_at_20"} <= set(m)
+    assert {"recall_at_100", "recall_at_20", "hit_at_20", "mrr", "ndcg_at_20",
+            "precision_at_20", "precision_ceiling_at_20", "f1_at_20", "map"} <= set(m)
+    # 1 labelled page, present -> precision 1/20, and that IS the ceiling (n < k).
+    assert m["precision_at_20"] == 0.05
+    assert m["precision_ceiling_at_20"] == 0.05
+    # A fuller label set has a HIGHER ceiling, so the number is interpretable against it.
+    m2 = ev.compute_retrieval_metrics(_retrieval([5, 9, 1, 2]), [5, 9, 30, 40], cfg)
+    assert m2["precision_ceiling_at_20"] == 4 / 20
+    assert m2["precision_at_20"] == 2 / 20  # 2 relevant found of 20 slots
+
+
+def test_map_is_a_ranking_metric_not_a_pool_metric(ev, cfg):
+    """MAP divides by the FULL ground-truth size, so a discarded page lowers it."""
+    # Both relevant at the very top -> AP = (1/1 + 2/2)/2 = 1.0
+    assert ev.compute_retrieval_metrics(_retrieval([5, 9, 1]), [5, 9], cfg)["map"] == 1.0
+    # One relevant at rank 2, the other absent -> (1/2)/2 = 0.25
+    assert ev.compute_retrieval_metrics(_retrieval([1, 5, 2]), [5, 9], cfg)["map"] == 0.25
+    # No relevant at all -> 0.0
+    assert ev.compute_retrieval_metrics(_retrieval([1, 2, 3]), [50], cfg)["map"] == 0.0
+
+
+def test_f1_is_the_harmonic_mean_of_precision_and_recall(ev, cfg):
+    # 2 of 4 labelled present, both in top-20: P=2/20=0.1, R=0.5 -> F1 = 2*0.1*0.5/0.6
+    m = ev.compute_retrieval_metrics(_retrieval([5, 9, 1, 2]), [5, 9, 30, 40], cfg)
+    p, r = m["precision_at_20"], m["recall_at_20"]
+    assert m["f1_at_20"] == round(2 * p * r / (p + r), 4)
 
 
 def test_pool_vs_final_recall_gap_is_visible(ev, cfg):

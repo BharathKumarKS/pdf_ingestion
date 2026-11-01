@@ -111,7 +111,8 @@ def _run_search_with_das(settings, monkeypatch, **overrides):
     store = DocumentStore(cfg)
     seen: dict = {}
 
-    def fake_search(_vec, tenant_id=None, limit=10, query_text=None, source_type=None):
+    def fake_search(_vec, tenant_id=None, limit=10, query_text=None, source_type=None,
+                    lane_weights=None):
         seen["dense_limit"] = limit
         return _fake_hits(limit)
 
