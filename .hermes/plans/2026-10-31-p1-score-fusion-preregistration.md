@@ -116,3 +116,41 @@ additive and inert by default.**
 * If S1 or S2 RESOLVES POSITIVE at the endpoint (nDCG@20 CI excludes 0, positive), score fusion IS a lever
   and the register's "no fusion lever" reading is wrong — a new candidate opens.
 * If S1/S2 RESOLVES NEGATIVE, the rank fusion is earning its place and the question is closed.
+
+---
+
+## 9. PRE-RUN AMENDMENT (2026-11-01) — G2's anchor is STALE, re-pointed (D6.1)
+
+> **Written and committed ALONE BEFORE the run.** Nothing measured by this run is in it; the
+> numbers below are a READ-ONLY re-derivation over three EXISTING artifacts, exactly as §11a of the
+> fusion-order pre-registration (`c65e4a6`) did for the same class of defect.
+
+**The defect.** §4's prediction 1 anchors G2 on *"T0's fusion/ce rows"* (`t0_baseline.json`,
+session 22). **T0 predates the shipped per-type rerank policy** (§I97/T4, landed session 26) — and
+that policy moves the cross-encoder's query text for factual queries, so the endpoint's top-20 moved
+after T0 was written. Measured now:
+
+| row | pool coverage | nDCG@20 | MAP | MRR@20 |
+|---|---|---|---|---|
+| `t0_baseline.json` → **fusion** | **0.684486** | 0.550629 | 0.342068 | — |
+| `t0_baseline.json` → **ce** | 0.455330 | **0.494618** | 0.278931 | 0.666825 |
+| `lane_inclusion.json` → **F0** (session 27, post-policy) | **0.684486** | **0.550298** | **0.340599** | **0.771688** |
+| `fusion_order.json` → **O0** (session 28) | **0.684486** | **0.550298** | **0.340599** | **0.771688** |
+
+⇒ T0's **pool coverage reproduces EXACTLY** (0.684486), but T0's **ce row does not**: its nDCG@20 is
+0.4946 against the product's 0.5503 today (gap 0.0557, ~140× the 1e-4 tolerance). Anchoring on T0's
+ce row would **VOID a correct run**. The pool half of the anchor is sound and is kept.
+
+**The amendment — re-point G2 to `logs/p1/step10/lane_inclusion.json` arm F0.** Same index, same
+day-class, same code path, **post-policy**; and `fusion_order.json`'s O0 is **bit-identical** to it
+(both 0.5502984962406015 nDCG@20), so it is the same anchor from two independent runs. This is the
+**§11a precedent** (the fusion-order pre-registration re-pointed its G2 off T4's arm C for exactly
+this reason: T4 predates the policy).
+
+**G2 becomes:** S0 reproduces F0 on **every** endpoint key and on `pool_cov`, per type, within
+**1e-4** — **plus** T0's fusion-row `pool_cov` (0.684486) as a REPORTED cross-day consistency check,
+not asserted.
+
+**Everything else in §1–§8 stands, unchanged.** The arms, the read rule, the predictions 2 and 3, the
+guards G1/G3/G4/G5/G6, the bootstrap (10,000 resamples, seed 20261031), and the endpoint are as
+registered. This amendment changes ONE anchor, not the experiment.
