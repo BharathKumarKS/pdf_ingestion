@@ -6,10 +6,48 @@
 > was chosen and **why not** the others, with the backing number (for defence and later recall).
 > Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-10-31, session 29 (✅ **5A RAN (read-only) — THE OVERVIEW-METRIC DIAGNOSIS: the "broken measuring stick" is REFUTED STRUCTURALLY. For overview, recall and precision have IDENTICAL capture (0.527) — the broad-label denominator cancels — and EVERY type is RANKER-limited. ⇒ 5B (graded labels) is HYGIENE, not a fix.** Verifier 50/50, mutation proof 50 mutations / 50 checks reddened / NO inert check. Read `IMPROVEMENTS.md` §I101 first. Next: 4B, then 4A.)**
-> Session 28's note follows, still true: (⚠️ **THE FUSION-ORDER RUN RAN — NO ORDER INTERVENTION MOVES THE ENDPOINT. The pool's ORDER is NOT the lever; removing SPLADE+ColBERT HURTS (RESOLVED NEGATIVE on multihop). §I99's "new #1" is CLOSED and §I89's dilution hypothesis is contradicted.**)
+> **Last updated: 2026-10-31, session 30 (✅ **4B RAN (read-only) — THE ENDPOINT CUT AS nDCG@k: the cut is MONOTONE and CANNOT change the top-20 (the CE's top-20 is a PREFIX of its top-50, 133/133). It adds RECALL only; the apparent nDCG gain (+0.0233) is a CONSTRUCTION artifact — on the 45 comparable queries it is UNRESOLVED (−0.0078).** Verifier 33/33, mutation 31 mutations / 33 checks reddened / NO inert check. Read `IMPROVEMENTS.md` §I102. Next: 4A.)**
+> Session 29's note follows, still true: (✅ **5A RAN (read-only) — THE OVERVIEW-METRIC DIAGNOSIS: the "broken measuring stick" is REFUTED STRUCTURALLY. For overview, recall and precision have IDENTICAL capture (0.527) and EVERY type is RANKER-limited. ⇒ 5B (graded labels) is HYGIENE, not a fix.**)
 >
-> ## ▶ SESSION 29 — ▶ START HERE. **5A RAN (read-only): THE OVERVIEW-METRIC DIAGNOSIS. The "broken measuring stick" is REFUTED STRUCTURALLY — for overview, RECALL and PRECISION have IDENTICAL capture (0.527), so the broad-label denominator cancels; every query type is RANKER-limited. 5B (graded labels) is HYGIENE, not a fix.**
+> ## ▶ SESSION 30 — ▶ START HERE. **4B RAN (read-only): THE ENDPOINT CUT AS nDCG@k. The cut is MONOTONE and CANNOT move the top-20 — the CE's top-20 is a PREFIX of its top-50 (133/133). It adds recall only; the apparent nDCG gain is a construction artifact (unresolved on the comparable queries).**
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 30, then `IMPROVEMENTS.md` §I102 (the
+> cut as nDCG@k) and §I101 (the overview-metric diagnosis). The cut is a context-budget knob, not a
+> ranking lever. Continue the ordered plan: **4A** (score-based fusion vs rank RRF), then §A (the
+> per-space query-vector fix). Pre-register each and commit the pre-registration ALONE first (D6.1), with
+> a verifier per stage."*
+>
+> **1. ✅ WHAT RAN — nothing ran. A READ-ONLY re-derivation** over `t4_endpoint.json` (arm C = CE top-20,
+> arm W50 = CE top-50, same pool). Harness `logs/p1/step10/cut_ndcg_k.py` → `cut_ndcg_k.json` (sha256
+> `fe297d18981a17e9…`); independent stdlib verifier **33/33 checks PASS**; mutation proof **31 mutations,
+> 33/33 checks reddened, NO inert check**. Pre-registration committed ALONE as `df92662` (D6.1).
+>
+> **2. THE RESULT.** `W50_pages[:20] == C_pages` on **133/133** and the pools are identical ⇒ the cut
+> **cannot move any @20 metric** (nDCG@20/R@20/P@20 identical). Paired vs C: **ΔR@k +0.1433 [+0.1126,
+> +0.1780] RESOLVED, 77/0/56** — recall is monotone in k; the added gold is **overview 12.05 pages** vs
+> factual 1.49 / multihop 0.33. **ΔnDCG@k +0.0233 RESOLVED** — but ⚠️ **a construction artifact**: where
+> `n_rel ≤ 20` (88/133) the IDCG denominators are identical, so the delta is non-negative by construction.
+> On the **45 comparable queries (`n_rel > 20`) it is UNRESOLVED (−0.0078)**. `P@k` falls (−0.0574) purely
+> from the denominator.
+>
+> **3. ⇒ THE VERDICT: the cut is a CONTEXT-BUDGET knob, not a ranking lever.** It cannot improve the
+> top-20 and its only gain is more context. Whether that helps the *answer* is the generator stage
+> (unmeasured). ⚠️ **k=100 needs a run** (T4 kept ≤ 50) — a budget question, not a ranking one.
+>
+> **4. ⚠️ THREE DEVIATIONS, all in §I102.** (a) the comparability split was ADDED after the first run
+> (the same-denominator construction is a fact that must be stated to avoid a false positive); (b) a
+> **verifier bug found and fixed** — `json.dumps(sort_keys=True)` reorders `by_type` on reload, so the
+> bootstrap must rebuild in fixed `TYPES` order; (c) the page-list vs chunk-list convention (§I97 §15):
+> nDCG@50 differs from T4's chunk-level value by ≤ 6e-4 on 2/133; R@50 re-derives exactly.
+>
+> **5. ▶ NEXT, IN ORDER.** **(a) 4A** — score-based fusion vs rank RRF (normalization arms; a new code
+> path, declared as a retrieval-path change). **(b) §A** — the per-space query-vector fix. ⚠️ **5B (graded
+> labels) stays DEMOTED to optional hygiene** (§I101).
+>
+> **6. ⚠️ WORKING TREE.** Committed this session: **ONE — the 4B pre-registration ALONE (`df92662`, D6.1).**
+> Uncommitted: the 4B harness/verifier/mutation-proof/logs, the artifact, §I102, this block.
+>
+> ## ▶ SESSION 29 — ✅ 5A RAN (read-only). **THE OVERVIEW-METRIC DIAGNOSIS: the "broken measuring stick" is REFUTED STRUCTURALLY — for overview, RECALL and PRECISION have IDENTICAL capture (0.527), so the broad-label denominator cancels; every query type is RANKER-limited. 5B (graded labels) is HYGIENE, not a fix.**
 >
 > **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 29, then `IMPROVEMENTS.md` §I101 (the
 > overview-metric diagnosis). The overview metric is NOT the constraint (capture ≈ 0.53 on every family,

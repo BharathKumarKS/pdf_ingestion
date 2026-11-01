@@ -1,0 +1,39 @@
+mutation               intended check                      reddens?  also reddens
+-------------------------------------------------------------------------------------------
+MV_V4_nDCG20_factual   V4_nDCG20_factual                   YES       V4c_nDCG20_vs_Cmetrics_factual
+MV_V4_nDCG20_overview  V4_nDCG20_overview                  YES       V4c_nDCG20_vs_Cmetrics_overview
+MV_V4_nDCG20_multihop  V4_nDCG20_multihop                  YES       V4c_nDCG20_vs_Cmetrics_multihop
+MV_V4_R20_factual      V4_R20_factual                      YES       -
+MV_V4_R20_overview     V4_R20_overview                     YES       -
+MV_V4_R20_multihop     V4_R20_multihop                     YES       -
+MV_V4_P20_factual      V4_P20_factual                      YES       -
+MV_V4_P20_overview     V4_P20_overview                     YES       -
+MV_V4_P20_multihop     V4_P20_multihop                     YES       -
+MV_V5_R50_factual      V5_R50_vs_W50metrics_factual        YES       -
+MV_V5_R50_overview     V5_R50_vs_W50metrics_overview       YES       -
+MV_V5_R50_multihop     V5_R50_vs_W50metrics_multihop       YES       -
+MV_V8_ci_dR            V8_ci_dR                            YES       -
+MV_V8_ci_dP            V8_ci_dP                            YES       -
+MV_V8_ci_dnDCG         V8_ci_dnDCG                         YES       -
+MV_V2_n                V2_n_queries_133                    YES       -
+MV_V2b_factual         V2b_n_factual                       YES       -
+MV_V2b_overview        V2b_n_overview                      YES       -
+MV_V2b_multihop        V2b_n_multihop                      YES       -
+MV_V1_t4               V1_input_digest_t4                  YES       -
+MV_V3_prefix           V3_prefix_identity                  YES       V3c_guard_recorded, V6_prefix_implies_identical_20
+MV_V3b_poolsha         V3b_pool_sha_equal                  YES       V3c_guard_recorded
+MV_V3c_guard           V3c_guard_recorded                  YES       -
+MV_V4c                 V4c_nDCG20_vs_Cmetrics_overview     YES       V4_nDCG20_overview
+MV_V6_prefix20         V6_prefix_implies_identical_20      YES       V3_prefix_identity, V3c_guard_recorded, V4_P20_overview, V4_R20_overview, V4_nDCG20_overview
+MV_V7_len              V7_len_monotone                     YES       V3_prefix_identity, V3c_guard_recorded
+MV_V7b_gold            V7b_extra_gold_nonneg               YES       -
+MV_V9_comp_n           V9_comparability_n                  YES       -
+MV_V9b_comp_mean       V9b_comparable_mean                 YES       -
+MV_V9c_nondec          V9c_same_denom_non_decreasing       YES       V8_ci_dnDCG
+MV_V10_nan             V10_no_nan                          YES       V4_nDCG20_factual, V4c_nDCG20_vs_Cmetrics_factual
+
+mutations       : 31
+checks total    : 33
+checks reddened : 33
+INERT checks    : none
+all mutations hit: True

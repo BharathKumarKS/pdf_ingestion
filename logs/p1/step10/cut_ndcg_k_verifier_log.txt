@@ -1,0 +1,38 @@
+artifact : /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/logs/p1/step10/cut_ndcg_k.json
+source   : /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/logs/p1/step10/t4_endpoint.json
+
+  PASS  V1_input_digest_t4
+  PASS  V2_n_queries_133
+  PASS  V2b_n_factual
+  PASS  V2b_n_overview
+  PASS  V2b_n_multihop
+  PASS  V3_prefix_identity
+  PASS  V3b_pool_sha_equal
+  PASS  V3c_guard_recorded
+  PASS  V4_nDCG20_factual
+  PASS  V4_R20_factual
+  PASS  V4_P20_factual
+  PASS  V4c_nDCG20_vs_Cmetrics_factual
+  PASS  V4_nDCG20_overview
+  PASS  V4_R20_overview
+  PASS  V4_P20_overview
+  PASS  V4c_nDCG20_vs_Cmetrics_overview
+  PASS  V4_nDCG20_multihop
+  PASS  V4_R20_multihop
+  PASS  V4_P20_multihop
+  PASS  V4c_nDCG20_vs_Cmetrics_multihop
+  PASS  V5_R50_vs_W50metrics_factual
+  PASS  V5_R50_vs_W50metrics_overview
+  PASS  V5_R50_vs_W50metrics_multihop
+  PASS  V6_prefix_implies_identical_20
+  PASS  V7_len_monotone
+  PASS  V7b_extra_gold_nonneg
+  PASS  V8_ci_dR
+  PASS  V8_ci_dP
+  PASS  V8_ci_dnDCG
+  PASS  V9_comparability_n
+  PASS  V9b_comparable_mean
+  PASS  V9c_same_denom_non_decreasing
+  PASS  V10_no_nan
+
+33 checks, 0 failed

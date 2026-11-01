@@ -8396,4 +8396,76 @@ be run before the retrieval levers (4A/4B, §A), which target the loss this entr
 
 **Read-only. Nothing written to any collection. No run, no re-ingest.**
 
+---
+
+#### I102. ✅ 4B — THE ENDPOINT CUT MEASURED AS nDCG@k. ⚠️ **The cut is MONOTONE and can never change the top-20 (the CE's top-20 is a PREFIX of its top-50, 133/133); it adds RECALL and nothing else. The apparent nDCG gain is a CONSTRUCTION artifact — on the 45 comparable queries it is UNRESOLVED (−0.0078).**
+
+**The question.** §I97 P3 measured the 20-slot cut's **coverage** cost (+0.1451, RESOLVED) and the register
+read it as *"a deliberate context budget."* **Coverage is not ranking** — no run had measured nDCG@k or
+R@k. This closes that gap.
+
+**Read-only. No run** — a re-derivation over ONE artifact (`t4_endpoint.json`: arm C = CE top-20, arm W50 =
+CE top-50, same pool). Harness `logs/p1/step10/cut_ndcg_k.py` → `cut_ndcg_k.json` (sha256
+`fe297d18981a17e9…`); independent stdlib verifier `cut_ndcg_k_verifier.py` (**33/33 checks PASS**);
+mutation proof `cut_ndcg_k_mutation.py` (**31 mutations, 33/33 checks reddened, NO inert check**).
+Pre-registration `.hermes/plans/2026-10-31-p1-cut-ndcg-k-preregistration.md`, committed **ALONE** as
+`df92662` (D6.1).
+
+**1. ⚠️ THE PREFIX IDENTITY — the cut CANNOT move the top-20.** On **133 of 133** queries
+`W50_pages[:20] == C_pages` **and** `C_pool_sha == W50_pool_sha` (guard G2). The cut is applied *after*
+reranking, so widening it appends ranks 21–50 and leaves the top-20 byte-identical. ⇒ **`nDCG@20`, `R@20`,
+`P@20` are identical between the arms** (verified per query, V6). **Prediction 1 CONFIRMED.**
+
+**2. ⚠️ THE APPARENT nDCG GAIN IS A CONSTRUCTION ARTIFACT.** Paired vs arm C, n=133:
+
+| | arm C (top-20) | arm W50 (top-50) | paired Δ | 95 % CI | W/L/T | verdict |
+|---|---|---|---|---|---|---|
+| nDCG@**k** | 0.4946 | 0.5179 | **+0.0233** | [+0.0109, +0.0360] | 51/26/56 | **RESOLVED — but see below** |
+| R@**k** | 0.4442 | 0.5874 | **+0.1433** | [+0.1126, +0.1780] | 77/0/56 | RESOLVED |
+| P@**k** | 0.2398 | 0.1824 | **−0.0574** | [−0.0705, −0.0448] | 0/77/56 | RESOLVED (negative) |
+
+⚠️ **`nDCG@50` vs `nDCG@20` is NOT a like-for-like comparison.** Where `n_rel <= 20` (88 of 133 queries),
+`IDCG@20 == IDCG@50`, so the 50-list is a **superset with the same denominator** and the delta is
+**non-negative BY CONSTRUCTION**. Split by that:
+
+| block | n | mean ΔnDCG | 95 % CI | verdict | mean ΔR | extra gold |
+|---|---|---|---|---|---|---|
+| `n_rel <= 20` (same denominator) | 88 | +0.0392 | [+0.0269, +0.0528] | RESOLVED — **by construction** | +0.1191 | 0.68 |
+| **`n_rel > 20` (comparable)** | **45** | **−0.0078** | [−0.0327, +0.0183] | **UNRESOLVED** | +0.1905 | **11.42** |
+
+⇒ **On the only queries where the comparison is meaningful, the extra slots do NOT improve ranked quality
+(−0.0078, unresolved).** The aggregate +0.0233 comes entirely from the 88 same-denominator queries, where
+it is arithmetic, not a finding. **Prediction 2 CONFIRMED** once the construction is stripped.
+
+**3. ✅ THE CUT ADDS RECALL, AND CANNOT REMOVE ANY.** `ΔR@k = +0.1433 [+0.1126, +0.1780] RESOLVED`,
+**77 wins / 0 losses / 56 ties** — recall is **monotone** in k by construction (a superset), so "the cut
+costs recall" is false and "the cut adds recall" is true. Per type the added gold is **overview 12.05
+pages** vs factual 1.49 and multihop 0.33 — the broad-label type is where a wider context window pays.
+**Prediction 3 CONFIRMED.** `P@k` falls (−0.0574) purely because the denominator grows.
+
+**4. ⇒ THE VERDICT: THE CUT IS A CONTEXT-BUDGET KNOB, NOT A RANKING LEVER.** It cannot improve the
+top-20 (prefix), it improves recall monotonically, and its nDCG effect is unresolved where measurable.
+**Prediction 4 CONFIRMED.** ⚠️ Whether the extra context helps the *answer* is the **generator stage**,
+still unmeasured — so this does not say "widen the cut"; it says the cut's cost and its only gain are both
+about **context size**, not retrieval quality.
+
+**5. ⚠️ THREE DEVIATIONS, stated.**
+* **The comparability split was ADDED to the harness after the first run.** The same-denominator
+  construction is a mathematical fact (same IDCG, superset list) that MUST be stated to avoid reading
+  +0.0233 as a finding; it is a guard against a false positive, not a post-hoc filter. The pre-registration
+  §4 prediction 2 already named this case ("unresolved or negative").
+* **A verifier bug, found and fixed during verification.** `json.dumps(sort_keys=True)` reorders `by_type`
+  alphabetically on reload, so the bootstrap (which resamples by INDEX) must rebuild the population in a
+  FIXED `TYPES` order. The first verifier run failed 4 checks on exactly this; the fix is in both files.
+* **Page-list vs chunk-list convention (§I97 §15).** The artifact stores page-deduped lists, not chunk
+  slots, so `nDCG@50` re-derived from pages differs from T4's chunk-level `W50_metrics["ndcg_at_50"]` by
+  **≤ 6e-4 on 2 of 133 queries** (the documented §15 gap). `R@50` re-derives **exactly** (0 mismatches).
+
+**6. ▶ NAMED FOLLOW-UP.** **k=100 needs a run** (T4 kept ≤ 50). ⚠️ Given the prefix identity, ranks 51–100
+are the same kind of question as 21–50 — a context-budget question — so k=100 is only worth a run if the
+generator stage is being measured.
+
+**Read-only. Nothing written to any collection. No run, no re-ingest.**
+
+
 
