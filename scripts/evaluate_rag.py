@@ -182,6 +182,7 @@ def run_retrieval(
     query_type: str = "factual",
     lanes: tuple[str, ...] | None = None,
     lane_weights: dict[str, float] | None = None,
+    fusion: str = "rrf",
 ) -> dict:
     """Embed + search + rerank. Adds graph lane for multihop queries.
 
@@ -234,6 +235,7 @@ def run_retrieval(
             tenant_id=tenant_id,
             fetch_k=cfg.reranker_fetch_k,
             lane_weights=lane_weights,
+            fusion=fusion,
         )
 
         # Graph lane for multihop queries — same logic as the Streamlit app

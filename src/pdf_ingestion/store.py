@@ -450,6 +450,7 @@ class DocumentStore:
         limit: int = 10,
         query_text: str | None = None,
         lane_weights: dict[str, float] | None = None,
+        fusion: str = "rrf",
     ) -> list[dict]:
         """
         Semantic search with multi-tenant scoping.
@@ -509,6 +510,7 @@ class DocumentStore:
             filter_=filter_,
             limit=limit,
             lane_weights=lane_weights,
+            fusion=fusion,
         )
         results = [{"score": h.score, "qdrant_point_id": str(h.id), **h.payload} for h in response.points]
 
@@ -537,6 +539,7 @@ class DocumentStore:
         limit: int,
         query_text: str | None = None,
         lane_weights: dict[str, float] | None = None,
+        fusion: str = "rrf",
     ):
         """
         Notebook-style retrieval funnel (see retrieval_funnel.ipynb):
@@ -692,7 +695,12 @@ class DocumentStore:
             # tests/test_qdrant_search_lane_weights.py::test_default_path_is_inert.
             wts = (None if lane_weights is None
                    else [float(lane_weights.get(n, 1.0)) for n in lane_names])
-            merged = self._rrf_merge(*lane_lists, rrf_k=1, weights=wts)[:limit]
+            if fusion == "rrf":
+                merged = self._rrf_merge(*lane_lists, rrf_k=1, weights=wts)[:limit]
+            else:
+                # ⚠️ 4A — the SCORE-FUSION alternative (minmax | zscore). Inert unless asked for; the
+                # default (`fusion="rrf"`) is byte-identical to the shipped path (pinned by tests).
+                merged = self._score_merge(*lane_lists, mode=fusion, weights=wts)[:limit]
             return _FusedResponse([
                 _FusedPoint(score=e["rrf_score"], id=e["qdrant_point_id"], payload=e["payload"])
                 for e in merged
@@ -883,6 +891,58 @@ class DocumentStore:
         return merged
 
     @staticmethod
+    def _score_merge(*result_lists: list[dict], mode: str = "minmax",
+                     weights: list[float] | None = None) -> list[dict]:
+        """
+        Score-based fusion: normalise each lane's raw scores per query, then sum.
+
+        ⚠️ A RETRIEVAL-PATH ALTERNATIVE to `_rrf_merge`, NOT the default. The product path calls
+        `_rrf_merge(rrf_k=1)`; this exists for the 4A measurement (score fusion vs rank fusion) and is
+        inert unless a caller asks for it. The three lanes produce INCOMPARABLE scores (dense cosine,
+        SPLADE sparse dot, ColBERT MaxSim), so each lane is normalised OVER ITS OWN candidate set
+        before summing:
+          * mode="minmax": (s - min) / (max - min)   -> [0, 1]; a degenerate lane (max == min) contributes 0
+          * mode="zscore": (s - mean) / std          -> standardised; a degenerate lane contributes 0
+
+        Keyed on 'chunk_id' falling back to 'qdrant_point_id', exactly as `_rrf_merge`, so a candidate
+        is never silently dropped for lacking a chunk_id (the RAPTOR-node case). The fused value is
+        written to 'rrf_score' so the downstream pool/MMR code reads it unchanged.
+        """
+        if mode not in ("minmax", "zscore"):
+            raise ValueError(f"unknown score-fusion mode: {mode!r}")
+        wts = list(weights) if weights is not None else [1.0] * len(result_lists)
+        if len(wts) != len(result_lists):
+            raise ValueError(
+                f"weights has {len(wts)} entries but there are {len(result_lists)} lane lists")
+        scores: dict[str, float] = {}
+        best: dict[str, dict] = {}
+        for w, result_list in zip(wts, result_lists):
+            if not result_list:
+                continue
+            vals = [float(it.get("score", 0.0)) for it in result_list]
+            if mode == "minmax":
+                lo, hi = min(vals), max(vals)
+                rng = hi - lo
+                norm = [((v - lo) / rng if rng > 0 else 0.0) for v in vals]
+            else:
+                mu = sum(vals) / len(vals)
+                sd = (sum((v - mu) ** 2 for v in vals) / len(vals)) ** 0.5
+                norm = [((v - mu) / sd if sd > 0 else 0.0) for v in vals]
+            for item, nv in zip(result_list, norm):
+                cid = item.get("chunk_id") or item.get("qdrant_point_id")
+                if not cid:
+                    continue
+                scores[cid] = scores.get(cid, 0.0) + w * nv
+                if cid not in best or item.get("score", 0) > best[cid].get("score", 0):
+                    best[cid] = item
+        merged = []
+        for cid, sc in sorted(scores.items(), key=lambda x: -x[1]):
+            entry = dict(best[cid])
+            entry["rrf_score"] = round(sc, 6)
+            merged.append(entry)
+        return merged
+
+    @staticmethod
     def _mmr_select(
         candidates: list[dict],
         top_k: int,
@@ -928,6 +988,7 @@ class DocumentStore:
         fetch_k: int | None = None,
         source_type: str | None = None,
         lane_weights: dict[str, float] | None = None,
+        fusion: str = "rrf",
     ) -> list[dict]:
         """
         Multi-lane retrieval: dense (+SPLADE) → MMR → DA expansion for recall.
@@ -950,7 +1011,8 @@ class DocumentStore:
                 limit=pool, query_text=query_text,
                 source_type=source_type,
                 lane_weights=lane_weights,
-                )
+                fusion=fusion,
+            )
             telemetry.set_attr(vs_span, "hits", len(dense_hits))
 
         # DA lane: merge resolved parent chunks into the pool BEFORE dedup/MMR
