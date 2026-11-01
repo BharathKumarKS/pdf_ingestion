@@ -8058,3 +8058,342 @@ per-type n is 40–53, so **only the factual per-type effects are resolved** —
 estimates are reported as *unresolved directions*, not effects. The overall effects are n=133 and resolved.
 And the CE here is `BAAI/bge-reranker-v2-m3` as served by the cluster — a different re-ranker is a different
 question.
+
+#### I98. ✅ LANE INCLUSION RAN — **NO LANE IMPROVES THE ENDPOINT.** RAPTOR as a first-class RRF participant is a **RESOLVED HARM on overview**; DA's fusion placement is a **NULL**; and the graph lane's harm is **NOT a placement artifact** — fusing it does not recover MRR
+
+**The registered question was NOT "does this improve things"** — it was *"does making a lane a
+first-class RRF participant change its sign and ordering, versus appending it?"* (`plan §0`). Today's
+wiring inserts the three lanes at three different depths: DA is appended **after** the vector fusion,
+the graph lane is appended by the **caller after dedup/MMR** with a fabricated `score`, and RAPTOR was
+**absent from the index and never called on the eval path**.
+
+**Artifact** `logs/p1/step10/lane_inclusion.json` sha256 `0f5f5a05e01e9939…`, **133 queries, 0 errors,
+wall 5,220.6 s**, one index (`knowledge_base_v3` + RAPTOR, nomic-768), HyDE ON and frozen, read-only.
+**All 8 harness guards PASS**; the **independent stdlib verifier passes 19/19**; its mutation proof
+reddens **all 14 checks with no inert check**. Pre-registration committed **ALONE** as `93146f5`
+(D6.1), **including a dated pre-run amendment (§11)** — see below, it is the more useful half.
+
+**Arms** — each REPLACES the pool's composition, so every treatment is a single-variable contrast
+against **F0f** (`search_fused(lanes=())`, the vector lanes only, fused), while **F0** (today's
+wiring) remains the product reference:
+
+| arm | what it is | coverage | R@20 | nDCG@20 | MAP | MRR@20 | Hit@20 |
+|---|---|---|---|---|---|---|---|
+| **F0** | today's wiring | 0.4675 | 0.4563 | 0.5503 | 0.3406 | 0.7717 | 0.9323 |
+| **F0f** | fused, vector lanes only | **0.4709** | **0.4596** | **0.5549** | **0.3421** | 0.7648 | 0.9474 |
+| **F1** | DA **into** the fusion | 0.4628 | 0.4516 | 0.5502 | 0.3401 | **0.7816** | 0.9323 |
+| **F2** | graph **into** the fusion | 0.4657 | 0.4546 | 0.5340 | 0.3287 | 0.7544 | 0.9474 |
+| **F3** | RAPTOR added | 0.4678 | 0.4567 | 0.5433 | 0.3377 | 0.7648 | 0.9474 |
+| **F4** | all three fused | 0.4558 | 0.4448 | 0.5269 | 0.3312 | 0.7803 | 0.9323 |
+
+**The four results, in the order the pre-registration asked for them.**
+
+1. ⚠️ **F3 (RAPTOR) is a RESOLVED HARM on the type it targets.** Per type, F3 − F0f: **factual
+   +0.0000 and multihop +0.0000 — EXACTLY, by construction** (the lane is gated to overview, and this
+   is a free internal consistency check); **overview nDCG −0.0383 RESOLVED, MAP −0.0148 RESOLVED**;
+   coverage **−0.003028 RESOLVED NEGATIVE**. Endpoint pages fall 20 → 18 on overview: the two
+   summary candidates **consume slots and push real pages out** (`endp_pageless_total` **58 of 133**
+   queries). ⇒ **§5's prediction 1 is FALSIFIED, and §11b had already registered that it CANNOT hold
+   through coverage**: a RAPTOR summary carries **no `page_number`**, so at the page-level unit the
+   lane can only **DISPLACE**, never add. Reading this as "RAPTOR is a bad lane" would be reading a
+   property of the **unit** as a finding about the lane.
+2. **F1 (DA into the fusion) does NOT reverse the DA lane's measured harm — prediction 2 CONFIRMED.**
+   vs **F0f**: nDCG −0.0047 *unresolved*, MAP −0.0020 *unresolved*, MRR +0.0168 *unresolved*, but
+   **precision −0.00752 RESOLVED** and **F1 −0.00593 RESOLVED** (both negative). vs **F0** (today's
+   wiring): **every metric unresolved**. ⇒ the DA lane's harm is **not** a placement artifact, and
+   moving it into the fusion changes nothing measurable at the endpoint — a **null**, recorded as one.
+3. ⚠️ **F2 (graph into the fusion) does NOT recover MRR — prediction 3 FALSIFIED, and that IS the
+   finding.** vs **F0f**: nDCG **−0.0209 RESOLVED**, R@20 **−0.0051 RESOLVED**, precision
+   **−0.0147 RESOLVED**, F1 **−0.0066 RESOLVED** — all negative; MRR −0.0103 *unresolved*. vs **F0**:
+   nDCG **−0.0163 RESOLVED**, precision **−0.0087 RESOLVED**, MRR −0.0173 *unresolved*. The
+   pre-registration said it: *"if F2 does not recover MRR, the placement was not the cause."* ⇒ **the
+   graph lane's cost is content, not placement** — giving it a rank does not fix it. ⚠️ **Scope, as
+   §11f states:** the graph lane fires for **every** query type inside `search_fused` (today's wiring
+   appends it only for multihop), so F2 − F0f measures **placement on multihop** and **INCLUSION
+   elsewhere** — and the largest resolved loss is on **overview** (−0.0425 nDCG), where the lane is
+   pure addition.
+4. **F4 does not exceed the best single-lane arm — prediction 4 CONFIRMED.** F4 is the **worst arm on
+   every ranking metric** (nDCG 0.5269, overview −0.0793 RESOLVED). Lane weighting is not a free win,
+   and nothing here ships.
+
+**⚠️ A SECOND INSTRUMENT FINDING, and it would have been read as a null: `mrr_at_20` is structurally
+BLIND to a page-less lane.** `F3 − F0f` on `mrr_at_20` is **exactly 0.000000 on all 133 queries, CI
+[0, 0]** — the tell the independent-verification skill names (*"a delta of 0.0 with a zero-width CI is
+a statement about the instrument, not the treatment"*). The mechanism is in the metric: `_endpoint_mrr`
+takes the first relevant page's rank over the **page-deduped** list, and page-dedup **drops** the
+page-less candidates and **compresses the positions** — so inserting a summary above the first
+relevant page cannot move it. The metric that *can* see the displacement is nDCG/MAP (the page-less
+candidate still occupies a slot in the gains array), and there the effect is **resolved negative**.
+⇒ **Do not quote `mrr_at_20` for a page-less lane.** Same class as §I95's pool-vs-endpoint trap.
+
+**⚠️ FOUR THINGS THE PRE-RUN AMENDMENT (§11) CAUGHT, and one of them was a live defect.**
+
+* **§11a — a real defect, found by a LIVE probe, not by review.** `store.search_raptor` returned
+  `{"score": …, **payload}`: a summary's payload has **no `chunk_id`**, and `_rrf_merge` keys on
+  `chunk_id` falling back to `qdrant_point_id` (§I84) — so **every RAPTOR candidate was silently
+  dropped inside `search_fused`** and **F3 as originally registered would have been a copy of its
+  control**, i.e. a null by construction. Measured live: **0 of 2** candidates surviving before the
+  fix, **2 of 2** after. Fixed in `store.py`; pinned by
+  `tests/test_lane_inclusion_eval.py::test_the_real_search_raptor_returns_a_key_the_fusion_can_use`
+  (mutation MV7). ⚠️ The first version of the tests **could not see it** — their fixture handed the
+  fusion a `chunk_id`, a shape the real lane never produces. **This is G5's own case, caught before
+  the run rather than by it.**
+* **§11c — the arms REPLACE the composition, so G3's superset claim against F0 was false by
+  construction** (measured: F0's pool 88, F3's 75 on one overview query). Re-pointed at **F0f**,
+  which also made every arm single-variable.
+* **§11e — the graph lane's Cypher has NO stable `ORDER BY`**: pool sizes **90 / 88 / 90** across
+  three **identical** calls in one process. G3 is asserted only on the **graph-free** arms; F2/F4's
+  pool relation is **reported** (F4 has 8 violations; F1/F2/F3 none; 19 queries cut-affected by the
+  100-slot cut).
+* **§11g — the cross-day anchor cannot be asserted on small n.** The smoke (3 overview queries)
+  suggested F0 diverged from the shipped run on overview; **at n=40 the aggregate matches the shipped
+  run to +0.0000 on all seven endpoint keys**. The anchor is asserted **per type on factual and
+  multihop (14/14 within 1e-4)** and **reported** on overview. Per-query page lists differ on
+  **1 of 133** (a multihop query — the known graph-lane transient).
+
+**⚠️ What this does NOT license.** No lane ships. **F0f — the vector-only fusion — is the best arm on
+nDCG and MAP, and today's wiring is −0.00456 nDCG against it (unresolved, but precision is −0.00602
+RESOLVED negative)**: the append pattern is not *earning* anything measurable at the endpoint, but
+that is an unresolved direction, **not** a licence to delete DA or the graph lane. One corpus, one
+document, one day, one funnel, one CE model (`BAAI/bge-reranker-v2-m3`). n=133 overall, 40–53 per
+type, so **only the per-type and the larger overall effects resolve**. ⚠️ **Not measured:** the
+generator stage (retrieval only); lane weighting as a ship candidate (F4 is exploratory); the
+**overview type's real problem** — its lane, as wired, makes it worse, and its R@20 (0.1947 at the
+best arm, ceiling 0.3992) remains the programme's worst number.
+
+**Read-only. No writes to any collection beyond S2's 73 carried RAPTOR nodes; no re-ingest; no
+embedder change.**
+
+---
+
+#### I99. ✅ THE ENDPOINT'S TOP-20 LOSS, DECOMPOSED PER TYPE — **the two real levers are the POOL's coverage and the POOL's ORDER, and the CROSS-ENCODER is worth 0.005 overall.** ⚠️ It CORRECTS the report's §3 reading of overview ("a retrieval problem") and re-scopes the CE work (T4) as a fine-tune candidate.
+
+**Read-only. No run, no new measurement** — this is a re-derivation over two existing artifacts
+(`t4_endpoint.json`, `t0_baseline.json`). Harness `logs/p1/step10/order_waste_decomp.py`, artifact
+`order_waste_decomp.json`; independent stdlib verifier `order_waste_decomp_verifier.py`
+(**42/42 checks pass**, re-deriving every cell from the SOURCE per-query arrays, not from the
+harness's own output); mutation proof `order_waste_decomp_mutation.py` (**42 mutations, 42/42 checks
+reddened, NO inert check**, every mutation hits its intended check).
+
+**The decomposition.** Per query: `R_ceil_20 = min(20, n_rel)/n_rel` (the label ceiling);
+`pool_oracle_20 = min(20, pool_gold)/n_rel` (the best ANY ranker could do on the pool the product
+actually built — an upper bound, not a target); `realised_N` (the pool's own order, no CE);
+`realised_C` (the product). Losses: `waste_pool = R_ceil − oracle` (the pool lacks the gold),
+`waste_order = oracle − N` (the pool's order buries gold it holds), `waste_ce = N − C`.
+
+| type | n | R_ceil@20 | pool-oracle | pool order (N) | product (C) | waste_pool | **waste_order** | waste_ce | gold pages in pool |
+|---|---|---|---|---|---|---|---|---|---|
+| factual | 53 | 0.9557 | 0.8052 | 0.5830 | 0.5574 | 0.1505 | **0.2222** | 0.0256 | 5.3 |
+| **overview** | 40 | **0.3992** | **0.3755** | 0.2103 | 0.1882 | **0.0236** | **0.1652** | 0.0221 | **31.4** |
+| multihop | 40 | 1.0000 | 0.6466 | 0.5106 | **0.5500** | 0.3534 | 0.1360 | **−0.0394** | 2.7 |
+| all 133 | 133 | 0.8016 | 0.6283 | 0.4491 | 0.4442 | 0.1734 | **0.1791** | **0.0050** | — |
+
+⚠️ **`R_ceil@20` here is the LABEL ceiling — `min(k, n_rel)/n_rel`.** The final report's §3 column of
+the same name is **reachability-adjusted** — `min(k, |reachable|)/|labelled|` — so the two agree
+**exactly for overview (0.3992)** and differ slightly elsewhere (factual 0.9557 vs 0.9494; multihop
+1.0000 vs 0.9556; all 133 0.8016 vs 0.7858). **Both are label-side, neither is a system number**,
+and the overview conclusion — the one this entry turns on — is unaffected. A future session must not
+read the two columns as the same quantity.
+
+**1. ⚠️ THE CROSS-ENCODER IS A SMALL PART OF THE ENDPOINT LOSS — 0.0050 overall.** It is 0.0256 on
+factual, 0.0221 on overview, and **−0.0394 on multihop, where it HELPS**. The register's focus on the
+CE (T4) is correct about the *mechanism* and wrong about the *size*: the two real levers are
+`waste_pool` (0.1734) and `waste_order` (0.1791), each ~35× the CE's aggregate contribution.
+
+**2. ⇒ THE CE FINE-TUNE IS PRICED, and it is NOT the next move.** A perfect cross-encoder could
+recover at most `waste_ce` — **0.026 on factual, 0.022 on overview, and nothing at all on multihop**,
+where the CE is already a gain. Keep it as the last resort, with this ceiling attached.
+
+**3. ⚠️ OVERVIEW IS AN ORDERING PROBLEM, NOT A RETRIEVAL PROBLEM — the report's §3 reading is
+corrected.** §3 reasoned "overview has the lowest pool coverage (0.5221) ⇒ a retrieval problem". The
+oracle shows the pool **holds 31.4 labelled pages out of 88.9 — enough to fill all 20 slots** — so
+the pool supports **0.3755 of the 0.3992 ceiling (94 %)**. `waste_pool` is only **0.0236**. The
+dominant loss is `waste_order` **0.1652** (the RRF order buries gold the pool holds), plus the CE's
+0.0221. **The lane answer was already closed (§I98); the retrieval answer is now closed too.**
+⚠️ **Caveat, stated:** overview's label sets are broad (mean 73.8 pages = 7.6 % of the corpus) and
+the pool is 35 % gold, so part of `waste_order` is the metric being unable to reward a reasonable
+20-slot answer to a broad question. The order loss is real recoverable space, not all of it
+recoverable.
+
+**4. ▶ THE NEW #1: THE FUSION'S ORDERING HAS NEVER BEEN TESTED.** §I92 tested the **cap** (coverage)
+and **MMR** (coverage); §I67 tested the **width** (coverage); T4 tested the **CE's query text**. Every
+one of those is a coverage or a CE knob. `waste_order` is the loss from the pool's own **order**, and
+no run has contrasted the fused RRF order against any alternative at the endpoint. That is the
+untested lever, and it is the largest one for overview.
+
+**5. ⚠️ What this does NOT license.** The oracle is an upper bound, not an achievable target. This is
+one corpus, one document, one funnel, one CE model. `n = 40` per non-factual type, so the per-type
+figures are point estimates without CIs here — the ordering claim is a size argument, and the run
+that would give it a CI is item 4. No lane, no cap and no width is re-opened.
+
+**Read-only. Nothing written to any collection. No run.**
+
+---
+
+#### I100. ✅ THE FUSION-ORDER RUN RAN — **NO ORDER INTERVENTION MOVES THE ENDPOINT.** The pool's ORDER is **not** the lever, and removing SPLADE+ColBERT **HURTS**. ⚠️ §I99's "new #1" is CLOSED, and §I89's dilution hypothesis is contradicted.
+
+**Artifact** `logs/p1/step10/fusion_order.json` (**133 queries, 0 errors, wall 2,470 s**, one index
+`knowledge_base_v3` nomic-768, HyDE ON and frozen, read-only). Pre-registration committed **ALONE** as
+`e8dda1a`; the **pre-run amendment §11** committed **ALONE** as `c65e4a6` (D6.1). Harness
+`fusion_order_endpoint.py`; independent stdlib verifier `fusion_order_verifier.py`
+(**393/393 checks PASS**); mutation proof `fusion_order_mutation.py` (**391 mutations, 393/393 checks
+reddened, NO inert check**, every mutation reddens its intended check).
+
+**THE RESULT — every treatment is a null or a harm.** Paired per query vs **O0** (the product), n=133:
+
+| arm | what it changes | nDCG@20 | MAP | MRR@20 | R@20 | P@20 |
+|---|---|---|---|---|---|---|
+| **O1** | `mmr_enabled=False` | +0.0004 *unres* | −0.0005 *unres* | +0.0004 *unres* | +0.0015 *unres* | −0.0000 *unres* |
+| **O2** | `colbert_enabled=False` | −0.0012 *unres* | −0.0034 *unres* | −0.0028 *unres* | +0.0001 *unres* | +0.0015 *unres* |
+| **O3** | dense-only (SPLADE+ColBERT out) | **−0.0182** *unres* | **−0.0145** *unres* | **−0.0231** *unres* | **−0.0238** *unres* | −0.0011 *unres* |
+| **O4** | level-1 RRF weights (dense 1.0, sparse .5, colbert .5) | −0.0004 *unres* | −0.0027 *unres* | +0.0038 *unres* | −0.0006 *unres* | +0.0015 *unres* |
+
+**1. ⇒ NOTHING SHIPS, and the lever is CLOSED.** The largest effect is **O3, and it is NEGATIVE** —
+**RESOLVED NEGATIVE on multihop** (nDCG **−0.0162 [−0.0310, −0.0015]**, R@20 **−0.0264
+[−0.0518, −0.0011]**). Every other cell is unresolved. **The pool's order is not improvable by any of
+these mechanisms**, so `waste_order` (§I99: 0.1791 overall, 0.1652 overview) is **not produced by MMR,
+not by ColBERT dilution, and not by level-1 lane weighting.** §I99's "the fusion's ordering has never
+been tested → the new #1" is answered, and the answer is **no**.
+
+**2. ⚠️ §I89's DILUTION HYPOTHESIS IS CONTRADICTED.** §I89/§I99 suggested the model-independent lanes
+(SPLADE, ColBERT) dilute the dense lane in RRF. **Removing them makes it worse**, not better: O3 is
+−0.0182 overall and resolved-negative on multihop. The lanes are earning their place.
+
+**3. ⚠️ PER TYPE, and overview nudges UP in every arm — none resolves.** overview nDCG@20: O1
+**+0.0024**, O2 **+0.0050**, O3 **+0.0083**, O4 **+0.0050** — **all unresolved** (n=40). factual:
+O1 +0.0009, O2 −0.0094, O3 **−0.0396**, O4 −0.0011. multihop: O1 −0.0024, O2 +0.0034, O3 **−0.0162
+RESOLVED**, O4 −0.0049. So the direction is consistent — order tweaks help overview slightly and hurt
+factual/multihop — but **the magnitude is ~20× below what would close `waste_order`**.
+
+**4. ⚠️ MMR DOES FIRE — on 16 of 133 queries — and O1 differs from O0 on EXACTLY those 16.** The
+artifact carries O0's own MMR delta; the set of queries where O0's MMR fired and the set where O1's
+pool differs from O0's are **set-equal**. So O1 is a genuine single-variable contrast, and its null is
+a measured null.
+
+**5. ⚠️ O4 IS NOT A PURE ORDER INTERVENTION — §2's claim was WRONG.** §2 said O4 isolates dilution
+"**without** removing candidates". Measured: O4's pool page SET differs from O0's on **133 of 133**
+queries (the order on 133/133), because the level-1 fusion is **truncated** to `limit` and reordering
+moves which candidates survive. **Stated, not buried:** O4's null could be an order effect cancelled by
+a composition change, and it cannot be read as a clean order test.
+
+**6. THE REGISTERED PREDICTIONS, scored.**
+* **P1 (O1 is a null) — CONFIRMED as a null, but the REASON given was wrong.** §5 said MMR "fires only
+  when `len(deduped) > fetch_k`, which is a minority of queries". It fires on **16 of 133** and O1
+  differs on exactly those. A right answer from a wrong mechanism.
+* **P2 (O3 improves overview) — DIRECTION CONFIRMED, UNRESOLVED** (+0.0083 nDCG, +0.0025 R@20), **and
+  O3 is a net HARM overall and RESOLVED NEGATIVE on multihop.** The prediction was not weighted for
+  the other two types.
+* **P3 (O2 sits between O0 and O3) — CONFIRMED** (−0.0012 vs −0.0182).
+* **P4 (O4 ≥ O0 on overview) — direction confirmed, UNRESOLVED** (+0.0050).
+* **P5 (no arm closes `waste_order`) — CONFIRMED**, decisively: the best overview gain is +0.0083
+  against 0.1652.
+
+**7. ⚠️ THREE DEVIATIONS, all stated.**
+* **The mutation proof ran AFTER the run**, not before it as §7 required. It **cannot** run before: the
+  verifier's checks are population-specific (133 queries, 53/40/40), so it needs a full-shaped
+  artifact. It ran **before any number was read** — the §I91 precedent, recorded rather than hidden.
+* **The recorded `G3` flag is MIS-SPECIFIED and is SUPERSEDED.** The harness read `mmr_fired` from the
+  **arm's own** call, and for O1 MMR is disabled — so it read False on all 133 and G3 asserted
+  set-equality on the 16 queries where O0's MMR **did** fire. Re-derived from O0's own delta, G3
+  **PASSES**. The verifier re-derives it (`V6_G3_O1_set_equality_REDERIVED`) and asserts the recorded
+  flag is the mis-specified one (`V6_G3d`); the harness is fixed.
+* **The recorded `G5` sub-check `O4_pool_set_identical_to_O0_everywhere` is MIS-SPECIFIED** — it is an
+  INVARIANCE claim, not a mechanism check, and false by construction (item 5). Corrected to
+  **reported**; the mechanism checks all pass.
+
+**8. ⚠️ TWO INSTRUMENT FINDINGS worth carrying.**
+* **`V4` is not "must be zero".** 10 multihop queries carry a **page-less endpoint candidate** from the
+  graph lane (`gold-008` on all six arms — the same query §I98 flagged). The harness's metrics count the
+  slot; a re-derivation from page lists cannot. The verifier now checks the **metric function** only on
+  the rows where it is exact and reports the exclusion, and asserts the **mechanism** (every affected
+  query is multihop).
+* **`O0w` (the guard arm) is bit-identical to `O0` on 133/133 queries** — the live proof that the O4
+  code change is inert by default. `G7` PASSES.
+
+**9. ▶ WHAT THIS LEAVES.** The endpoint's loss is **not** the pool's order, **not** the lanes, **not**
+the fusion width/cap/MMR, and the cross-encoder is worth 0.005 (§I99). The remaining candidates are the
+**embedder/ingestion** (§A, the per-space query-vector fix, which unblocks the v2-vs-v3 comparison) and
+the **generator stage** (unmeasured). ⚠️ **The overview metric itself is now a live suspect**: its label
+sets are broad (73.8 pages of 968), the pool is 35 % gold, and no ranker — fused, weighted, dense-only
+or cross-encoded — surfaces more than ~51 % of its slots as gold.
+
+**Read-only. No writes to any collection. No re-ingest, no embedder change.**
+
+---
+
+#### I101. ✅ 5A — THE OVERVIEW-METRIC DIAGNOSIS RAN (read-only). ⚠️ **The "broken measuring stick" is REFUTED STRUCTURALLY: for overview, RECALL and PRECISION have IDENTICAL capture (0.527), so the broad-label denominator cancels — the metric is not the constraint. Every query type is RANKER-limited.** ⇒ 5B (graded labels) is **hygiene, not a fix**.
+
+**The question** (§I100 item 9). Is overview's low score an ARTIFACT of the metric (a 73.8-page label set
+making recall's denominator enormous) or a REAL ranking loss? §I100 registered it as *"a live suspect"*
+but never tested it. **This is the gate for 5B.**
+
+**Read-only. No run, no new measurement** — a re-derivation over three existing artifacts
+(`t4_endpoint.json`, `t0_baseline.json`, `fusion_order.json`). Harness
+`logs/p1/step10/overview_metric_diag.py` → `overview_metric_diag.json` (sha256 `a08ed9b92c1c597a…`);
+independent stdlib verifier `overview_metric_diag_verifier.py` (**50/50 checks PASS**, every cell
+re-derived from the SOURCE per-query arrays); mutation proof `overview_metric_diag_mutation.py`
+(**50 mutations, 50/50 checks reddened, NO inert check**). Pre-registration
+`.hermes/plans/2026-10-31-p1-overview-metric-diagnosis-preregistration.md`, committed **ALONE** as
+`8f6af4f` (D6.1).
+
+**The method — two ceilings, and a capture ratio.** Per query: the realised value, the **LABEL** ceiling
+(what the register already reports), and the **POOL-AWARE** ceiling — the best any ranker could do on
+the gold the product's pool *actually holds* (`P_ceil_pool = min(pool_gold,k)/k`;
+`nDCG_ceil_pool = IDCG(min(pool_gold,k))/IDCG(min(n_rel,k))`). `capture = realised / ceiling_pool`
+(per-query ratio, averaged within type). **`capture >= 0.90` ⇒ metric-limited; `< 0.90` ⇒
+ranker-limited** — the threshold was fixed in the pre-registration and not moved.
+
+| type | n | R@20 | R-ceil lab / pool | **cap_R** | P@20 | P-ceil lab / pool | **cap_P** | nDCG | nDCG-ceil pool | **cap_nDCG** | pool_gold (mean/med/min/max) | frac ≥ 20 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| factual | 53 | 0.5574 | 0.9557 / 0.8052 | 0.673 | 0.1358 | 0.3000 / 0.2472 | 0.673 | 0.4524 | 0.8829 | 0.509 | 5.3 / 2 / 0 / 29 | 0.08 |
+| **overview** | 40 | 0.1882 | 0.3992 / 0.3755 | **0.527** | 0.5125 | 1.0000 / **0.9688** | **0.527** | 0.5379 | **0.9790** | **0.548** | **31.4 / 29 / 12 / 61** | **0.80** |
+| multihop | 40 | 0.5500 | 1.0000 / 0.6466 | 0.843 | 0.1050 | 0.2138 / 0.1363 | 0.843 | 0.5072 | 0.7221 | 0.700 | 2.7 / 2 / 0 / 9 | 0.00 |
+| all 133 | 133 | 0.4442 | — / 0.6283 | 0.676 | 0.2398 | — / 0.4308 | 0.676 | 0.4946 | 0.8634 | 0.576 | — | — |
+
+**1. ⚠️ THE STRUCTURAL FINDING — recall and precision have the SAME capture, so the broad-label
+argument is MOOT.** For overview, `cap_R == cap_P == 0.527` **exactly**. That is not a coincidence: both
+ratios reduce to the same quantity,
+`|gold ∩ C| / min(k, pool_gold)` — the `n_rel` denominator **cancels** between the realised recall and
+the recall ceiling. ⇒ **A broad label set cannot make recall selectively unfair here, because recall's
+capture is identical to precision's.** The "73.8 pages is too many" reading is **refuted for the
+capture question**: the label breadth is fully absorbed by the ceiling, and against that ceiling the
+ranker sits at 0.53 on both families.
+
+**2. ⚠️ THE POOL-AWARE CEILINGS ARE NEAR THE LABEL CEILINGS, so the register's `P-ceil = 1.0` was
+slightly optimistic but not misleading.** overview `P_ceil_pool = 0.9688` (vs label 1.0),
+`nDCG_ceil_pool = 0.9790` (vs label 1.0), `R_ceil_pool = 0.3755` (vs label 0.3992). **80 % of overview
+queries have `pool_gold >= 20`** — the pool holds enough gold to fill every slot — so the achievable
+ceiling really is ≈1.0 and the system really is at ≈0.53 of it. **0.43 of nDCG@20 is recoverable
+ranking**, not a metric artifact.
+
+**3. ⇒ THE VERDICT: RANKER-LIMITED on EVERY family, for EVERY type.** overview: R 0.527 · P 0.527 ·
+nDCG 0.548. factual: 0.673 · 0.673 · 0.509. multihop: 0.843 · 0.843 · 0.700. All **below the 0.90
+threshold**. The registered prediction ("overview is ranker-limited on all three families; the
+broken-measuring-stick reading is refuted") is **CONFIRMED**. ⇒ **5B (graded labels) is HYGIENE, not a
+fix** — it would not make the overview problem go away, because the metric is not where the loss is.
+The loss is the ordering loss already named (§I99 `waste_order` 0.1652).
+
+**4. ✅ THE MMR SUBSET CHECK (the Q3 question, folded in).** MMR fires on **16 of 133** — factual 5,
+overview 5, multihop 6 (⚠️ **spread across all three types, not concentrated**). On the queries where it
+fires, `O1 − O0` (MMR off vs the product) is **nDCG +0.0030, R@20 +0.0127, MRR@20 +0.0037** — small, and
+**mixed by type** (nDCG: factual **+0.0091**, overview **+0.0195**, multihop **−0.0159**). ⇒ **Even on
+its own firing set, MMR moves the endpoint metric by ~0.003 nDCG** — the aggregate null (§I100) is not
+hiding large opposite-sign per-query effects; the 16 are individually near-null. The firing set is
+**set-equal to the O0/O1 pool-diff set** (§I100 item 4 reproduced, guard V8b).
+
+**5. ⚠️ A DEVIATION, stated.** The pre-registration §3 wrote `capture = realised/ceiling` without saying
+*per-query-then-averaged* vs *ratio-of-means*. It is implemented **per-query-then-averaged** (the
+project's universal convention — the §I99 harness does the same), and the verifier re-derives it that
+way. The two definitions differ by < 0.02 on every cell and **change no verdict**. Recorded rather than
+silently chosen.
+
+**6. ⚠️ What this does NOT license.** It does not say the ranker is "broken" — the pool-aware ceiling is
+an ORACLE (an upper bound, §I99), not a target. It says the metric is not the explanation and the
+headroom is real ranking headroom. One corpus, one document, one funnel, one CE model. ⚠️ **It does not
+close 5B**: a graded label set is still legitimate hygiene for a broad question class, and it remains
+available — but it is **demoted from "the overview fix" to "optional label hygiene"**, and it should not
+be run before the retrieval levers (4A/4B, §A), which target the loss this entry shows is real.
+
+**Read-only. Nothing written to any collection. No run, no re-ingest.**
+
+
