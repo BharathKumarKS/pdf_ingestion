@@ -1,0 +1,119 @@
+{
+ "meta": {
+  "arm": "S0",
+  "collection": "knowledge_base_v3",
+  "fusion": "rrf",
+  "n_calls_per_query": 4,
+  "n_queries": 5,
+  "qdrant_host": "10.0.10.65",
+  "read_only": true,
+  "what": "the store's vector-lane query is nondeterministic in its tail; the pool is not"
+ },
+ "per_query": [
+  {
+   "endpoint_pages_reproducible": true,
+   "id": "gold-036",
+   "lane_digests": [
+    "25871c45f8b3c921",
+    "cc7447804941f46e",
+    "cc7447804941f46e",
+    "cc7447804941f46e"
+   ],
+   "n_calls": 4,
+   "n_distinct_lane_digests": 2,
+   "n_distinct_pool_shas": 1,
+   "pool_shas": [
+    "731429ae6b0498fc",
+    "731429ae6b0498fc",
+    "731429ae6b0498fc",
+    "731429ae6b0498fc"
+   ],
+   "query_type": "factual"
+  },
+  {
+   "endpoint_pages_reproducible": true,
+   "id": "gold-093",
+   "lane_digests": [
+    "c183ed890801f6af",
+    "c183ed890801f6af",
+    "85ce8d1b32e0a9aa",
+    "85ce8d1b32e0a9aa"
+   ],
+   "n_calls": 4,
+   "n_distinct_lane_digests": 2,
+   "n_distinct_pool_shas": 1,
+   "pool_shas": [
+    "43094fdcd2fb7de7",
+    "43094fdcd2fb7de7",
+    "43094fdcd2fb7de7",
+    "43094fdcd2fb7de7"
+   ],
+   "query_type": "multihop"
+  },
+  {
+   "endpoint_pages_reproducible": true,
+   "id": "gold-097",
+   "lane_digests": [
+    "3ae6ddbb6766100a",
+    "3ae6ddbb6766100a",
+    "0cbc5e66a0498e6c",
+    "0cbc5e66a0498e6c"
+   ],
+   "n_calls": 4,
+   "n_distinct_lane_digests": 2,
+   "n_distinct_pool_shas": 1,
+   "pool_shas": [
+    "aac31b5c1a2f60cd",
+    "aac31b5c1a2f60cd",
+    "aac31b5c1a2f60cd",
+    "aac31b5c1a2f60cd"
+   ],
+   "query_type": "multihop"
+  },
+  {
+   "endpoint_pages_reproducible": true,
+   "id": "ovw-008",
+   "lane_digests": [
+    "4580716ddf5e62bb",
+    "62dcec0550b2aeaa",
+    "4580716ddf5e62bb",
+    "4580716ddf5e62bb"
+   ],
+   "n_calls": 4,
+   "n_distinct_lane_digests": 2,
+   "n_distinct_pool_shas": 1,
+   "pool_shas": [
+    "ce13aeb8634ad7e7",
+    "ce13aeb8634ad7e7",
+    "ce13aeb8634ad7e7",
+    "ce13aeb8634ad7e7"
+   ],
+   "query_type": "overview"
+  },
+  {
+   "endpoint_pages_reproducible": true,
+   "id": "ovw-020",
+   "lane_digests": [
+    "9bf022abba83bc6a",
+    "9bf022abba83bc6a",
+    "9bf022abba83bc6a",
+    "a1176ac994f2c918"
+   ],
+   "n_calls": 4,
+   "n_distinct_lane_digests": 2,
+   "n_distinct_pool_shas": 1,
+   "pool_shas": [
+    "4b4f2def94989c0b",
+    "4b4f2def94989c0b",
+    "4b4f2def94989c0b",
+    "4b4f2def94989c0b"
+   ],
+   "query_type": "overview"
+  }
+ ],
+ "summary": {
+  "queries_with_a_lane_digest_flip": 5,
+  "queries_with_a_pool_sha_flip": 0,
+  "queries_with_unstable_endpoint_pages": 0
+ }
+}

@@ -1,0 +1,316 @@
+mutation                                     intended check                                  reddens?
+-------------------------------------------------------------------------------------------------------
+MV_V2_S0_overall_ndcg_at_20                  V2_S0_overall_ndcg_at_20                        YES   (+1 other)
+MV_V2_S0_overall_map                         V2_S0_overall_map                               YES   (+1 other)
+MV_V2_S0_overall_mrr_at_20                   V2_S0_overall_mrr_at_20                         YES   (+1 other)
+MV_V2_S0_overall_recall_at_20                V2_S0_overall_recall_at_20                      YES   (+1 other)
+MV_V2_S0_overall_recall_at_100               V2_S0_overall_recall_at_100                     YES
+MV_V2_S0_overall_hit_at_20                   V2_S0_overall_hit_at_20                         YES   (+1 other)
+MV_V2_S0_overall_precision_at_20             V2_S0_overall_precision_at_20                   YES   (+1 other)
+MV_V2_S0_overall_precision_ceiling_at_20     V2_S0_overall_precision_ceiling_at_20           YES   (+1 other)
+MV_V2_S0_overall_f1_at_20                    V2_S0_overall_f1_at_20                          YES   (+1 other)
+MV_V2_S0_overall_precision_ceiling_at_20     V2_S0_overall_precision_ceiling_at_20           YES   (+1 other)
+MV_V2_S0_overall_coverage_reachable          V2_S0_overall_coverage_reachable                YES
+MV_V2_S0_overall_pool_cov                    V2_S0_overall_pool_cov                          YES   (+1 other)
+MV_V2_S0_overall_pool_mean                   V2_S0_overall_pool_mean                         YES
+MV_V2_S0_factual_ndcg_at_20                  V2_S0_factual_ndcg_at_20                        YES   (+1 other)
+MV_V2_S0_factual_map                         V2_S0_factual_map                               YES   (+1 other)
+MV_V2_S0_factual_mrr_at_20                   V2_S0_factual_mrr_at_20                         YES   (+1 other)
+MV_V2_S0_factual_recall_at_20                V2_S0_factual_recall_at_20                      YES   (+1 other)
+MV_V2_S0_factual_recall_at_100               V2_S0_factual_recall_at_100                     YES
+MV_V2_S0_factual_hit_at_20                   V2_S0_factual_hit_at_20                         YES   (+1 other)
+MV_V2_S0_factual_precision_at_20             V2_S0_factual_precision_at_20                   YES   (+1 other)
+MV_V2_S0_factual_precision_ceiling_at_20     V2_S0_factual_precision_ceiling_at_20           YES   (+1 other)
+MV_V2_S0_factual_f1_at_20                    V2_S0_factual_f1_at_20                          YES   (+1 other)
+MV_V2_S0_factual_precision_ceiling_at_20     V2_S0_factual_precision_ceiling_at_20           YES   (+1 other)
+MV_V2_S0_factual_coverage_reachable          V2_S0_factual_coverage_reachable                YES
+MV_V2_S0_factual_pool_cov                    V2_S0_factual_pool_cov                          YES   (+1 other)
+MV_V2_S0_factual_pool_mean                   V2_S0_factual_pool_mean                         YES
+MV_V2_S0_multihop_ndcg_at_20                 V2_S0_multihop_ndcg_at_20                       YES   (+1 other)
+MV_V2_S0_multihop_map                        V2_S0_multihop_map                              YES   (+1 other)
+MV_V2_S0_multihop_mrr_at_20                  V2_S0_multihop_mrr_at_20                        YES   (+1 other)
+MV_V2_S0_multihop_recall_at_20               V2_S0_multihop_recall_at_20                     YES   (+1 other)
+MV_V2_S0_multihop_recall_at_100              V2_S0_multihop_recall_at_100                    YES
+MV_V2_S0_multihop_hit_at_20                  V2_S0_multihop_hit_at_20                        YES   (+1 other)
+MV_V2_S0_multihop_precision_at_20            V2_S0_multihop_precision_at_20                  YES   (+1 other)
+MV_V2_S0_multihop_precision_ceiling_at_20    V2_S0_multihop_precision_ceiling_at_20          YES   (+1 other)
+MV_V2_S0_multihop_f1_at_20                   V2_S0_multihop_f1_at_20                         YES   (+1 other)
+MV_V2_S0_multihop_precision_ceiling_at_20    V2_S0_multihop_precision_ceiling_at_20          YES   (+1 other)
+MV_V2_S0_multihop_coverage_reachable         V2_S0_multihop_coverage_reachable               YES
+MV_V2_S0_multihop_pool_cov                   V2_S0_multihop_pool_cov                         YES   (+1 other)
+MV_V2_S0_multihop_pool_mean                  V2_S0_multihop_pool_mean                        YES
+MV_V2_S0_overview_ndcg_at_20                 V2_S0_overview_ndcg_at_20                       YES   (+1 other)
+MV_V2_S0_overview_map                        V2_S0_overview_map                              YES   (+1 other)
+MV_V2_S0_overview_mrr_at_20                  V2_S0_overview_mrr_at_20                        YES   (+1 other)
+MV_V2_S0_overview_recall_at_20               V2_S0_overview_recall_at_20                     YES   (+1 other)
+MV_V2_S0_overview_recall_at_100              V2_S0_overview_recall_at_100                    YES
+MV_V2_S0_overview_hit_at_20                  V2_S0_overview_hit_at_20                        YES   (+1 other)
+MV_V2_S0_overview_precision_at_20            V2_S0_overview_precision_at_20                  YES   (+1 other)
+MV_V2_S0_overview_precision_ceiling_at_20    V2_S0_overview_precision_ceiling_at_20          YES   (+1 other)
+MV_V2_S0_overview_f1_at_20                   V2_S0_overview_f1_at_20                         YES   (+1 other)
+MV_V2_S0_overview_precision_ceiling_at_20    V2_S0_overview_precision_ceiling_at_20          YES   (+1 other)
+MV_V2_S0_overview_coverage_reachable         V2_S0_overview_coverage_reachable               YES
+MV_V2_S0_overview_pool_cov                   V2_S0_overview_pool_cov                         YES   (+1 other)
+MV_V2_S0_overview_pool_mean                  V2_S0_overview_pool_mean                        YES
+MV_V2_S1_overall_ndcg_at_20                  V2_S1_overall_ndcg_at_20                        YES
+MV_V2_S1_overall_map                         V2_S1_overall_map                               YES
+MV_V2_S1_overall_mrr_at_20                   V2_S1_overall_mrr_at_20                         YES
+MV_V2_S1_overall_recall_at_20                V2_S1_overall_recall_at_20                      YES
+MV_V2_S1_overall_recall_at_100               V2_S1_overall_recall_at_100                     YES
+MV_V2_S1_overall_hit_at_20                   V2_S1_overall_hit_at_20                         YES
+MV_V2_S1_overall_precision_at_20             V2_S1_overall_precision_at_20                   YES
+MV_V2_S1_overall_precision_ceiling_at_20     V2_S1_overall_precision_ceiling_at_20           YES
+MV_V2_S1_overall_f1_at_20                    V2_S1_overall_f1_at_20                          YES
+MV_V2_S1_overall_precision_ceiling_at_20     V2_S1_overall_precision_ceiling_at_20           YES
+MV_V2_S1_overall_coverage_reachable          V2_S1_overall_coverage_reachable                YES
+MV_V2_S1_overall_pool_cov                    V2_S1_overall_pool_cov                          YES
+MV_V2_S1_overall_pool_mean                   V2_S1_overall_pool_mean                         YES
+MV_V2_S1_factual_ndcg_at_20                  V2_S1_factual_ndcg_at_20                        YES
+MV_V2_S1_factual_map                         V2_S1_factual_map                               YES
+MV_V2_S1_factual_mrr_at_20                   V2_S1_factual_mrr_at_20                         YES
+MV_V2_S1_factual_recall_at_20                V2_S1_factual_recall_at_20                      YES
+MV_V2_S1_factual_recall_at_100               V2_S1_factual_recall_at_100                     YES
+MV_V2_S1_factual_hit_at_20                   V2_S1_factual_hit_at_20                         YES
+MV_V2_S1_factual_precision_at_20             V2_S1_factual_precision_at_20                   YES
+MV_V2_S1_factual_precision_ceiling_at_20     V2_S1_factual_precision_ceiling_at_20           YES
+MV_V2_S1_factual_f1_at_20                    V2_S1_factual_f1_at_20                          YES
+MV_V2_S1_factual_precision_ceiling_at_20     V2_S1_factual_precision_ceiling_at_20           YES
+MV_V2_S1_factual_coverage_reachable          V2_S1_factual_coverage_reachable                YES
+MV_V2_S1_factual_pool_cov                    V2_S1_factual_pool_cov                          YES
+MV_V2_S1_factual_pool_mean                   V2_S1_factual_pool_mean                         YES
+MV_V2_S1_multihop_ndcg_at_20                 V2_S1_multihop_ndcg_at_20                       YES
+MV_V2_S1_multihop_map                        V2_S1_multihop_map                              YES
+MV_V2_S1_multihop_mrr_at_20                  V2_S1_multihop_mrr_at_20                        YES
+MV_V2_S1_multihop_recall_at_20               V2_S1_multihop_recall_at_20                     YES
+MV_V2_S1_multihop_recall_at_100              V2_S1_multihop_recall_at_100                    YES
+MV_V2_S1_multihop_hit_at_20                  V2_S1_multihop_hit_at_20                        YES
+MV_V2_S1_multihop_precision_at_20            V2_S1_multihop_precision_at_20                  YES
+MV_V2_S1_multihop_precision_ceiling_at_20    V2_S1_multihop_precision_ceiling_at_20          YES
+MV_V2_S1_multihop_f1_at_20                   V2_S1_multihop_f1_at_20                         YES
+MV_V2_S1_multihop_precision_ceiling_at_20    V2_S1_multihop_precision_ceiling_at_20          YES
+MV_V2_S1_multihop_coverage_reachable         V2_S1_multihop_coverage_reachable               YES
+MV_V2_S1_multihop_pool_cov                   V2_S1_multihop_pool_cov                         YES
+MV_V2_S1_multihop_pool_mean                  V2_S1_multihop_pool_mean                        YES
+MV_V2_S1_overview_ndcg_at_20                 V2_S1_overview_ndcg_at_20                       YES
+MV_V2_S1_overview_map                        V2_S1_overview_map                              YES
+MV_V2_S1_overview_mrr_at_20                  V2_S1_overview_mrr_at_20                        YES
+MV_V2_S1_overview_recall_at_20               V2_S1_overview_recall_at_20                     YES
+MV_V2_S1_overview_recall_at_100              V2_S1_overview_recall_at_100                    YES
+MV_V2_S1_overview_hit_at_20                  V2_S1_overview_hit_at_20                        YES
+MV_V2_S1_overview_precision_at_20            V2_S1_overview_precision_at_20                  YES
+MV_V2_S1_overview_precision_ceiling_at_20    V2_S1_overview_precision_ceiling_at_20          YES
+MV_V2_S1_overview_f1_at_20                   V2_S1_overview_f1_at_20                         YES
+MV_V2_S1_overview_precision_ceiling_at_20    V2_S1_overview_precision_ceiling_at_20          YES
+MV_V2_S1_overview_coverage_reachable         V2_S1_overview_coverage_reachable               YES
+MV_V2_S1_overview_pool_cov                   V2_S1_overview_pool_cov                         YES
+MV_V2_S1_overview_pool_mean                  V2_S1_overview_pool_mean                        YES
+MV_V2_S2_overall_ndcg_at_20                  V2_S2_overall_ndcg_at_20                        YES
+MV_V2_S2_overall_map                         V2_S2_overall_map                               YES
+MV_V2_S2_overall_mrr_at_20                   V2_S2_overall_mrr_at_20                         YES
+MV_V2_S2_overall_recall_at_20                V2_S2_overall_recall_at_20                      YES
+MV_V2_S2_overall_recall_at_100               V2_S2_overall_recall_at_100                     YES
+MV_V2_S2_overall_hit_at_20                   V2_S2_overall_hit_at_20                         YES
+MV_V2_S2_overall_precision_at_20             V2_S2_overall_precision_at_20                   YES
+MV_V2_S2_overall_precision_ceiling_at_20     V2_S2_overall_precision_ceiling_at_20           YES
+MV_V2_S2_overall_f1_at_20                    V2_S2_overall_f1_at_20                          YES
+MV_V2_S2_overall_precision_ceiling_at_20     V2_S2_overall_precision_ceiling_at_20           YES
+MV_V2_S2_overall_coverage_reachable          V2_S2_overall_coverage_reachable                YES
+MV_V2_S2_overall_pool_cov                    V2_S2_overall_pool_cov                          YES
+MV_V2_S2_overall_pool_mean                   V2_S2_overall_pool_mean                         YES
+MV_V2_S2_factual_ndcg_at_20                  V2_S2_factual_ndcg_at_20                        YES
+MV_V2_S2_factual_map                         V2_S2_factual_map                               YES
+MV_V2_S2_factual_mrr_at_20                   V2_S2_factual_mrr_at_20                         YES
+MV_V2_S2_factual_recall_at_20                V2_S2_factual_recall_at_20                      YES
+MV_V2_S2_factual_recall_at_100               V2_S2_factual_recall_at_100                     YES
+MV_V2_S2_factual_hit_at_20                   V2_S2_factual_hit_at_20                         YES
+MV_V2_S2_factual_precision_at_20             V2_S2_factual_precision_at_20                   YES
+MV_V2_S2_factual_precision_ceiling_at_20     V2_S2_factual_precision_ceiling_at_20           YES
+MV_V2_S2_factual_f1_at_20                    V2_S2_factual_f1_at_20                          YES
+MV_V2_S2_factual_precision_ceiling_at_20     V2_S2_factual_precision_ceiling_at_20           YES
+MV_V2_S2_factual_coverage_reachable          V2_S2_factual_coverage_reachable                YES
+MV_V2_S2_factual_pool_cov                    V2_S2_factual_pool_cov                          YES
+MV_V2_S2_factual_pool_mean                   V2_S2_factual_pool_mean                         YES
+MV_V2_S2_multihop_ndcg_at_20                 V2_S2_multihop_ndcg_at_20                       YES
+MV_V2_S2_multihop_map                        V2_S2_multihop_map                              YES
+MV_V2_S2_multihop_mrr_at_20                  V2_S2_multihop_mrr_at_20                        YES
+MV_V2_S2_multihop_recall_at_20               V2_S2_multihop_recall_at_20                     YES
+MV_V2_S2_multihop_recall_at_100              V2_S2_multihop_recall_at_100                    YES
+MV_V2_S2_multihop_hit_at_20                  V2_S2_multihop_hit_at_20                        YES
+MV_V2_S2_multihop_precision_at_20            V2_S2_multihop_precision_at_20                  YES
+MV_V2_S2_multihop_precision_ceiling_at_20    V2_S2_multihop_precision_ceiling_at_20          YES
+MV_V2_S2_multihop_f1_at_20                   V2_S2_multihop_f1_at_20                         YES
+MV_V2_S2_multihop_precision_ceiling_at_20    V2_S2_multihop_precision_ceiling_at_20          YES
+MV_V2_S2_multihop_coverage_reachable         V2_S2_multihop_coverage_reachable               YES
+MV_V2_S2_multihop_pool_cov                   V2_S2_multihop_pool_cov                         YES
+MV_V2_S2_multihop_pool_mean                  V2_S2_multihop_pool_mean                        YES
+MV_V2_S2_overview_ndcg_at_20                 V2_S2_overview_ndcg_at_20                       YES
+MV_V2_S2_overview_map                        V2_S2_overview_map                              YES
+MV_V2_S2_overview_mrr_at_20                  V2_S2_overview_mrr_at_20                        YES
+MV_V2_S2_overview_recall_at_20               V2_S2_overview_recall_at_20                     YES
+MV_V2_S2_overview_recall_at_100              V2_S2_overview_recall_at_100                    YES
+MV_V2_S2_overview_hit_at_20                  V2_S2_overview_hit_at_20                        YES
+MV_V2_S2_overview_precision_at_20            V2_S2_overview_precision_at_20                  YES
+MV_V2_S2_overview_precision_ceiling_at_20    V2_S2_overview_precision_ceiling_at_20          YES
+MV_V2_S2_overview_f1_at_20                   V2_S2_overview_f1_at_20                         YES
+MV_V2_S2_overview_precision_ceiling_at_20    V2_S2_overview_precision_ceiling_at_20          YES
+MV_V2_S2_overview_coverage_reachable         V2_S2_overview_coverage_reachable               YES
+MV_V2_S2_overview_pool_cov                   V2_S2_overview_pool_cov                         YES
+MV_V2_S2_overview_pool_mean                  V2_S2_overview_pool_mean                        YES
+MV_V1_n                                      V1_n_queries_133                                YES
+MV_V1c_arms                                  V1c_arms_present                                YES
+MV_V1b_factual                               V1b_n_factual                                   YES   (+87 other)
+MV_V1b_multihop                              V1b_n_multihop                                  YES   (+91 other)
+MV_V1b_overview                              V1b_n_overview                                  YES   (+84 other)
+MV_V3_pool_sha                               V3_pool_sha_recomputes                          YES
+MV_V2b_S0_overall                            V2b_S0_overall_metric_fn_exact                  YES   (+9 other)
+MV_V2b_S0_factual                            V2b_S0_factual_metric_fn_exact                  YES   (+9 other)
+MV_V2b_S0_multihop                           V2b_S0_multihop_metric_fn_exact                 YES   (+9 other)
+MV_V2b_S0_overview                           V2b_S0_overview_metric_fn_exact                 YES   (+9 other)
+MV_V2b_S1_overall                            V2b_S1_overall_metric_fn_exact                  YES   (+6 other)
+MV_V2b_S1_factual                            V2b_S1_factual_metric_fn_exact                  YES   (+6 other)
+MV_V2b_S1_multihop                           V2b_S1_multihop_metric_fn_exact                 YES   (+6 other)
+MV_V2b_S1_overview                           V2b_S1_overview_metric_fn_exact                 YES   (+6 other)
+MV_V2b_S2_overall                            V2b_S2_overall_metric_fn_exact                  YES   (+6 other)
+MV_V2b_S2_factual                            V2b_S2_factual_metric_fn_exact                  YES   (+6 other)
+MV_V2b_S2_multihop                           V2b_S2_multihop_metric_fn_exact                 YES   (+6 other)
+MV_V2b_S2_overview                           V2b_S2_overview_metric_fn_exact                 YES   (+6 other)
+MV_V4_coverage                               V4_coverage_rederives_exact                     YES   (+2 other)
+MV_V5_pageless_mechanism                     V5_pageless_endpoint_candidates_are_all_multihop  YES
+MV_V6_S1_ndcg_at_20_mean                     V6_S1_minus_S0_ndcg_at_20_mean                  YES
+MV_V6_S1_ndcg_at_20_n                        V6_S1_minus_S0_ndcg_at_20_n                     YES
+MV_V6_S1_ndcg_at_20_ci                       V6_S1_minus_S0_ndcg_at_20_ci                    YES
+MV_V6_S1_ndcg_at_20_resolved                 V6_S1_minus_S0_ndcg_at_20_resolved              YES
+MV_V6_S1_map_mean                            V6_S1_minus_S0_map_mean                         YES
+MV_V6_S1_map_n                               V6_S1_minus_S0_map_n                            YES
+MV_V6_S1_map_ci                              V6_S1_minus_S0_map_ci                           YES
+MV_V6_S1_map_resolved                        V6_S1_minus_S0_map_resolved                     YES
+MV_V6_S1_mrr_at_20_mean                      V6_S1_minus_S0_mrr_at_20_mean                   YES
+MV_V6_S1_mrr_at_20_n                         V6_S1_minus_S0_mrr_at_20_n                      YES
+MV_V6_S1_mrr_at_20_ci                        V6_S1_minus_S0_mrr_at_20_ci                     YES
+MV_V6_S1_mrr_at_20_resolved                  V6_S1_minus_S0_mrr_at_20_resolved               YES
+MV_V6_S1_recall_at_20_mean                   V6_S1_minus_S0_recall_at_20_mean                YES
+MV_V6_S1_recall_at_20_n                      V6_S1_minus_S0_recall_at_20_n                   YES
+MV_V6_S1_recall_at_20_ci                     V6_S1_minus_S0_recall_at_20_ci                  YES
+MV_V6_S1_recall_at_20_resolved               V6_S1_minus_S0_recall_at_20_resolved            YES
+MV_V6_S1_recall_at_100_mean                  V6_S1_minus_S0_recall_at_100_mean               YES
+MV_V6_S1_recall_at_100_n                     V6_S1_minus_S0_recall_at_100_n                  YES
+MV_V6_S1_recall_at_100_ci                    V6_S1_minus_S0_recall_at_100_ci                 YES
+MV_V6_S1_recall_at_100_resolved              V6_S1_minus_S0_recall_at_100_resolved           YES
+MV_V6_S1_hit_at_20_mean                      V6_S1_minus_S0_hit_at_20_mean                   YES
+MV_V6_S1_hit_at_20_n                         V6_S1_minus_S0_hit_at_20_n                      YES
+MV_V6_S1_hit_at_20_ci                        V6_S1_minus_S0_hit_at_20_ci                     YES
+MV_V6_S1_hit_at_20_resolved                  V6_S1_minus_S0_hit_at_20_resolved               YES
+MV_V6_S1_precision_at_20_mean                V6_S1_minus_S0_precision_at_20_mean             YES
+MV_V6_S1_precision_at_20_n                   V6_S1_minus_S0_precision_at_20_n                YES
+MV_V6_S1_precision_at_20_ci                  V6_S1_minus_S0_precision_at_20_ci               YES
+MV_V6_S1_precision_at_20_resolved            V6_S1_minus_S0_precision_at_20_resolved         YES
+MV_V6_S1_precision_ceiling_at_20_mean        V6_S1_minus_S0_precision_ceiling_at_20_mean     YES
+MV_V6_S1_precision_ceiling_at_20_n           V6_S1_minus_S0_precision_ceiling_at_20_n        YES
+MV_V6_S1_precision_ceiling_at_20_ci          V6_S1_minus_S0_precision_ceiling_at_20_ci       YES
+MV_V6_S1_precision_ceiling_at_20_resolved    V6_S1_minus_S0_precision_ceiling_at_20_resolved  YES
+MV_V6_S1_f1_at_20_mean                       V6_S1_minus_S0_f1_at_20_mean                    YES
+MV_V6_S1_f1_at_20_n                          V6_S1_minus_S0_f1_at_20_n                       YES
+MV_V6_S1_f1_at_20_ci                         V6_S1_minus_S0_f1_at_20_ci                      YES
+MV_V6_S1_f1_at_20_resolved                   V6_S1_minus_S0_f1_at_20_resolved                YES
+MV_V6_S1_factual_ndcg_at_20                  V6_S1_factual_ndcg_at_20_mean                   YES
+MV_V6_S1_factual_map                         V6_S1_factual_map_mean                          YES
+MV_V6_S1_factual_mrr_at_20                   V6_S1_factual_mrr_at_20_mean                    YES
+MV_V6_S1_factual_recall_at_20                V6_S1_factual_recall_at_20_mean                 YES
+MV_V6_S1_multihop_ndcg_at_20                 V6_S1_multihop_ndcg_at_20_mean                  YES
+MV_V6_S1_multihop_map                        V6_S1_multihop_map_mean                         YES
+MV_V6_S1_multihop_mrr_at_20                  V6_S1_multihop_mrr_at_20_mean                   YES
+MV_V6_S1_multihop_recall_at_20               V6_S1_multihop_recall_at_20_mean                YES
+MV_V6_S1_overview_ndcg_at_20                 V6_S1_overview_ndcg_at_20_mean                  YES
+MV_V6_S1_overview_map                        V6_S1_overview_map_mean                         YES
+MV_V6_S1_overview_mrr_at_20                  V6_S1_overview_mrr_at_20_mean                   YES
+MV_V6_S1_overview_recall_at_20               V6_S1_overview_recall_at_20_mean                YES
+MV_V6_poolcov_S1                             V6_poolcov_S1_minus_S0_mean                     YES
+MV_V6_S2_ndcg_at_20_mean                     V6_S2_minus_S0_ndcg_at_20_mean                  YES
+MV_V6_S2_ndcg_at_20_n                        V6_S2_minus_S0_ndcg_at_20_n                     YES
+MV_V6_S2_ndcg_at_20_ci                       V6_S2_minus_S0_ndcg_at_20_ci                    YES
+MV_V6_S2_ndcg_at_20_resolved                 V6_S2_minus_S0_ndcg_at_20_resolved              YES
+MV_V6_S2_map_mean                            V6_S2_minus_S0_map_mean                         YES
+MV_V6_S2_map_n                               V6_S2_minus_S0_map_n                            YES
+MV_V6_S2_map_ci                              V6_S2_minus_S0_map_ci                           YES
+MV_V6_S2_map_resolved                        V6_S2_minus_S0_map_resolved                     YES
+MV_V6_S2_mrr_at_20_mean                      V6_S2_minus_S0_mrr_at_20_mean                   YES
+MV_V6_S2_mrr_at_20_n                         V6_S2_minus_S0_mrr_at_20_n                      YES
+MV_V6_S2_mrr_at_20_ci                        V6_S2_minus_S0_mrr_at_20_ci                     YES
+MV_V6_S2_mrr_at_20_resolved                  V6_S2_minus_S0_mrr_at_20_resolved               YES
+MV_V6_S2_recall_at_20_mean                   V6_S2_minus_S0_recall_at_20_mean                YES
+MV_V6_S2_recall_at_20_n                      V6_S2_minus_S0_recall_at_20_n                   YES
+MV_V6_S2_recall_at_20_ci                     V6_S2_minus_S0_recall_at_20_ci                  YES
+MV_V6_S2_recall_at_20_resolved               V6_S2_minus_S0_recall_at_20_resolved            YES
+MV_V6_S2_recall_at_100_mean                  V6_S2_minus_S0_recall_at_100_mean               YES
+MV_V6_S2_recall_at_100_n                     V6_S2_minus_S0_recall_at_100_n                  YES
+MV_V6_S2_recall_at_100_ci                    V6_S2_minus_S0_recall_at_100_ci                 YES
+MV_V6_S2_recall_at_100_resolved              V6_S2_minus_S0_recall_at_100_resolved           YES
+MV_V6_S2_hit_at_20_mean                      V6_S2_minus_S0_hit_at_20_mean                   YES
+MV_V6_S2_hit_at_20_n                         V6_S2_minus_S0_hit_at_20_n                      YES
+MV_V6_S2_hit_at_20_ci                        V6_S2_minus_S0_hit_at_20_ci                     YES
+MV_V6_S2_hit_at_20_resolved                  V6_S2_minus_S0_hit_at_20_resolved               YES
+MV_V6_S2_precision_at_20_mean                V6_S2_minus_S0_precision_at_20_mean             YES
+MV_V6_S2_precision_at_20_n                   V6_S2_minus_S0_precision_at_20_n                YES
+MV_V6_S2_precision_at_20_ci                  V6_S2_minus_S0_precision_at_20_ci               YES
+MV_V6_S2_precision_at_20_resolved            V6_S2_minus_S0_precision_at_20_resolved         YES
+MV_V6_S2_precision_ceiling_at_20_mean        V6_S2_minus_S0_precision_ceiling_at_20_mean     YES
+MV_V6_S2_precision_ceiling_at_20_n           V6_S2_minus_S0_precision_ceiling_at_20_n        YES
+MV_V6_S2_precision_ceiling_at_20_ci          V6_S2_minus_S0_precision_ceiling_at_20_ci       YES
+MV_V6_S2_precision_ceiling_at_20_resolved    V6_S2_minus_S0_precision_ceiling_at_20_resolved  YES
+MV_V6_S2_f1_at_20_mean                       V6_S2_minus_S0_f1_at_20_mean                    YES
+MV_V6_S2_f1_at_20_n                          V6_S2_minus_S0_f1_at_20_n                       YES
+MV_V6_S2_f1_at_20_ci                         V6_S2_minus_S0_f1_at_20_ci                      YES
+MV_V6_S2_f1_at_20_resolved                   V6_S2_minus_S0_f1_at_20_resolved                YES
+MV_V6_S2_factual_ndcg_at_20                  V6_S2_factual_ndcg_at_20_mean                   YES
+MV_V6_S2_factual_map                         V6_S2_factual_map_mean                          YES
+MV_V6_S2_factual_mrr_at_20                   V6_S2_factual_mrr_at_20_mean                    YES
+MV_V6_S2_factual_recall_at_20                V6_S2_factual_recall_at_20_mean                 YES
+MV_V6_S2_multihop_ndcg_at_20                 V6_S2_multihop_ndcg_at_20_mean                  YES
+MV_V6_S2_multihop_map                        V6_S2_multihop_map_mean                         YES
+MV_V6_S2_multihop_mrr_at_20                  V6_S2_multihop_mrr_at_20_mean                   YES
+MV_V6_S2_multihop_recall_at_20               V6_S2_multihop_recall_at_20_mean                YES
+MV_V6_S2_overview_ndcg_at_20                 V6_S2_overview_ndcg_at_20_mean                  YES
+MV_V6_S2_overview_map                        V6_S2_overview_map_mean                         YES
+MV_V6_S2_overview_mrr_at_20                  V6_S2_overview_mrr_at_20_mean                   YES
+MV_V6_S2_overview_recall_at_20               V6_S2_overview_recall_at_20_mean                YES
+MV_V6_poolcov_S2                             V6_poolcov_S2_minus_S0_mean                     YES
+MV_V7_G1_population_133_0_errors_all_arms    V7_G1_population                                YES
+MV_V7_G3_three_arms_share_the_same_lane_set  V7_G3_lane_set                                  YES
+MV_V7_G3b_digest_flip_is_pool_inert          V7_G3b_inert                                    YES
+MV_V7_G4_normalisers_exercised_each_lane     V7_G4_normalisers_exercised                     YES
+MV_V7_G5_no_lane_dropout_survived            V7_G5_no_lane_dropout                           YES
+MV_V7_G6_no_nan_null_and_page_dedup          V7_G6_no_nan_null_dedup                         YES
+MV_V7_G4b_lane_stats                         V7_G4b_lane_stats_reported                      YES
+MV_V7_G3_lane_set_detail                     V7_G3_lane_set                                  YES   (+1 other)
+MV_V7_G3_digest_list                         V7_G3_digest_list_reported                      YES
+MV_V7_G3b_covers                             V7_G3b_covers_every_flip                        YES
+MV_V7_G3b_inert_detail                       V7_G3b_inert                                    YES
+MV_V8_ndcg_at_20                             V8_G2_anchor_overall                            YES   (+1 other)
+MV_V8_map                                    V8_G2_anchor_overall                            YES   (+1 other)
+MV_V8_mrr_at_20                              V8_G2_anchor_overall                            YES   (+1 other)
+MV_V8_recall_at_20                           V8_G2_anchor_overall                            YES   (+1 other)
+MV_V8_hit_at_20                              V8_G2_anchor_overall                            YES   (+1 other)
+MV_V8_precision_at_20                        V8_G2_anchor_overall                            YES   (+1 other)
+MV_V8_precision_ceiling_at_20                V8_G2_anchor_overall                            YES   (+1 other)
+MV_V8_f1_at_20                               V8_G2_anchor_overall                            YES   (+1 other)
+MV_V8_pool_cov                               V8_G2_anchor_overall                            YES   (+1 other)
+MV_V8_factual_ndcg_at_20                     V8_G2_anchor_factual                            YES   (+1 other)
+MV_V8_factual_map                            V8_G2_anchor_factual                            YES   (+1 other)
+MV_V8_factual_pool_cov                       V8_G2_anchor_factual                            YES   (+1 other)
+MV_V8_multihop_ndcg_at_20                    V8_G2_anchor_multihop                           YES   (+1 other)
+MV_V8_multihop_map                           V8_G2_anchor_multihop                           YES   (+1 other)
+MV_V8_multihop_pool_cov                      V8_G2_anchor_multihop                           YES   (+1 other)
+MV_V8_overview_ndcg_at_20                    V8_G2_anchor_overview                           YES   (+1 other)
+MV_V8_overview_map                           V8_G2_anchor_overview                           YES   (+1 other)
+MV_V8_overview_pool_cov                      V8_G2_anchor_overview                           YES   (+1 other)
+MV_V8_missing_keys                           V8_G2_anchor_reports_missing_keys               YES
+MV_V9_S1                                     V9_composition_S1                               YES
+MV_V9_S2                                     V9_composition_S2                               YES
+MV_V10_nan                                   V10_no_nan                                      YES   (+1 other)
+
+mutations        : 307
+checks total     : 279
+checks reddened  : 279
+INERT checks     : none
+all mutations hit: True
+EXIT=0
