@@ -5,6 +5,12 @@ Pre-ingest a base textbook globally, let students upload their own PDFs, and ans
 
 > **Architecture:** Synapse Learning Worlds v5.0 · Author: Bharath Kumar
 
+> **▶ Where the work stands.** This README describes the **system**. The **current state** — the open
+> measurement programme, the ordered next tasks, and the session-by-session handoff — lives in
+> **`HANDOFF.md`** (read its latest `SESSION` block first) with the numbered backlog in
+> **`IMPROVEMENTS.md`** and the decision log in **`DECISIONS.md`**. The **Roadmap** table below is
+> course-phase level; it is not the work queue. Read `HANDOFF.md` before trusting any status line here.
+
 ---
 
 ## Architecture Overview
@@ -359,10 +365,10 @@ uv run pytest tests/test_phase1.py tests/test_phase2.py tests/test_phase3.py tes
 uv run pytest tests/test_integration_real.py -v -s
 ```
 
-**464 tests pass / 4 fail / 6 skip** (`uv run pytest tests/ -q -m "not slow"`, ~3 min). The 4 are
-**pre-existing and documented** in `HANDOFF.md` — not regressions. Do not quote a test count in
-this file without re-running the suite: an earlier revision of this line said "135 tests pass"
-and had been wrong for many sessions.
+**745 tests pass / 4 fail / 6 skip** (`uv run pytest tests/ -q -m "not slow"`, ~5 min, measured
+2026-11-01). The 4 are **pre-existing and documented** in `HANDOFF.md` — not regressions. Do not
+quote a test count in this file without re-running the suite: an earlier revision of this line said
+"135 tests pass" and had been wrong for many sessions.
 
 ### Verifier at every step — a standing rule
 
@@ -529,7 +535,7 @@ Payload filtering (`tenant_id`, `is_global_baseline`) keeps everything in one co
 | Phase 3 | ✅ Complete | ColPali visual embeddings + Memgraph GraphRAG concept graph |
 | Phase 4A | ✅ Complete | Intent router + SPLADE hybrid + DA retrieval lane + MMR |
 | Phase 4B | ✅ Complete | Nomic MRL (64d→768d nested prefetch) + ColBERT v2.0 MaxSim 4-vector schema |
-| Phase 4C | 🔜 | Cross-encoder re-ranker (BAAI/bge-reranker-v2-m3, top-20 final reranking) |
+| Phase 4C | ✅ Complete | Cross-encoder re-ranker (BAAI/bge-reranker-v2-m3, top-20 final reranking). ⚠️ **Shipped, but NOT a free win**: T4 measured it as a **net harm at the endpoint** (§I97 — removing it lifts nDCG@20), and §I99 prices it as a small part of the loss. See `IMPROVEMENTS.md` §I97/§I99 before treating this row as an improvement. |
 | Phase 5 | 🔜 | DeBERTa guardrails + answer leakage guard |
 | Phase 6 | 🔜 | Per-query observability (latency/route logging) + teacher dashboard |
 
