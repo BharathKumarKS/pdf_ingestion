@@ -49,6 +49,7 @@ import time
 import httpx
 from loguru import logger
 
+from src.core import telemetry
 from src.core.config import Settings, get_settings
 
 # -- Retry / deadline policy ---------------------------------------------------
@@ -245,17 +246,26 @@ def _call_ollama(
         payload["format"] = "json"
 
     _bump("calls")
-    body = _post_with_retry(
-        f"{cfg.ollama_host}/api/generate",
-        payload,
-        {"Content-Type": "application/json"},
-        timeout,
-        _budget(timeout),
-        f"ollama {cfg.ollama_model}",
-    )
-    if body is None:
-        return ""
-    return body.get("response", "")
+    started = time.monotonic()
+    # §I4: the raw-httpx path emitted no LLM span (OpenAIInstrumentor patches the unused openai
+    # SDK). This manual span is a no-op when Phoenix is off (telemetry.span yields None) and is
+    # placed BELOW call_llm so a harness that monkeypatches call_llm cannot bypass it.
+    with telemetry.span("llm.call", {"backend": "ollama", "model": cfg.ollama_model,
+                                     "json_mode": json_mode,
+                                     "prompt_chars": len(prompt) + len(system)}) as _sp:
+        body = _post_with_retry(
+            f"{cfg.ollama_host}/api/generate",
+            payload,
+            {"Content-Type": "application/json"},
+            timeout,
+            _budget(timeout),
+            f"ollama {cfg.ollama_model}",
+        )
+        text = body.get("response", "") if body is not None else ""
+        telemetry.set_attr(_sp, "latency_ms", round((time.monotonic() - started) * 1000, 1))
+        telemetry.set_attr(_sp, "ok", body is not None)
+        telemetry.set_attr(_sp, "response_chars", len(text))
+    return text
 
 
 # ── OpenAI-compatible ──────────────────────────────────────────────────────
@@ -292,14 +302,22 @@ def _call_openai(
 
     url = f"{base}/v1/chat/completions"
     _bump("calls")
-    body = _post_with_retry(
-        url, payload, headers, timeout, _budget(timeout),
-        f"openai {cfg.openai_model}",
-    )
+    started = time.monotonic()
+    # §I4: manual span — see _call_ollama. No-op when Phoenix is off; below call_llm on purpose.
+    with telemetry.span("llm.call", {"backend": "openai", "model": cfg.openai_model,
+                                     "json_mode": json_mode,
+                                     "prompt_chars": len(prompt) + len(system)}) as _sp:
+        body = _post_with_retry(
+            url, payload, headers, timeout, _budget(timeout),
+            f"openai {cfg.openai_model}",
+        )
+        choices = body.get("choices", []) if body is not None else []
+        text = choices[0].get("message", {}).get("content", "") if choices else ""
+        telemetry.set_attr(_sp, "latency_ms", round((time.monotonic() - started) * 1000, 1))
+        telemetry.set_attr(_sp, "ok", body is not None and bool(choices))
+        telemetry.set_attr(_sp, "response_chars", len(text))
     if body is None:
         return ""
-
-    choices = body.get("choices", [])
     if not choices:
         _bump("failures")
         logger.error(
@@ -308,4 +326,4 @@ def _call_openai(
             cfg.openai_model, cfg.openai_api_base,
         )
         return ""
-    return choices[0].get("message", {}).get("content", "")
+    return text

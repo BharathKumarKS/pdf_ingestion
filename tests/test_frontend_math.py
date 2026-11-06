@@ -93,5 +93,11 @@ def test_cited_pages_reads_both_citation_formats(app):
     assert app._cited_pages(ans) == {141, 274}
 
 
+def test_cited_pages_reads_the_cjk_bracket_and_unicode_spaces(app):
+    """§I115 — the generator emits 【Page N】 and Page+U+202F; both must parse."""
+    assert app._cited_pages("as shown 【Page 141】 and [Page\u202f274]") == {141, 274}
+    assert app._cited_pages("【Page\u00a099】") == {99}
+
+
 def test_cited_pages_empty_when_no_citations(app):
     assert app._cited_pages("an answer with no citations at all") == set()

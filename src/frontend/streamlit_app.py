@@ -250,9 +250,14 @@ def _clean_text(text: str) -> str:
 
 
 def _cited_pages(answer: str) -> set[int]:
-    """Page numbers the ANSWER actually cites, e.g. ``[Page 846]`` or ``(page 846)``."""
+    """Page numbers the ANSWER actually cites: ``[Page 846]``, ``【Page 846】`` or ``(page 846)``.
+
+    ⚠️ The CJK bracket and the narrow/no-break spaces the model emits (U+202F / U+00A0) are
+    matched on purpose — the generator uses all three, and matching only ``[Page`` made the app
+    show "Sources retrieved" (all pages) for every answer it could not parse (§I115).
+    """
     import re
-    return {int(n) for n in re.findall(r'(?:\[Page\s*|\(page\s*)(\d+)', answer, re.IGNORECASE)}
+    return {int(n) for n in re.findall(r'[\[【(]\s*[Pp]age\s*(\d+)', answer or '')}
 
 
 def _colpali_status_badge(status: str, vectors: int | None = None) -> str:
@@ -360,6 +365,19 @@ with st.sidebar:
             st.caption("🔭 Phoenix enabled but server unreachable")
         else:
             st.caption("🔭 Phoenix off (`PHOENIX_ENABLED=true` to enable)")
+
+        # ── Per-query route/latency trace (README Phase 6, O2) ────────────
+        from src.core import query_trace as _qt
+        _recents = _qt.recent(10)
+        if _recents:
+            with st.expander(f"🧭 Recent queries ({len(_recents)})", expanded=False):
+                st.dataframe(
+                    [{"query": t.query[:60], "intent": t.intent, "lanes": ",".join(t.lanes),
+                      "k": t.k, "top1": t.top1, "hits": t.n_hits, "total_ms": t.total_ms,
+                      "stages_ms": t.stages_ms, "error": t.error}
+                     for t in reversed(_recents)],
+                    use_container_width=True,
+                )
 
 
 # ── Build tab list depending on role ──────────────────────────────────────
