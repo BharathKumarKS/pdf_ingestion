@@ -5,6 +5,12 @@
 > Engineering record: `IMPROVEMENTS.md` §I89–§I97 · `DECISIONS.md` §8.
 > **§4 is the attribution of the last step (T4) — the one section whose result is a measurement, not a
 > description: it says where the loss is and what to do about it.**
+>
+> ⚠️ **SUPERSEDED IN ONE PLACE — read `levers_report.md` first.** §3's conclusion that overview is
+> *"a retrieval problem"* is **corrected**: the pool already holds enough gold to fill all 20 slots
+> (31.4 of 88.9 pages), so overview's loss is its **ORDER**, not its coverage. See `levers_report.md`
+> §3 and `IMPROVEMENTS.md` §I99. **Everything else in this report stands.** `levers_report.md` is the
+> consolidated levers document: what moves which metric, where we stand, and where to move next.
 
 **Scope.** One embedder (**nomic-embed-text-v1.5**), one index (`knowledge_base_v3`, 3,796 chunks / 888
 pages), one corpus (one undergraduate physics textbook), **133 labelled queries**, HyDE on and frozen,
@@ -16,7 +22,9 @@ read-only. Two registered measurements:
 
 ⚠️ **Which lanes were actually live — stated because it is easy to assume otherwise.** The **dense**,
 **sparse (SPLADE)** and **ColBERT** lanes are **fused** (reciprocal rank fusion). The **DA lane** is
-**merged inside the fusion**, before dedup and MMR. The **graph lane is NOT fused** — its hits are
+**NOT fused**: `search_with_das` **appends** its resolved parent chunks to the dense list *after*
+`search()` has returned the fused pool and *before* dedup and MMR (`store.py:892-909`), so DA never
+participates in RRF. The **graph lane is NOT fused** — its hits are
 **appended to the pool after the fusion** (so they never pass through RRF, dedup or MMR, and cannot
 displace a fused hit). **RAPTOR is in neither run**: it is absent from this index and the evaluation path
 never calls it. In v1, DA and the graph lane are **off**; everything else is identical.
