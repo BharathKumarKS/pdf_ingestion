@@ -61,11 +61,57 @@ ECHO_FIELDS = (
 # KaTeX: NiceGUI's `ui.markdown` renders via markdown2 and does NOT typeset maths on its own.
 # Pull KaTeX in and auto-render `$...$` / `$$...$$` so the answer's equations render as they do
 # in Streamlit. If the CDN is unreachable the page still works — the delimiters just show through.
+#
+# ⚠️ WHY AN OBSERVER AND NOT THE SCRIPT'S `onload`. NiceGUI renders the answer, the cards and the
+# RAPTOR summaries AFTER page load. KaTeX's own auto-render fires exactly once, from the script's
+# `onload` — at which point none of that content exists — so every `ui.markdown(...)` added later
+# showed raw `$…$` / `\frac` (measured in this frontend, 2026-11-05: the answer displayed
+# `$$F = m\,a, $$` literally). The observer re-typesets whenever the DOM gains nodes; it is
+# disconnected around the call so KaTeX's own DOM writes cannot re-trigger it.
 _KATEX_HEAD = """
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
-  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});"></script>
+  onload="window.__synapseTypeset && window.__synapseTypeset();"></script>
+<script>
+window.__synapseTypeset = function () {
+  if (typeof renderMathInElement !== 'function') return;
+  if (window.__synapseObserver) window.__synapseObserver.disconnect();
+  try {
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false}
+      ],
+      throwOnError: false,
+      ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option']
+    });
+  } finally {
+    if (window.__synapseObserver) {
+      window.__synapseObserver.observe(document.body,
+        {childList: true, subtree: true, characterData: true});
+    }
+  }
+};
+(function () {
+  var scheduled = false;
+  var install = function () {
+    window.__synapseObserver = new MutationObserver(function () {
+      if (scheduled) return;
+      scheduled = true;
+      setTimeout(function () { scheduled = false; window.__synapseTypeset(); }, 120);
+    });
+    window.__synapseObserver.observe(document.body,
+      {childList: true, subtree: true, characterData: true});
+    window.__synapseTypeset();
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', install);
+  } else {
+    install();
+  }
+})();
+</script>
 """
 
 
@@ -129,6 +175,31 @@ def _convert_braces_to_math(text: str) -> str:
 def _render_generated(text: str) -> str:
     """Full pipeline for model-generated prose: clean artefacts, then normalise maths delimiters."""
     return _convert_braces_to_math(_latex_delims_to_dollars(_clean_text(text)))
+
+
+def _plain_preview(text: str, limit: int = 200) -> str:
+    """A retrieved-passage preview for a PLAIN-TEXT table cell.
+
+    ⚠️ A `ui.table` cell renders as TEXT, not markdown — so routing it through the maths converter
+    would just show the `$` delimiters. Make it plain instead: drop parser artefacts (including an
+    UNTERMINATED `<!--`, which a mid-comment truncation would leave dangling), strip maths
+    delimiters down to their content, and truncate on a word boundary.
+
+    ⚠️ Truncation happens LAST and on a word boundary, never mid-formula — the same rule the graph
+    preview follows (`_render_generated(text[:N])`, not `_render_generated(text)[:N]`).
+    """
+    import re
+    t = re.sub(r'<!--.*?-->', ' ', text or '', flags=re.S)   # complete comments
+    t = re.sub(r'<!--.*$', ' ', t, flags=re.S)               # an unterminated one
+    t = re.sub(r'\$\$(.+?)\$\$', r'\1', t, flags=re.S)       # display maths -> its content
+    t = re.sub(r'\$(.+?)\$', r'\1', t, flags=re.S)           # inline maths -> its content
+    t = re.sub(r'\\\[(.+?)\\\]', r'\1', t, flags=re.S)
+    t = re.sub(r'\\\((.+?)\\\)', r'\1', t, flags=re.S)
+    t = re.sub(r'\\[a-zA-Z]+', ' ', t)                       # leftover LaTeX control sequences
+    t = re.sub(r'\s+', ' ', t).strip()
+    if len(t) <= limit:
+        return t
+    return t[:limit].rsplit(' ', 1)[0] + '…'
 
 
 def _cited_pages(answer: str) -> set[int]:
@@ -349,7 +420,7 @@ def _render_result(container: ui.column, out: dict) -> None:
                 "source": r.get("source_type", "?"),
                 "score": round(float(r.get("score", 0.0)), 3),
                 "relevance": _relevance(float(r.get("score", 0.0))),
-                "preview": _clean_text(r.get("text", ""))[:200],
+                "preview": _plain_preview(r.get("text", "")),
             }
             for i, r in enumerate(out["chunks"], 1)
         ]
@@ -855,7 +926,9 @@ def _render_graph_search(data: dict) -> None:
             ui.label(f"🔗 {r['matched_concepts']} concept(s) matched: {concepts}").classes(
                 "text-caption"
             )
-            ui.markdown(_render_generated(r["text_preview"])[:1500])
+            # Truncate the RAW string, then convert — converting first can cut inside a formula
+            # and leave an unmatched `$` that KaTeX then swallows or mangles.
+            ui.markdown(_render_generated(r["text_preview"][:1500]))
             ui.label(f"chunk_id: {r['chunk_id']}").classes("text-caption")
 
 
@@ -921,7 +994,8 @@ def index() -> None:
     ui.add_head_html(_KATEX_HEAD)
     ui.label("Synapse — NiceGUI frontend").classes("text-h5")
     ui.label(
-        "P3 — Ask a Question + read-only Status / Cards / RAPTOR. Streamlit remains primary."
+        "NG-P4 — Ask a Question + read-only Status / Cards / RAPTOR / Visual / Graph. "
+        "Streamlit remains primary."
     ).classes(
         "text-caption"
     )
@@ -938,6 +1012,14 @@ def index() -> None:
             _ask_panel()
         with ui.tab_panel(status_tab):
             _status_panel()
+            # The resolved-config echo is the NG-P1 acceptance surface ("must match the exported
+            # env"). ⚠️ It used to sit OUTSIDE the tab panels, so a raw `key = 'value'` dump showed
+            # on EVERY tab including Ask (measured 2026-11-05). It belongs on the diagnostics tab,
+            # collapsed, not on the page a student reads.
+            with ui.expansion("Resolved config (must match the exported env)",
+                              value=False).classes("w-full"):
+                for k, v in resolved_config().items():
+                    ui.label(f"{k} = {v!r}")
         with ui.tab_panel(cards_tab):
             _cards_panel()
         with ui.tab_panel(raptor_tab):
@@ -947,10 +1029,6 @@ def index() -> None:
         with ui.tab_panel(graph_tab):
             _graph_panel()
 
-    with ui.card().classes("w-full"):
-        ui.label("Resolved config (must match the exported env)").classes("text-subtitle1")
-        for k, v in resolved_config().items():
-            ui.label(f"{k} = {v!r}")
     ui.label(f"health: http://localhost:{PORT}/healthz").classes("text-caption")
 
 
