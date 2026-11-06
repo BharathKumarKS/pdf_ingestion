@@ -328,8 +328,14 @@ the only stage whose result can license a ship** — everything before it is pre
    Nomic's `layer_norm`-then-slice? ⚠️ **OPEN — and it changes every 64d number.** Moving it means
    re-measuring §I59's rows.
 5. **§I68 before F** — ✅ **TAKEN**.
-6. **The fine-tune's validation split** (by document/passage, not by card) — ⚠️ **OPEN**, and it decides
-   whether the §4 number means anything.
+6. **The fine-tune's validation split** (by document/passage, not by card) — ✅ **TAKEN 2026-10-25
+   (session 20): PASSAGE-LEVEL** — hold out passages, and **all cards generated from them**, so no
+   held-out card's source passage is in training. ⚠️ **Document-level was offered and rejected as
+   degenerate** (there is ONE textbook, so it is all-or-nothing and leaves a tiny val set);
+   **card-level was rejected as leaky** (the plan's own §4 warning). It decides whether the §4 number
+   means anything. ⚠️ **Taken with §I86 in hand:** the fine-tune's ceiling is now measured low (the
+   resolved loss is at the fused pool, and the cross-encoder absorbs it), so S6 is a low-ceiling bet
+   whose value is the **null** as much as the gain.
 
 ---
 

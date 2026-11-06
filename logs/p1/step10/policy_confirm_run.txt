@@ -1,0 +1,27 @@
+2026-10-30 06:00:02.659 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-30 06:00:03.527 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-10-30 06:00:03.527 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-30 06:00:03.527 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+2026-10-30 06:00:03.530 | INFO     | src.pdf_ingestion.hyde_cache:load:183 - HyDE cache loaded: 127 entries from 18ece9b9404688c8__openai_gpt-oss-20b__ab681b8e43855a46.json
+2026-10-30 06:00:03.804 | DEBUG    | scripts.evaluate_rag:run_retrieval:212 - HyDE: generated hypothetical (152 chars)
+2026-10-30 06:00:03.875 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-10-30 06:00:03.999 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+2026-10-30 06:00:06.947 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.573 (kept 20/98)
+2026-10-30 06:00:07.243 | DEBUG    | scripts.evaluate_rag:run_retrieval:212 - HyDE: generated hypothetical (241 chars)
+2026-10-30 06:00:10.493 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.158 (kept 20/86)
+2026-10-30 06:00:10.745 | DEBUG    | scripts.evaluate_rag:run_retrieval:212 - HyDE: generated hypothetical (224 chars)
+2026-10-30 06:00:14.409 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.884 (kept 20/100)
+2026-10-30 06:00:16.647 | INFO     | src.core.database:get_memgraph:432 - Memgraph: connected at bolt://localhost:7687
+2026-10-30 06:00:16.944 | INFO     | src.pdf_ingestion.graph_builder:ensure_schema:216 - Memgraph: schema ready
+2026-10-30 06:00:17.016 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:692 - Concept Qdrant search: top=['Composition of stars and Earth', 'element formation in stars', 'element synthesis in stars', 'emission of light by atoms', 'formation of stars', 'location of atoms', 'stellar physics', 'Radiation from atoms']
+2026-10-30 06:00:17.797 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/87)
+
+wrote logs/p1/step10/_probe_b.json
+=== LIVE CONFIRMATION GUARDS ===
+  [PASS] L1_ce_fed_the_right_query_text: 4/4 queries fed the expected CE text
+  [PASS] L2_pages_match_the_composition_exactly: 4/4 endpoint page lists match T4 exactly
+  [PASS] L3_no_colbert_dropout_in_accepted_calls: 0 dropouts
+  [PASS] L4_no_reranker_fallback: 0 fallbacks
+  [FAIL] L5_133_queries_0_errors: 4 queries, 0 errors
+
+GUARD FAILURE

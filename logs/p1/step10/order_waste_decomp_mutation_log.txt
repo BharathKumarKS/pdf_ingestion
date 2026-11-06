@@ -1,0 +1,50 @@
+mutation                       intended check                reddens?  also reddens
+-------------------------------------------------------------------------------------------
+MV_V3_R_ceil_20_factual        V3_R_ceil_20_factual          YES       V5_recoverable_factual, V5_waste_pool_factual
+MV_V3_R_ceil_20_overview       V3_R_ceil_20_overview         YES       V5_recoverable_overview, V5_waste_pool_overview
+MV_V3_R_ceil_20_multihop       V3_R_ceil_20_multihop         YES       V5_recoverable_multihop, V5_waste_pool_multihop
+MV_V3_R_ceil_20_overall        V3_R_ceil_20_overall          YES       -
+MV_V3_pool_oracle_20_factual   V3_pool_oracle_20_factual     YES       V5_waste_order_factual, V5_waste_pool_factual
+MV_V3_pool_oracle_20_overview  V3_pool_oracle_20_overview    YES       V5_waste_order_overview, V5_waste_pool_overview
+MV_V3_pool_oracle_20_multihop  V3_pool_oracle_20_multihop    YES       V5_waste_order_multihop, V5_waste_pool_multihop
+MV_V3_pool_oracle_20_overall   V3_pool_oracle_20_overall     YES       -
+MV_V3_realised_N_factual       V3_realised_N_factual         YES       V5_waste_ce_factual, V5_waste_order_factual
+MV_V3_realised_N_overview      V3_realised_N_overview        YES       V5_waste_ce_overview, V5_waste_order_overview
+MV_V3_realised_N_multihop      V3_realised_N_multihop        YES       V5_waste_ce_multihop, V5_waste_order_multihop
+MV_V3_realised_N_overall       V3_realised_N_overall         YES       -
+MV_V3_realised_C_factual       V3_realised_C_factual         YES       V5_recoverable_factual, V5_waste_ce_factual
+MV_V3_realised_C_overview      V3_realised_C_overview        YES       V5_recoverable_overview, V5_waste_ce_overview
+MV_V3_realised_C_multihop      V3_realised_C_multihop        YES       V5_recoverable_multihop, V5_waste_ce_multihop
+MV_V3_realised_C_overall       V3_realised_C_overall         YES       -
+MV_V5_waste_pool_factual       V5_waste_pool_factual         YES       -
+MV_V5_waste_pool_overview      V5_waste_pool_overview        YES       -
+MV_V5_waste_pool_multihop      V5_waste_pool_multihop        YES       -
+MV_V5_waste_order_factual      V5_waste_order_factual        YES       -
+MV_V5_waste_order_overview     V5_waste_order_overview       YES       -
+MV_V5_waste_order_multihop     V5_waste_order_multihop       YES       -
+MV_V5_waste_ce_factual         V5_waste_ce_factual           YES       -
+MV_V5_waste_ce_overview        V5_waste_ce_overview          YES       -
+MV_V5_waste_ce_multihop        V5_waste_ce_multihop          YES       -
+MV_V5_recoverable_factual      V5_recoverable_factual        YES       -
+MV_V5_recoverable_overview     V5_recoverable_overview       YES       -
+MV_V5_recoverable_multihop     V5_recoverable_multihop       YES       -
+MV_V6_factual                  V6_shares_sum_1_factual       YES       -
+MV_V6_overview                 V6_shares_sum_1_overview      YES       -
+MV_V6_multihop                 V6_shares_sum_1_multihop      YES       -
+MV_V2_n                        V2_n_queries_133              YES       -
+MV_V2b_factual                 V2b_n_factual                 YES       -
+MV_V2b_overview                V2b_n_overview                YES       -
+MV_V2b_multihop                V2b_n_multihop                YES       -
+MV_V1_t4                       V1_input_digest_t4            YES       -
+MV_V1b_t0                      V1b_input_digest_t0           YES       -
+MV_V4_pool_gold                V4_pool_gold_identity         YES       -
+MV_V7_oracle_gt_ceiling        V7_oracle_le_ceiling          YES       V3_pool_oracle_20_factual, V3_pool_oracle_20_overall, V4_pool_gold_identity
+MV_V8_C_gt_oracle              V8_realised_C_le_oracle       YES       V3_pool_oracle_20_factual, V3_pool_oracle_20_overall, V4_pool_gold_identity
+MV_V9_funnel                   V9_funnel_matches_T0          YES       -
+MV_V10_nan                     V10_no_nan                    YES       V5_waste_ce_factual
+
+mutations            : 42
+checks total         : 42
+checks reddened      : 42
+INERT checks         : none
+all mutations hit    : True

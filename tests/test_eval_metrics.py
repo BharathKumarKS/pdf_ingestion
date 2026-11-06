@@ -208,3 +208,38 @@ def test_run_visual_retrieval_metrics_use_page_labels(ev):
     m = ev.compute_retrieval_metrics(r, [94, 425], _visual_cfg())
     assert m["recall_at_20"] == 1.0
     assert m["hit_at_20"] == 1.0
+
+
+# ── Citation accuracy / coverage (§I115) ─────────────────────────────────────
+# The generator emits `[Page N]`, `【Page N】` and `Page`+U+202F/U+00A0. The old metric matched
+# only `[Page <ascii-space>N]`, found nothing, and returned 1.0 for every answer (vacuous).
+
+def _chunks(pages):
+    return [{"page_number": p} for p in pages]
+
+
+def test_citation_accuracy_parses_all_three_bracket_forms(ev):
+    for a in ("see [Page 141]", "see 【Page 141】", "see (page 141)"):
+        assert ev.compute_citation_accuracy(a, _chunks([141])) == 1.0
+
+
+def test_citation_accuracy_handles_unicode_spaces(ev):
+    """U+202F narrow-no-break and U+00A0 no-break must match — the model emits them."""
+    for sp in ("\u202f", "\u00a0", " ", "\t"):
+        assert ev.compute_citation_accuracy(f"[Page{sp}141]", _chunks([141])) == 1.0
+
+
+def test_citation_accuracy_is_none_when_uncited(ev):
+    """No citation -> None, NOT 1.0 (the vacuous value §I115 removed)."""
+    assert ev.compute_citation_accuracy("an answer citing nothing", _chunks([1, 2])) is None
+    assert ev.compute_citation_accuracy("", _chunks([1])) is None
+
+
+def test_citation_accuracy_flags_a_page_not_retrieved(ev):
+    assert ev.compute_citation_accuracy("see [Page 141] and [Page 999]", _chunks([141])) == 0.5
+
+
+def test_citation_coverage_is_the_paired_signal(ev):
+    assert ev.compute_citation_coverage("see [Page 1]") == 1.0
+    assert ev.compute_citation_coverage("【Page 9】") == 1.0
+    assert ev.compute_citation_coverage("no citation here") == 0.0

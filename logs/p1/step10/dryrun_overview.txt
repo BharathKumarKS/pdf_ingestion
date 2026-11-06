@@ -1,0 +1,73 @@
+2026-11-02 14:11:56.407 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 14:11:58.035 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-11-02 14:11:58.989 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-11-02 14:11:59.824 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 1.14s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 1.85s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 4.73s.
+Failed to export span batch due to timeout, max retries or shutdown.
+2026-11-02 14:12:08.983 | INFO     | src.core.intent_router:_try_load_classifier:163 - IntentRouter: loaded trained classifier from data/models/intent_classifier.pkl
+2026-11-02 14:12:08.988 | DEBUG    | src.core.intent_router:classify:200 - IntentRouter (trained): 'multihop'
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 1.01s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 2.04s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 3.95s.
+Failed to export span batch due to timeout, max retries or shutdown.
+2026-11-02 14:12:16.296 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-11-02 14:12:16.414 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 0.88s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 1.79s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 3.22s.
+Failed to export span batch due to timeout, max retries or shutdown.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 0.87s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 2.32s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 4.56s.
+Failed to export span batch due to timeout, max retries or shutdown.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 0.97s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 2.15s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 4.23s.
+Failed to export span batch due to timeout, max retries or shutdown.
+2026-11-02 14:12:40.112 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+2026-11-02 14:12:40.886 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.134 (kept 20/90)
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 0.89s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 2.37s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 3.92s.
+Failed to export span batch due to timeout, max retries or shutdown.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 1.03s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 1.66s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 4.19s.
+Failed to export span batch due to timeout, max retries or shutdown.
+2026-11-02 14:12:55.960 | INFO     | src.core.database:get_memgraph:432 - Memgraph: connected at bolt://localhost:7687
+2026-11-02 14:12:56.169 | INFO     | src.pdf_ingestion.graph_builder:ensure_schema:216 - Memgraph: schema ready
+2026-11-02 14:12:56.316 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:710 - Concept Qdrant search: top=['conservation of energy', 'conservation of energy and momentum', 'Law of Conservation of Energy', 'Principle of Conservation of Energy', 'Conservation of Energy Theorem', 'Conservation of Mechanical Energy', 'energy conservation', 'conservation of atoms']
+🔭 OpenTelemetry Tracing Details 🔭
+|  Phoenix Project: synapse-learning
+|  Span Processor: SimpleSpanProcessor
+|  Collector Endpoint: http://localhost:6007/v1/traces
+|  Transport: HTTP + protobuf
+|  Transport Headers: {}
+|  
+|  Using a default SpanProcessor. `add_span_processor` will overwrite this default.
+|  
+|  ⚠️ WARNING: It is strongly advised to use a BatchSpanProcessor in production environments.
+|  
+|  `register` has set this TracerProvider as the global OpenTelemetry default.
+|  To disable this behavior, call `register` with `set_global_tracer_provider=False`.
+
+[96s] query='How does Feynman develop the concept of conservation of energy across mechanics, waves and thermodynamics?'  exception=False
+  markdown blocks: 78
+
+--- markdown block #1 (len 3896) ---
+In the first chapter Feynman introduces the conservation of energy by looking at a simple mechanical system. He shows that for a body falling under gravity the sum of its kinetic energy $T$ and its gravitational potential energy $U=mgh$ remains constant, $T+U=\text{const}$, and that this result follows directly from Newton’s laws (page 251). He then uses the principle of virtual work, imagining a small displacement of a system that is not actually moving, to derive the same balance of energies without having to solve the equations of motion explicitly (page 94). These arguments illustrate how the conservation law is a consequence of the underlying dynamical equations.
+
+Feynman then points out that the same theorem holds in a broader context. In the discussion of relativity he shows that when two pieces of a moving body are brought to rest, the energy released is $(m_w-m_0)c^2$, a result that follows from the relativistic relation between mass and energy (page 316). In quantum mechanics he connects the symmetry of the laws under time translations to the conservation of energy: if the equations of motion do not change when the time coordinate is shifted, the energy of the system is conserved (page 921). This symmetry argument is a modern, abstract way of deriving the same principle that was first obtained from Newton’s laws.
+
+When the book turns to thermodynamics, Feynman explain
+
+--- markdown block #2 (len 1161) ---
+We know that in a glass of water everything is jiggling around, all the parts are moving all the time, so there is a certain kinetic energy inside, which we ordinarily may not pay any attention to. We do not notice the motion of the atoms, which produces heat, and so we do not call it kinetic energy, but heat is primarily kinetic energy. Internal potential energy may also be in the form, for instance, of chemical energy: when we burn gasoline energy is liberated because the potential energies of the atoms in the new atomic arrangement are lower than in the old arrangement. It is not strictly possible to treat heat as being pure kinetic energy, for a little of the potential gets in, and vice versa for chemical energy, so we put the two together and say that the total kinetic and potential energy inside an object is partly heat, partly chemical energy, and so on. Anyway, all these different forms of internal energy are sometimes considered as 'lost' energy in the sense described above; this will be made clearer when we study thermodynamics. Another situation in which energy conservation appears to be false is when we study only part of a system.
+
+--- markdown block #3 (len 1149) ---
+The symmetries of the physical laws are very interesting at this level, but they turn out, in the end, to be even more interesting and exciting when we come to quantum mechanics. For a reason which we cannot make clear at the level of the present discussion-a fact that most physicists still find somewhat staggering, a most profound and beautiful thing, is that, in quantum mechanics, for each of the rules of symmetry there is a corresponding conservation law; there is a definite connection between the laws of conservation and the symmetries of physical laws. We can only state this at present, without any attempt at explanation.
+That the laws are symmetrical under translation in time means, in quantum mechanics, that energy is conserved .
+The fact, for example, that the laws are symmetrical for translation in space when we add the principles of quantum mechanics, turns out to mean that momentum is conserved .
+Invariance under rotation through a fixed angle in space corresponds to the conservation of angular momentum . These connections are very interesting and beautiful things, among the most beautiful and profound things in physics.

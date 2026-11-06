@@ -1,0 +1,19 @@
+=== §I96 counter mutation proof — Thu Oct 29 21:23:28 PDT 2026 ===
+source before: sha256 50685451790ac5d1eec2cef42cd99e422d44564fc1174352487c3839dbbdc241
+
+--- MV1 (increment removed) — expect the counter tests to FAIL ---
+  /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/src/core/database.py:321: UserWarning: Payload indexes have no effect in the local Qdrant. Please use server Qdrant if you need payload indexes.
+    client.create_payload_index(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_colbert_lane_dropout.py::test_colbert_failure_increments_the_counter
+FAILED tests/test_colbert_lane_dropout.py::test_the_counter_accumulates_across_queries
+2 failed, 4 passed, 1 warning in 2.60s
+
+source after restore: sha256 50685451790ac5d1eec2cef42cd99e422d44564fc1174352487c3839dbbdc241
+RESTORE: byte-identical OK
+--- post-restore re-run (expect PASS) ---
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+6 passed, 1 warning in 1.86s

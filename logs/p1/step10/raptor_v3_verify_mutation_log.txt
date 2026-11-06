@@ -1,0 +1,29 @@
+2026-10-30 16:51:54.838 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-30 16:51:55.695 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-10-30 16:51:55.695 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+=== S2 verifier mutation proof (live store, wrapper-injected mutations) ===
+checks: V1 v3 raptor count == v2 raptor count, V2 raptor point ids identical (set equality), V3 payloads identical except embedding_version, V3b every v3 raptor payload records the nomic model, V4 v3 chunk count unchanged, V5 every raptor point carries both dense lanes at the declared widths, V6 v2 raptor count unchanged, V7 live search_raptor returns results on an overview query
+
+mutation                                             V1     V2     V3    V3b     V4     V5     V6     V7
+base (no mutation)                                 PASS   PASS   PASS   PASS   PASS   PASS   PASS   PASS
+MV1 v3 loses one raptor point                       RED    RED   PASS   PASS   PASS   PASS   PASS   PASS
+MV2 one v3 raptor id renamed                       PASS    RED   PASS   PASS   PASS   PASS   PASS   PASS
+MV3 one v3 payload text edited                     PASS   PASS    RED   PASS   PASS   PASS   PASS   PASS
+MV4 v3 embedding_version reverted to Qwen3         PASS   PASS   PASS    RED   PASS   PASS   PASS   PASS
+MV5 v3 chunk count +1                              PASS   PASS   PASS   PASS    RED   PASS   PASS   PASS
+MV6 one v3 point loses dense_full                  PASS   PASS   PASS   PASS   PASS    RED   PASS   PASS
+MV7 one raptor point dropped from BOTH v2 and v3   PASS   PASS   PASS   PASS   PASS   PASS    RED   PASS
+MV8 search_raptor returns nothing                  PASS   PASS   PASS   PASS   PASS   PASS   PASS    RED
+
+  [ok] MV1 v3 loses one raptor point: intended ['V1'] reddened ['V1', 'V2']
+  [ok] MV2 one v3 raptor id renamed: intended ['V2'] reddened ['V2']
+  [ok] MV3 one v3 payload text edited: intended ['V3'] reddened ['V3']
+  [ok] MV4 v3 embedding_version reverted to Qwen3: intended ['V3b'] reddened ['V3b']
+  [ok] MV5 v3 chunk count +1: intended ['V4'] reddened ['V4']
+  [ok] MV6 one v3 point loses dense_full: intended ['V5'] reddened ['V5']
+  [ok] MV7 one raptor point dropped from BOTH v2 and v3: intended ['V6'] reddened ['V6']
+  [ok] MV8 search_raptor returns nothing: intended ['V7'] reddened ['V7']
+  [ok] base scenario is all-green (8/8)
+  [ok] every check reddened by at least one mutation (inert: none)
+
+ALL MUTATIONS DISCRIMINATE

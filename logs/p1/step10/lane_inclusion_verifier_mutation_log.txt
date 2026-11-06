@@ -1,0 +1,33 @@
+=== S5 verifier mutation proof — lane_inclusion.json ===
+baseline: all green
+  [ok] MV1 a row's ndcg_at_20 moved
+        must redden ['V1'] -> reddened ['V1', 'V5', 'V6']
+  [ok] MV2 a row's mrr_at_20 moved
+        must redden ['V2'] -> reddened ['V2', 'V5', 'V6']
+  [ok] MV3 the first RELEVANT endpoint page removed
+        must redden ['V2', 'V3'] -> reddened ['V2', 'V3']
+  [ok] MV4 a POOL page removed
+        must redden ['V10', 'V4'] -> reddened ['V10']
+  [ok] MV5 an aggregate moved
+        must redden ['V5'] -> reddened ['V5']
+  [ok] MV6 a delta mean moved
+        must redden ['V6'] -> reddened ['V6']
+  [ok] MV7 a guard flag flipped (with the row that contradicts it)
+        must redden ['V7'] -> reddened ['V7']
+  [ok] MV8 the ANCHOR's other side moved
+        must redden ['V8'] -> reddened ['V8']
+  [ok] MV9 F1's pool loses F0f's pages
+        must redden ['V9'] -> reddened ['V10', 'V4', 'V9', 'V9b']
+  [ok] MV10 a pool_sha changed
+        must redden ['V10'] -> reddened ['V10']
+  [ok] MV11 meta.n_queries changed
+        must redden ['V11'] -> reddened ['V11', 'V7']
+  [ok] MV12 a slot list gains a page-less entry
+        must redden ['V12'] -> reddened ['V12']
+  [ok] MV13 the RAPTOR lane fires on a factual row
+        must redden ['V13'] -> reddened ['V13']
+
+checks reddened by at least one mutation: ['V1', 'V10', 'V11', 'V12', 'V13', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V9b']
+inert checks: none
+
+ALL MUTATIONS DISCRIMINATE

@@ -108,3 +108,40 @@ re-ingest / fine-tune, §I85/§I87's caveat attached).
 On completion: an `IMPROVEMENTS.md` entry (§I112 or next), the artifact
 `logs/p1/step10/overview_signal_probe.json`, the hypotheses cache, the verifier and mutation proof, and
 the run log. **Read-only at run time.**
+
+---
+
+## 9. ADDENDUM (2026-11-04, session 34) — the first full run was VOID; G4 caught a harness dedup defect
+
+**What happened.** The first full run (40 queries, 0 errors) **failed G4**: arm A's R@20 came out
+**0.1878** against the §I111 anchor **0.2128** (off by 0.025 > the ±0.020 floor). Per §4.1 that voids
+the run — and it was right to.
+
+**Root cause — a HARNESS defect, not a model result.** `_dense_lane` called `store.search(...)` and
+kept the **raw chunk hits**, which carry **several chunks per page with no page dedup**. The §I111
+reference arm (`fusion_attribution._pages_of`) **dedups by page, first appearance**. So arms A and B
+carried ~27 duplicate pages each (max 40) and the duplicates consumed top-20 slots, depressing R@20.
+Proof (re-derived from the artifact): deduping the recorded arm-A list gives R@20 = **0.2128** — the
+§I111 anchor to the digit — and arm B deduped = **0.1489** = `D100_raw` exactly. Arms C/D were never
+affected (their page→score table is set-keyed, i.e. already deduped).
+
+**Consequence for the headline.** With a corrected arm A the comparison collapses:
+
+| paired | as-run | corrected (deduped A) |
+|---|---|---|
+| C − A (R@20) | +0.0271, RESOLVED POSITIVE | **+0.0021, CI [−0.0081, +0.0123], UNRESOLVED** |
+| D − A (R@20) | +0.0262, RESOLVED POSITIVE | **+0.0012, CI [−0.0070, +0.0094], UNRESOLVED** |
+
+⇒ the as-run "RESOLVED POSITIVE" is an **artifact of the missing dedup**; corrected, **C and D do not
+move R@20**. The query-representation lever does **not** resolve on R@20.
+
+**The fix.** `_dense_lane` now dedups by page, preserving order (matching `_pages_of`). The
+pre-registration's design, guards and predictions are **unchanged** — this is an implementation
+defect repair, so the re-run is the same pre-registered experiment, not a new one.
+
+**G7 (determinism), separately.** The first run also failed G7 on **one** query (`ovw-020`), where
+arm A's page list differed from its own re-run by a **swap of two adjacent pages at ranks 60/61**
+(668 ↔ 688) — deep in the tail, far below the k=20 cut, i.e. the documented **§I103 lane-tail
+tie-break nondeterminism**, not a metric-affecting instability. Recorded, not "fixed".
+
+**Action:** re-run the probe after the dedup fix; re-check G4 (expect ≈0.2128) and G7.

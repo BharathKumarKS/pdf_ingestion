@@ -1,0 +1,77 @@
+{
+  "baseline": {
+    "test_default_setting_is_one": "PASS",
+    "test_default_path_emits_no_traversal": "PASS",
+    "test_expansion_traverses_and_reports_real_hops": "PASS",
+    "test_hop_distance_is_not_constant": "PASS",
+    "test_hop_bound_is_clamped": "PASS",
+    "test_seed_only_when_max_hops_is_zero": "PASS"
+  },
+  "mutations": {
+    "M1_default_setting_is_two": {
+      "applied": true,
+      "results": {
+        "test_default_setting_is_one": "FAIL",
+        "test_default_setting_is_one__why": "E       AssertionError: assert 2 == 1",
+        "test_default_path_emits_no_traversal": "PASS",
+        "test_expansion_traverses_and_reports_real_hops": "PASS",
+        "test_hop_distance_is_not_constant": "PASS",
+        "test_hop_bound_is_clamped": "PASS",
+        "test_seed_only_when_max_hops_is_zero": "PASS"
+      }
+    },
+    "M2_branch_always_legacy": {
+      "applied": true,
+      "results": {
+        "test_default_setting_is_one": "PASS",
+        "test_default_path_emits_no_traversal": "PASS",
+        "test_expansion_traverses_and_reports_real_hops": "FAIL",
+        "test_expansion_traverses_and_reports_real_hops__why": "E       AssertionError: the expansion must emit the hop-bounded traversal",
+        "test_hop_distance_is_not_constant": "PASS",
+        "test_hop_bound_is_clamped": "FAIL",
+        "test_hop_bound_is_clamped__why": "E       AssertionError: the hop bound must be clamped",
+        "test_seed_only_when_max_hops_is_zero": "PASS"
+      }
+    },
+    "M3_clamp_removed": {
+      "applied": true,
+      "results": {
+        "test_default_setting_is_one": "PASS",
+        "test_default_path_emits_no_traversal": "PASS",
+        "test_expansion_traverses_and_reports_real_hops": "PASS",
+        "test_hop_distance_is_not_constant": "PASS",
+        "test_hop_bound_is_clamped": "FAIL",
+        "test_hop_bound_is_clamped__why": "E       AssertionError: the hop bound must be clamped",
+        "test_seed_only_when_max_hops_is_zero": "PASS"
+      }
+    },
+    "M4_hop_distance_hardcoded_zero": {
+      "applied": true,
+      "results": {
+        "test_default_setting_is_one": "PASS",
+        "test_default_path_emits_no_traversal": "PASS",
+        "test_expansion_traverses_and_reports_real_hops": "FAIL",
+        "test_expansion_traverses_and_reports_real_hops__why": "assert \"RELATES_TO*0..2\" in cypher, \"the expansion must emit the hop-bounded traversal\"",
+        "test_hop_distance_is_not_constant": "FAIL",
+        "test_hop_distance_is_not_constant__why": "E       AssertionError: hop_distance is still constant",
+        "test_hop_bound_is_clamped": "PASS",
+        "test_seed_only_when_max_hops_is_zero": "PASS"
+      }
+    },
+    "M5_branch_inverted_default_traverses": {
+      "applied": true,
+      "results": {
+        "test_default_setting_is_one": "PASS",
+        "test_default_path_emits_no_traversal": "FAIL",
+        "test_default_path_emits_no_traversal__why": "E       AssertionError: the shipped path must NOT traverse RELATES_TO",
+        "test_expansion_traverses_and_reports_real_hops": "FAIL",
+        "test_expansion_traverses_and_reports_real_hops__why": "E       AssertionError: the expansion must emit the hop-bounded traversal",
+        "test_hop_distance_is_not_constant": "PASS",
+        "test_hop_bound_is_clamped": "FAIL",
+        "test_hop_bound_is_clamped__why": "E       AssertionError: the hop bound must be clamped",
+        "test_seed_only_when_max_hops_is_zero": "FAIL",
+        "test_seed_only_when_max_hops_is_zero__why": "E       AssertionError: assert 'RELATES_TO' not in '\\n         ...            '"
+      }
+    }
+  }
+}

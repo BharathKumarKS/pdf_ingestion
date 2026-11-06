@@ -1,0 +1,103 @@
+2026-11-04 20:23:58.789 | INFO     | __main__:main:154 - overview queries: 2
+2026-11-04 20:23:58.919 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-11-04 20:23:59.740 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-11-04 20:23:59.740 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-11-04 20:23:59.741 | INFO     | __main__:_build_hypotheses:65 - hypotheses cache loaded: 2 queries
+{
+ "aggregates": {
+  "A": {
+   "R@20": 0.10775788576300085,
+   "nDCG@20": 0.583119610287572,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 47.52336928608115
+  },
+  "B": {
+   "R@20": 0.06641091219096334,
+   "nDCG@20": 0.3265093207062168,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 47.32822580645161
+  },
+  "C": {
+   "R@20": 0.09906223358908782,
+   "nDCG@20": 0.4700177300723548,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 44.995000000000005
+  },
+  "D": {
+   "R@20": 0.11210571184995738,
+   "nDCG@20": 0.49554752720922945,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 43.44583333333333
+  }
+ },
+ "deltas": {
+  "C-A": {
+   "n": 2,
+   "mean": -0.008695652173913045,
+   "ci": [
+    -0.02573913043478261,
+    0.008347826086956521
+   ],
+   "resolved": false,
+   "wins": 0,
+   "losses": 1
+  },
+  "D-A": {
+   "n": 2,
+   "mean": 0.0043478260869565175,
+   "ci": [
+    -0.004173913043478257,
+    0.012869565217391292
+   ],
+   "resolved": false,
+   "wins": 1,
+   "losses": 0
+  },
+  "B-A": {
+   "n": 2,
+   "mean": -0.041346973572037524,
+   "ci": [
+    -0.045524296675191825,
+    -0.03716965046888322
+   ],
+   "resolved": true,
+   "wins": 0,
+   "losses": 2
+  },
+  "C-A_ndcg": {
+   "n": 2,
+   "mean": -0.1131018802152172,
+   "ci": [
+    -0.11556800794875079,
+    -0.1106357524816836
+   ],
+   "resolved": true,
+   "wins": 0,
+   "losses": 2
+  },
+  "D-A_ndcg": {
+   "n": 2,
+   "mean": -0.08757208307834258,
+   "ci": [
+    -0.13450275768280623,
+    -0.04064140847387893
+   ],
+   "resolved": true,
+   "wins": 0,
+   "losses": 2
+  }
+ },
+ "guards": {
+  "G1_population_40": false,
+  "G2_zero_errors": true,
+  "G3_hypotheses_frozen": true,
+  "G4_armA_reproduces_I111_dense_only": false,
+  "G5_armB_differs_from_A": true,
+  "G6_lane_ordered_len_ge_20": true,
+  "G7_determinism_A": true
+ }
+}
+
+artifact: logs/p1/step10/overview_signal_probe.json
+sha256: 157b62020bdde4d708a9b2512e0552f54c1fc283034f8ec466e439346cc69a19
+GUARD FAILURE: G1_population_40, G4_armA_reproduces_I111_dense_only

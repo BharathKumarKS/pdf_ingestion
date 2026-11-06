@@ -1,0 +1,53 @@
+{
+  "probed_at_utc": "2026-11-06T01:58:18Z",
+  "base": "http://10.0.10.70:8123",
+  "timeout_s": 35.0,
+  "lanes": {
+    "dense": {
+      "url": "http://10.0.10.70:8123/embed-text/v1/embeddings",
+      "status": 200,
+      "latency_s": 0.19,
+      "bytes": 30446,
+      "shape": [
+        "object",
+        "model",
+        "data",
+        "embeddings",
+        "usage"
+      ],
+      "error": null
+    },
+    "colbert": {
+      "url": "http://10.0.10.70:8123/embed-text/v1/multivector-embeddings",
+      "status": 200,
+      "latency_s": 0.13,
+      "bytes": 37357,
+      "shape": [
+        "object",
+        "model",
+        "embedding_type",
+        "is_query",
+        "data",
+        "embeddings",
+        "usage"
+      ],
+      "error": null
+    },
+    "sparse": {
+      "url": "http://10.0.10.70:8123/embed-text/v1/sparse-embeddings",
+      "status": null,
+      "latency_s": 35.04,
+      "bytes": 0,
+      "shape": null,
+      "error": "TimeoutError: timed out"
+    },
+    "rerank": {
+      "url": "http://10.0.10.70:8123/rerank/v1/rank",
+      "status": null,
+      "latency_s": 35.03,
+      "bytes": 0,
+      "shape": null,
+      "error": "TimeoutError: timed out"
+    }
+  }
+}

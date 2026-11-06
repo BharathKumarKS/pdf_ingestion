@@ -1,0 +1,73 @@
+{
+ "doc_id": "7ba61432-c5e0-416d-aecf-25a232523481",
+ "n_pages": 968,
+ "written": 428,
+ "wall_s": 3134.9,
+ "checks": [
+  {
+   "id": "V-0.1 doc_exists",
+   "pass": true,
+   "detail": "doc=7ba61432-c5e0-416d-aecf-25a232523481"
+  },
+  {
+   "id": "V-0.2 pdf_exists",
+   "pass": true,
+   "detail": "/Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/data/base_textbooks/feynman-lectures-on-physics-volume1.pdf"
+  },
+  {
+   "id": "V-0.3 old_doc_vectors_recorded",
+   "pass": true,
+   "detail": "old doc 6d55c52b-47ae-45ff-bee0-a3ca01ac93ce: 1033 points"
+  },
+  {
+   "id": "V-0.4 page_count",
+   "pass": true,
+   "detail": "pdf=968 doc=968"
+  },
+  {
+   "id": "V-A1.1 reused_existing",
+   "pass": true,
+   "detail": "968 records"
+  },
+  {
+   "id": "V-A2 all_have_image_key",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "id": "V-A3 all_active",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "id": "V-B1 all_batches_done",
+   "pass": true,
+   "detail": "242/242"
+  },
+  {
+   "id": "V-B2 qdrant_points_for_doc",
+   "pass": true,
+   "detail": "qdrant=968 expected=968"
+  },
+  {
+   "id": "V-B3 patch_shape",
+   "pass": true,
+   "detail": "shape=(1031, 128) dim=128"
+  },
+  {
+   "id": "V-C1 search_returns_current_doc",
+   "pass": true,
+   "detail": "6/10 hits from 7ba61432-c5e0-416d-aecf-25a232523481"
+  },
+  {
+   "id": "V-C2 old_doc_untouched",
+   "pass": true,
+   "detail": "before=1033 after=1033"
+  },
+  {
+   "id": "V-C3 total_vectors",
+   "pass": true,
+   "detail": "total=2001"
+  }
+ ]
+}

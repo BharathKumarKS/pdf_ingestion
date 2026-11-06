@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "after": "g3_query_side_baseline_2026-10-22_post_merge.json",
+    "after_model": "Qwen/Qwen3-Embedding-0.6B",
+    "before": "g3_query_side_baseline_2026-10-22.json",
+    "before_model": "Qwen/Qwen3-Embedding-0.6B",
+    "n_queries": 200,
+    "no_cluster": true,
+    "prereg": ".hermes/plans/2026-11-05-p1-g3-sensitive-remeasurement-preregistration.md",
+    "read_only": true,
+    "what": "\u00a7G3 sensitive re-measurement \u2014 per-query >=2-concept chunk COUNT, paired"
+  },
+  "primary_ge2_count": {
+    "after_total": 158,
+    "before_total": 138,
+    "ci95": [
+      -0.012701,
+      0.212701
+    ],
+    "l": 1,
+    "mean_paired_delta": 0.1,
+    "n": 200,
+    "queries_that_moved": 12,
+    "sd": 0.808249,
+    "ties": 188,
+    "verdict": "UNRESOLVED",
+    "w": 11
+  },
+  "secondary_share_ge_2": {
+    "after": 0.064123,
+    "after_chunks": 2464,
+    "before": 0.063419,
+    "before_chunks": 2176
+  }
+}

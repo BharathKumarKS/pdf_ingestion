@@ -1,0 +1,56 @@
+{
+  "baseline": {
+    "test_derived_instruction_default_is_search_query": "PASS",
+    "test_derived_embedder_uses_the_derived_instruction": "PASS",
+    "test_arm_embedder_keeps_the_arms_instruction": "PASS",
+    "test_derived_instruction_is_overridable": "PASS",
+    "test_derived_embedder_dim_is_the_derived_dim": "PASS"
+  },
+  "mutations": {
+    "M1_derived_inherits_arm_instruction": {
+      "applied": true,
+      "results": {
+        "test_derived_instruction_default_is_search_query": "PASS",
+        "test_derived_embedder_uses_the_derived_instruction": "FAIL",
+        "test_derived_embedder_uses_the_derived_instruction__why": "assert d._model == \"nomic-ai/nomic-embed-text-v1.5\"",
+        "test_arm_embedder_keeps_the_arms_instruction": "PASS",
+        "test_derived_instruction_is_overridable": "FAIL",
+        "test_derived_instruction_is_overridable__why": "E       AssertionError: assert 'Instruct: QW...TYLE\\nQuery: ' == 'CUSTOM: '",
+        "test_derived_embedder_dim_is_the_derived_dim": "PASS"
+      }
+    },
+    "M2_default_is_not_search_query": {
+      "applied": true,
+      "results": {
+        "test_derived_instruction_default_is_search_query": "FAIL",
+        "test_derived_instruction_default_is_search_query__why": "E       AssertionError: assert 'Instruct: QWEN\\n' == 'search_query: '",
+        "test_derived_embedder_uses_the_derived_instruction": "PASS",
+        "test_arm_embedder_keeps_the_arms_instruction": "PASS",
+        "test_derived_instruction_is_overridable": "PASS",
+        "test_derived_embedder_dim_is_the_derived_dim": "PASS"
+      }
+    },
+    "M3_arm_uses_derived_instruction": {
+      "applied": true,
+      "results": {
+        "test_derived_instruction_default_is_search_query": "PASS",
+        "test_derived_embedder_uses_the_derived_instruction": "PASS",
+        "test_arm_embedder_keeps_the_arms_instruction": "FAIL",
+        "test_arm_embedder_keeps_the_arms_instruction__why": "E       AssertionError: assert 'search_query: ' == 'Instruct: QW...TYLE\\nQuery: '",
+        "test_derived_instruction_is_overridable": "PASS",
+        "test_derived_embedder_dim_is_the_derived_dim": "PASS"
+      }
+    },
+    "M4_derived_dim_is_the_arms": {
+      "applied": true,
+      "results": {
+        "test_derived_instruction_default_is_search_query": "PASS",
+        "test_derived_embedder_uses_the_derived_instruction": "PASS",
+        "test_arm_embedder_keeps_the_arms_instruction": "PASS",
+        "test_derived_instruction_is_overridable": "PASS",
+        "test_derived_embedder_dim_is_the_derived_dim": "FAIL",
+        "test_derived_embedder_dim_is_the_derived_dim__why": "E       AssertionError: assert 1024 == 768"
+      }
+    }
+  }
+}

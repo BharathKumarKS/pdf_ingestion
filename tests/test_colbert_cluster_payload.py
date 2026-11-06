@@ -27,8 +27,8 @@ from src.core.config import Settings
 from src.pdf_ingestion.colbert_embedder import ClusterColBERTEmbedder
 
 
-def _settings() -> Settings:
-    return Settings(
+def _settings(**overrides) -> Settings:
+    base = dict(
         use_stub_colbert=False,
         colbert_enabled=True,
         colbert_model="colbert-ir/colbertv2.0",
@@ -36,6 +36,8 @@ def _settings() -> Settings:
         qdrant_in_memory=True,
         sqlite_url="sqlite:///./data/test_synapse.db",
     )
+    base.update(overrides)
+    return Settings(**base)
 
 
 def _capture(monkeypatch, data, method, *args, **kwargs):
@@ -95,6 +97,36 @@ class TestPayloadContract:
                               "embed_query", "kinetic energy")
         assert payload["model"] == "colbert-ir/colbertv2.0"
         assert payload["input"] == ["kinetic energy"]
+
+    def test_cluster_model_overrides_the_local_one_when_set(self, monkeypatch):
+        """§I117 — `sv_colbert_model` is the CLUSTER id; it wins when non-empty.
+
+        Empty (the default) must fall back to `colbert_model`, or the switch would fire on
+        a config that never opted in.
+        """
+        import httpx
+
+        sent: list[dict] = []
+
+        class FakeResp:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {"data": [{"embedding": [[0.1, 0.2]], "index": 0}]}
+
+        def fake_post(url, **kw):
+            sent.append(kw.get("json", {}))
+            return FakeResp()
+
+        monkeypatch.setattr(httpx, "post", fake_post)
+
+        ClusterColBERTEmbedder(_settings(sv_colbert_model="lightonai/GTE-ModernColBERT-v1")) \
+            .embed_query("q")
+        assert sent[0]["model"] == "lightonai/GTE-ModernColBERT-v1"
+
+        ClusterColBERTEmbedder(_settings()).embed_query("q")   # sv_colbert_model empty
+        assert sent[1]["model"] == "colbert-ir/colbertv2.0"
 
 
 # ── the response ORDER contract ──────────────────────────────────────────────

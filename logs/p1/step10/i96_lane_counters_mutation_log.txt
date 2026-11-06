@@ -1,0 +1,12 @@
+=== §I96 lane-counter mutation proof — 2026-10-29 21:43:35.560970 ===
+store.py sha256 0a678a031ef4c781fd6cd170ecc156ae9013f902df49c03de964078d07d2fe5e
+graph_builder.py sha256 6590d6073de3fa6c40161643a96111fd896a43169f452bb81295a866f8bf8994
+
+MV1 DA counter removed       -> RED (correct)  [1 failed, 1 warning in 1.76s]
+MV2 RAPTOR counter removed   -> RED (correct)  [1 failed, 1 warning in 1.73s]
+MV3 graph counter removed    -> RED (correct)  [1 failed in 1.06s]
+MV4b RAPTOR made to SWALLOW  -> RED (correct)  [1 failed, 1 warning in 1.72s]
+
+store.py: restore byte-identical OK
+graph_builder.py: restore byte-identical OK
+post-restore re-run: 6 passed, 1 warning in 1.78s

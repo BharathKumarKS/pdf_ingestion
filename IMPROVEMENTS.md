@@ -1771,6 +1771,94 @@ responds to a reordering, or the expansion arm.
 
 ---
 
+### G5 outcome — GENUINE MULTI-HOP BUILT, DEFAULT-OFF, VERIFIED (2026-11-05)
+
+**What was built.** `graph_search` was a single-hop concept lookup that hard-coded `hop_distance = 0`
+(§I2: *"multihop is nominal"*). It now traverses: new setting **`cfg.graph_max_hops`** (default **1**)
++ a branched query — `max_hops == 1` keeps the legacy Cypher **byte-identical** (no `RELATES_TO`,
+`0 AS hop_distance`); `>= 2` expands the seed set along `RELATES_TO` edges and reports the real
+minimum edge count via `min(size(relationships(p)))`. **Default 1 is deliberate** — the expansion is a
+new treatment and must not move the shipped lane until its ablation runs (§G1's rule).
+
+**Live behaviour probe** (`logs/p1/step10/graph_multihop_probe.py` → `.json`, read-only, 8 multihop
+queries, live Memgraph + cluster embedder, limit 500):
+
+| | hop-1 (shipped) | hop-2 (expansion) |
+|---|---|---|
+| `hop_distance` | all **0** (8/8) | **{0, 1, 2}** — not constant (8/8) |
+| chunks returned | 8–112 | 500 (cap) |
+| **new chunks vs hop-1** | — | **+388 … +492** (adds on 8/8) |
+| wall | ~0.3 s | ~2.1 s |
+
+⇒ **the traversal traverses**: a 2-hop chunk — one that mentions a *neighbour* of a seed, never the
+seed — is reached, which is exactly the plan's verifier (*"a query requiring two hops retrieves a page
+neither one-hop endpoint reaches"*).
+
+**⚠️ THREE THINGS THE LIVE PROBE CAUGHT THAT THE FAKE-DRIVER UNIT TESTS COULD NOT** (recorded, not hidden):
+1. **Memgraph has no `LENGTH()` on paths** — the first query errored `Function 'LENGTH' doesn't exist`;
+   fixed to `size(relationships(p))`. A unit test with a fake driver cannot see a Cypher dialect gap.
+2. **3 hops is prohibitive** — measured **0.3 s (1) / 2.3 s (2) / 66.5 s (3)**, and 2-hop already
+   reaches **2,780 of 6,065** concepts. The bound is therefore **clamped to 2**, not 3.
+3. **The expansion's tail is invisible at the shipped ranking.** With hop-first ordering and a top-20
+   limit the returned list is filled by hop-0 chunks, so the new hop-1/2 chunks only enter when the
+   seed set is short. A real property for the ablation to read against — not a defect.
+
+**Verification.** Tests `tests/test_graph_multihop.py` **6/6**; mutation `graph_multihop_mutation.py`
+→ `.json`: baseline all PASS, **6/6 checks reddened, none inert**, failures on assertions. Independent
+verifier **`openai/gpt-oss-20b` (`deleg_fa7bdec1`), 7/7 claims CONFIRMED** (cited lines re-checked by
+the author; tree unchanged after the review).
+
+**⚠️ §I2 is only PARTLY closed.** The traversal exists and is verified, but it **ships OFF** (default
+1) until its **ablation** runs — PPR's rule (§G1), and the lane is a measured content HARM (§I98), so
+the ablation must show the expansion *earns its place*, not merely that it runs. The ablation needs
+the full retrieval path and is **BLOCKED** while the cluster's sparse + rerank lanes are down.
+
+**Register against:** §I2 (the constant-0 defect), §G1 (the "no claim without the ablation" rule),
+§I98 (the lane's content harm), §G3 (the merge this ran on).
+
+---
+
+### G3 outcome — the SENSITIVE re-measurement: still UNRESOLVED, but DIRECTIONAL (2026-11-05)
+
+**Why.** §I51 recorded §G3's merge as measured-and-null on an endpoint that was **INERT** (a median
+that could not leave 1.0), so the null was uninformative. Re-pre-registering a sensitive endpoint was
+an owner decision, now taken.
+
+**Pre-registered** (`.hermes/plans/2026-11-05-p1-g3-sensitive-remeasurement-preregistration.md`,
+written before the re-derivation): the endpoint is the **per-query count of chunks matching ≥ 2** of the
+query's top-8 concepts, over the **whole** `matched_concepts` histogram (no LIMIT), **paired** across the
+200 queries; **RESOLVED iff the 95 % CI on the mean paired delta excludes 0**.
+
+**Result** (`logs/p1/step10/g3_sensitive_remeasure.json`, read-only over the two 2026-10-22 artifacts):
+
+| | before | after |
+|---|---|---|
+| chunks matching ≥ 2 (total) | **138** | **158** |
+| `share_ge_2` | 0.063419 | 0.064123 |
+
+Mean paired delta **0.10**, SD 0.808, **95 % CI [−0.0127, +0.2127] ⇒ UNRESOLVED**; **11 W / 1 L /
+188 ties** (12 of 200 queries move at all). The **138 → 158** figures reproduce §I51's V3 table
+**exactly** — the harness re-derives the recorded numbers.
+
+**⇒ THE FINDING.** Even a *sensitive* endpoint does not resolve the merge's query-side effect — it is
+**UNRESOLVED, not negative**. The direction is **11 wins to 1 loss**, so the mean is swamped by the
+**188 ties** (the design is underpowered on this endpoint, the §G1 defect class in a new form). ⚠️ This
+does **NOT** licence *"entity resolution does not help retrieval"*: the endpoint measures
+*matched-concept multiplicity*, not retrieval quality. A retrieval-quality claim still needs the
+**endpoint ablation** — BLOCKED while the cluster's sparse + rerank lanes are down.
+
+**Verification.** `logs/p1/step10/g3_sensitive_remeasure_verifier.py` **independently re-derives** the
+endpoint from the inputs (a second implementation) and compares the artifact to it — **9/9 PASS**;
+mutation proof **9/9 checks reddened, none inert** (an input-mutation was added so the id-match check
+could be reddened at all). Independent verifier **`openai/gpt-oss-20b` (`deleg_7ed32af1`), 7/7
+CONFIRMED**; the author re-ran the harness to a **byte-identical** artifact and noted the reviewer's one
+arithmetic slip (0.064129 vs the correct 0.064123) — immaterial.
+
+**Register against:** §I51 (the inert endpoint this replaces), §I29 (the query-side quantity), §G1 (the
+underpowered-cut defect class), §G5 (the sibling graph item).
+
+---
+
 ## H. Course standards — compliance check (de-identified)
 
 Standards the course states explicitly for retrieval, and where this project stands.
@@ -8559,3 +8647,414 @@ generator stage is being measured.
 
 
 
+
+---
+
+#### I105. ✅ THE PER-TYPE k SWEEP at the endpoint — **wider k buys RECALL and COVERAGE (most for overview), NOT ranked quality; the apparent CAPTURE gain is a CEILING artifact.** The owner's "wider k helps, and most for overview" is **half right**: the recall half is real and type-dependent; the quality half is refuted.
+
+**The question.** §I97 P3 and §I102 measured the endpoint cut **20 → 50** on the WHOLE population. Neither reported **per query type**, and neither recomputed the **per-type ceilings**. Does widening the last layer's cut improve the metric **per type** — and is the benefit type-dependent (broad overview vs narrow factual)?
+
+**Read-only. No run, no new measurement** — a re-derivation over TWO existing artifacts (`t4_endpoint.json`, `t0_baseline.json`). Two arms: **CE** = the cross-encoder's ranked pages (the LAST layer, `W50_pages`, k ≤ 50); **POOL** = the fused pool's own order (`fusion_ranked`, k ≤ 100). k grids CE `{1,2,5,10,20,30,40,47}`, POOL `{1,2,5,10,20,30,40,50}`; anchor **k=20**. Metrics per type: **R@k, nDCG@k, P@k, cov@k** (the `evaluate_rag.py` convention), each beside its **pool-aware ceiling**, plus **capture = realised/ceiling** (per query, averaged). Harness `logs/p1/step10/per_type_k_sweep.py` → `per_type_k_sweep.json`; independent stdlib verifier `per_type_k_sweep_verifier.py` (**18/18 checks PASS**, every cell re-derived from the raw page lists); mutation proof `per_type_k_sweep_mutation.py` (**17 mutations, 17/17 reddened their intended check, NO inert check**). Pre-registration `.hermes/plans/2026-11-01-p1-per-type-k-sweep-preregistration.md`.
+
+**Guards (all pass).** population 133 (53/40/40); prefix identity `W50[:20]==C_pages` 133/133; pool sha 133/133; **cross-artifact anchor `t0.fusion_ranked[:20] == t4.N_pages` 133/133** (two independent runs agree on the pool order); CE arm @20 reproduces `t4.C_metrics` per query; R@k monotone.
+
+**1. ✅ THE RECALL HALF IS REAL, MONOTONE, AND TYPE-DEPENDENT — CE arm, mean per type:**
+
+| k | 1 | 5 | 10 | **20** | 30 | 40 | 47 |
+|---|---|---|---|---|---|---|---|
+| factual R@k | 0.204 | 0.344 | 0.457 | **0.557** | 0.635 | 0.689 | **0.725** |
+| **overview R@k** | 0.013 | 0.058 | 0.109 | **0.188** | 0.268 | 0.327 | **0.370** |
+| multihop R@k | 0.249 | 0.396 | 0.457 | **0.550** | 0.564 | 0.590 | **0.605** |
+
+Paired vs k=20, full population: **factual ΔR@47 +0.1675 RESOLVED**, **overview +0.1817 RESOLVED**, **multihop +0.0529 RESOLVED** — and **Δcov@k tracks ΔR@k** exactly. **Overview gains most in RELATIVE terms** (0.188 → 0.370, ~2×). The owner's recall prediction is **CONFIRMED**.
+
+**2. ⚠️ THE QUALITY HALF IS REFUTED — nDCG@k does NOT improve for overview.**
+
+| k | 20 | 30 | 40 | 47 |
+|---|---|---|---|---|
+| factual nDCG@k | 0.452 | 0.474 | 0.490 | 0.500 |
+| **overview nDCG@k** | **0.538** | 0.533 | 0.525 | **0.531** |
+| multihop nDCG@k | 0.508 | 0.514 | 0.522 | 0.527 |
+
+Paired vs k=20: **overview ΔnDCG@47 −0.0070 UNRESOLVED** (and −0.0050 / −0.0127 at k=30/40). On the **comparable block** (`n_rel > 20`, §I102's trap — where IDCG is not the same denominator): overview **n=40, ΔnDCG@30/40/47 = −0.0050 / −0.0127 / −0.0070, all UNRESOLVED**; factual **n=5** goes **−0.0374 RESOLVED NEGATIVE at k=30**; **multihop n=0** (no multihop query has `n_rel > 20`). ⇒ **wider k does not raise ranked quality for any type, and on the pool's own order it is a RESOLVED HARM for overview (POOL ΔnDCG@50 −0.0540).**
+
+**3. ⚠️ THE CAPTURE RISE IS A CEILING ARTIFACT — the pre-registered falsification clause FIRED, and the mechanism refutes it.** overview `capture_nDCG` rises **0.548 (k=20) → 0.657 (k=47), +0.109** — above the +0.05 clause. **But the realised nDCG went DOWN (0.538 → 0.531) while the pool-aware CEILING fell (0.979 → 0.806).** The ceiling falls because overview's pool holds **~31 gold pages** but the label set is **~58**: past `k ≈ pool_gold`, `IDCG(min(pool_gold,k))` saturates while `IDCG(n_rel,k)` keeps growing. ⇒ **the entire capture gain is the denominator shrinking, not quality rising.** The clause is **recorded as fired and then explained away by its own mechanism** — stated, not buried.
+
+**4. ✅ THE REGISTERED PREDICTIONS, scored.** **P1** (R/cov monotone, largest for overview) **CONFIRMED**. **P2** (nDCG flat/negative on the comparable block) **CONFIRMED**. **P3** (capture flat in k) **FALSIFIED in the letter, refuted in the mechanism** (item 3). **P4** (CE @20 a prefix) **CONFIRMED** (anchor).
+
+**5. ⇒ THE VERDICT.** **Wider k is a CONTEXT-BUDGET knob, per type as well as overall** (§I97/§I102, now per type). It raises **recall and coverage** — real, monotone, and **most for overview** — but it **cannot raise ranked quality**, and the one number that appeared to rise (capture) rose by a **ceiling artifact**. ⚠️ Whether the extra overview pages help the *answer* is the **generator stage, still unmeasured** — this is the only reading under which "wider k for overview" pays.
+
+**6. ⚠️ BOUNDS.** CE arm capped at **k=47** (T4 kept ≤ 50); **k > 100 is IMPOSSIBLE** without widening the pool cap (default 100) — a separate run (§I92 priced it: cap 100→500 = +0.1835 pool coverage → **+0.003** endpoint). n=40 per non-factual type. One corpus, one document, one funnel. ⚠️ **This closes the "does a wider cut help, per type?" question; it does NOT re-open the pool → top-20 ranking loss (§I99 `waste_order`), which remains the endpoint's binding loss.**
+
+**Read-only. Nothing written to any collection. No run, no re-ingest.**
+
+---
+
+#### I106. ✅ THE WIDE-POOL / HIGHER-k TEST — **widening the pool cap (100 → 500) and sweeping k to 250 buys RECALL and COVERAGE, NOT ranked quality; in the comparable regime (`k < n_rel`) it is a small RESOLVED HARM for overview.** §I105's verdict SURVIVES a wider pool.
+
+**The question** (the owner's, after §I105). §I105 swept k at the endpoint but the cross-encoder's ranking was available only to **k=50** (T4 kept ≤50), and the pool was capped at 100. Does **widening the pool cap** and sweeping k higher change the picture — per query type, on the last layer?
+
+**Two parts.**
+* **POOL arm — READ-ONLY.** `wide_pool_k_sweep.py` → `wide_pool_k_sweep.json`, from `fusion_attribution.json` (`C_pages` = pool order at cap 100; `W500_pages` = pool order at cap 500, 268–389 pages/query). Verifier **11/11**; mutation **11/11 reddened, NO inert check**.
+* **CE arm — A RUN.** `wide_ce_endpoint.py` → `wide_ce_endpoint.json` (**133 queries, 0 errors, 0 reranker fallbacks, reachable 888 == T0, wall 401 s**, one arm, `mmr_candidates`/`reranker_fetch_k`/`reranker_top_k` all 100→500). It records the CE's **FULL** ordered page list (kept 268–389 of the pool). Sweep `wide_ce_k_sweep.py` → `wide_ce_k_sweep.json`. Verifier **11/11**; mutation **11/11 reddened, NO inert check**.
+
+**Pre-registrations** `.hermes/plans/2026-11-01-p1-wide-pool-k-sweep-preregistration.md` and `...-wide-ce-endpoint-preregistration.md`. **Read-only. No collection write, no re-ingest, no `src/` change.**
+
+**1. ✅ THE POOL ARM — widening the cap does NOT change the pool's top-50.** POOL100 and POOL500 are near-identical for k ≤ 50 (overview R@20 **0.210 vs 0.208**). The wide cap **appends** candidates; it does not reorder the top. So "wider k" only bites **beyond k=50** — the range §I105 could not reach. Recall keeps rising to k=250 (POOL500 overview **0.208 → 0.724**).
+
+**2. ✅ THE CE ARM over the wide pool — recall rises hard, per type:**
+
+| k | 20 | 50 | 100 | 150 | 200 | 250 |
+|---|---|---|---|---|---|---|
+| factual R@k | 0.583 | 0.703 | 0.799 | 0.840 | 0.870 | **0.902** |
+| **overview R@k** | **0.164** | 0.315 | 0.493 | 0.620 | 0.713 | **0.768** |
+| multihop R@k | 0.542 | 0.605 | 0.666 | 0.694 | 0.740 | **0.756** |
+
+**3. ⚠️ THE RANKED QUALITY DOES NOT IMPROVE — in the comparable regime it is a RESOLVED HARM.** `nDCG@k` dips then rises (overview 0.474 @20 → 0.448 @40 → 0.637 @250), **but the rise begins at k ≈ n_rel** (`n_rel` mean: overview **73.8**, factual 9.5, multihop 4.3): past it `IDCG(n_rel,k)` **saturates** while the DCG numerator grows, so `nDCG@k` rises **BY CONSTRUCTION** — the mirror of §I102's artifact. In the comparable block (**k < n_rel**), paired vs k=20:
+
+| type | k | n | ΔnDCG | 95 % CI | verdict |
+|---|---|---|---|---|---|
+| **overview** | 30 | 35 | **−0.0270** | [−0.0434, −0.0111] | **RESOLVED NEG** |
+| **overview** | 40 | 27 | **−0.0285** | [−0.0509, −0.0069] | **RESOLVED NEG** |
+| overview | 50 | 22 | −0.0227 | [−0.0506, +0.0049] | unresolved |
+| **overview** | 100 | 9 | **−0.0413** | [−0.0827, −0.0024] | **RESOLVED NEG** |
+| factual | 30 | 3 | −0.0771 | [−0.1347, −0.0058] | RESOLVED NEG |
+| multihop | ≥30 | 0 | — | — | no comparable query |
+
+⇒ **The falsification clause did NOT fire** (overview never resolves POSITIVE). **§I105's verdict survives a wider pool: wider k buys recall/coverage, not ranked quality.**
+
+**4. ✅ PREDICTIONS, scored.** **P1** (R/cov monotone, largest for overview) **CONFIRMED**. **P2** (nDCG flat/negative in the comparable regime) **CONFIRMED** (item 3). **P3** (CE@20 ≈ §I105) **CONFIRMED** (anchor; reachable 888 == T0). ⚠️ **§I105's capture prediction was FALSIFIED** — capture rose MORE on the wider pool (overview 0.583 → 0.754), because the same denominator saturation drives it; recorded as a miss, not buried.
+
+**5. ⇒ THE VERDICT.** **Wider k, with or without a wider pool, is a CONTEXT-BUDGET knob.** It raises recall and coverage (real, monotone, most for overview) and cannot raise ranked quality. ⚠️ **The only reading under which "wider k for overview" pays is the generator stage — still unmeasured.** ⚠️ **This does NOT re-open the pool → top-20 ranking loss (§I99 `waste_order`).**
+
+**6. ⚠️ BOUNDS.** One corpus, one document, one funnel. n=40 per non-factual type; the comparable block thins fast (overview n=9 at k=100, n=1 at k=250). The CE list is capped at the pool size (~300), so k>~300 is not reachable without a still-wider cap. **Read-only: nothing written to any collection, no re-ingest.**
+
+**7. ⚠️ AN ENVIRONMENT NOTE.** The run harness exits with a `libc++abi: ... recursive_mutex lock failed` **teardown-time** abort AFTER the artifact is written (a Qdrant-client shutdown race). It does not affect the artifact; check the JSON, not the exit code.
+
+#### I107. ✅ THE VISUAL-LANE VALIDATION RAN (read-only) — ⚠️ **THE COLPALI APERTURE CANNOT SEPARATE IN-DOMAIN FROM NEAR-DOMAIN.** A near-domain image (H 2p orbital, top-1 cosine **0.5609**) **outscores the weakest in-domain concept** (oscillator, **0.4936**); the score floor is high (noise **0.4578**, a brand logo **0.4355**); **no separating threshold exists**. V1 PASSES (12/12 real page images) but **at cos 1.0000 — a self-match signature, not proof of cross-render generalisation.** The lane still has **NO labelled retrieval metric**.
+
+**The question.** The ColPali visual lane was populated for the CURRENT doc this session (968 page vectors for `7ba61432`; 1,033 for the old doc). Does its similarity score **separate** "this image is from my book" from "this image merely looks like physics"? And is there an **aperture** (a top-1 cosine threshold τ) that accepts in-domain and rejects near/far?
+
+**What ran — nothing written, read-only.** `logs/p1/step10/visual_lane_validation.py` → `visual_lane_validation.json`. Query images: 12 REAL page images (`data/page_images/b2d9fb56-…/page_NNNN.png`) + 8 SYNTHETIC in-domain concept figures + 4 near-domain + 5 far-domain. Each is embedded with ColPali (`embed_query_image`) and searched against `visual_knowledge_base` (top-5, τ=0.0). The in-concept "gold" is the **TEXT lane's top-5 for a description — a PROXY, not hand-verified ground truth**; the near/far labels are our judgement. Both stated in the artifact's provenance block.
+
+**The three-way split and the aperture sweep.** Split the query images into in / near / far domains; sweep τ ∈ {0.0, 0.3 … 0.9}; a τ "separates" iff in-domain acceptance = 1.0 AND near = 0.0.
+
+| group | n | top-1 cosine | note |
+|---|---|---|---|
+| **in_book_page** | 12 | **1.0000** (all) | page N image → page N, 12/12 MATCH |
+| **in_concept** (synthetic) | 8 | 0.4936 – 0.5852 | mean overlap with the text proxy **0.1063** |
+| **near_domain** | 4 | 0.4325 – **0.5609** | H 2p orbital is the top scorer |
+| **far_domain** | 5 | 0.4019 – 0.4920 | noise 0.4578, logo 0.4355 |
+
+Aperture sweep (acceptance rate per domain): at τ = 0.45 near is still 0.75; at τ = 0.55 in_concept drops to 0.25 while near is 0.50; **at τ = 0.60 in_concept = 0.00 and near = 0.00** — i.e. the only τ that rejects near also rejects every synthetic in-domain concept. **`separating: NONE`.**
+
+**The checks:** ✅ **V1** in-book self-page match ≥ 80% (**12/12, PASS**). ❌ **V2** in-concept mean overlap ≥ 0.4 (**0.1063, FAIL**). ❌ **V3** in-domain top-1 min > near-domain top-1 max (**0.4936 vs 0.5609, gap −0.0673, FAIL**). Exit code 1 = the two failing checks, as registered.
+
+**⇒ THE VERDICT.** **The aperture is NOT usable to gate the visual lane.** The score has a **high floor** (a random-noise image scores 0.4578; a brand logo 0.4355) and a **physics-looking-but-absent** image outscores a genuine in-domain one — so no similarity threshold can decide "is this from my book". A cross-modal **agreement** measure (V2) is also low (0.106). ⚠️ **The visual lane therefore has neither a labelled retrieval metric NOR a usable confidence gate** — it can be shown, but not trusted, and not scored.
+
+**⚠️ A CAVEAT ON V1, not hidden.** V1 passes at **cos 1.0000 on all 12** page images. That is the signature of an **exact self-match**; the docstring claims a genuine **cross-render** test (old Docling renders vs new PyMuPDF@150dpi). **Whether the query images are the ones stored (a self-match) or a true cross-render match is NOT established here** — it needs one check (compare the query file to the stored page's image / vector). Until then V1 should be read as "the lane finds an image it has", not "the lane generalises across renders".
+
+**⚠️ BOUNDS.** The concept images are **synthetic matplotlib figures**, not photographs or real diagrams — easier than real images, so the in-domain scores are an **upper** bound. The in-concept gold is a **proxy**. n is tiny (12/8/4/5). **Read-only: no collection write, no re-ingest.** **Register against:** §I89 (the visual lane declared unmeasurable), §I90/§I94 (the visual-collection state), and the demo deck's "visual lane is populated but not measurable" line.
+
+**▶ WHAT THIS UNBLOCKS / RULES OUT.** (a) **Rules out** a similarity-gated visual lane (the aperture is a fiction on this data). (b) **The only route to a real visual measure is LABELS** — the 33 `vis-*` queries need `relevant_pages`, after which `compute_retrieval_metrics` scores the lane like any other. (c) The V1 self-match question is a **one-check** open item.
+
+---
+
+#### I108. ✅ THE GENERATOR EVAL RAN (`v3_judged_full`, 200 queries) — **the "generator unmeasured" gap is CLOSED.** A **cross-family** judge (generator `openai/gpt-oss-20b`, judge `Qwen/Qwen3-VL-8B-Instruct`) scored per-type **faithfulness** and **answer_relevance** for the first time.
+
+**The question.** Every retrieval number in the register is a *retrieval* number. Nothing had ever measured whether the **generated answer** is grounded in the retrieved context (faithfulness) or answers the question (answer_relevance). This closes that gap.
+
+**What ran.** `scripts/evaluate_rag.py --query-file data/eval_queries_v2.json --skip-visual --judge-model Qwen/Qwen3-VL-8B-Instruct --run-name v3_judged_full`. Artifacts `data/eval_results/v3_judged_full_2026-11-03_0115.{json,md}` (finished 2026-11-02 17:15 local). ⚠️ **The judge MUST be cross-family** — `config.yaml`'s default `judge_model` is `gpt-oss-20b`, the **same family as the generator**, which the code itself warns is "indistinguishable from a genuinely faithful answer". The run overrode it.
+
+**Run integrity.** Synthesis succeeded **167/200**; faithfulness computed **166/200**; **5,057 judge calls, 0 failed**. Retrieval metrics are over the **133** labelled queries; the judged metrics over the 200.
+
+| Scope | R@100 | R@20 | Hit@20 | Ctx.Prec | MRR | NDCG@20 | **Faithful** | **Ans.Rel** | Citation | n |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 0.679 | 0.458 | 0.940 | 0.244 | 0.765 | 0.555 | **0.636** | **0.857** | 1.000 | 133/133 |
+| factual | 0.827 | 0.590 | 0.924 | 0.131 | 0.784 | 0.593 | **0.683** | **0.855** | 1.000 | 53/53 |
+| multihop | 0.647 | 0.550 | 0.900 | 0.105 | 0.665 | 0.507 | **0.702** | **0.742** | 1.000 | 40/40 |
+| overview | 0.516 | 0.192 | 1.000 | 0.534 | 0.841 | 0.554 | **0.510** | **0.975** | 1.000 | 40/40 |
+
+**Abstention** (negatives): **22/34 = 0.647** — a negative is handled correctly when the system declines.
+
+**⇒ THE READING.** Citation accuracy is **1.000** across every type — when the generator cites, it cites a retrieved page. But **faithfulness is moderate (0.636)** and it tracks the retrieval weakness: **overview is lowest (0.510)** — the same type with the worst R@20 (0.192) — while **multihop is highest (0.702)**. **answer_relevance is high everywhere (0.857)** and *inverted* on overview (**0.975**): the system answers overview questions well but grounds them least — consistent with §I101's finding that overview is broad-label and ranker-limited. ⚠️ **This is a JUDGE score on a 200-query single run** — no independent verifier or mutation proof was run against it; treat it as a first measurement, not a certified one. **Register against:** §I97/T4 (the generator was the last unmeasured stage), §I101 (overview ranker-limited), and the demo runbook.
+
+---
+
+#### I109. ⚠️ T3 RAN — the lane-complete v2-vs-v3 A/B — **BUT ITS ANCHOR GUARD (G8) FAILED, so per its own pre-registration §8 "the run reports nothing".** ⚠️ **DIAGNOSED: G8's ANCHOR IS STALE, not the harness** — §I85's rows predate **two** documented changes.
+
+**What ran.** `logs/p1/step10/t3_lane_complete.py` (six arms: `A_off`/`A_on`×2 / `B_off`/`B_on`×2), 133 queries, **0 errors**, HyDE frozen (93 served), read-only. Artifact `logs/p1/step10/t3_lane_complete.json` sha256 `f7153581657092d8…`; wall `A_off` 153.9 s · `B_off` 152.4 s · `A_on` 243.4/252.8 s · `B_on` 206.1/220.3 s.
+
+**The result it self-reports** (⚠️ **not readable — see below**). **P1 cR@20 (B_on − A_on) = +0.01037**, CI **[+0.00077, +0.01998]**, RESOLVED, **28W/10L/95T**; P2 raw R@20 +0.01014 (same). Per type: **overview +0.0194 RESOLVED** (23W/6L), multihop +0.0242 unresolved, factual −0.0069 unresolved. **Lane deltas:** `A_on − A_off` **−0.0181 RESOLVED NEGATIVE** (adding DA+graph **hurt** arm A at the endpoint); `B_on − B_off` −0.0034 unresolved. Power: `sd_d` 0.0565 → floor 0.00961.
+
+**Guards.** G1, G1b, G2 (reachable **888**), G3 (0 errors), G4 (0 fallbacks), **G5 (arm A's DA lane live 133/133 in BOTH arms — §A holds inside the full funnel)**, G6 (graph live 40/40), G7 (HyDE frozen), G10 (both `_on` arms bit-exact across reps), G_divisor — **all PASS**. **G8 FAILS.**
+
+**⚠️ THE DIAGNOSIS (the substance).** G8 requires the `_off` arms to reproduce §I85's arm rows within ±0.020. Measured gaps:
+
+| arm | R@20 | R@100 | Hit@20 | MRR | NDCG@20 |
+|---|---|---|---|---|---|
+| **A** off vs §I85 | +0.0163 | **0.0** | +0.0226 | **0.0** | +0.0539 |
+| **B** off vs §I85 | +0.0133 | +0.0164 | +0.0226 | +0.0531 | +0.0568 |
+
+Two **documented, post-§I85** changes explain every gap — the anchor target is a configuration that **no longer exists**:
+
+1. **The per-type rerank-query policy (§I97/T4) shipped** in `e0f1616` (2026-11-01): `evaluate_rag.py`'s `rerank_query` changed from `hyp` to **`hyp if query_type == "overview" else query_text`**. **Evidence:** arm A's **pool is bit-identical to §I85** (`pool_size`, `recall@100`, `mrr` identical on **133/133**) yet its reranked **top-20 differs on exactly 39/53 FACTUAL queries — and 0/40 overview, 0/40 multihop**. That per-type confinement is the policy's signature (overview keeps the hypothetical; multihop never used HyDE). ⚠️ **Not** cross-encoder nondeterminism: `A_on` r1 == r2 bit-exact (G10).
+2. **v3 was re-embedded POOLED** (session 21, §I89), **after** Stage F measured it late-chunked. **Evidence:** arm B's **pool differs on 133/133** (`pool_size` 65→75 etc.) while **arm A's pool is bit-identical** — same code path, so B's pool change can only come from **its index**.
+
+⇒ ⚠️ **G9's claim ("the ONLY difference from §I85 is §A's code") was WRONG**: **three** things changed — the rerank-query policy, the v3 index, and §A. **G8 was mis-specified as a single-variable anchor.**
+
+**⇒ THE VERDICT.** Per the pre-registration's own rule ("**If G8 fails … fix before reading anything; the run reports nothing**"), **T3's `ships=True` is NOT readable off this run as-is.** The `B_on − A_on` comparison is *internally* valid (both arms on the same current code+index), but the anchor's job — proving the instrument is §I85's — is now impossible, because the instrument legitimately evolved. **Resolution needs an owner decision:** either **re-register the anchor against the current `_off` configuration** (treat T3's off arms as the new reference, D6.1) or re-run with a corrected anchor. ⚠️ **T3 also has NO independent verifier and NO mutation proof** — prereg §7 required `t3_verifier.py` + `t3_mutation.py`; **neither exists** (the session ended mid-flight). **Register against:** §I85 (the base-lane null this completes), §I89 (the pooled re-embed + the defect §A fixed), §I97/T4 (the rerank-query policy), §I98 (DA null / graph content harm), §I104/§A.
+
+---
+
+#### I110. ✅ THE OVERVIEW k=50 GENERATOR RUN — **WIDER k DOES NOT IMPROVE THE OVERVIEW ANSWER.** §I105/§I106's open reading ("the only reading under which wider k pays is the generator, still unmeasured") is now **CLOSED NEGATIVE**.
+
+**The question.** §I105/§I106 showed wider k buys overview **recall/coverage** but not ranked quality, and both end on the same sentence: the generator stage was unmeasured. It is now measured (§I108) — but at the product's **k=20**. Does raising the cut to **k=50** improve overview's **faithfulness** (the lowest of the three types, 0.5097 at k=20)?
+
+**What ran.** `.venv/bin/python scripts/evaluate_rag.py --query-file data/eval_queries_overview.json --skip-visual --judge-model Qwen/Qwen3-VL-8B-Instruct --run-name overview_k50`, with `RERANKER_TOP_K=50` (fetch_k/mrr_candidates unchanged at 100 — the CUT is widened, not the pool). Pre-registration `.hermes/plans/2026-11-02-p1-overview-k50-generator-preregistration.md`, **committed ALONE as `d297da4`** (D6.1). Artifact `data/eval_results/overview_k50_2026-11-03_0744.{json,md}`. 40 overview queries; **synthesis 33/40**, faithfulness computed 33/40, **2,261 judge calls, 0 failed**; read-only.
+
+**THE RESULT — paired vs k=20 (`v3_judged_full`), n=33:**
+
+| metric | k=20 | k=50 | Δ | 95 % CI | verdict |
+|---|---|---|---|---|---|
+| **faithfulness** | 0.5278 | 0.4773 | **−0.0505** | [−0.1373, +0.0362] | **UNRESOLVED** (11W/15L) |
+| answer_relevance | 0.9798 | 1.0000 | +0.0202 | [−0.0074, +0.0478] | unresolved |
+| citation_accuracy | 1.0000 | 1.0000 | 0.0000 | — | — |
+| context_precision | 0.5515 | 0.4429 | **−0.1085** | [−0.1430, −0.0741] | **RESOLVED NEGATIVE** |
+
+**⇒ THE VERDICT.** Faithfulness is **unresolved, and the point estimate leans NEGATIVE (−0.05)** — more context did not improve grounding, and it **measurably diluted context precision**. Per the pre-registered falsification clause, **"wider k for overview" is closed: it is a context-budget knob with no answer-side benefit.** ⚠️ **Caveats, stated:** a judge score on a single run (no independent verifier on a judge score, §I108's own caveat); n=33 (1 query produced no answer, 6 had no baseline faithfulness); the judge saw a larger context at k=50, so the comparison is not context-blind. **Register against:** §I105, §I106 (the recall-only verdicts this closes), §I108 (the generator baseline), §I102 (the cut cannot move the top-20).
+
+---
+
+#### I111. ✅ THE POOL-ORDER ATTRIBUTION (read-only) — **THE ORDERING LOSS IS NOT THE FUSION; THE GOLD IS IN THE POOL BUT RANKED 21–100.** The RRF fusion orders the gold **no worse than its strongest single lane** (dense-only). ⇒ the remaining lever is the **lanes' own scoring**, not the fusion.
+
+**The question.** §I99 located the endpoint loss in the pool's own ORDER (`waste_order` 0.179 overall / 0.165 overview) and priced the cross-encoder at 0.005. §I100 (§I100), §I103 and §I106 ruled out the fusion's knobs. **Is the order loss caused by the FUSION, or by the lanes it fuses?**
+
+**What ran — read-only, nothing written.** `logs/p1/step10/pool_order_attribution.py` over `fusion_attribution.json` (133 queries; `C_pages` = the product pool order at cap 100, `D100_pages` = dense-only pool, `W500_pages` = cap 500).
+
+| type | n | cov(pool) | oracle@20 | **FUSED@20** | dense-only@20 | W500@20 | fused−oracle |
+|---|---|---|---|---|---|---|---|
+| factual | 53 | 0.811 | 0.8052 | **0.5830** | 0.5291 | 0.5922 | 0.2222 |
+| **overview** | 40 | 0.508 | 0.3755 | **0.2103** | 0.2128 | 0.2078 | **0.1652** |
+| multihop | 40 | 0.647 | 0.6466 | **0.5106** | 0.5058 | 0.5227 | 0.1360 |
+| all 133 | 133 | 0.671 | 0.6283 | **0.4491** | 0.4270 | 0.4557 | 0.1791 |
+
+**Rank distribution of gold in the FUSED pool order (all queries):** ranks 1–20 **39.5 %** · 21–50 **29.6 %** · 51–100 **30.9 %** · 101+ 0 %.
+
+**1. ✅ THE FUSION IS NOT THE CULPRIT.** Paired **FUSED@20 − dense-only@20**: **factual +0.0539**, **overview −0.0025**, **multihop +0.0048**, **all +0.0222** — **every one UNRESOLVED**. The fused order is at worst equal to its strongest single lane. For **overview** the two are the same to 3 dp (0.2103 vs 0.2128): **overview's order IS the dense lane's order** — the sparse and ColBERT lanes neither help nor hurt it.
+
+**2. ✅ THE CAP APPENDS, IT DOES NOT REORDER** — W500@20 ≈ FUSED@20 on every type (all: 0.4557 vs 0.4491), reproducing §I92 at the page level.
+
+**3. ⚠️ THE LOSS IS IN THE LANES' SCORING.** The pool **covers** 67 % of the gold overall (overview 50.8 %, factual 81.1 %) — but only **39.5 %** of the gold it holds lands in the top-20; **60.5 % sits at ranks 21–100**. Since the fusion is not worse than its lanes and the cap does not reorder, the gold is ranked low **by the lanes themselves**. ⇒ **the fix must change how the lanes SCORE these pages (query representation / embedder / reranker), not the fusion.**
+
+**4. ⚠️ THE CEILING IS ARITHMETIC, NOT RETRIEVAL (the R-ceil question).** `R-ceil@20` for overview is **exactly `20 × mean(1/n_rel) = 20 × 0.0200 = 0.3992`** — the label sets are broad (min 22 / median 56.5 / mean 73.8 / max 314; **no** query has `n_rel < 20`). So a median overview query cannot exceed 20/56.5 ≈ 0.35 recall@20 **whatever the retriever does**. The ceiling rises only with k or with narrower labels. ⚠️ **Two ceilings exist and differ at k=50** — the **label** ceiling `min(k,n_rel)/n_rel` (0.755 at k=50) vs the **reachability-adjusted** one (0.680) — quoting one without naming it is the §I99/§I105 trap.
+
+**⇒ NEXT LEVER (the attribution's payoff).** The levers still open, in cost order: (a) a **reranker that reorders better** — but priced at `waste_ce` 0.022 for overview; (b) a **CE score-prior/blend** so the CE cannot demote a strong-pool page (untried, cheap); (c) a **stronger/other cross-encoder** (untried); (d) the **RAPTOR lane re-placed as an append** for overview (its dedicated lane is off the eval path and displaces when fused, §I98); (e) a **better retrieval signal** for overview queries — the only class of fix the attribution leaves standing. **Register against:** §I99 (the decomposition this explains), §I100/§I103/§I106 (the fusion knobs this rules out), §I105 (the ceiling), §I108/§I110 (the generator).
+
+#### I112. ✅ THE OVERVIEW RETRIEVAL-SIGNAL PROBE — **THE QUERY-SIDE LEVER IS CLOSED: a different query REPRESENTATION does NOT rank the overview gold higher.** §I111's reading (a "better retrieval SIGNAL" is the only class left standing) is tested on the cheap half — the QUERY side — and returns **NULL**. ⇒ the remaining signal lever is the **DOCUMENT side** (embedder / re-ingest / fine-tune).
+
+**The question.** §I111 showed the fused order == dense-only for overview and 60.5 % of the pooled gold sits at ranks 21–100 ⇒ the gold is ranked low **by the lanes' own scoring**. **Does a different QUERY REPRESENTATION make the dense lane rank it higher?** Read-only, dense lane alone, 40 overview queries, `knowledge_base_v3` (nomic-768, pooled), index and lane config held fixed.
+
+**Pre-registration** `.hermes/plans/2026-11-04-p1-overview-signal-probe-preregistration.md` (committed ALONE, `f93b9e6`). Artifact `logs/p1/step10/overview_signal_probe.json` (sha256 `a72d5256…`), hypotheses cache `overview_signal_hypotheses.json`, run log, verifier + mutation proof. **40 queries, 0 errors. ALL SEVEN GUARDS PASS.**
+
+**Arms** (dense lane, top-100 recorded): **A** the shipped single HyDE hypothetical · **B** the raw query (a known-worse control) · **C** multi-hypothetical **max** over N=5 · **D** multi-hypothetical **mean** over N=5.
+
+| arm | R@20 | nDCG@20 | mean gold rank |
+|---|---|---|---|
+| A single HyDE hypothetical | **0.2128** | 0.6304 | **27.92** |
+| B raw query | 0.1489 | 0.4691 | 30.32 |
+| C multi-hyp max (N=5) | 0.2150 | 0.6345 | 35.50 |
+| D multi-hyp mean (N=5) | 0.2140 | 0.6364 | 35.85 |
+
+**Paired vs A (95 % CI, n=40):**
+* **C − A R@20: +0.0021, CI [−0.0081, +0.0123], UNRESOLVED** (12W/13L).
+* **D − A R@20: +0.0012, CI [−0.0070, +0.0094], UNRESOLVED** (14W/13L).
+* C − A nDCG: +0.0041, CI [−0.0200, +0.0282], UNRESOLVED · D − A nDCG: +0.0060, CI [−0.0132, +0.0252], UNRESOLVED.
+* **B − A R@20: −0.0639, CI [−0.0861, −0.0417], RESOLVED NEGATIVE** (3W/34L) — the control: the HyDE hypothetical IS the better overview query (§I97/T4 confirmed at the dense lane).
+
+**1. ✅ THE RESULT — NULL.** Neither multi-hypothetical max (C) nor mean (D) resolves on R@20 or nDCG@20. Worse, their **mean gold rank is HIGHER** than A's (35.5/35.9 vs 27.9): the 5-hypothetical union **dilutes** — it pulls marginally more gold into the top-20 (R@20 +0.002, noise) while pushing the gold it holds **deeper** on average. ⇒ **no query representation tested beats the shipped single hypothetical.**
+
+**2. ✅ THE ANCHOR HELD.** Arm A reproduces §I111's dense-only R@20 for overview (0.2128) to the digit (G4) — the probe is the same instrument.
+
+**3. ⚠️ THE FIRST RUN WAS VOID — G4 CAUGHT A HARNESS DEDUP DEFECT (recorded, not hidden).** The first full run reported **C/D RESOLVED POSITIVE +0.027/+0.026** and failed **G4** (arm A 0.1878 vs 0.2128). Root cause: `_dense_lane` kept the raw `store.search` chunk hits — **several chunks per page, no page dedup** — while §I111's reference arm (`fusion_attribution._pages_of`) dedups by page; the ~27 duplicate pages/query ate top-20 slots. Deduping the recorded arm A gives **0.2128** and arm B **0.1489** = `D100_raw` exactly. **⇒ the as-run "POSITIVE" was an artifact of the missing dedup.** Fixed (`_dense_lane` now dedups by page, order-preserving), pre-registration addendum §9 written, void artifacts preserved (`overview_signal_probe_VOID_run1.json`), re-run clean. **Both** the harness guard **G4** and the independent verifier's **V10** redden on the void artifact — the verification stack caught it twice.
+
+**4. ⚠️ FALSIFICATION CLAUSE TRIGGERED (pre-reg §4).** Neither C nor D resolves positive ⇒ **the QUERY-side half of the "better retrieval signal" class is CLOSED**; the remaining lever is the **DOCUMENT side** (embedder change / re-ingest / fine-tune, §I85/§I87's caveat attached). ⚠️ Bounds: one corpus, one document, n=40, N=5 a choice not a measurement (a null at N=5 does not exclude a larger N), and the probe measures the **dense lane**, not the endpoint (a dense-lane win would not imply an endpoint win — §I85).
+
+**Register against:** §I111 (the attribution this tests the cheap half of), §I97/T4 (the per-type query policy the control confirms), §I105 (the ceiling — overview R@20 0.2128 sits far below R-ceil 0.3992), §I110 (the generator side, also null).
+
+#### I113. ⚠️ RAPTOR AS GENERATOR CONTEXT — **A NULL (the summaries do NOT improve overview faithfulness: −0.032, unresolved), AND FLAGGED: G6 FAILS — the harness's arm-A system prompt is not the product's, so arm A does not reproduce the §I108 baseline.** 40 overview queries, 0 errors, wall 5,976 s. Verifier **24/24**, mutation **24/24 reddened (proof passes)**.
+
+**The question.** §I98 showed the RAPTOR lane as a *ranked participant* hurts overview (a summary has no `page_number`, so it can only displace a page). This asks the untried variant: hand the summaries to the **GENERATOR** as extra context, never entering the ranked list. Pre-registration `.hermes/plans/2026-11-04-p1-raptor-generator-context-preregistration.md` (committed ALONE, `f93b9e6`). Artifact `logs/p1/step10/raptor_context.json` (sha256 `226b3769…`), run log, verifier + mutation proof. Read-only. Arms: **A** CE top-20 pages only · **B** the same pages + the top-2 RAPTOR summaries appended as a `[Summary]` block.
+
+**The result — NULL, point estimate negative.** Paired **B − A**, n=40:
+
+| metric | Δ (B − A) | 95 % CI | verdict | W/L |
+|---|---|---|---|---|
+| **faithfulness** | **−0.0320** | [−0.1009, +0.0368] | **UNRESOLVED** | 13/17 |
+| answer_relevance | 0.0000 | [0, 0] | unresolved | 0/0 |
+| citation_accuracy | 0.0000 | [0, 0] | unresolved | 0/0 |
+
+Aggregate faithfulness: **A 0.4551 · B 0.4229**. ⇒ **giving the generator chapter-level summaries does not help, and if anything costs** — the point estimate is negative, and answer_relevance / citation are bit-identical (the summaries change no answer's relevance or citations).
+
+**⚠️ G6 FAILS — the anchor caught a harness defect (recorded, not hidden).** G6 required arm A to reproduce the §I108 overview baseline (**0.5097**, n=40); arm A came out **0.4551**, gap **−0.0546** > the ±0.030 tolerance. **Diagnosed by source-read: the harness's arm-A SYSTEM prompt differs from the product's.** The harness uses `"You are a physics tutor. Answer the student's question using ONLY the material provided. Cite the page number for each fact as [Page N]…"` while the product's `synthesize` uses `_SYNTH_SYSTEM` (the 5-rule block, incl. *"If the passages are irrelevant, say so in one sentence and stop."* — `evaluate_rag.py:472`). **⇒ arm A is NOT the product path**, so the anchor's job — prove the reuse is exact — fails, exactly as it should. ⚠️ A **second** plausible contributor: the generator **samples** (`call_llm` has no temperature knob, §I108's own caveat), so a single run need not reproduce another to ±0.03.
+
+**⇒ VERDICT: FLAGGED, not a clean result** (the T3/§I109 precedent). The paired delta is *internally* valid (both arms share the harness prompt — only the summaries differ), so it measures the RAPTOR-context effect **for this prompt**; but because arm A is not the product's, the absolute level does not transfer. **Needs an owner decision:** (a) align the harness's system prompt to `_SYNTH_SYSTEM` and re-run (the anchor then becomes a real reuse test), or (b) record the delta as prompt-conditional and do not generalise it. ⚠️ **Do NOT quote the absolute A/B faithfulness as the product's.**
+
+**Register against:** §I98 (the lane as a ranked participant — the harm this variant was meant to avoid), §I108 (the generator baseline the anchor references), §I110 (the k=50 generator null), §I112 (the query-side null).
+
+#### I115. ⚠️ THE CITATION METRIC IS VACUOUS — **`citation_accuracy` reads 1.000 in every report because its regex matches ZERO citations in the entire run.** The generator emits `Page` + a **narrow no-break space (U+202F)** or a CJK bracket `【Page N】`; the metric wants a literal `[Page <ascii-space>N]`. **Read-only, over `v3_judged_full`; no cluster.**
+
+**The mechanism.** `evaluate_rag.compute_citation_accuracy` (`:669`) matches `r"\[Page (\d+)\]"` — a **literal ASCII space** between `Page` and the number. The generator (`openai/gpt-oss-20b`) emits **`Page\u202f<N>` (545×)** or **`Page\u00a0<N>` (41×)** or a **CJK bracket `【Page N】`**. So the regex finds **no citation in any of the 166 answers**, and the function's own rule — `if not cited: return 1.0  # no citations — not penalised` — returns **1.0 for every answer**. ⇒ **the reported citation_accuracy 1.000 is 100 % artifact** (it appears in §I108, the deck, and every prior report).
+
+**The real citation behaviour, re-derived (the fixed parser, all three forms):**
+
+| quantity | value |
+|---|---|
+| answers citing **nothing** at all | **53 / 166 (32 %)** |
+| answers citing in **any** form | **113 / 166 (68 %)** — `[Page N]` / `【Page N】` 94, `(page N)` 19 |
+| corrected citation **validity** (cited ∩ retrieved / cited) | **0.6463** (n=113) |
+| **answer-cites-gold recall** (end-to-end) | **0.2018** |
+
+Artifact `logs/p1/step10/citation_fix.json` (harness `citation_fix_recheck.py`, verifier `citation_fix_verifier.py` **14/14**, mutation `citation_fix_mutation.py` **14/14 reddened, no inert**; **independent cross-family reviewer** `openai/gpt-oss-20b`, read-only, deleg `deleg_9aae2d81`: **C1–C7 ALL CONFIRMED**).
+
+**⚠️ It propagates to the UI.** Both frontends' `_cited_pages` use `r'(?:\[Page\s*|\(page\s*)(\d+)'` — it handles the narrow space but **not the CJK bracket**, so for the 38 CJK-cited answers the apps find no citation and fall back to **"Sources retrieved" (all pages)** instead of the cited set (`streamlit_app.py:749`, `nicegui_app.py:134`). ⇒ **the metric AND the source panel are both blind to the same 23 % of answers.**
+
+**⇒ VERDICT / FIX.** (a) **Standardise the citation format in the synthesis prompt** (one bracket, one space) — **still open** (a generator change, needs its own measured run); or (b) **fix the three parsers** to accept both brackets and any Unicode space. **✅ (b) APPLIED 2026-11-05:** `compute_citation_accuracy`/`compute_citation_coverage` in `evaluate_rag.py` (now returns **None**, not 1.0, when uncited, + a `Cit.Cov.` column in both report tables) and `_cited_pages` in **both** frontends — tests `test_eval_metrics.py` (6) + `test_frontend_math.py` (1). ⚠️ **Do NOT quote citation_accuracy 1.000** — the number is now None-over-uncited. **Register against:** §I108 (the report carrying the false 1.000), the demo deck (same), §I82 (the router agreement cited below).
+
+#### I116. ⚠️ THE EVAL BYPASSES THE INTENT ROUTER — **the product routes with a classifier that agrees with the gold labels only 0.5714 of the time, but every metric is computed on the GOLD `query_type`.** ⇒ the measured retrieval is an **oracle-routing** upper bound, not the product's. **Source-read; no run.**
+
+**The mechanism.** `evaluate_rag.evaluate_query` (`:817`) sets `query_type = query.get("query_type", "factual")` — the **gold label**. Both frontends instead call `get_intent_router(cfg).classify(q_vec)` (`streamlit_app.py:541`, `nicegui_app.py:190`) and gate **three** things on it: **HyDE** (`intent in ("factual","overview")`), **lane selection** (`also_raptor`/`also_graph`), and the **rerank query** (`hyp if intent == "overview" else query`). The router's agreement with the gold labels is **0.5714** (D6.5 / §I82) — so on ~43 % of queries the product fires the **wrong HyDE gate, the wrong lanes, and the wrong CE query**. §I97 measured the CE-query mis-set at **factual nDCG −0.136** — the largest single lever in the programme — and that harm is **invisible to every artifact** because the eval never mis-routes. ⇒ **a real, unmeasured end-to-end leak at the front of the pipeline.** **Fix/measure:** add a router-in-the-loop arm (feed `classify()` instead of the gold label) and report the delta; or improve the router. **Register against:** §I82 (the retrain), §I97 (the rerank-query policy the router gates), the guardrails plan (G1's `out_of_scope` would touch the same classifier).
+
+#### I117. ⚠️ THE CLUSTER'S EMBEDDER MODELS MOVED — AND THE REPO'S UPGRADE FIELDS ARE **DEAD CONFIG**. The cluster's **ColBERT** list now offers **only** `lightonai/GTE-ModernColBERT-v1`; the repo's `colbert-ir/colbertv2.0` is **no longer listed** (though the **custom-model override still serves it** — POST 200). The **sparse** list offers `Qdrant/bm42-all-minilm-l6-v2-attentions`, `Qdrant/bm25`, `prithivida/Splade_PP_en_v1` (default). ⚠️ `config.py` **DECLARES** `sv_colbert_model = "lightonai/GTE-ModernColBERT-v1"` (`:126`) and `sv_sparse_model = "Qdrant/bm42-all-minilm-l6-v2-attentions"` (`:127`) — §I1's upgrades — **but NOTHING READS THEM** (`grep` finds them only in `config.py`). The embedders send `cfg.colbert_model` / `cfg.splade_model` to the cluster, so the upgrade is **declared but unwired**.
+
+**Live probe 2026-11-05 (10.0.10.70:8123), read-only:**
+
+| lane | model | POST | note |
+|---|---|---|---|
+| ColBERT | `lightonai/GTE-ModernColBERT-v1` | **200**, dim **128** | cold-load 10.5 s |
+| ColBERT | `colbert-ir/colbertv2.0` (repo) | **200**, dim **128** | 0.12 s — the override works |
+| sparse | `prithivida/Splade_PP_en_v1` / `Qdrant/bm25` / `Qdrant/bm42-…` | **timeout (≥30 s)** | **service DOWN** |
+| rerank | `BAAI/bge-reranker-v2-m3` | **timeout (≥30 s)** | **service DOWN** |
+
+⚠️ **Both ColBERT models are 128-dim, so the `colbert` named vector is a schema drop-in** — but a **model change invalidates the stored lane vectors**, so any switch needs the lane **re-embedded** (3,796 chunks; `reembed_chunks.py` currently *carries* colbert+sparse over, it does not recompute them). **Expected metric benefit ≈ 0**: §I100's O2 (no ColBERT) was **−0.0012 nDCG, unresolved** — the lanes contribute ~nothing at the endpoint, so a switch buys **robustness/currency, not a number**. ⚠️ **The sparse + rerank outages block every retrieval run** (#2 and the demo). **Register against:** §I1 (the embedder-upgrade table), §I96 (a silently dropped lane), §I100 (the lanes' endpoint contribution).
+
+#### I114. ✅ THE G1 PRE-FLIGHT DIAGNOSTIC — **THE INPUT GUARDRAIL CANNOT BE BUILT FROM THE CHEAP SIGNALS THE PLAN NAMES.** The **34 negatives are THREE different problems**, and a top-1 score floor is a **weak instrument** (AUC 0.774; to catch a third of the negatives it must refuse ~9 % of answerables). ⇒ **G1's scope must split** (off-domain → an input gate; in-domain-but-absent → the G2 grounding floor). **Read-only, no cluster, no store write.**
+
+**The question.** The guardrails plan's **G1** proposes an input gate: refuse a query when it is out-of-scope (an `out_of_scope` intent) **or** the top retrieved score is below a floor. `HANDOFF` §34's item 4 calls the score floor "the cheaper path". **Before building it, does either cheap signal separate the 34 negatives from the answerables?**
+
+**Method.** A **read-only re-derivation** over the product-config run already on disk — `data/eval_results/v3_judged_full_2026-11-03_0115.json` (sha256 `801adffc…`; `knowledge_base_v3` / nomic-768, DA+SPLADE+ColBERT+MMR+CE on, `score_threshold` 0.0), which covers **exactly** the labelled population. Per query the signal is the **recorded top-1 cross-encoder score** (`top_chunks[0].score`). Harness `logs/p1/step10/g1_negatives_diagnostic.py` → artifact `logs/p1/step10/g1_negatives_diagnostic.json`. **No run, no re-retrieval.**
+
+**1. ⚠️ THE 34 NEGATIVES ARE THREE DIFFERENT PROBLEMS (by id prefix), and the score distributions overlap heavily.**
+
+| subclass | n | what it is | example | score min / median / max |
+|---|---|---|---|---|
+| `neg-out` | 12 | **off-domain** — the corpus cannot address it | "What is the capital of France?" | 0.05 / 0.57 / 0.85 |
+| `neg-in` | 12 | **in-domain physics the book does NOT cover** | "…the book's treatment of the Higgs boson" | 0.03 / 0.31 / 1.01 |
+| `neg-nea` | 10 | **in-domain, the book lacks the specific value** | "…value the book gives for the mass of the proton" | 0.10 / 0.24 / 1.08 |
+
+The **answerable** top-1 scores span 0.03–1.50 (median 1.00). The negative scores sit **inside** that range — `neg-in`/`neg-nea` reach 1.0–1.08, above the answerable median — so **no score floor cleanly separates them.**
+
+**2. ⚠️ THE SCORE FLOOR IS A WEAK GATE — measured, not assumed.** AUC for `refuse if top-1 < τ` is **0.774** (moderate). The operating points (rule: the lowest τ meeting a false-refusal budget, then the recall it buys):
+
+| false-refusal budget | τ | recall of negatives | precision | false-refusal rate |
+|---|---|---|---|---|
+| ≤ 5 % | 0.070 | **0.147** (5/34) | 0.500 | 0.038 |
+| ≤ 10 % | 0.170 | **0.324** (11/34) | 0.478 | 0.090 |
+| ≤ 15 % | 0.205 | **0.382** (13/34) | 0.419 | 0.135 |
+
+Best F1 is **0.500** (τ 0.76: recall 0.853, but a **0.398 false-refusal rate** — it refuses **40 %** of legitimate questions). ⇒ **a bare score-floor gate would either miss two-thirds of the negatives or refuse 40 % of real questions.** Neither is shippable.
+
+**3. ⚠️ AN OFF-TOPIC / DOMAIN SIGNAL CAN ONLY REACH 12/34 = 0.353.** The `out_of_scope` class (or any domain classifier) targets the `neg-out` subclass alone — the 22 `neg-in`/`neg-nea` queries are **in-domain physics** (the eval labels all 34 negatives `query_type=factual`); no input-side signal can know whether the *book* holds the answer without retrieving and judging the evidence. ⇒ **those 22 are the OUTPUT guardrail's (G2's grounding floor) job, not the input gate's.** Even an **oracle** domain detector OR-ed with the best score floor reaches only **30/34 = 0.882** recall — and only via that 0.40-false-refusal floor.
+
+**4. ⚠️ THE GATE IS UNDEFINED FOR THE VISUAL ROUTE.** **33 of the 200 queries** (`vis-*`, the ColPali page lane) record **no chunk-level top-1** — a text score floor is undefined for them. Any gate must be defined **per route**.
+
+**⇒ THE FINDING.** G1 as scoped (a cheap score-floor / `out_of_scope` input gate over the 34 negatives) **cannot be built from the cheap signals** — the label set is dominated by near-domain negatives that only a *grounding* judgment separates. **Proposed reorder (owner decision):** (a) **G1 narrows** to the **off-domain input gate** (12/34), which needs the router's `out_of_scope` — a **classifier RETRAIN** (D6.5 precedent), not a score floor; (b) the **22 in-domain negatives move to G2** (the grounding floor, which the plan already specs); (c) **do NOT ship a bare score floor** (F1 0.50 / FPR 0.40 measured). ⚠️ Bounds: one corpus, one document, the **CE top-1** signal only (a normalised dense-cosine or a margin signal is untested), and the scores come from a **single recorded run** (§I103 lane-tail nondeterminism attached).
+
+**Register against:** the guardrails plan `.hermes/plans/2026-11-04-p1-guardrails-observability-SESSIONS.md` (G1/G2 rows), `ARCHITECTURE.md` §12 (the per-check precision/recall constraint this measures), §I108/§I110 (the generator this guardrail would sit behind), D6.5 (the retrain precedent).
+
+#### I118. ✅ THE SPARSE LANE'S SILENT DROPOUT IS NOW COUNTED — **§I96's class is closed for the FOURTH lane, and it is the one DOWN on the cluster (2026-11-05).** Also: the cluster re-probe REPRODUCED the sparse + rerank outage (dense + ColBERT answer; sparse + rerank hang). **Cluster-free change; query-time only; no re-ingest.**
+
+**The gap.** §I96 recorded that a retrieval LANE can drop out silently — its `except` omits the lane's `Prefetch`, so the RRF fusion runs over a **reduced lane set (a different pool)** with nothing outside the log text able to see it. Counters were added for **ColBERT** (`store.colbert_dropouts`, `e0f1616`), **DA** (`store.da_dropouts`), **RAPTOR** (`store.raptor_dropouts`) and **GRAPH** (`GraphBuilder.graph_dropouts`). The **SPLADE (sparse) lane was the one left uncounted**: its `except` in `_qdrant_search` only logged `"SPLADE encode failed (…), skipping sparse lane"`. ⚠️ **It is also the lane that is DOWN on the cluster right now**, so every run since the outage has been silently fusing **dense(+ColBERT) only** with no counter to show it.
+
+**The fix.** `src/pdf_ingestion/store.py`: `DocumentStore.__init__` now initialises `self.sparse_dropouts: int = 0` and `self.last_sparse_dropout: str | None = None`; the sparse `except` increments both and appends `[dropout #N]` to the log line — byte-for-byte the shape of the ColBERT counter. **Behaviour-neutral on the success path** (same `Prefetch`, same `lane_names`). 13 lines. **Additive/observational** — no consumer reads `sparse_dropouts` yet.
+
+**Evidence.** `tests/test_lane_dropout_counters.py` — three sparse tests (failure increments + accumulates; success does NOT increment) + the start-at-zero test extended. **15/15 pass** (sparse + ColBERT dropout suites). **Mutation proof** `logs/p1/step10/sparse_dropout_mutation.py` → `sparse_dropout_mutation.json`: baseline all PASS; **M1** (drop `+= 1`) reddens the failure + accumulate checks **on the assertion**; **M2** (increment on success too) reddens the negative control; **M3** (init to 1) reddens start-at-zero — **no inert check**. ⚠️ The mutation harness runs the **project venv** python (`.venv/bin/python`), not the agent's — a bare `python3 -m pytest` gave a red *baseline* (missing deps), which would have made every mutation's vector meaningless.
+
+**The cluster re-probe (2026-11-05, read-only).** `logs/p1/step10/cluster_probe.py` → `cluster_probe.json`: **dense 200 (0.19 s) · ColBERT 200 (0.12 s) · sparse timeout (35 s) · rerank timeout (35 s)** — **reproduces session 35 exactly**. `cluster_probe_alternates.py` rules out the "endpoint moved" hypothesis: `10.0.10.70:8123` answers unknown paths with a **404 in 0.08 s** (the HTTP front is ALIVE) and the same timeout recurs on `:8000` — so the sparse/rerank **handlers** hang; it is **not** a dead host, a wrong port, or a moved route. Verifier `cluster_probe_verifier.py` **7/7 PASS**, mutation proof: each check reddens its intended check, none inert. ⇒ **#2 (router-in-the-loop) and the demo's retrieval path remain BLOCKED; the owner cannot restart the services.**
+
+**Independent reviewer (gpt-oss-20b, `deleg_1b9df948`, read-only, family ≠ the author's).** Five numbered claims (the init, the guard-gated increment, success-path neutrality, the mutation proof, and the no-other-consumer claim): **5/5 CONFIRMED**. ⚠️ The reviewer's cited *line numbers* for the test file were wrong (it named the DA-test region, lines 56–61, for `sparse_dropouts`); the **identifiers** resolve and the author re-derived C5 mechanically (`grep` finds `sparse_dropouts` only in `store.py` init:352 / increment:686, the test file, and the mutation script) — so the substance holds and the sloppy citation is recorded, not banked.
+
+**Register against:** §I96 (the class this closes), §I117 (the outage this re-confirms), §I55 (the reranker's equivalent counter, the template), §I100 (the lanes' ~0 endpoint contribution — this is visibility, not a metric win).
+
+#### I119. ✅ THE DERIVED LANE INHERITED THE ARM'S (QWEN) QUERY INSTRUCTION — now pinned to the derived model's own convention. **Measured; fixed; verified.** Query-time only, no re-ingest.
+
+**The mechanism.** `get_derived_embedder` (`cluster_embedder.py`) builds the embedder for the DERIVED collections (`concept_embeddings`, `derivative_artifacts`, both **nomic-768**) by `model_copy(update={"dense_model": derived_dense_model, "dense_dim": derived_dense_dim})` — it copied the **model and the width but NOT the instruction**, so the derived embedder **inherited the ARM's `query_instruction`**. Measured (default config): the derived nomic embedder carried **Qwen's** `'Instruct: Given a physics question, retrieve textbook passages that answer it\nQuery: '`. ⚠️ `step10_env.sh` masks it (`QUERY_INSTRUCTION="search_query: "`), so it bites only when the env override is absent — which is exactly the "default config" a fresh run or a test uses.
+
+**Why it matters.** The derived collections were **built** with `search_document:` documents, so their query side must be nomic's `search_query: `. A Qwen instruction sent to a nomic model is the wrong convention — and it fires only when the arm's width differs from the collection's (so in a nomic run it is a **no-op** and invisible).
+
+**The fix (2 files).** `config.py`: new **`derived_query_instruction: str = "search_query: "`**. `get_derived_embedder`: also copies `"query_instruction": cfg.derived_query_instruction`. ⇒ the derived lane is **nomic end-to-end and independent of the arm**.
+
+**⚠️ ADJACENT LATENT TRAP (recorded, not fixed).** The config **defaults** describe the retired Qwen/v2 world: `dense_model = Qwen/Qwen3-Embedding-0.6B` (1024) while the deployed collection `knowledge_base_v3` is **768** (nomic). Measured: a **1024d vector into `dense_full` (768) → HTTP 400**; 768 → OK. So a run **without** the `DENSE_MODEL` override would break the MAIN dense lane. The defaults should be aligned to the deployed collection, or a read-path width guard added (the §A guard covers the derived lanes only).
+
+**Evidence.** `tests/test_derived_embedder_instruction.py` **5/5**; mutation `derived_embedder_mutation.py` → `.json`: baseline all PASS, **5/5 reddened, none inert**. Independent verifier **`openai/gpt-oss-20b` (`deleg_ed3b2cce`), 5/5 CONFIRMED** (⚠️ the first dispatch returned a truncated verdict — a partial verdict is no verdict; re-dispatched without the empty `output_schema` that coerced it).
+
+**Register against:** §I12/§I47 (the derived lanes' own-space defect this is the instruction-side twin of), §I83 (the 768 rebuild), §A (the width guard), §I117.
+
+#### I120. ⚠️ WE IMPLEMENT THE LAB'S PPR *ITERATION* BUT NOT ITS *SUBSTRATE* — and our co-occurrence graph is too dense for hop expansion (1-hop **296** pages, 2-hop **802**, of ~906).
+
+**The lab (`Labs/Week_5/week5.2/memgraphrag_concepts`) implements MemGraphRAG** (arXiv:2606.00610; ref impl `XMUDeepLIT/MemGraphRAG`): a **three-layer global memory** (Schema / Fact / Passage) → a **heterogeneous indexing graph** (`PASSAGE, SCHEMA, TYPE, ENTITY`; typed relation edges, `instance_of`, `evidence` w=0.8, entity↔entity `similarity` at cos ≥ 0.82), with PPR as **the retrieval mechanism** over **per-layer reset vectors** `P_init(p)/P_init(e)/P_init(t)` and **applied hub suppression** `1/log(deg+1)`.
+
+| | Lab (MemGraphRAG) | Ours |
+|---|---|---|
+| Extraction | LLM **typed triples** `(head_type, relation, tail_type)` | LLM **concept names** + prerequisites |
+| Schema layer | yes (derived from facts; stable = ≥2 passages) | **none** |
+| Relation edges | LLM-typed relations | **co-occurrence** `RELATES_TO` (weight = co-mention count) |
+| PPR reset | **per-layer** (passages/entities/types) | single reset over the query's seed **concepts** |
+| Hub suppression | **applied** in the reset | only **reported** |
+| PPR role | **the retrieval** | a **re-ranker** over one lane's candidates (§G1) |
+
+**We match the ALGORITHM, not the ARCHITECTURE.** Our `personalized_pagerank` is the lab's iteration verbatim (`W=D⁻¹A`, `v(k+1)=(1−λ)Wv(k)+λv(0)`, λ=½, 10 steps) with a λ sweep and a hub-suppression *report* — but no three-layer memory, no typed triples, no per-layer reset, and hub suppression not applied. **⇒ §G1's null is evidence about PPR re-ranking over a dense, untyped co-occurrence graph — NOT about the lab's method**, which propagates over a structured, typed graph.
+
+**The density, measured** (`logs/p1/step10/g1_pool_size_probe.py` → `.json`, read-only, 40 multihop queries):
+
+| pool | median pages | `cut_bites_at_k` (k=10 / 20) |
+|---|---|---|
+| shipped (seed concepts) | **15** | 26/40 · 16/40 |
+| 1-hop expansion | **296** | 40/40 · 40/40 |
+| 2-hop expansion | **802.5** | 40/40 · 40/40 |
+
+⇒ **the hop expansion is a FLOOD, not a refinement** (median 15 → 802 pages of ~906 in-window; 40/40 queries gain, +682…+823). So (a) the §G5 expansion is not a usable lane treatment as wired, and (b) a **page-level PPR ablation on the expanded pool is saturated** — the pool is the book. ⚠️ Also measured: the `*0..2` **path-enumeration** Cypher (`min(size(relationships(p)))`, used by both §G5 and the first probe) is pathologically slow on high-degree seeds (did not return in minutes); the **level-by-level DISTINCT neighbour** query is 0.2–0.4 s and is the form to use.
+
+**Register against:** §G1 (the closed null this reframes), §G5 (the expansion this bounds), §I2, the lab `memgraphrag_concepts` and the two papers in `Research Papers/`.
+
+#### I121. ✅ C1/C4 BUILT (the response-side grounding graph + ALCE citation faithfulness) — and ⚠️ **THE LAB'S NLI MODEL DOES NOT SEPARATE UNRELATED FROM ENTAILING TEXT** (measured: an unrelated passage scores entailment **0.9948**, ABOVE a supporting passage's **0.9924**).
+
+**What was built (C1).** `src/core/guardrails/response.py` now carries the lab's five response-grounding modules, ported from `Labs/Week_6/response_grounding/src/response_grounding/*.py`: `ClaimExtractor` (+ the lab's sentence-split fallback and its COSTAR prompt, copied to `src/core/guardrails/prompts/claim_extractor_system_prompt.md`), `ClaimDocumentMatrixBuilder` (the Cartesian product), `SemanticSimilarityFilter` (MiniLM cosine, τ 0.5, strictly-greater), `NLIEntailmentChecker` (DeBERTa cross-encoder, entailment = the softmax prob of the model's entailment head, τ 0.55) and `GroundednessEvaluator` (grounded iff ≥1 retained edge entails; score = grounded/claims; an **isolated left node** — a claim with no edge — is the graph's hallucination signature). The only deviations from the lab are (a) `call_llm` replaces `instructor`+`OpenAI` (same `ClaimExtraction` schema, same fallback) and (b) the encoder/checker are injectable so `USE_STUB_NLI` can stand in offline. Factories `get_semantic_filter` / `get_nli_checker` / `get_groundedness_evaluator` read `cfg`; `evaluate_groundedness` is the entry point. New config: `use_stub_nli`, `guard_similarity_model`, `guard_nli_model`, `guard_similarity_threshold`, `guard_nli_threshold`, `guard_max_claims`, `guard_max_evidence`.
+
+**What was built (C4).** `compute_citation_faithfulness` implements **ALCE** (Gao et al., 2023) over the same NLI graph: **citation recall** = the fraction of ALL statements with ≥1 entailing citation; **citation precision** = the fraction of ALL citations that entail. Both are **None** when the answer cites nothing — the §I115 lesson applied (`"no citations"` and `"every citation faithful"` are different facts). Citations are stripped from the statement before the NLI read, so the entailment is about content, not the `[Page N]` marker.
+
+**⚠️ THE FINDING — the model, not the port.** The port is faithful; the acceptance tests and the live probe's ASSERTED checks all pass. But the live probe (`logs/p1/step10/c1_live_probe.py` → `.json`) measures the lab's chosen NLI model `cross-encoder/nli-deberta-v3-base` on three passages against one claim ("Energy is conserved in a closed system."):
+
+| passage | contradiction | entailment | neutral | verdict at τ 0.55 |
+|---|---|---|---|---|
+| **supporting** ("…energy can neither be created nor destroyed…") | 0.0002 | **0.9924** | 0.0074 | entailing ✓ |
+| **unrelated** ("The cat sat quietly on the warm mat by the window.") | 0.0017 | **0.9948** | 0.0036 | **entailing ✗** |
+| **contradicting** ("Energy is routinely created from nothing…") | 0.0730 | 0.1058 | 0.8213 | not entailing ✓ |
+
+**The unrelated passage OUTSCORES the supporting one** (separation gap **−0.002359**): no threshold can separate them. The head reads are the model's own softmax; the entailment class index resolves to **1** (the real head order is `{0: contradiction, 1: entailment, 2: neutral}` — verified live; the offline stub mirrors that order so a test cannot pass on a class order the model does not have). ⇒ **this is a property of the base DeBERTa NLI head, and it directly undercuts §I114's plan** to hand the **22 near-domain negatives** (`neg-in` 12 + `neg-nea` 10) to the response-side grounding floor: a floor whose entailment read calls an unrelated passage entailment cannot refuse those negatives on grounding grounds. **This is a MODEL limitation, not a code defect** — the fix is a different/stronger NLI model or a two-stage read, and it needs its own measured decision.
+
+**Evidence.** `tests/test_guardrails_response_c1.py` + `tests/test_guardrails_citation_c4.py` **33/33**; independent stdlib verifier `logs/p1/step10/guardrails_c1c4_verifier.py` **14/14** (PART 1 re-derives every probe flag from the raw probabilities; PART 2 re-derives the ALCE metrics with its own splitter/regex/arithmetic over a hand-set oracle); mutation `guardrails_c1c4_mutation.py` **13/13 reddened, no inert** (⚠️ M9 was INERT on the first run — the object-form test was rescued by the bracket-slice fallback; a stronger fixture `{"claims": [...], "extra": [1,2]}` was added and M9 now reddens — recorded, not hidden). Independent cross-family reviewer **`openai/gpt-oss-20b`** (the cluster router, vs the author's deepseek): see `logs/p1/step10/guardrails_c1c4_review.json`.
+
+**Register against:** the plan `.hermes/plans/2026-11-05-p1-guardrails-course-aligned-SESSIONS.md` (C1/C4 rows), §I114 (the G1 split this floor was assigned), §I115 (the citation-metric lesson C4 applies), ARCHITECTURE.md §2/§4 (Gate 2, absent from `src/` until now).
+
+#### I122. ⚠️ A PER-STEP VERIFICATION CONTRACT THAT LIVES ONLY AS PROSE GETS SILENTLY SKIPPED — now enforced by a deterministic completeness gate bound to the test suite.
+
+**The failure, measured.** The guardrails plan's §9 states a four-part contract per step (acceptance + independent reviewer + stdlib verifier + mutation proof) and §9.4 says a step with no verdict is not done. An audit **against the files, not the prose** found the session-37 status table marked **P0, R8 and C2 `✅ DONE` with no independent reviewer** — a *consistent* omission, i.e. a forgotten ritual, not a judgment call. Nothing distinguished "no reviewer" from "reviewer recorded elsewhere", because the table is written by hand by the author.
+
+**Why a "verifier of the verifier" is the wrong fix.** A second LLM reading the table is itself a *judgment* check, so it fails for the same reason the first one did — it only fires if someone remembers to run it, and then you need a trigger for the trigger.
+
+**The fix (2 files).** `scripts/verify_plan_coverage.py` — deterministic, no model: for every `✅ DONE` row in a plan's status table it asserts the verifier cell is non-empty, the mutation cell is non-empty, an independent reviewer **resolves** (a `deleg_*` id, or a `…review…` artifact that exists on disk), and every backticked `path/like/this` token exists. `tests/test_plan_verification_coverage.py` binds it to the suite — so it cannot itself be skipped — and includes its own negative tests (the gate must redden on a missing reviewer and on a missing artifact). Being deterministic, the gate needs **no verifier of its own**; the one residual judgment ("was the reviewer's verdict *substantive*?") cannot be gated and stays covered by the existing rule *a partial verdict is no verdict*.
+
+**Demonstrated.** Run against the pre-fix table it names **exactly P0, R8, C2**. The three steps were then **retro-verified**: `p0_config_guard_verifier.py` 14/14, the R7R8 mutation 7/7, the C2 mutation 4/4, and an independent cross-family reviewer (`openai/gpt-oss-20b` on the cluster router vs the author's deepseek) **13/13 CONFIRMED** (`logs/p1/step10/guardrails_p0_r8_c2_review.json`).
+
+**Register against:** the plan §9 (the contract this enforces) and §9.5, `HANDOFF.md` session 38, §I121 (the same session's other verification work).

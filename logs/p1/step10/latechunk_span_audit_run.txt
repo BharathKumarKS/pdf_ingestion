@@ -1,0 +1,36 @@
+2026-10-26 15:59:31.391 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-26 15:59:33.515 | INFO     | __main__:main:79 - children with parent span: 3796
+2026-10-26 15:59:33.515 | INFO     | __main__:main:84 - auditing 6 parents
+2026-10-26 15:59:33.515 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-26 15:59:39.995 | INFO     | src.pdf_ingestion.late_chunk_embedder:_get_tokenizer:191 - Late-chunk tokenizer ready: nomic-ai/nomic-embed-text-v1.5
+2026-10-26 15:59:39.996 | INFO     | __main__:main:90 - declared specials for nomic-ai/nomic-embed-text-v1.5: leading=0 trailing=2; prefix='search_document: '
+{
+  "question": "does a nomic child's late-chunked vector equal an independent span-pooling?",
+  "collection": "knowledge_base_v3",
+  "model": "nomic-ai/nomic-embed-text-v1.5",
+  "declared_specials": {
+    "leading": 0,
+    "trailing": 2
+  },
+  "prefix": "search_document: ",
+  "n_rows": 83,
+  "n_parents": 6,
+  "no_writes": true,
+  "no_llm": true
+}
+{
+  "offset_exact_all": false,
+  "offset_exact_n": 6,
+  "align_ok_n": 83,
+  "cos_manual_vs_stored": {
+    "n": 83,
+    "mean": 1.0,
+    "min": 1.0,
+    "median": 1.0,
+    "n_below_0.99": 0,
+    "n_below_0.90": 0
+  },
+  "verdict_hint": "H1 (shipped path reproduces an independent span-pooling)"
+}
+
+artifact: logs/p1/step10/latechunk_span_audit.json

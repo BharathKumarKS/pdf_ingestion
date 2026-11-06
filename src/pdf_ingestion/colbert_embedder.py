@@ -66,7 +66,8 @@ class ClusterColBERTEmbedder:
     def __init__(self, settings: Settings | None = None) -> None:
         cfg = settings or get_settings()
         self._url   = cfg.sv_colbert_url
-        self._model = cfg.colbert_model
+        # §I117 — the CLUSTER model: prefer the explicit cluster id when set, else the local one.
+        self._model = cfg.sv_colbert_model or cfg.colbert_model
 
     def _post(self, texts: list[str], is_query: bool, batch_size: int = 4) -> list[np.ndarray]:
         import httpx

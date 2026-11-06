@@ -198,6 +198,32 @@ def _assert_lane_width(low, low_name: str, low_size: int, cfg) -> None:
         )
 
 
+def _assert_query_width(query_vector, vectors_cfg, dense_name: str, cfg) -> None:
+    """§I119 — a query vector sent to the FULL-dimension dense lane must have that lane's width.
+
+    ⚠️ The read-path twin of `_assert_lane_width`. Unlike the LOW lane (which is *sliced* to the
+    collection's width, so the two cannot disagree by construction), the full lane takes the query
+    vector as-is — so a model/collection mismatch (e.g. the neutral Qwen-1024 code default against
+    a nomic-768 collection) reaches Qdrant as a bare 400 with no remedy in it. This was measured
+    on 2026-11-05: a run without the `DENSE_MODEL` override 400'd the main dense lane. Read the
+    lane's declared width OFF THE COLLECTION and RAISE, naming both widths and the fix.
+
+    A stub/legacy schema reports no width (`_lane_size` → None) and is skipped — the guard fires
+    only when the collection is readable, never on a guess.
+    """
+    size = _lane_size(vectors_cfg, dense_name)
+    if size is None:
+        return
+    got = int(np.asarray(query_vector).shape[0])
+    if got != int(size):
+        raise RuntimeError(
+            f"the dense lane '{dense_name}' on '{cfg.qdrant_collection}' is {int(size)}d, but the "
+            f"query vector is {got}d (model '{cfg.dense_model}') — Qdrant would reject the query "
+            f"with a 400. Embed the query with the model that BUILT the collection (set "
+            f"DENSE_MODEL/DENSE_DIM to match), or point QDRANT_COLLECTION at a {got}d collection."
+        )
+
+
 def _collection_dense_width(qdrant, collection: str) -> int | None:
     """The width of a collection's dense vector, read OFF THE COLLECTION, or None if unreadable.
 
@@ -346,6 +372,11 @@ class DocumentStore:
         self.last_da_dropout: str | None = None
         self.raptor_dropouts: int = 0
         self.last_raptor_dropout: str | None = None
+        # The SPLADE lane has its own swallow point (the `except` around the sparse Prefetch below
+        # skips the lane and fuses from dense(+ColBERT) only) — the same §I96 class, and the lane
+        # that is DOWN on the cluster as of 2026-11-05, where it silently degrades every run.
+        self.sparse_dropouts: int = 0
+        self.last_sparse_dropout: str | None = None
         # ⚠️ §I99's fusion-order run needs to know, PER QUERY, whether MMR actually fired: MMR
         # SELECTS a subset (`_mmr_select` returns `top_k`), so a query it fired on has a different
         # pool MEMBERSHIP, not just a different order. Without this counter the run's G3 cannot tell
@@ -645,6 +676,10 @@ class DocumentStore:
                 with_payload=True,
             )
 
+        # §I119 — the read-path width guard. The full lane below takes `query_vector` UNSLICED, so
+        # a wrong-model query would reach Qdrant as a bare 400; RAISE first with the remedy.
+        _assert_query_width(query_vector, vectors_cfg, dense_name, cfg)
+
         # Stage 1+2: dense funnel (always). ⚠️ The low lane's NAME and WIDTH both come off the
         # collection, never from `cfg.dense_dim_low`: v2's low lane is 64d and v3's is 128d, and
         # the gemma A/B queries both — slicing to the config value would send a 128d vector to
@@ -675,7 +710,13 @@ class DocumentStore:
                 prefetches.append(Prefetch(query=sv.to_qdrant(), using="sparse", limit=250))
                 lane_names.append("sparse")
             except Exception as exc:
-                logger.warning("SPLADE encode failed ({}), skipping sparse lane", exc)
+                # §I96 — COUNT it. Same class as the ColBERT lane: the Prefetch is omitted, so the
+                # RRF fusion runs over a REDUCED lane set (a different pool), and nothing outside
+                # the log text could see it. A run-integrity block asserts lane health per query.
+                self.sparse_dropouts += 1
+                self.last_sparse_dropout = f"{type(exc).__name__}: {exc}"
+                logger.warning("SPLADE encode failed ({}), skipping sparse lane [dropout #{}]",
+                               exc, self.sparse_dropouts)
 
         # Stage 4: ColBERT joins the fusion as a THIRD CONTRIBUTOR.
         #

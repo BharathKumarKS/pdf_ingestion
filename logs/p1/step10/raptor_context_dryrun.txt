@@ -1,0 +1,67 @@
+2026-11-04 20:24:09.562 | INFO     | __main__:main:93 - overview queries: 2
+2026-11-04 20:24:09.655 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-11-04 20:24:10.862 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-11-04 20:24:10.862 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-11-04 20:24:10.862 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+2026-11-04 20:24:10.865 | INFO     | src.pdf_ingestion.hyde_cache:load:183 - HyDE cache loaded: 127 entries from 18ece9b9404688c8__openai_gpt-oss-20b__ab681b8e43855a46.json
+2026-11-04 20:24:10.865 | INFO     | __main__:main:114 - judge: Qwen/Qwen3-VL-8B-Instruct @ http://10.0.10.70:8000/v1
+2026-11-04 20:24:11.086 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (691 chars)
+2026-11-04 20:24:11.150 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-11-04 20:24:11.279 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+2026-11-04 20:24:15.796 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.982 (kept 20/97)
+2026-11-04 20:25:13.759 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (1042 chars)
+2026-11-04 20:25:18.978 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/89)
+{
+ "deltas": {
+  "faithfulness": {
+   "n": 2,
+   "mean": 0.37505,
+   "ci": [
+    0.293416,
+    0.456684
+   ],
+   "resolved": true,
+   "wins": 2,
+   "losses": 0
+  },
+  "answer_relevance": {
+   "n": 2,
+   "mean": 0.0,
+   "ci": [
+    0.0,
+    0.0
+   ],
+   "resolved": false,
+   "wins": 0,
+   "losses": 0
+  },
+  "citation_accuracy": {
+   "n": 2,
+   "mean": 0.0,
+   "ci": [
+    0.0,
+    0.0
+   ],
+   "resolved": false,
+   "wins": 0,
+   "losses": 0
+  }
+ },
+ "aggregates": {
+  "A_faithfulness": 0.20829999999999999,
+  "B_faithfulness": 0.58335
+ },
+ "guards": {
+  "G1_population_40": false,
+  "G2_zero_errors": true,
+  "G3_pages_identical_between_arms": true,
+  "G4_summaries_are_pageless_and_absent": true,
+  "G5_judge_cross_family": true,
+  "G6_armA_reproduces_I108_baseline": false,
+  "G7_attachment_deterministic": true
+ }
+}
+
+artifact: logs/p1/step10/raptor_context.json
+sha256: add2f73885614c6bb5582cda410d3bf95f1a3cad2389d988f9022d0dded73e91
+GUARD FAILURE: G1_population_40, G6_armA_reproduces_I108_baseline

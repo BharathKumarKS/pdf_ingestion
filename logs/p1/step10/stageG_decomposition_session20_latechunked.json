@@ -1,0 +1,249 @@
+{
+  "meta": {
+    "what": "Stage G \u2014 the \u00a7I66 stage decomposition on BOTH arms (base \u2192 cut \u2192 fusion \u2192 cross-encoder)",
+    "arms": {
+      "A": {
+        "arm": "A",
+        "collection": "knowledge_base_v2",
+        "qdrant_host": "10.0.10.65",
+        "dense_model": "Qwen/Qwen3-Embedding-0.6B",
+        "dense_dim": 1024,
+        "dense_lane": "dense_1024",
+        "low_lane": "dense_64",
+        "low_size": 64,
+        "document_prefix": "",
+        "query_instruction": "Instruct: Given a physics question, retrieve textbook passages that answer it\nQuery: ",
+        "N": 1000,
+        "L": 500,
+        "top_k": 20,
+        "da_enabled": false,
+        "graph_lane": "OFF (mirrors Stage F)",
+        "hyde": "ON, frozen (data/hyde_cache)",
+        "unit": "coverage of a query's REACHABLE labelled pages (\u00a7I66's unit)",
+        "n_chunks": 3489,
+        "n_pages": 888,
+        "n_queries": 133,
+        "n_errors": 0,
+        "wall_seconds": 154.5
+      },
+      "B": {
+        "arm": "B",
+        "collection": "knowledge_base_v3",
+        "qdrant_host": "10.0.10.65",
+        "dense_model": "nomic-ai/nomic-embed-text-v1.5",
+        "dense_dim": 768,
+        "dense_lane": "dense_full",
+        "low_lane": "dense_64",
+        "low_size": 64,
+        "document_prefix": "search_document: ",
+        "query_instruction": "search_query: ",
+        "N": 1000,
+        "L": 500,
+        "top_k": 20,
+        "da_enabled": false,
+        "graph_lane": "OFF (mirrors Stage F)",
+        "hyde": "ON, frozen (data/hyde_cache)",
+        "unit": "coverage of a query's REACHABLE labelled pages (\u00a7I66's unit)",
+        "n_chunks": 3489,
+        "n_pages": 888,
+        "n_queries": 133,
+        "n_errors": 0,
+        "wall_seconds": 144.2
+      }
+    },
+    "unit": "coverage of a REACHABLE labelled page set; raw R@k reported separately",
+    "n_queries": 133
+  },
+  "guards": {
+    "G1_A_config": true,
+    "G2_B_config": true,
+    "G3_A_known_answer_I66": true,
+    "G4_133_both_arms": true,
+    "G5_same_corpus": true,
+    "G6_A_fulldim_known_answer_I66": true
+  },
+  "known_answer": {
+    "target_I66": {
+      "stage0_base_N1000": 0.8151,
+      "stage1_cut_L500": 0.7478
+    },
+    "measured": {
+      "stage0_base_N1000": 0.815136,
+      "stage1_cut_L500": 0.747763
+    },
+    "gaps": {
+      "stage0_base_N1000": 3.599999999992498e-05,
+      "stage1_cut_L500": -3.700000000006476e-05
+    },
+    "tol": 0.002
+  },
+  "decomposition": {
+    "base (64d lane @N=1000)": {
+      "A_v2_qwen3": 0.815136,
+      "B_v3_nomic": 0.799964
+    },
+    "after full-dim cut L=500": {
+      "A_v2_qwen3": 0.747763,
+      "B_v3_nomic": 0.692148
+    },
+    "after fusion (pool=100)": {
+      "A_v2_qwen3": 0.660452,
+      "B_v3_nomic": 0.624655
+    },
+    "after cross-encoder (top-20)": {
+      "A_v2_qwen3": 0.458824,
+      "B_v3_nomic": 0.457639
+    }
+  },
+  "deltas_B_minus_A": {
+    "base (64d lane @N=1000)": {
+      "mean_delta_B_minus_A": -0.015172,
+      "ci95": [
+        -0.062742,
+        0.032398
+      ],
+      "resolved": false,
+      "n": 133,
+      "wins": 34,
+      "losses": 49,
+      "ties": 50
+    },
+    "after full-dim cut L=500": {
+      "mean_delta_B_minus_A": -0.055615,
+      "ci95": [
+        -0.111589,
+        0.00036
+      ],
+      "resolved": false,
+      "n": 133,
+      "wins": 22,
+      "losses": 66,
+      "ties": 45
+    },
+    "after fusion (pool=100)": {
+      "mean_delta_B_minus_A": -0.035797,
+      "ci95": [
+        -0.052129,
+        -0.019465
+      ],
+      "resolved": true,
+      "n": 133,
+      "wins": 7,
+      "losses": 51,
+      "ties": 75
+    },
+    "after cross-encoder (top-20)": {
+      "mean_delta_B_minus_A": -0.001185,
+      "ci95": [
+        -0.022554,
+        0.020183
+      ],
+      "resolved": false,
+      "n": 133,
+      "wins": 21,
+      "losses": 26,
+      "ties": 86
+    }
+  },
+  "fulldim_no_prefilter": {
+    "L100": {
+      "A_v2_qwen3": 0.519204,
+      "B_v3_nomic": 0.414793,
+      "mean_delta_B_minus_A": -0.104411,
+      "ci95": [
+        -0.155867,
+        -0.052955
+      ],
+      "resolved": true,
+      "wins": 18,
+      "losses": 67
+    },
+    "L500": {
+      "A_v2_qwen3": 0.828609,
+      "B_v3_nomic": 0.688664,
+      "mean_delta_B_minus_A": -0.139946,
+      "ci95": [
+        -0.180467,
+        -0.099424
+      ],
+      "resolved": true,
+      "wins": 7,
+      "losses": 73
+    },
+    "L1000": {
+      "A_v2_qwen3": 0.926563,
+      "B_v3_nomic": 0.825692,
+      "mean_delta_B_minus_A": -0.10087,
+      "ci95": [
+        -0.135055,
+        -0.066686
+      ],
+      "resolved": true,
+      "wins": 3,
+      "losses": 67
+    },
+    "L2000": {
+      "A_v2_qwen3": 0.977258,
+      "B_v3_nomic": 0.948838,
+      "mean_delta_B_minus_A": -0.028419,
+      "ci95": [
+        -0.045945,
+        -0.010893
+      ],
+      "resolved": true,
+      "wins": 7,
+      "losses": 45
+    }
+  },
+  "i66_fulldim_cross_check": {
+    "target_I66_N3489_L500": 0.8286,
+    "measured_A_L500": 0.828609,
+    "gap": 9.000000000036756e-06,
+    "pass": true
+  },
+  "raw_product_metrics": {
+    "raw_r100_fusion": {
+      "A_v2_qwen3": 0.646897,
+      "B_v3_nomic": 0.611493
+    },
+    "raw_r20_ce": {
+      "A_v2_qwen3": 0.447496,
+      "B_v3_nomic": 0.44631
+    }
+  },
+  "by_type": {
+    "factual": {
+      "n": 53,
+      "cov_base": {
+        "A": 0.85384,
+        "B": 0.849945
+      },
+      "cov_ce": {
+        "A": 0.568493,
+        "B": 0.575943
+      }
+    },
+    "multihop": {
+      "n": 40,
+      "cov_base": {
+        "A": 0.803392,
+        "B": 0.780812
+      },
+      "cov_ce": {
+        "A": 0.574813,
+        "B": 0.556571
+      }
+    },
+    "overview": {
+      "n": 40,
+      "cov_base": {
+        "A": 0.775599,
+        "B": 0.752892
+      },
+      "cov_ce": {
+        "A": 0.197523,
+        "B": 0.201953
+      }
+    }
+  }
+}

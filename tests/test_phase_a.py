@@ -150,7 +150,7 @@ def test_search_with_das_returns_list(stub_store):
 
 def test_search_with_das_da_disabled(stub_store, monkeypatch):
     monkeypatch.setattr(stub_store._cfg, "da_enabled", False)
-    q_vec = np.random.rand(768).astype(np.float32)
+    q_vec = np.random.rand(stub_store._cfg.dense_dim).astype(np.float32)
     results = stub_store.search_with_das(q_vec, query_text="test", tenant_id="global")
     assert isinstance(results, list)
 

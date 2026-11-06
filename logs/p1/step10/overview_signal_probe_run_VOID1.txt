@@ -1,0 +1,150 @@
+2026-11-04 20:27:24.798 | INFO     | __main__:main:154 - overview queries: 40
+2026-11-04 20:27:24.917 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-11-04 20:27:25.818 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-11-04 20:27:25.818 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-11-04 20:27:25.819 | INFO     | __main__:_build_hypotheses:65 - hypotheses cache loaded: 2 queries
+2026-11-04 20:27:25.820 | INFO     | src.pdf_ingestion.hyde_cache:load:183 - HyDE cache loaded: 127 entries from 18ece9b9404688c8__openai_gpt-oss-20b__ab681b8e43855a46.json
+2026-11-04 20:27:34.733 | INFO     | __main__:_build_hypotheses:98 - [ovw-003] 5 hypotheses built
+2026-11-04 20:27:43.231 | INFO     | __main__:_build_hypotheses:98 - [ovw-004] 5 hypotheses built
+2026-11-04 20:28:00.208 | INFO     | __main__:_build_hypotheses:98 - [ovw-005] 5 hypotheses built
+2026-11-04 20:28:10.392 | INFO     | __main__:_build_hypotheses:98 - [ovw-006] 5 hypotheses built
+2026-11-04 20:28:22.659 | INFO     | __main__:_build_hypotheses:98 - [ovw-007] 5 hypotheses built
+2026-11-04 20:28:33.066 | INFO     | __main__:_build_hypotheses:98 - [ovw-008] 5 hypotheses built
+2026-11-04 20:28:44.692 | INFO     | __main__:_build_hypotheses:98 - [ovw-009] 5 hypotheses built
+2026-11-04 20:28:58.119 | INFO     | __main__:_build_hypotheses:98 - [ovw-010] 5 hypotheses built
+2026-11-04 20:29:11.632 | INFO     | __main__:_build_hypotheses:98 - [ovw-011] 5 hypotheses built
+2026-11-04 20:29:18.772 | INFO     | __main__:_build_hypotheses:98 - [ovw-012] 5 hypotheses built
+2026-11-04 20:29:30.447 | INFO     | __main__:_build_hypotheses:98 - [ovw-013] 5 hypotheses built
+2026-11-04 20:29:40.612 | INFO     | __main__:_build_hypotheses:98 - [ovw-014] 5 hypotheses built
+2026-11-04 20:29:58.401 | INFO     | __main__:_build_hypotheses:98 - [ovw-015] 5 hypotheses built
+2026-11-04 20:30:17.747 | INFO     | __main__:_build_hypotheses:98 - [ovw-016] 5 hypotheses built
+2026-11-04 20:30:28.186 | INFO     | __main__:_build_hypotheses:98 - [ovw-017] 5 hypotheses built
+2026-11-04 20:30:38.646 | INFO     | __main__:_build_hypotheses:98 - [ovw-019] 5 hypotheses built
+2026-11-04 20:30:49.927 | INFO     | __main__:_build_hypotheses:98 - [ovw-020] 5 hypotheses built
+2026-11-04 20:31:01.203 | INFO     | __main__:_build_hypotheses:98 - [ovw-024] 5 hypotheses built
+2026-11-04 20:31:13.976 | INFO     | __main__:_build_hypotheses:98 - [ovw-027] 5 hypotheses built
+2026-11-04 20:31:28.104 | INFO     | __main__:_build_hypotheses:98 - [ovw-029] 5 hypotheses built
+2026-11-04 20:31:46.698 | INFO     | __main__:_build_hypotheses:98 - [ovw-030] 5 hypotheses built
+2026-11-04 20:32:00.466 | INFO     | __main__:_build_hypotheses:98 - [ovw-031] 5 hypotheses built
+2026-11-04 20:32:10.908 | INFO     | __main__:_build_hypotheses:98 - [ovw-034] 5 hypotheses built
+2026-11-04 20:32:21.499 | INFO     | __main__:_build_hypotheses:98 - [ovw-035] 5 hypotheses built
+2026-11-04 20:32:37.441 | INFO     | __main__:_build_hypotheses:98 - [ovw-036] 5 hypotheses built
+2026-11-04 20:32:52.498 | INFO     | __main__:_build_hypotheses:98 - [ovw-037] 5 hypotheses built
+2026-11-04 20:33:10.756 | INFO     | __main__:_build_hypotheses:98 - [ovw-038] 5 hypotheses built
+2026-11-04 20:33:22.138 | INFO     | __main__:_build_hypotheses:98 - [ovw-039] 5 hypotheses built
+2026-11-04 20:33:41.665 | INFO     | __main__:_build_hypotheses:98 - [ovw-040] 5 hypotheses built
+2026-11-04 20:33:56.894 | INFO     | __main__:_build_hypotheses:98 - [ovw-041] 5 hypotheses built
+2026-11-04 20:34:17.578 | INFO     | __main__:_build_hypotheses:98 - [ovw-042] 5 hypotheses built
+2026-11-04 20:34:41.420 | INFO     | __main__:_build_hypotheses:98 - [ovw-043] 5 hypotheses built
+2026-11-04 20:35:02.445 | INFO     | __main__:_build_hypotheses:98 - [ovw-044] 5 hypotheses built
+2026-11-04 20:35:18.718 | INFO     | __main__:_build_hypotheses:98 - [ovw-045] 5 hypotheses built
+2026-11-04 20:35:36.732 | INFO     | __main__:_build_hypotheses:98 - [ovw-046] 5 hypotheses built
+2026-11-04 20:35:52.786 | INFO     | __main__:_build_hypotheses:98 - [ovw-047] 5 hypotheses built
+2026-11-04 20:36:08.164 | INFO     | __main__:_build_hypotheses:98 - [ovw-048] 5 hypotheses built
+2026-11-04 20:36:29.892 | INFO     | __main__:_build_hypotheses:98 - [ovw-049] 5 hypotheses built
+2026-11-04 20:36:50.797 | INFO     | __main__:main:186 -   5/40 queries
+2026-11-04 20:37:17.498 | INFO     | __main__:main:186 -   10/40 queries
+2026-11-04 20:37:39.607 | INFO     | __main__:main:186 -   15/40 queries
+2026-11-04 20:38:01.962 | INFO     | __main__:main:186 -   20/40 queries
+2026-11-04 20:38:19.744 | INFO     | __main__:main:186 -   25/40 queries
+2026-11-04 20:38:38.492 | INFO     | __main__:main:186 -   30/40 queries
+2026-11-04 20:38:56.719 | INFO     | __main__:main:186 -   35/40 queries
+2026-11-04 20:39:18.024 | INFO     | __main__:main:186 -   40/40 queries
+{
+ "aggregates": {
+  "A": {
+   "R@20": 0.18784808274377804,
+   "nDCG@20": 0.6632530924058742,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 42.387355816391725
+  },
+  "B": {
+   "R@20": 0.13598354529017867,
+   "nDCG@20": 0.4912144378192715,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 43.74164429758646
+  },
+  "C": {
+   "R@20": 0.21495970586474472,
+   "nDCG@20": 0.6344952837996365,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 35.50378924366604
+  },
+  "D": {
+   "R@20": 0.21401407910080644,
+   "nDCG@20": 0.6363797400109279,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 35.85014159595165
+  }
+ },
+ "deltas": {
+  "C-A": {
+   "n": 40,
+   "mean": 0.027111623120966696,
+   "ci": [
+    0.014591109546374407,
+    0.039632136695558984
+   ],
+   "resolved": true,
+   "wins": 28,
+   "losses": 4
+  },
+  "D-A": {
+   "n": 40,
+   "mean": 0.026165996357028428,
+   "ci": [
+    0.016160246287262557,
+    0.0361717464267943
+   ],
+   "resolved": true,
+   "wins": 28,
+   "losses": 2
+  },
+  "B-A": {
+   "n": 40,
+   "mean": -0.051864537453599355,
+   "ci": [
+    -0.06966604471358687,
+    -0.034063030193611836
+   ],
+   "resolved": true,
+   "wins": 3,
+   "losses": 35
+  },
+  "C-A_ndcg": {
+   "n": 40,
+   "mean": -0.028757808606237712,
+   "ci": [
+    -0.05439243584016132,
+    -0.003123181372314106
+   ],
+   "resolved": true,
+   "wins": 11,
+   "losses": 28
+  },
+  "D-A_ndcg": {
+   "n": 40,
+   "mean": -0.026873352394946246,
+   "ci": [
+    -0.048450210218360545,
+    -0.005296494571531942
+   ],
+   "resolved": true,
+   "wins": 13,
+   "losses": 27
+  }
+ },
+ "guards": {
+  "G1_population_40": true,
+  "G2_zero_errors": true,
+  "G3_hypotheses_frozen": true,
+  "G4_armA_reproduces_I111_dense_only": false,
+  "G5_armB_differs_from_A": true,
+  "G6_lane_ordered_len_ge_20": true,
+  "G7_determinism_A": false
+ }
+}
+
+artifact: logs/p1/step10/overview_signal_probe.json
+sha256: 41d01122a7051c0f6c1ed51f09a8fb57b60cabaa8c9fa6359df9bbba18949595
+GUARD FAILURE: G4_armA_reproduces_I111_dense_only, G7_determinism_A

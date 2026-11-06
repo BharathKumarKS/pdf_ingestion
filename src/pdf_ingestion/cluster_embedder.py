@@ -408,7 +408,8 @@ def get_derived_embedder(
     if _derived_embedder is None:
         cfg = settings or get_settings()
         sub = cfg.model_copy(update={"dense_model": cfg.derived_dense_model,
-                                     "dense_dim": cfg.derived_dense_dim})
+                                     "dense_dim": cfg.derived_dense_dim,
+                                     "query_instruction": cfg.derived_query_instruction})
         if cfg.use_stub_embedder:
             _derived_embedder = StubClusterEmbedder(
                 dim=cfg.derived_dense_dim, dim_low=cfg.dense_dim_low,

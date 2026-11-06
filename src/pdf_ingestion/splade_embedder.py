@@ -60,7 +60,8 @@ class ClusterSpladeEmbedder:
     def __init__(self, settings: Settings | None = None) -> None:
         cfg        = settings or get_settings()
         self._url   = cfg.sv_sparse_url
-        self._model = cfg.splade_model
+        # §I117 — the CLUSTER model: prefer the explicit cluster id when set, else the local one.
+        self._model = cfg.sv_sparse_model or cfg.splade_model
 
     def _post(self, texts: list[str], batch_size: int = 32) -> list[SparseVector]:
         import httpx

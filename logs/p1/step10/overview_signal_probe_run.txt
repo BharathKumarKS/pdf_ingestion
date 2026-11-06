@@ -1,0 +1,111 @@
+2026-11-04 20:43:54.425 | INFO     | __main__:main:163 - overview queries: 40
+2026-11-04 20:43:54.519 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-11-04 20:43:55.426 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-11-04 20:43:55.427 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-11-04 20:43:55.429 | INFO     | __main__:_build_hypotheses:65 - hypotheses cache loaded: 40 queries
+2026-11-04 20:44:11.149 | INFO     | __main__:main:195 -   5/40 queries
+2026-11-04 20:44:30.319 | INFO     | __main__:main:195 -   10/40 queries
+2026-11-04 20:44:45.252 | INFO     | __main__:main:195 -   15/40 queries
+2026-11-04 20:45:02.366 | INFO     | __main__:main:195 -   20/40 queries
+2026-11-04 20:45:18.135 | INFO     | __main__:main:195 -   25/40 queries
+2026-11-04 20:45:33.499 | INFO     | __main__:main:195 -   30/40 queries
+2026-11-04 20:45:50.412 | INFO     | __main__:main:195 -   35/40 queries
+2026-11-04 20:46:05.983 | INFO     | __main__:main:195 -   40/40 queries
+{
+ "aggregates": {
+  "A": {
+   "R@20": 0.21281665342717215,
+   "nDCG@20": 0.6303761310527455,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 27.922398059314567
+  },
+  "B": {
+   "R@20": 0.14891373024798304,
+   "nDCG@20": 0.4690876155762064,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 30.31819266587656
+  },
+  "C": {
+   "R@20": 0.21495970586474472,
+   "nDCG@20": 0.6344952837996365,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 35.50378924366604
+  },
+  "D": {
+   "R@20": 0.21401407910080644,
+   "nDCG@20": 0.6363797400109279,
+   "Hit@20": 1.0,
+   "mean_gold_rank": 35.85014159595165
+  }
+ },
+ "deltas": {
+  "C-A": {
+   "n": 40,
+   "mean": 0.002143052437572582,
+   "ci": [
+    -0.008061347601183018,
+    0.012347452476328182
+   ],
+   "resolved": false,
+   "wins": 12,
+   "losses": 13
+  },
+  "D-A": {
+   "n": 40,
+   "mean": 0.001197425673634313,
+   "ci": [
+    -0.0070140640466004375,
+    0.009408915393869064
+   ],
+   "resolved": false,
+   "wins": 14,
+   "losses": 13
+  },
+  "B-A": {
+   "n": 40,
+   "mean": -0.06390292317918911,
+   "ci": [
+    -0.08606899402755236,
+    -0.041736852330825865
+   ],
+   "resolved": true,
+   "wins": 3,
+   "losses": 34
+  },
+  "C-A_ndcg": {
+   "n": 40,
+   "mean": 0.004119152746890996,
+   "ci": [
+    -0.019980066073661595,
+    0.028218371567443584
+   ],
+   "resolved": false,
+   "wins": 18,
+   "losses": 19
+  },
+  "D-A_ndcg": {
+   "n": 40,
+   "mean": 0.006003608958182463,
+   "ci": [
+    -0.013228603902715267,
+    0.02523582181908019
+   ],
+   "resolved": false,
+   "wins": 20,
+   "losses": 19
+  }
+ },
+ "guards": {
+  "G1_population_40": true,
+  "G2_zero_errors": true,
+  "G3_hypotheses_frozen": true,
+  "G4_armA_reproduces_I111_dense_only": true,
+  "G5_armB_differs_from_A": true,
+  "G6_lane_ordered_len_ge_20": true,
+  "G7_determinism_A": true
+ }
+}
+
+artifact: logs/p1/step10/overview_signal_probe.json
+sha256: a72d52569f9f4cc6e23a17ad4355b9b5883fb0e56d9dd41db5f3e9ce68d8b359
+ALL GUARDS PASS

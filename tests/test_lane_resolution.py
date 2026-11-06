@@ -169,3 +169,44 @@ def test_write_guard_is_silent_on_a_match(settings):
 
     _assert_lane_width(np.ones(128, dtype=np.float32), "dense_128", 128, settings)
     _assert_lane_width(np.ones(64, dtype=np.float32), "dense_64", 64, settings)
+
+
+# ── 4. The READ-path width guard (§I119) ────────────────────────────────────
+
+def test_read_guard_raises_when_the_query_model_does_not_match_the_collection(settings, monkeypatch):
+    """§I119 — a 1024d query into a 768d collection must RAISE, not reach Qdrant as a bare 400.
+
+    The full-dimension lane takes the query vector UNSLICED, so unlike the low lane the two can
+    disagree — and the mismatch (the neutral Qwen-1024 code default against a nomic-768 collection)
+    is exactly what bit a run on 2026-11-05.
+    """
+    from src.pdf_ingestion.store import DocumentStore
+
+    cfg = settings.model_copy(update={"dense_dim": 1024,
+                                      "dense_model": "Qwen/Qwen3-Embedding-0.6B"})
+    store = DocumentStore(cfg)
+    monkeypatch.setattr(store, "_qdrant",
+                        _CapturingQdrant(_cfg_vectors(dense_128=128, dense_full=768)))
+
+    with pytest.raises(RuntimeError) as excinfo:
+        store._qdrant_search(np.ones(1024, dtype=np.float32), filter_=None, limit=10,
+                             query_text="what is kinetic energy")
+
+    msg = str(excinfo.value)
+    assert "dense_full" in msg and "768d" in msg and "1024d" in msg
+    assert "DENSE_MODEL" in msg, "it must name the remedy, not just the fault"
+
+
+def test_read_guard_is_silent_when_the_widths_match(settings, monkeypatch):
+    """The happy path is untouched: a 768d query into a 768d collection issues the query."""
+    cfg, calls = _run_funnel(
+        settings, monkeypatch, _cfg_vectors(dense_128=128, dense_full=768), dense_dim=768)
+    assert calls[0]["using"] == "dense_full"
+    assert len(calls[0]["query"]) == 768
+
+
+def test_read_guard_skips_an_unreadable_schema(settings, monkeypatch):
+    """A stub schema declares no size — the guard must not fire on a guess."""
+    cfg, calls = _run_funnel(
+        settings, monkeypatch, {"dense_64": object(), "dense_full": object()})
+    assert calls, "the funnel must proceed when the collection's width is unreadable"

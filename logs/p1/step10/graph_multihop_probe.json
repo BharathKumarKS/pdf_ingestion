@@ -1,0 +1,248 @@
+{
+  "meta": {
+    "memgraph": "localhost:7687",
+    "qdrant": "10.0.10.65",
+    "collection": "knowledge_base_v3",
+    "sample": 8,
+    "limit": 500,
+    "read_only": true
+  },
+  "aggregate": {
+    "queries": 8,
+    "queries_hop2_adds": 8,
+    "hop1_all_zero": 8,
+    "hop2_not_constant": 8
+  },
+  "rows": [
+    {
+      "query_id": "gold-008",
+      "query": "How did astronomers discover that stars are made of atoms of the same kind as those on Earth?",
+      "n_at_hop1": 10,
+      "n_at_hop2": 500,
+      "wall_s_hop1": 2.64,
+      "wall_s_hop2": 2.11,
+      "hop1_distances": [
+        0
+      ],
+      "hop2_distance_hist": {
+        "0": 10,
+        "1": 32,
+        "2": 458
+      },
+      "new_chunks_at_hop2": 490,
+      "example_2hop_chunk": {
+        "chunk_id": "0e7f0f31-f11e-41bd-8549-36649d01367a",
+        "hop_distance": 1,
+        "concepts": [
+          "nucleus",
+          "proton",
+          "Chemical Element",
+          "neutron",
+          "atomic structure"
+        ],
+        "preview": "With this picture the atoms were easier to understand. They were thought to have a 'nucleu"
+      }
+    },
+    {
+      "query_id": "gold-013",
+      "query": "What happens to the focus of an ellipse when it is viewed at a tilt?",
+      "n_at_hop1": 8,
+      "n_at_hop2": 500,
+      "wall_s_hop1": 0.27,
+      "wall_s_hop2": 2.09,
+      "hop1_distances": [
+        0
+      ],
+      "hop2_distance_hist": {
+        "0": 8,
+        "1": 285,
+        "2": 207
+      },
+      "new_chunks_at_hop2": 492,
+      "example_2hop_chunk": {
+        "chunk_id": "a106ada6-0756-45b9-b5ac-d19a5dbd7336",
+        "hop_distance": 1,
+        "concepts": [
+          "polar vector",
+          "cross product",
+          "Magnetic Field",
+          "Angular Momentum",
+          "dot product"
+        ],
+        "preview": "If a and b are called ordinary vectors, we have a special name for them, we call them pola"
+      }
+    },
+    {
+      "query_id": "gold-027",
+      "query": "Why does the passage state that we look at the 'blob' from different points of view when moving at different velocities?",
+      "n_at_hop1": 11,
+      "n_at_hop2": 500,
+      "wall_s_hop1": 0.29,
+      "wall_s_hop2": 2.09,
+      "hop1_distances": [
+        0
+      ],
+      "hop2_distance_hist": {
+        "0": 11,
+        "1": 376,
+        "2": 113
+      },
+      "new_chunks_at_hop2": 489,
+      "example_2hop_chunk": {
+        "chunk_id": "62fcdc33-e150-4834-b8a5-4584f00630a5",
+        "hop_distance": 1,
+        "concepts": [
+          "kinetic energy",
+          "Hooke's Law",
+          "Potential Energy",
+          "mass",
+          "angular frequency"
+        ],
+        "preview": "<!-- formula-not-decoded -->\nNow the kinetic energy is zero when x is at the maximum, beca"
+      }
+    },
+    {
+      "query_id": "gold-032",
+      "query": "When a mass moves only along the radius, which quantity stays constant and how is the torque \u03c4 related to the Coriolis f",
+      "n_at_hop1": 12,
+      "n_at_hop2": 500,
+      "wall_s_hop1": 0.31,
+      "wall_s_hop2": 2.13,
+      "hop1_distances": [
+        0
+      ],
+      "hop2_distance_hist": {
+        "0": 12,
+        "1": 273,
+        "2": 215
+      },
+      "new_chunks_at_hop2": 488,
+      "example_2hop_chunk": {
+        "chunk_id": "0e7f0f31-f11e-41bd-8549-36649d01367a",
+        "hop_distance": 1,
+        "concepts": [
+          "proton",
+          "neutron",
+          "Chemical Element",
+          "Atomic Number",
+          "atomic structure"
+        ],
+        "preview": "With this picture the atoms were easier to understand. They were thought to have a 'nucleu"
+      }
+    },
+    {
+      "query_id": "gold-038",
+      "query": "Why, according to the passage, does the force only need to fight friction to keep an efficient oscillator steady after i",
+      "n_at_hop1": 36,
+      "n_at_hop2": 500,
+      "wall_s_hop1": 0.29,
+      "wall_s_hop2": 2.17,
+      "hop1_distances": [
+        0
+      ],
+      "hop2_distance_hist": {
+        "0": 36,
+        "1": 464
+      },
+      "new_chunks_at_hop2": 464,
+      "example_2hop_chunk": {
+        "chunk_id": "8f7cbe71-e22f-4363-978a-e0bdb1c4a8a7",
+        "hop_distance": 1,
+        "concepts": [
+          "Period of molecular rotation",
+          "muon",
+          "Meson",
+          "Light travels one foot",
+          "atomic vibration"
+        ],
+        "preview": ", MEAN = Period of a sound wave Period of radiowave. , LIFE OF = Muon. , SECONDS = 10 9 10"
+      }
+    },
+    {
+      "query_id": "gold-048",
+      "query": "According to the passage, why does light appear to travel slower than the ultimate speed c in a material?",
+      "n_at_hop1": 112,
+      "n_at_hop2": 500,
+      "wall_s_hop1": 0.3,
+      "wall_s_hop2": 2.17,
+      "hop1_distances": [
+        0
+      ],
+      "hop2_distance_hist": {
+        "0": 112,
+        "1": 388
+      },
+      "new_chunks_at_hop2": 388,
+      "example_2hop_chunk": {
+        "chunk_id": "9b665c9d-5950-4b68-a3c4-66866ea42be7",
+        "hop_distance": 1,
+        "concepts": [
+          "Ideal Gas Law",
+          "kinetic energy",
+          "vibrational energy",
+          "adiabatic index",
+          "Rotational Energy"
+        ],
+        "preview": "Now we shall look at some ways to test the theory, and to see how successful is the classi"
+      }
+    },
+    {
+      "query_id": "gold-058",
+      "query": "How does the result P12 obtained with both holes open differ from the sum of P1 and P2?",
+      "n_at_hop1": 10,
+      "n_at_hop2": 500,
+      "wall_s_hop1": 0.31,
+      "wall_s_hop2": 2.11,
+      "hop1_distances": [
+        0
+      ],
+      "hop2_distance_hist": {
+        "0": 10,
+        "1": 209,
+        "2": 281
+      },
+      "new_chunks_at_hop2": 490,
+      "example_2hop_chunk": {
+        "chunk_id": "e47ebf3b-d836-41e5-90e5-8f4ee4e0bb3c",
+        "hop_distance": 1,
+        "concepts": [
+          "Michael Hartl",
+          "Robert B. Leighton",
+          "Caltech",
+          "Feynman's Tips on Physics",
+          "Feynman Lectures on Physics"
+        ],
+        "preview": "When I saw the lists of errata and the content of the proposed new volume, I quickly agree"
+      }
+    },
+    {
+      "query_id": "gold-060",
+      "query": "Why does the inability of all electrons to occupy the same place give matter its strength?",
+      "n_at_hop1": 9,
+      "n_at_hop2": 500,
+      "wall_s_hop1": 0.32,
+      "wall_s_hop2": 2.15,
+      "hop1_distances": [
+        0
+      ],
+      "hop2_distance_hist": {
+        "0": 9,
+        "1": 158,
+        "2": 333
+      },
+      "new_chunks_at_hop2": 491,
+      "example_2hop_chunk": {
+        "chunk_id": "46f1a142-2b91-41cc-9e69-79d7a2e8db45",
+        "hop_distance": 1,
+        "concepts": [
+          "Entropy Change Formula",
+          "Entropy",
+          "Heat Transfer",
+          "Planck's constant",
+          "Second Law of Thermodynamics"
+        ],
+        "preview": "It can also be determined theoretically by means of Planck's constant and quantum mechanic"
+      }
+    }
+  ]
+}

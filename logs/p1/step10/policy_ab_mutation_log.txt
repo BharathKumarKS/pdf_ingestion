@@ -1,0 +1,18 @@
+=== baseline (no mutation) ===
+  failing checks: NONE (correct)
+  MV1 per-query P_gold metric      intended=V3       reddened=['V3', 'V4', 'V5', 'V6']
+  MV2 artifact aggregate           intended=V4       reddened=['V4']
+  MV3 artifact delta mean          intended=V5       reddened=['V5']
+  MV4 selection_gold flipped       intended=V2       reddened=['V2']
+  MV5 pool_sha                     intended=V8       reddened=['V8']
+  MV6 router cache class           intended=V2/V9    reddened=['V2', 'V9']
+  MV7 T4 Q_metrics                 intended=V6       reddened=['V3', 'V6']
+  MV8 guard flag False             intended=V12      reddened=['V12']
+  MV9 g3c n_moved                  intended=V10      reddened=['V10']
+  MV10 agreement                   intended=V9       reddened=['V9']
+  MV11 P_router > P_gold           intended=V11      reddened=['V11', 'V5']
+  MV12 drop a row                  intended=V1       reddened=['V1', 'V4', 'V5', 'V9']
+  MV13 overview P_gold != C        intended=V7       reddened=['V3', 'V4', 'V5', 'V6', 'V7']
+
+checks never reddened: NONE — every check is reddenable
+inert mutations: NONE

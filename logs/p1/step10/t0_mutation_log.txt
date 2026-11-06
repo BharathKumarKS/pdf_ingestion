@@ -1,0 +1,90 @@
+T0 — per-stage mutation proofs (pre-registration §7b + re-registration §3/§4/§5)
+==============================================================================
+
+Instrument: each mutation is applied to the HARNESS (`logs/p1/step10/t0_baseline.py`), the
+harness is re-run on a 5-query subset, and the INDEPENDENT verifier (`t0_verifier.py`) is
+run against the artifact THAT run wrote (the artifact's mtime is asserted to have moved, so the
+verifier cannot be reading a previous run's file). The source is then restored.
+
+harness sha256 at the time of the proof: bf313c4a15f1974cfa75ace6f9622115b2bc5eb77affeb37402126532724435b
+
+The discriminator is each Vn's own failure detail:
+  * n_bad  — per-query re-derivation mismatches for that stage
+  * pass   — the stage's overall verdict (also covers non-per-query failures, e.g. V3's
+             pool-over-cap check, which is a boolean and does not contribute to n_bad)
+
+⚠️ V1 and V2 are RED in EVERY run, including the baseline, and that is EXPECTED: their G3
+   anchor is §I89's n=133 coverage row (0.918953 / 0.838136), which a subset run cannot
+   reproduce. The anchor is orthogonal to the mutation — the mutation is judged by whether the
+   stage's RE-DERIVATION detail changes, which is what n_bad/pass below record.
+
+MUTATIONS
+------------------------------------------------------------------------------
+MV1 base             cov_base record -> constant 0.5
+MV2 cut              cov_cut record -> constant 0.5
+MV3 fusion           fusion_ranked record gains a phantom page (pool 100 -> 101)
+MV4 cross-encoder    ce_ranked record REVERSED (same page set, different order)
+MV5 aperture         `admission_uncapped` incremented by 1 at every tau (ALL swept boundaries)
+MV6 b5 scale         boundary 5's recorded scores collapsed to a RANK scale, 1/(1+i)
+MV7 precision/F1     ONLY the recorded precision_at_20 / f1_at_20 at the cross-encoder -> 0.999
+
+RESULT MATRIX   (pass, n_bad)
+------------------------------------------------------------------------------
+mutation                          V1              V2              V3              V4              V5              V6
+baseline                      FAIL,0          FAIL,0          PASS,0          PASS,0          PASS,0          PASS,0
+MV1 base                      FAIL,5          FAIL,0          PASS,0          PASS,0          PASS,0          PASS,0
+MV2 cut                       FAIL,0          FAIL,5          PASS,0          PASS,0          PASS,0          PASS,0
+MV3 fusion                    FAIL,0          FAIL,0          FAIL,0          PASS,0          PASS,0          PASS,0
+MV1                           FAIL,5          FAIL,0          PASS,0          PASS,0          PASS,0          PASS,0
+MV2                           FAIL,0          FAIL,5          PASS,0          PASS,0          PASS,0          PASS,0
+MV3                           FAIL,0          FAIL,0          FAIL,0          PASS,0          PASS,0          PASS,0
+MV4                           FAIL,0          FAIL,0          PASS,0         FAIL,12          PASS,0          PASS,0
+MV5                           FAIL,0          FAIL,0          PASS,0          PASS,0        FAIL,120         FAIL,60
+MV6                           FAIL,0          FAIL,0          PASS,0          PASS,0          PASS,0        FAIL,121
+MV7                           FAIL,0          FAIL,0          PASS,0         FAIL,10          PASS,0          PASS,0
+
+READING — each mutation turns EXACTLY its own stage red (and V5/V6 also go red under MV5, since
+`admission_uncapped` is recorded for EVERY swept boundary, boundary 5 included):
+  MV1 -> V1 FAIL          others unchanged
+  MV2 -> V2 FAIL          others unchanged
+  MV3 -> V3 FAIL          others unchanged
+  MV4 -> V4 FAIL          others unchanged
+  MV5 -> V5 FAIL AND V6 FAIL   (the same recorded quantity exists at both swept boundaries)
+  MV6 -> V6 FAIL          others unchanged
+  MV7 -> V4 FAIL          others unchanged — this is the V4 EXTENSION alone (recall/MRR/MAP/nDCG
+                          are untouched, so only the two NEW checks can fire)
+
+⚠️ MV4 is the sharpest of the set: it does NOT change the page SET, only the ORDER, and V4 still
+   goes red — so V4 discriminates on the rank-dependent metrics, not merely on set membership.
+
+⚠️ MV6 is the case the harness's OWN guard cannot see: the mutation corrupts the RECORD, while
+   G9 is computed from the live variable, so the harness still reports G9 = true. Only the
+   verifier, reading the artifact, catches it. That is precisely the 'a stage can be wrong while
+   the aggregate is right' case the per-stage verifiers exist for.
+
+⚠️ TWO DEFECTS WERE FOUND BY RUNNING THIS PROOF, both recorded:
+   (1) A first attempt at MV3 was MALFORMED — the anchor ended mid-line, so the appended
+       `# MUTANT` comment swallowed the `"ce_ranked": ce_ranked,` that followed on the same
+       line. The artifact then lacked a key and the verifier raised KeyError instead of
+       reporting a red stage — a crash, which is not a clean proof. Fixed with whole-line
+       anchors, and the script now asserts the artifact carries every key before invoking the
+       verifier.
+   (2) V6's own `recall_at_100` check was MIS-SPECIFIED: it compared against the top-100 pages,
+       while the harness computes that key as the POOL recall over the boundary's ENTIRE output
+       (which is how `_metrics_from_pages` builds it, and how V3's pool check has always worked).
+       It made V6 red at the BASELINE on gold-004 (verifier 0.0 vs harness 0.6667). Fixed; V6 now
+       passes at the baseline. A mis-specified check that only ever fails is worse than none.
+
+   (3) RUNNING THE VERIFIER ON THE FULL 133-QUERY ARTIFACT found TWO MORE over-strict checks —
+       both false positives on correct data, and both fixed:
+       (a) V3 asserted `da_live == n_queries`. The DA lane was live on 132 of 133; a lane
+           returning nothing for ONE query is a legitimate outcome, and the pre-registration's G6
+           requires non-empty on AT LEAST the queries it should — not on every one. Relaxed to
+           `0 < live <= eligible`, with the shortfall REPORTED (da_shortfall = 1) rather than
+           failed. An over-strict check is worse than no check: it gets switched off.
+       (b) V4 reported a MAP mismatch on gold-033: verifier 0.05625 vs harness 0.0563. That is
+           the ROUNDING BOUNDARY — the artifact stores 4 dp, and the difference is
+           5.000000000000143e-05, i.e. 1.4e-18 ABOVE a 5e-5 tolerance. Fixed with a 1e-12 guard
+           in the tolerant compare, not by widening the tolerance.
+
+Source restored byte-identical after every mutation: True

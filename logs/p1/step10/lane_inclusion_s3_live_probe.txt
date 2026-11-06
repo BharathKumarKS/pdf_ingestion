@@ -1,0 +1,45 @@
+2026-10-30 16:57:03.490 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-30 16:57:04.318 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-10-30 16:57:04.319 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-30 16:57:04.319 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+2026-10-30 16:57:04.517 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-10-30 16:57:04.618 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+2026-10-30 16:57:06.958 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.741 (kept 20/88)
+2026-10-30 16:57:09.103 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.822 (kept 20/75)
+{
+  "arms": {
+    "F0_control": {
+      "candidates_with_rrf_score": 0,
+      "candidates_without_page_number": 0,
+      "endpoint_pages_top20": 20,
+      "lanes": null,
+      "pool_pages": 88,
+      "pool_size": 88,
+      "raptor_candidates_in_pool": 0,
+      "raptor_dropouts_delta": 0
+    },
+    "F3_raptor": {
+      "candidates_with_rrf_score": 75,
+      "candidates_without_page_number": 2,
+      "endpoint_pages_top20": 18,
+      "lanes": [
+        "raptor"
+      ],
+      "pool_pages": 73,
+      "pool_size": 75,
+      "raptor_candidates_in_pool": 2,
+      "raptor_dropouts_delta": 0
+    }
+  },
+  "collection": "knowledge_base_v3",
+  "hyde": "OFF (probe)",
+  "query": "summarise the chapter on energy and momentum conservation"
+}
+
+=== S3 live wiring check ===
+  [PASS] the control has NO RAPTOR candidate (got 0)
+  [PASS] the fused arm HAS a RAPTOR candidate (got 2)
+  [PASS] every fused candidate carries an rrf_score (75/75)
+  [PASS] the RAPTOR lane dropped out 0 times
+  [info] pool sizes — control 88, F3 75; the difference is the DA lane the control appends and F3's lane set excludes
+ALL PASS

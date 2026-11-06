@@ -543,30 +543,65 @@ class GraphBuilder:
         if not scored_concepts:
             return []
 
+        # §G5/§I2 — traversal depth. `graph_max_hops == 1` is the SHIPPED behaviour: a single-hop
+        # concept lookup with NO `RELATES_TO` traversal, so `hop_distance` is 0 by construction
+        # (the §I2 defect). `2` expands the seed set along `RELATES_TO` edges — a chunk that
+        # mentions a NEIGHBOUR of a seed becomes reachable — and `hop_distance` reports the real
+        # minimum edge count. ⚠️ The default is 1 ON PURPOSE: the expansion is a new treatment and
+        # must not change the shipped lane until its ablation runs (§G1's rule). The two paths are
+        # branched so the legacy path stays byte-identical.
+        # ⚠️ The bound is CLAMPED to 2, measured 2026-11-05: on the live graph the query costs
+        # ~0.3 s at 1 hop, ~2.3 s at 2, and **66.5 s at 3** (2-hop already reaches 2,780 of 6,065
+        # concepts), so 3 hops is prohibitive and 2 is the syllabus's "expand two hops".
+        max_hops = max(1, min(int(getattr(self._cfg, "graph_max_hops", 1) or 1), 2))
+        concepts_param = [{"name": n, "score": s} for n, s in scored_concepts]
+
         # Rank by how many DISTINCT query concepts a chunk matches, then by how
         # similar those concepts are to the query. Without any ORDER BY this
         # returned an arbitrary LIMIT — Memgraph's storage order — so a question
         # about satellite orbits came back with chunks that merely mention "orbit"
-        # (aberration, telescope tilt). Note this is a single-hop concept lookup:
-        # no traversal happens, which is why hop_distance is the constant 0 and is
-        # no longer surfaced to the user as "hops".
-        cypher = """
-        UNWIND $concepts AS c
-        MATCH (k:Concept {name: c.name})
-        MATCH (ch:Chunk)-[:MENTIONS]->(k)
-        WHERE ch.tenant_id IN [$tenant_id, 'global']
-        WITH ch, collect(DISTINCT k.name) AS matched, sum(c.score) AS concept_score
-        RETURN ch.id AS chunk_id, matched AS concept_path,
-               size(matched) AS matched_concepts, concept_score,
-               ch.chunk_text AS text_preview
-        ORDER BY matched_concepts DESC, concept_score DESC
-        LIMIT $limit
-        """
+        # (aberration, telescope tilt).
+        if max_hops == 1:
+            cypher = """
+            UNWIND $concepts AS c
+            MATCH (k:Concept {name: c.name})
+            MATCH (ch:Chunk)-[:MENTIONS]->(k)
+            WHERE ch.tenant_id IN [$tenant_id, 'global']
+            WITH ch, collect(DISTINCT k.name) AS matched, sum(c.score) AS concept_score
+            RETURN ch.id AS chunk_id, matched AS concept_path,
+                   size(matched) AS matched_concepts, concept_score,
+                   0 AS hop_distance,
+                   ch.chunk_text AS text_preview
+            ORDER BY matched_concepts DESC, concept_score DESC
+            LIMIT $limit
+            """
+        else:
+            # The bound is a Cypher LITERAL (variable-length bounds take no parameter), so it is
+            # formatted from the clamped int above — never from user input. `min(size(relationships(p)))`
+            # is the real hop distance; `*0..N` admits the seed itself (hop 0), so a seed-matching chunk
+            # still ranks ahead of a neighbour-matching one. ⚠️ Memgraph has no `length()` for paths
+            # (verified live 2026-11-05: "Function 'LENGTH' doesn't exist") — use `size(relationships(p))`.
+            cypher = f"""
+            UNWIND $concepts AS c
+            MATCH (k:Concept {{name: c.name}})
+            MATCH p = (k)-[:RELATES_TO*0..{max_hops}]-(n:Concept)
+            WITH n, c, min(size(relationships(p))) AS hop
+            MATCH (ch:Chunk)-[:MENTIONS]->(n)
+            WHERE ch.tenant_id IN [$tenant_id, 'global']
+            WITH ch, min(hop) AS hop_distance,
+                 collect(DISTINCT n.name) AS reached,
+                 max(c.score) AS concept_score
+            RETURN ch.id AS chunk_id, reached AS concept_path,
+                   size(reached) AS matched_concepts, concept_score, hop_distance,
+                   ch.chunk_text AS text_preview
+            ORDER BY hop_distance ASC, matched_concepts DESC, concept_score DESC
+            LIMIT $limit
+            """
         try:
             with driver.session() as session:
                 records = session.run(
                     cypher,
-                    concepts=[{"name": n, "score": s} for n, s in scored_concepts],
+                    concepts=concepts_param,
                     tenant_id=tenant_id,
                     limit=limit,
                 ).data()
@@ -576,7 +611,7 @@ class GraphBuilder:
                     "concept_path": r["concept_path"],
                     "matched_concepts": r["matched_concepts"],
                     "concept_score": r["concept_score"],
-                    "hop_distance": 0,   # single-hop by construction; see above
+                    "hop_distance": int(r["hop_distance"]),
                     "text_preview": (r["text_preview"] or "")[:200],
                 }
                 for r in records

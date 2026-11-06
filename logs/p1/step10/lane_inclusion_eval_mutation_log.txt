@@ -1,0 +1,30 @@
+=== S3 mutation proof — tests/test_lane_inclusion_eval.py ===
+scripts/evaluate_rag.py sha256 5847266cea63420afdf0427d3b03c97d55a92dc09bca803f640b9aabca6c3eb6
+src/pdf_ingestion/store.py sha256 051032dac9f0fefff58cb155365a3bc38842c779001bf97a049e5dc094dd4e5d
+baseline: all green [9 passed, 1 warning in 1.31s]
+  [ok] MV1 the fused branch is never taken (`if True`)
+        must redden: test_fused_graph_arm_goes_through_the_fusion_not_the_append -> RED
+        reddened: ['test_fused_arm_passes_the_graph_lane_the_raw_query_vector', 'test_fused_graph_arm_goes_through_the_fusion_not_the_append', 'test_raptor_gate_is_applied_to_the_lane_set_not_only_to_the_call', 'test_raptor_hit_reaches_the_pool_through_the_fusion', 'test_raptor_lane_fires_only_for_overview']  [7 failed, 2 passed, 1 warning in 1.31s]
+  [ok] MV2 the RAPTOR gate is removed from the lane set
+        must redden: test_raptor_gate_is_applied_to_the_lane_set_not_only_to_the_call -> RED
+        reddened: ['test_raptor_gate_is_applied_to_the_lane_set_not_only_to_the_call', 'test_raptor_lane_fires_only_for_overview']  [3 failed, 6 passed, 1 warning in 1.30s]
+  [ok] MV3 the graph lane is given the fusion's vector, not the raw one
+        must redden: test_fused_arm_passes_the_graph_lane_the_raw_query_vector -> RED
+        reddened: ['test_fused_arm_passes_the_graph_lane_the_raw_query_vector']  [1 failed, 8 passed, 1 warning in 1.31s]
+  [ok] MV4 the RAPTOR lane is never wired (raptor_vector=None)
+        must redden: test_raptor_hit_reaches_the_pool_through_the_fusion -> RED
+        reddened: ['test_fused_arm_passes_the_graph_lane_the_raw_query_vector', 'test_raptor_hit_reaches_the_pool_through_the_fusion', 'test_raptor_lane_fires_only_for_overview']  [3 failed, 6 passed, 1 warning in 1.30s]
+  [ok] MV5 the control stops fabricating the graph score
+        must redden: test_default_lanes_none_uses_todays_wiring -> RED
+        reddened: ['test_default_lanes_none_uses_todays_wiring']  [1 failed, 8 passed, 1 warning in 1.30s]
+  [ok] MV6 the control stops mapping graph page_num -> page_number
+        must redden: test_default_lanes_none_uses_todays_wiring -> RED
+        reddened: ['test_default_lanes_none_uses_todays_wiring']  [1 failed, 8 passed, 1 warning in 1.30s]
+  [ok] MV7 `search_raptor` drops the point id (the lane vanishes in the fusion)
+        must redden: test_the_real_search_raptor_returns_a_key_the_fusion_can_use -> RED
+        reddened: ['test_the_real_search_raptor_returns_a_key_the_fusion_can_use']  [1 failed, 8 passed, 1 warning in 1.35s]
+
+tests reddened by at least one mutation: ['test_default_lanes_none_uses_todays_wiring', 'test_fused_arm_passes_the_graph_lane_the_raw_query_vector', 'test_fused_graph_arm_goes_through_the_fusion_not_the_append', 'test_raptor_gate_is_applied_to_the_lane_set_not_only_to_the_call', 'test_raptor_hit_reaches_the_pool_through_the_fusion', 'test_raptor_lane_fires_only_for_overview', 'test_the_real_search_raptor_returns_a_key_the_fusion_can_use']
+source restored byte-identical
+
+ALL MUTATIONS DISCRIMINATE

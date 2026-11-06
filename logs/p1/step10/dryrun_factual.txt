@@ -1,0 +1,72 @@
+2026-11-02 14:10:42.540 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 14:10:44.611 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-11-02 14:10:45.457 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-11-02 14:10:46.928 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 1.06s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 2.40s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 3.25s.
+Failed to export span batch due to timeout, max retries or shutdown.
+2026-11-02 14:10:55.430 | INFO     | src.core.intent_router:_try_load_classifier:163 - IntentRouter: loaded trained classifier from data/models/intent_classifier.pkl
+2026-11-02 14:10:55.435 | DEBUG    | src.core.intent_router:classify:200 - IntentRouter (trained): 'factual'
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 0.98s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 2.05s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 3.73s.
+Failed to export span batch due to timeout, max retries or shutdown.
+2026-11-02 14:11:03.796 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-11-02 14:11:03.908 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 0.81s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 2.12s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 4.16s.
+Failed to export span batch due to timeout, max retries or shutdown.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 0.99s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 2.35s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 4.54s.
+Failed to export span batch due to timeout, max retries or shutdown.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 0.86s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 1.77s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 3.29s.
+Failed to export span batch due to timeout, max retries or shutdown.
+2026-11-02 14:11:27.066 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+2026-11-02 14:11:27.781 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.994 (kept 20/82)
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 0.86s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 2.08s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 3.44s.
+Failed to export span batch due to timeout, max retries or shutdown.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 1.17s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 2.17s.
+Transient error HTTPConnectionPool(host='localhost', port=6007): Max retries exceeded with url: /v1/traces (Caused by NewConnectionError("HTTPConnection(host='localhost', port=6007): Failed to establish a new connection: [Errno 61] Connection refused")) encountered while exporting span batch, retrying in 4.13s.
+Failed to export span batch due to timeout, max retries or shutdown.
+🔭 OpenTelemetry Tracing Details 🔭
+|  Phoenix Project: synapse-learning
+|  Span Processor: SimpleSpanProcessor
+|  Collector Endpoint: http://localhost:6007/v1/traces
+|  Transport: HTTP + protobuf
+|  Transport Headers: {}
+|  
+|  Using a default SpanProcessor. `add_span_processor` will overwrite this default.
+|  
+|  ⚠️ WARNING: It is strongly advised to use a BatchSpanProcessor in production environments.
+|  
+|  `register` has set this TracerProvider as the global OpenTelemetry default.
+|  To disable this behavior, call `register` with `set_global_tracer_provider=False`.
+
+[66s] query="What is Newton's second law?"  exception=False
+  markdown blocks: 85
+
+--- markdown block #1 (len 1614) ---
+If we have a hot thing and a cold thing, the heat goes from hot to cold. So the law of entropy is one such law. But we expect to understand the law of entropy from the point of view of mechanics. In fact, we have just been successful in obtaining all the consequences of the argument that heat cannot flow backwards by itself from just mechanical arguments, and we thereby obtained an understanding of the Second Law. Apparently we can get irreversibility from reversible equations. But was it only a mechanical argument that we used? Let us look into it more closely.
+Where does irreversibility come from? It does not come from Newton's laws. If we claim that the behavior of everything is ultimately to be understood in terms of the laws of physics, and if it also turns out that all the equations have the fantastic property that if we put t = -t we have another solution, then every phenomenon is reversible. How then does it come about in nature on a large scale that things are not reversible? Obviously there must be some law, some obscure but fundamental equation, perhaps in electricity, maybe in neutrino physics, in which it does matter which way time goes.
+Since our question has to do with the entropy, our problem is to try to find a microscopic description of entropy. If we say we have a certain amount of energy in something, like a gas, then we can get a microscopic picture of it, 
+
+--- markdown block #2 (len 1122) ---
+The acceleration a is the rate of change of the velocity, and Newton's Second Law says more than that the effect of a given force varies inversely as the mass; it says also that the direction of the change in the velocity and the direction of the force are the same. Thus we must understand that a change in a velocity, or an acceleration, has a wider meaning than in common language: The velocity of a moving object can change by its speeding up, slowing down (when it slows down, we say it accelerates with a negative acceleration), or changing its direction of motion. An acceleration at right angles to the velocity was discussed in Chapter 7. There we saw that an object moving in a circle of radius R with a certain speed v along the circle falls away from a straightline path by a distance equal to 1 2 ( v 2 /R ) t 2 if t is very small. Thus the formula for acceleration at right angles to the motion is
+
+and a force at right angles to the velocity will cause an object to move in a curved path whose radius of curvature can be found by dividing the force by the mass to get the acceleration, and then using (9.3).
+
+--- markdown block #3 (len 1064) ---
+According to Newton's Second Law, force is the time rate of change of the momentum, so we conclude that the rate of change of momentum p 1 of particle 1 is equal to minus the rate of change of momentum p 2 of particle 2, or
+
+Now if the rate of change is always equal and opposite, it follows that the total change in the momentum of particle 1 is equal and opposite to the total change in the momentum of particle 2; this means that if we add the momentum of particle 1 to the momentum of particle 2, the rate of change of the sum of these, due to the mutual forces (called internal forces) between particles, is zero; that is
+
+There is assumed to be no other force in the problem. If the rate of change of this sum is always zero, that is just another way of saying that the quantity ( p 1 + p 2 )
+does not change. (This quantity is also written m 1 v 1 + m 2 v 2 , and is called the total momentum of the two particles.) We have now obtained the result that the total momentum of the two particles does not change because of any mutual interactions between them.

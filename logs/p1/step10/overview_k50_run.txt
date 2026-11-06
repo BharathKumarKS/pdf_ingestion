@@ -1,0 +1,257 @@
+
+Synapse RAG Evaluation Pipeline
+  Query file:       data/eval_queries_overview.json
+  Tenant:           global
+  Score threshold:  0.0
+  Mode:             full (retrieval + generation)
+  Judge LLM:        openai / Qwen/Qwen3-VL-8B-Instruct
+
+Loaded 40 queries from data/eval_queries_overview.json
+2026-11-02 20:07:06.523 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-11-02 20:07:06.725 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-11-02 20:07:06.725 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-11-02 20:07:06.725 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+  [ 1/40] ovw-001: In what ways does Feynman use the principle of conservation 
+...
+2026-11-02 20:07:09.956 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (625 chars)
+2026-11-02 20:07:09.971 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-11-02 20:07:10.030 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+2026-11-02 20:07:11.362 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.948 (kept 50/96)
+        recall@100=0.322 recall@50=0.209 hit@50=1.000 mrr=1.000 ndcg@50=0.522
+  [ 2/40] ovw-002: How does Feynman develop the principle of conservation of 
+mo...
+2026-11-02 20:08:09.732 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (816 chars)
+2026-11-02 20:08:11.320 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.917 (kept 50/95)
+        recall@100=0.549 recall@50=0.412 hit@50=1.000 mrr=1.000 ndcg@50=0.497
+  [ 3/40] ovw-003: How does Feynman develop the concept of conservation of 
+angu...
+2026-11-02 20:08:52.597 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (706 chars)
+2026-11-02 20:08:53.868 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.974 (kept 50/77)
+        recall@100=0.818 recall@50=0.727 hit@50=1.000 mrr=1.000 ndcg@50=0.639
+  [ 4/40] ovw-004: How does the Feynman Lectures on Physics, Volume 1, trace 
+th...
+2026-11-02 20:09:46.913 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (709 chars)
+2026-11-02 20:09:49.583 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.969 (kept 50/100)
+        recall@100=0.400 recall@50=0.235 hit@50=1.000 mrr=0.500 ndcg@50=0.422
+  [ 5/40] ovw-005: How does Feynman develop the concept of wave‑particle 
+dualit...
+2026-11-02 20:10:41.819 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (783 chars)
+2026-11-02 20:10:43.533 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.436 (kept 50/90)
+        recall@100=0.568 recall@50=0.500 hit@50=1.000 mrr=1.000 ndcg@50=0.558
+  [ 6/40] ovw-006: How does Feynman build up the concept of quantum 
+probability...
+2026-11-02 20:11:43.165 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (825 chars)
+2026-11-02 20:11:45.362 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.368 (kept 50/91)
+        recall@100=0.565 recall@50=0.457 hit@50=1.000 mrr=1.000 ndcg@50=0.434
+  [ 7/40] ovw-007: How does the Feynman Lectures on Physics, Volume 1 develop 
+t...
+2026-11-02 20:12:41.416 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (1100 chars)
+2026-11-02 20:12:43.269 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.537 (kept 50/94)
+        recall@100=0.633 recall@50=0.490 hit@50=1.000 mrr=0.500 ndcg@50=0.586
+  [ 8/40] ovw-008: How does Feynman develop the concept of mass-energy 
+equivale...
+2026-11-02 20:14:06.462 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (681 chars)
+2026-11-02 20:14:08.010 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.282 (kept 50/84)
+        recall@100=0.697 recall@50=0.606 hit@50=1.000 mrr=1.000 ndcg@50=0.661
+  [ 9/40] ovw-009: How does Feynman develop the kinetic theory of gases 
+through...
+2026-11-02 20:15:19.977 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (778 chars)
+2026-11-02 20:15:22.181 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.622 (kept 50/89)
+        recall@100=0.417 recall@50=0.260 hit@50=1.000 mrr=1.000 ndcg@50=0.627
+  [10/40] ovw-010: In what way does Feynman build the concept of entropy from 
+i...
+2026-11-02 20:16:22.527 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (799 chars)
+2026-11-02 20:16:23.828 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.920 (kept 50/67)
+        recall@100=0.472 recall@50=0.417 hit@50=1.000 mrr=1.000 ndcg@50=0.501
+  [11/40] ovw-011: How does Feynman develop the concept of electromagnetic 
+radi...
+2026-11-02 20:17:07.467 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (770 chars)
+2026-11-02 20:17:08.947 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.663 (kept 50/89)
+        recall@100=0.336 recall@50=0.229 hit@50=1.000 mrr=1.000 ndcg@50=0.663
+  [12/40] ovw-012: How does Feynman develop the concept of Fermat's principle 
+t...
+2026-11-02 20:17:46.378 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (724 chars)
+2026-11-02 20:17:47.770 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.660 (kept 50/87)
+        recall@100=0.481 recall@50=0.444 hit@50=1.000 mrr=1.000 ndcg@50=0.508
+  [13/40] ovw-013: How does Feynman develop the concept of oscillatory motion 
+a...
+2026-11-02 20:18:25.131 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (893 chars)
+2026-11-02 20:18:28.221 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.848 (kept 50/100)
+        recall@100=0.319 recall@50=0.217 hit@50=1.000 mrr=1.000 ndcg@50=0.733
+  [14/40] ovw-014: How does Feynman develop the concept of the harmonic 
+oscilla...
+2026-11-02 20:19:10.230 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (762 chars)
+2026-11-02 20:19:11.833 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.149 (kept 50/90)
+2026-11-02 20:20:11.856 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.4s
+2026-11-02 20:21:14.308 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 2/2 in 4.8s
+        recall@100=0.483 recall@50=0.310 hit@50=1.000 mrr=1.000 ndcg@50=0.358
+  [15/40] ovw-015: How does Feynman build the statistical mechanical framework 
+...
+2026-11-02 20:22:09.429 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (811 chars)
+2026-11-02 20:22:11.024 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.585 (kept 50/93)
+        recall@100=0.390 recall@50=0.281 hit@50=1.000 mrr=0.333 ndcg@50=0.431
+  [16/40] ovw-016: How does Feynman develop the concept of chemical energy 
+thro...
+2026-11-02 20:22:36.870 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (859 chars)
+2026-11-02 20:22:38.470 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.535 (kept 50/96)
+2026-11-02 20:23:38.496 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.3s
+        recall@100=0.605 recall@50=0.372 hit@50=1.000 mrr=0.500 ndcg@50=0.374
+  [17/40] ovw-017: How does Feynman build the concept of atomic forces 
+througho...
+2026-11-02 20:24:41.300 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (803 chars)
+2026-11-02 20:24:42.924 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.261 (kept 50/93)
+        recall@100=0.336 recall@50=0.181 hit@50=1.000 mrr=1.000 ndcg@50=0.544
+  [18/40] ovw-019: In what ways does Feynman's discussion of the uncertainty 
+pr...
+2026-11-02 20:25:50.924 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (1040 chars)
+2026-11-02 20:25:52.494 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.490 (kept 50/81)
+2026-11-02 20:26:52.515 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.4s
+2026-11-02 20:27:54.959 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 2/2 in 5.7s
+2026-11-02 20:40:02.729 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.5s
+        recall@100=0.677 recall@50=0.645 hit@50=1.000 mrr=1.000 ndcg@50=0.697
+  [19/40] ovw-020: How does Feynman's exposition of electron interference 
+evolv...
+2026-11-02 20:40:41.092 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (891 chars)
+2026-11-02 20:40:42.475 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.767 (kept 50/75)
+        recall@100=0.727 recall@50=0.576 hit@50=1.000 mrr=1.000 ndcg@50=0.639
+  [20/40] ovw-024: How does Feynman develop the concept of rotational dynamics 
+...
+2026-11-02 20:41:30.952 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (696 chars)
+2026-11-02 20:41:32.243 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.960 (kept 50/68)
+        recall@100=0.611 recall@50=0.556 hit@50=1.000 mrr=1.000 ndcg@50=0.554
+  [21/40] ovw-027: How does Feynman develop the concept of diffusion from the 
+m...
+2026-11-02 20:42:01.567 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (950 chars)
+2026-11-02 20:42:03.268 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.452 (kept 50/95)
+        recall@100=0.600 recall@50=0.343 hit@50=1.000 mrr=1.000 ndcg@50=0.411
+  [22/40] ovw-029: How does Feynman's treatment of color vision evolve 
+througho...
+2026-11-02 20:42:46.738 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (708 chars)
+2026-11-02 20:42:48.029 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.553 (kept 50/66)
+        recall@100=0.765 recall@50=0.647 hit@50=1.000 mrr=1.000 ndcg@50=0.623
+  [23/40] ovw-030: How does Feynman integrate the concepts of sound wave 
+propag...
+2026-11-02 20:43:38.110 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (847 chars)
+2026-11-02 20:43:39.532 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.563 (kept 50/82)
+        recall@100=0.534 recall@50=0.411 hit@50=1.000 mrr=1.000 ndcg@50=0.650
+  [24/40] ovw-031: How does Feynman develop the concept of Fourier analysis 
+thr...
+2026-11-02 20:44:39.495 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (599 chars)
+2026-11-02 20:44:41.957 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.572 (kept 50/100)
+        recall@100=0.368 recall@50=0.303 hit@50=1.000 mrr=0.333 ndcg@50=0.531
+  [25/40] ovw-034: How does The Feynman Lectures on Physics, Volume 1, build 
+th...
+2026-11-02 20:45:39.154 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (801 chars)
+2026-11-02 20:45:40.803 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.800 (kept 50/100)
+        recall@100=0.720 recall@50=0.520 hit@50=1.000 mrr=1.000 ndcg@50=0.488
+  [26/40] ovw-035: How does Feynman build the concept of probability as a 
+found...
+2026-11-02 20:46:26.088 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (793 chars)
+2026-11-02 20:46:27.459 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.489 (kept 50/78)
+        recall@100=0.455 recall@50=0.273 hit@50=1.000 mrr=0.500 ndcg@50=0.253
+  [27/40] ovw-036: How does Feynman develop the concept of thermodynamic 
+temper...
+2026-11-02 20:46:59.131 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (1025 chars)
+2026-11-02 20:47:00.745 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.680 (kept 50/86)
+        recall@100=0.571 recall@50=0.371 hit@50=1.000 mrr=1.000 ndcg@50=0.577
+  [28/40] ovw-037: How does Feynman develop the concept of boundary conditions 
+...
+2026-11-02 20:47:35.607 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (954 chars)
+2026-11-02 20:47:38.837 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.734 (kept 50/100)
+        recall@100=0.223 recall@50=0.117 hit@50=1.000 mrr=0.333 ndcg@50=0.242
+  [29/40] ovw-038: How does Feynman develop the concept of potential energy 
+fie...
+2026-11-02 20:48:55.994 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (862 chars)
+2026-11-02 20:48:57.485 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.980 (kept 50/85)
+        recall@100=0.552 recall@50=0.433 hit@50=1.000 mrr=1.000 ndcg@50=0.653
+  [30/40] ovw-039: How does The Feynman Lectures on Physics, Volume 1 develop 
+t...
+2026-11-02 20:49:54.152 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (665 chars)
+2026-11-02 20:49:55.630 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.552 (kept 50/90)
+        recall@100=0.385 recall@50=0.279 hit@50=1.000 mrr=1.000 ndcg@50=0.585
+  [31/40] ovw-040: How does Feynman's presentation in Volume 1 illustrate the 
+t...
+2026-11-02 20:51:02.041 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (821 chars)
+2026-11-02 20:51:03.638 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.891 (kept 50/98)
+2026-11-02 20:52:03.657 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.0s
+        recall@100=0.543 recall@50=0.326 hit@50=1.000 mrr=1.000 ndcg@50=0.549
+  [32/40] ovw-041: How does Feynman develop the concept and applications of 
+cen...
+2026-11-02 20:53:16.989 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (781 chars)
+2026-11-02 20:53:18.601 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.603 (kept 50/72)
+        recall@100=0.696 recall@50=0.652 hit@50=1.000 mrr=1.000 ndcg@50=0.726
+  [33/40] ovw-042: How does Feynman develop a unified understanding of wave 
+pro...
+2026-11-02 20:54:17.420 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (997 chars)
+2026-11-02 20:54:19.125 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.645 (kept 50/98)
+2026-11-02 21:06:57.817 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.8s
+2026-11-02 21:07:48.430 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ConnectTimeout: [Errno 60] Operation timed out) — retry 2/2 in 5.0s
+        recall@100=0.420 recall@50=0.260 hit@50=1.000 mrr=1.000 ndcg@50=0.587
+  [34/40] ovw-043: How does Feynman develop the concept of transformation 
+prope...
+2026-11-02 21:08:22.904 | DEBUG    | __main__:run_retrieval:232 - HyDE: generated hypothetical (1001 chars)
+2026-11-02 21:08:24.623 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.876 (kept 50/97)
+2026-11-02 21:14:40.023 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.2s
+2026-11-02 21:41:14.959 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 2/2 in 5.9s
+2026-11-02 21:41:28.889 | ERROR    | src.core.llm:_post_with_retry:219 - LLM CALL FAILED (openai openai/gpt-oss-20b @ http://10.0.10.70:8000/v1/chat/completions) after 3 attempt(s): ConnectTimeout: [Errno 60] Operation timed out — returning empty string. Callers must not treat '' as a valid answer.
+2026-11-02 21:41:28.890 | ERROR    | __main__:evaluate_query:892 - [ovw-043] synthesis returned nothing; generation metrics unavailable
+        recall@100=0.336 recall@50=0.227 hit@50=1.000 mrr=1.000 ndcg@50=0.553
+  [35/40] ovw-044: How does Feynman develop the concept of time–distance 
+relati...
+2026-11-02 21:41:36.704 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: [Errno 60] Operation timed out) — retry 1/3 in 2.1s
+2026-11-02 21:41:46.708 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: [Errno 60] Operation timed out) — retry 2/3 in 4.0s
+2026-11-02 21:58:43.186 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: [Errno 60] Operation timed out) — retry 3/3 in 8.4s
+        Error: [Errno 60] Operation timed out
+  [36/40] ovw-045: How does Feynman build a coherent narrative of thermal 
+radia...
+2026-11-02 21:59:50.776 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: [Errno 60] Operation timed out) — retry 1/3 in 2.7s
+2026-11-02 22:00:01.495 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: [Errno 60] Operation timed out) — retry 2/3 in 5.2s
+2026-11-02 22:00:14.622 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: [Errno 60] Operation timed out) — retry 3/3 in 11.8s
+        Error: [Errno 60] Operation timed out
+  [37/40] ovw-046: How does Feynman's presentation of molecular kinetic 
+behavio...
+2026-11-02 22:16:45.769 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: [Errno 60] Operation timed out) — retry 1/3 in 1.7s
+2026-11-02 22:16:55.403 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: [Errno 60] Operation timed out) — retry 2/3 in 4.3s
+2026-11-02 22:34:01.576 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: [Errno 60] Operation timed out) — retry 3/3 in 11.7s
+        Error: timed out
+  [38/40] ovw-047: How does Feynman's treatment of the interaction of light 
+wit...
+2026-11-02 22:51:37.859 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: timed out) — retry 1/3 in 1.4s
+2026-11-02 22:51:49.366 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: timed out) — retry 2/3 in 3.5s
+2026-11-02 22:52:03.042 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: timed out) — retry 3/3 in 6.4s
+        Error: timed out
+  [39/40] ovw-048: How does Feynman develop the concept of atomic and 
+molecular...
+2026-11-02 23:10:13.836 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: timed out) — retry 1/3 in 2.0s
+2026-11-02 23:10:26.024 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: timed out) — retry 2/3 in 3.3s
+2026-11-02 23:10:39.436 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: timed out) — retry 3/3 in 8.8s
+        Error: timed out
+  [40/40] ovw-049: How does Feynman build the theory of quantum state 
+evolution...
+2026-11-02 23:25:31.932 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: timed out) — retry 1/3 in 1.5s
+2026-11-02 23:25:43.615 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: timed out) — retry 2/3 in 2.9s
+2026-11-02 23:25:56.675 | WARNING  | src.pdf_ingestion.cluster_embedder:_post_with_retry:312 - Dense embed POST to http://10.0.10.70:8123/embed-text/v1/embeddings failed (ConnectTimeout: timed out) — retry 3/3 in 11.8s
+        Error: timed out
+
+Evaluation complete in 2776.5s
+                             RAG Evaluation Results                             
+┏━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━┳━━━━━━━┳━━━━━━┳━━━━━━━┳━━━━━━┓
+┃      ┃      ┃      ┃      ┃      ┃      ┃      ┃       ┃      ┃ Cita… ┃  n / ┃
+┃ Sco… ┃ Rec… ┃ Rec… ┃ Hit… ┃ Ctx… ┃  MRR ┃ NDC… ┃ Fait… ┃ Ans… ┃  Acc. ┃ cal… ┃
+┡━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━╇━━━━━━━╇━━━━━━╇━━━━━━━╇━━━━━━┩
+│ Ove… │ 0.5… │ 0.3… │ 1.0… │ 0.4… │ 0.8… │ 0.5… │ 0.477 │ 1.0… │ 1.000 │ 34 / │
+│      │      │      │      │      │      │      │       │      │       │   34 │
+│   o… │ 0.5… │ 0.3… │ 1.0… │ 0.4… │ 0.8… │ 0.5… │ 0.477 │ 1.0… │ 1.000 │ 34 / │
+│      │      │      │      │      │      │      │       │      │       │   34 │
+└──────┴──────┴──────┴──────┴──────┴──────┴──────┴───────┴──────┴───────┴──────┘
+
+Warning: Recall@100 = 0.517 (< 0.60). The base retriever is missing relevant 
+pages. Consider: HyDE, lower score threshold, or query expansion.
+
+⚠️  RUN INTEGRITY WARNING — 1 queries with no answer, 0 judge failures. 
+Generation metrics are incomplete; see 'Run integrity' in the artifact.
+
+Results saved to: data/eval_results/overview_k50_2026-11-03_0744.md
+Structured twin: data/eval_results/overview_k50_2026-11-03_0744.json
+
+Tip: Run again with --run-name <name> after each system change to track lift.

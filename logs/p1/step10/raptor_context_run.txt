@@ -1,0 +1,160 @@
+2026-11-04 20:27:24.799 | INFO     | __main__:main:93 - overview queries: 40
+2026-11-04 20:27:24.917 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-11-04 20:27:25.818 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-11-04 20:27:25.818 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-11-04 20:27:25.818 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+2026-11-04 20:27:25.819 | INFO     | src.pdf_ingestion.hyde_cache:load:183 - HyDE cache loaded: 127 entries from 18ece9b9404688c8__openai_gpt-oss-20b__ab681b8e43855a46.json
+2026-11-04 20:27:25.820 | INFO     | __main__:main:114 - judge: Qwen/Qwen3-VL-8B-Instruct @ http://10.0.10.70:8000/v1
+2026-11-04 20:27:26.097 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (691 chars)
+2026-11-04 20:27:26.172 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-11-04 20:27:26.297 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+2026-11-04 20:27:30.691 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.982 (kept 20/97)
+2026-11-04 20:29:12.513 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (1042 chars)
+2026-11-04 20:29:17.845 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/89)
+2026-11-04 20:32:28.142 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.9s
+2026-11-04 20:32:57.373 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (765 chars)
+2026-11-04 20:33:01.657 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.962 (kept 20/82)
+2026-11-04 20:34:45.819 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (880 chars)
+2026-11-04 20:34:50.371 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/98)
+2026-11-04 20:36:33.022 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 1.3s
+2026-11-04 20:37:01.771 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (1024 chars)
+2026-11-04 20:37:06.631 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.609 (kept 20/84)
+2026-11-04 20:39:02.874 | INFO     | __main__:main:155 -   5/40 queries
+2026-11-04 20:39:03.108 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (966 chars)
+2026-11-04 20:39:08.299 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.617 (kept 20/82)
+2026-11-04 20:40:44.397 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (967 chars)
+2026-11-04 20:40:48.780 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.543 (kept 20/92)
+2026-11-04 20:41:51.714 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (795 chars)
+2026-11-04 20:41:56.385 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.731 (kept 20/88)
+2026-11-04 20:43:04.551 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (972 chars)
+2026-11-04 20:43:09.472 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.587 (kept 20/92)
+2026-11-04 20:43:58.276 | ERROR    | evaluate_rag:compute_faithfulness:604 - Faithfulness: claim extraction was not parseable — metric unavailable
+2026-11-04 20:44:21.538 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (814 chars)
+2026-11-04 20:44:25.382 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.775 (kept 20/66)
+2026-11-04 20:45:32.091 | INFO     | __main__:main:155 -   10/40 queries
+2026-11-04 20:45:32.351 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (913 chars)
+2026-11-04 20:45:38.151 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.571 (kept 20/100)
+2026-11-04 20:46:45.561 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (670 chars)
+2026-11-04 20:46:49.752 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.838 (kept 20/84)
+2026-11-04 20:47:34.730 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (810 chars)
+2026-11-04 20:47:40.890 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.628 (kept 20/100)
+2026-11-04 20:49:08.382 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (761 chars)
+2026-11-04 20:49:13.630 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.474 (kept 20/92)
+2026-11-04 20:50:45.626 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (874 chars)
+2026-11-04 20:50:50.180 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.614 (kept 20/89)
+2026-11-04 20:51:54.254 | INFO     | __main__:main:155 -   15/40 queries
+2026-11-04 20:51:54.556 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (799 chars)
+2026-11-04 20:51:58.328 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/97)
+2026-11-04 20:53:15.281 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (789 chars)
+2026-11-04 20:53:20.241 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.564 (kept 20/94)
+2026-11-04 20:57:20.225 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 1.9s
+2026-11-04 20:57:39.814 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (899 chars)
+2026-11-04 20:57:47.976 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.864 (kept 20/80)
+2026-11-04 20:59:00.325 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (880 chars)
+2026-11-04 20:59:04.569 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.797 (kept 20/75)
+2026-11-04 21:00:10.577 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (892 chars)
+2026-11-04 21:00:15.761 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.631 (kept 20/69)
+2026-11-04 21:02:09.281 | INFO     | __main__:main:155 -   20/40 queries
+2026-11-04 21:02:09.595 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (737 chars)
+2026-11-04 21:02:19.032 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.450 (kept 20/100)
+2026-11-04 21:03:15.160 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (780 chars)
+2026-11-04 21:03:21.161 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.122 (kept 20/64)
+2026-11-04 21:05:05.025 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (738 chars)
+2026-11-04 21:05:10.202 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.383 (kept 20/79)
+2026-11-04 21:06:26.149 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (865 chars)
+2026-11-04 21:06:33.292 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.489 (kept 20/100)
+2026-11-04 21:08:01.936 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (697 chars)
+2026-11-04 21:08:08.463 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.881 (kept 20/93)
+2026-11-04 21:09:46.996 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 1.3s
+2026-11-04 21:11:18.348 | INFO     | __main__:main:155 -   25/40 queries
+2026-11-04 21:11:18.652 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (818 chars)
+2026-11-04 21:11:24.424 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.132 (kept 20/76)
+2026-11-04 21:13:07.209 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (845 chars)
+2026-11-04 21:13:12.464 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.618 (kept 20/84)
+2026-11-04 21:15:10.080 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 1.6s
+2026-11-04 21:16:08.004 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (853 chars)
+2026-11-04 21:16:15.953 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.334 (kept 20/100)
+2026-11-04 21:18:36.273 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (950 chars)
+2026-11-04 21:18:42.181 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.928 (kept 20/90)
+2026-11-04 21:20:18.595 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (705 chars)
+2026-11-04 21:20:24.482 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.482 (kept 20/98)
+2026-11-04 21:29:26.537 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 1.3s
+2026-11-04 21:29:55.679 | INFO     | __main__:main:155 -   30/40 queries
+2026-11-04 21:29:55.939 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (889 chars)
+2026-11-04 21:30:01.314 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.339 (kept 20/93)
+2026-11-04 21:36:26.282 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 1.7s
+2026-11-04 21:53:05.785 | WARNING  | src.core.llm:_post_with_retry:208 - LLM POST to http://10.0.10.70:8000/v1/chat/completions failed (ReadTimeout: timed out) — retry 1/2 in 2.1s
+2026-11-04 21:54:00.773 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (914 chars)
+2026-11-04 21:54:04.199 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.829 (kept 20/78)
+2026-11-04 21:55:48.374 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (854 chars)
+2026-11-04 21:55:53.120 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.559 (kept 20/90)
+2026-11-04 21:56:58.341 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (920 chars)
+2026-11-04 21:57:04.794 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.645 (kept 20/96)
+2026-11-04 21:58:10.443 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (1028 chars)
+2026-11-04 21:58:18.328 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.561 (kept 20/100)
+2026-11-04 22:00:25.905 | INFO     | __main__:main:155 -   35/40 queries
+2026-11-04 22:00:26.198 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (734 chars)
+2026-11-04 22:00:33.744 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.600 (kept 20/91)
+2026-11-04 22:01:36.719 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (999 chars)
+2026-11-04 22:01:42.848 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.477 (kept 20/97)
+2026-11-04 22:03:05.962 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (757 chars)
+2026-11-04 22:03:10.867 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.503 (kept 20/92)
+2026-11-04 22:04:43.403 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (1018 chars)
+2026-11-04 22:04:48.989 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.526 (kept 20/95)
+2026-11-04 22:05:50.058 | DEBUG    | evaluate_rag:run_retrieval:232 - HyDE: generated hypothetical (842 chars)
+2026-11-04 22:05:54.216 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.067 (kept 20/90)
+2026-11-04 22:07:02.016 | INFO     | __main__:main:155 -   40/40 queries
+{
+ "deltas": {
+  "faithfulness": {
+   "n": 39,
+   "mean": -0.03204871794871794,
+   "ci": [
+    -0.100885487062294,
+    0.036788051164858115
+   ],
+   "resolved": false,
+   "wins": 13,
+   "losses": 17
+  },
+  "answer_relevance": {
+   "n": 40,
+   "mean": 0.0,
+   "ci": [
+    0.0,
+    0.0
+   ],
+   "resolved": false,
+   "wins": 0,
+   "losses": 0
+  },
+  "citation_accuracy": {
+   "n": 40,
+   "mean": 0.0,
+   "ci": [
+    0.0,
+    0.0
+   ],
+   "resolved": false,
+   "wins": 0,
+   "losses": 0
+  }
+ },
+ "aggregates": {
+  "A_faithfulness": 0.455125641025641,
+  "B_faithfulness": 0.4229175
+ },
+ "guards": {
+  "G1_population_40": true,
+  "G2_zero_errors": true,
+  "G3_pages_identical_between_arms": true,
+  "G4_summaries_are_pageless_and_absent": true,
+  "G5_judge_cross_family": true,
+  "G6_armA_reproduces_I108_baseline": false,
+  "G7_attachment_deterministic": true
+ }
+}
+
+artifact: logs/p1/step10/raptor_context.json
+sha256: 226b3769565bf2013484d327e95c4b0cf66e66943c5d4e56ad99fb972398875d
+GUARD FAILURE: G6_armA_reproduces_I108_baseline

@@ -1,0 +1,44 @@
+{
+  "baseline": {
+    "test_sparse_failure_increments_the_counter": "PASS",
+    "test_sparse_success_does_not_increment": "PASS",
+    "test_sparse_counter_accumulates_across_queries": "PASS",
+    "test_counters_start_at_zero": "PASS"
+  },
+  "mutations": {
+    "M1_counter_not_incremented_on_failure": {
+      "applied": true,
+      "results": {
+        "test_sparse_failure_increments_the_counter": "FAIL",
+        "test_sparse_failure_increments_the_counter__why": "E       AssertionError: the SPLADE failure was swallowed with no counter \u2014 a lane-reduced pool is invisible",
+        "test_sparse_success_does_not_increment": "PASS",
+        "test_sparse_counter_accumulates_across_queries": "FAIL",
+        "test_sparse_counter_accumulates_across_queries__why": "raise RuntimeError(\"sparse endpoint timed out\")",
+        "test_counters_start_at_zero": "PASS"
+      }
+    },
+    "M2_counter_incremented_on_success_too": {
+      "applied": true,
+      "results": {
+        "test_sparse_failure_increments_the_counter": "PASS",
+        "test_sparse_success_does_not_increment": "FAIL",
+        "test_sparse_success_does_not_increment__why": "tests/test_lane_dropout_counters.py:181: AssertionError",
+        "test_sparse_counter_accumulates_across_queries": "PASS",
+        "test_counters_start_at_zero": "PASS"
+      }
+    },
+    "M3_starts_at_one": {
+      "applied": true,
+      "results": {
+        "test_sparse_failure_increments_the_counter": "FAIL",
+        "test_sparse_failure_increments_the_counter__why": "E       AssertionError: the SPLADE failure was swallowed with no counter \u2014 a lane-reduced pool is invisible",
+        "test_sparse_success_does_not_increment": "FAIL",
+        "test_sparse_success_does_not_increment__why": "tests/test_lane_dropout_counters.py:181: AssertionError",
+        "test_sparse_counter_accumulates_across_queries": "FAIL",
+        "test_sparse_counter_accumulates_across_queries__why": "raise RuntimeError(\"sparse endpoint timed out\")",
+        "test_counters_start_at_zero": "FAIL",
+        "test_counters_start_at_zero__why": "tests/test_lane_dropout_counters.py:210: AssertionError"
+      }
+    }
+  }
+}

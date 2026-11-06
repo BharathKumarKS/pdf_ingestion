@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "sampled": 120,
+    "v2_chunk_points": 3489,
+    "v3_chunk_points": 3489,
+    "shared_chunk_ids": 3489,
+    "expected_changes": [
+      "embedding_version"
+    ],
+    "no_writes": true,
+    "no_llm": true
+  },
+  "checked_lanes": {
+    "colbert": 120,
+    "sparse": 120
+  },
+  "colbert_mismatches": [],
+  "sparse_mismatches": [],
+  "payload_mismatches": [],
+  "guards": {
+    "G1_v3_chunk_ids_subset_of_v2": true,
+    "G2_colbert_identical_on_every_sampled_chunk": true,
+    "G3_sparse_identical_on_every_sampled_chunk": true,
+    "G4_payload_unchanged_except_embedding_version": true
+  }
+}

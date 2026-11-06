@@ -1,0 +1,1047 @@
+===== T0 — the full-funnel nomic baseline =====
+started: 2026-10-27T20:38:05Z
+2026-10-27 13:38:06.852 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-27 13:38:07.693 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-10-27 13:38:07.693 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-27 13:38:07.693 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+2026-10-27 13:38:07.815 | INFO     | src.pdf_ingestion.hyde_cache:load:183 - HyDE cache loaded: 127 entries from 18ece9b9404688c8__openai_gpt-oss-20b__ab681b8e43855a46.json
+2026-10-27 13:38:07.815 | INFO     | __main__:run:325 - T0 — knowledge_base_v3 768d low=dense_64(64) dense_lane=dense_full N=1000 L=500 fetch_k=100 top_k=20 DA=True queries=133
+2026-10-27 13:38:09.219 | INFO     | __main__:run:332 - corpus: 3489 in-window content chunks / 888 distinct pages
+2026-10-27 13:38:27.246 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (152 chars)
+2026-10-27 13:38:27.319 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-10-27 13:38:27.441 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+2026-10-27 13:38:29.119 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.427 (kept 20/98)
+2026-10-27 13:38:29.358 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (152 chars)
+2026-10-27 13:38:31.171 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.427 (kept 20/98)
+2026-10-27 13:38:31.805 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (241 chars)
+2026-10-27 13:38:34.560 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.933 (kept 20/86)
+2026-10-27 13:38:34.821 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (241 chars)
+2026-10-27 13:38:37.519 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.933 (kept 20/86)
+2026-10-27 13:38:38.247 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (224 chars)
+2026-10-27 13:38:40.691 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.449 (kept 20/100)
+2026-10-27 13:38:40.954 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (224 chars)
+2026-10-27 13:38:43.514 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.449 (kept 20/100)
+2026-10-27 13:38:45.205 | INFO     | src.core.database:get_memgraph:432 - Memgraph: connected at bolt://localhost:7687
+2026-10-27 13:38:45.408 | INFO     | src.pdf_ingestion.graph_builder:ensure_schema:212 - Memgraph: schema ready
+2026-10-27 13:38:45.468 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Composition of stars and Earth', 'element formation in stars', 'element synthesis in stars', 'emission of light by atoms', 'formation of stars', 'location of atoms', 'stellar physics', 'Radiation from atoms']
+2026-10-27 13:38:46.218 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/87)
+2026-10-27 13:38:47.473 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Composition of stars and Earth', 'element formation in stars', 'element synthesis in stars', 'emission of light by atoms', 'formation of stars', 'location of atoms', 'stellar physics', 'Radiation from atoms']
+2026-10-27 13:38:48.160 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/87)
+2026-10-27 13:38:48.314 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Composition of stars and Earth', 'element formation in stars', 'element synthesis in stars', 'emission of light by atoms', 'formation of stars', 'location of atoms', 'stellar physics', 'Radiation from atoms']
+2026-10-27 13:38:48.992 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (387 chars)
+2026-10-27 13:38:50.762 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.838 (kept 20/92)
+2026-10-27 13:38:51.045 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (387 chars)
+2026-10-27 13:38:52.870 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.838 (kept 20/92)
+2026-10-27 13:38:53.504 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (368 chars)
+2026-10-27 13:38:55.293 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.976 (kept 20/82)
+2026-10-27 13:38:55.533 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (368 chars)
+2026-10-27 13:38:57.479 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.976 (kept 20/82)
+2026-10-27 13:38:58.131 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (355 chars)
+2026-10-27 13:39:00.653 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.579 (kept 20/100)
+2026-10-27 13:39:00.926 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (355 chars)
+2026-10-27 13:39:03.520 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.579 (kept 20/100)
+2026-10-27 13:39:05.079 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Focal Property of Ellipse', 'Ellipse', 'angle of telescope tilt', 'Ellipse Definition', 'focusing on a point on the sun', 'focusing', 'Lens Focus', 'Lens Focusing']
+2026-10-27 13:39:05.884 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.893 (kept 20/78)
+2026-10-27 13:39:06.997 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Focal Property of Ellipse', 'Ellipse', 'angle of telescope tilt', 'Ellipse Definition', 'focusing on a point on the sun', 'focusing', 'Lens Focus', 'Lens Focusing']
+2026-10-27 13:39:07.719 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.893 (kept 20/78)
+2026-10-27 13:39:07.876 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Focal Property of Ellipse', 'Ellipse', 'angle of telescope tilt', 'Ellipse Definition', 'focusing on a point on the sun', 'focusing', 'Lens Focus', 'Lens Focusing']
+2026-10-27 13:39:08.570 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (11 chars)
+2026-10-27 13:39:11.616 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.680 (kept 20/100)
+2026-10-27 13:39:11.869 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (11 chars)
+2026-10-27 13:39:14.858 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.680 (kept 20/100)
+2026-10-27 13:39:15.561 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (423 chars)
+2026-10-27 13:39:17.445 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.946 (kept 20/90)
+2026-10-27 13:39:17.704 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (423 chars)
+2026-10-27 13:39:19.674 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.946 (kept 20/90)
+2026-10-27 13:39:20.342 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (424 chars)
+2026-10-27 13:39:22.055 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.315 (kept 20/94)
+2026-10-27 13:39:22.310 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (424 chars)
+2026-10-27 13:39:24.206 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.315 (kept 20/94)
+2026-10-27 13:39:24.862 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (385 chars)
+2026-10-27 13:39:26.562 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/73)
+2026-10-27 13:39:26.826 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (385 chars)
+2026-10-27 13:39:28.815 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/73)
+2026-10-27 13:39:29.503 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (316 chars)
+2026-10-27 13:39:31.372 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.981 (kept 20/80)
+2026-10-27 13:39:31.617 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (316 chars)
+2026-10-27 13:39:33.729 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.981 (kept 20/80)
+2026-10-27 13:39:34.434 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (475 chars)
+2026-10-27 13:39:36.498 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.939 (kept 20/92)
+2026-10-27 13:39:36.765 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (475 chars)
+2026-10-27 13:39:38.967 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.939 (kept 20/92)
+2026-10-27 13:39:39.710 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (292 chars)
+2026-10-27 13:39:42.022 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.953 (kept 20/100)
+2026-10-27 13:39:42.271 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (292 chars)
+2026-10-27 13:39:44.583 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.953 (kept 20/100)
+2026-10-27 13:39:45.392 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (342 chars)
+2026-10-27 13:39:47.513 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.916 (kept 20/95)
+2026-10-27 13:39:47.770 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (342 chars)
+2026-10-27 13:39:50.008 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.916 (kept 20/95)
+2026-10-27 13:39:50.842 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (362 chars)
+2026-10-27 13:39:52.989 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.930 (kept 20/80)
+2026-10-27 13:39:53.268 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (362 chars)
+2026-10-27 13:39:55.362 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.930 (kept 20/80)
+2026-10-27 13:39:56.115 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (463 chars)
+2026-10-27 13:39:58.288 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.922 (kept 20/86)
+2026-10-27 13:39:58.551 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (463 chars)
+2026-10-27 13:40:00.860 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.922 (kept 20/86)
+2026-10-27 13:40:01.716 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (492 chars)
+2026-10-27 13:40:03.940 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.925 (kept 20/90)
+2026-10-27 13:40:04.212 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (492 chars)
+2026-10-27 13:40:06.600 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.925 (kept 20/90)
+2026-10-27 13:40:09.419 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['difference of velocities', 'visual perception of motion', 'Uncertainty in Particle Position and Velocity', 'Position vs. Time in Accelerated Motion', 'direction of motion', 'Velocity Measurement', 'Light Path in Moving Frame', 'Particle velocity measurement']
+2026-10-27 13:40:10.397 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.971 (kept 20/105)
+2026-10-27 13:40:12.732 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['difference of velocities', 'visual perception of motion', 'Uncertainty in Particle Position and Velocity', 'Position vs. Time in Accelerated Motion', 'direction of motion', 'Velocity Measurement', 'Light Path in Moving Frame', 'Particle velocity measurement']
+2026-10-27 13:40:13.664 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.971 (kept 20/105)
+2026-10-27 13:40:13.811 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['difference of velocities', 'visual perception of motion', 'Uncertainty in Particle Position and Velocity', 'Position vs. Time in Accelerated Motion', 'direction of motion', 'Velocity Measurement', 'Light Path in Moving Frame', 'Particle velocity measurement']
+2026-10-27 13:40:13.896 | INFO     | __main__:run:438 -   20/133
+2026-10-27 13:40:14.600 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (312 chars)
+2026-10-27 13:40:16.457 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.948 (kept 20/85)
+2026-10-27 13:40:16.697 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (312 chars)
+2026-10-27 13:40:18.789 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.948 (kept 20/85)
+2026-10-27 13:40:19.577 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (118 chars)
+2026-10-27 13:40:21.525 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.768 (kept 20/92)
+2026-10-27 13:40:21.776 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (118 chars)
+2026-10-27 13:40:23.819 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.768 (kept 20/92)
+2026-10-27 13:40:24.644 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (340 chars)
+2026-10-27 13:40:26.771 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/87)
+2026-10-27 13:40:27.024 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (340 chars)
+2026-10-27 13:40:29.232 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/87)
+2026-10-27 13:40:30.068 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (319 chars)
+2026-10-27 13:40:32.199 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.985 (kept 20/89)
+2026-10-27 13:40:32.445 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (319 chars)
+2026-10-27 13:40:34.515 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.985 (kept 20/89)
+2026-10-27 13:40:36.480 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Theorem Relating Torque and Angular Momentum', 'Torque Equals Rate of Change of Angular Momentum', 'Dependence of torque on axis of rotation', 'Center of Mass Motion Theorem', 'constant-mass law', 'Gravitational Torque', 'Torque as a vector quantity', 'Gravitational Constant']
+2026-10-27 13:40:37.318 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.991 (kept 20/82)
+2026-10-27 13:40:38.816 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Theorem Relating Torque and Angular Momentum', 'Torque Equals Rate of Change of Angular Momentum', 'Dependence of torque on axis of rotation', 'Center of Mass Motion Theorem', 'constant-mass law', 'Gravitational Torque', 'Torque as a vector quantity', 'Gravitational Constant']
+2026-10-27 13:40:39.677 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.991 (kept 20/82)
+2026-10-27 13:40:39.824 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Theorem Relating Torque and Angular Momentum', 'Torque Equals Rate of Change of Angular Momentum', 'Dependence of torque on axis of rotation', 'Center of Mass Motion Theorem', 'constant-mass law', 'Gravitational Torque', 'Torque as a vector quantity', 'Gravitational Constant']
+2026-10-27 13:40:40.612 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (199 chars)
+2026-10-27 13:40:42.581 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.698 (kept 20/99)
+2026-10-27 13:40:42.866 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (199 chars)
+2026-10-27 13:40:45.000 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.698 (kept 20/99)
+2026-10-27 13:40:45.758 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (613 chars)
+2026-10-27 13:40:47.868 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.988 (kept 20/93)
+2026-10-27 13:40:48.110 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (613 chars)
+2026-10-27 13:40:50.532 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.988 (kept 20/93)
+2026-10-27 13:40:51.281 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (198 chars)
+2026-10-27 13:40:53.190 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.881 (kept 20/60)
+2026-10-27 13:40:53.443 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (198 chars)
+2026-10-27 13:40:55.447 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.881 (kept 20/60)
+2026-10-27 13:40:56.290 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (126 chars)
+2026-10-27 13:40:58.229 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.621 (kept 20/62)
+2026-10-27 13:40:58.484 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (126 chars)
+2026-10-27 13:41:00.469 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.621 (kept 20/62)
+2026-10-27 13:41:01.346 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (476 chars)
+2026-10-27 13:41:03.633 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.932 (kept 20/75)
+2026-10-27 13:41:03.891 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (476 chars)
+2026-10-27 13:41:06.102 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.932 (kept 20/75)
+2026-10-27 13:41:08.214 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['driving force in oscillatory systems', 'Oscillating Force', 'resistance law for the oscillator', 'Law of Friction', 'energy dissipation in oscillators', 'General Solution of Oscillatory Motion', 'Efficiency of an oscillator', 'Complex representation of oscillatory force']
+2026-10-27 13:41:09.092 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.939 (kept 20/94)
+2026-10-27 13:41:10.557 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['driving force in oscillatory systems', 'Oscillating Force', 'resistance law for the oscillator', 'Law of Friction', 'energy dissipation in oscillators', 'General Solution of Oscillatory Motion', 'Efficiency of an oscillator', 'Complex representation of oscillatory force']
+2026-10-27 13:41:11.326 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.939 (kept 20/94)
+2026-10-27 13:41:11.517 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['driving force in oscillatory systems', 'Oscillating Force', 'resistance law for the oscillator', 'Law of Friction', 'energy dissipation in oscillators', 'General Solution of Oscillatory Motion', 'Efficiency of an oscillator', 'Complex representation of oscillatory force']
+2026-10-27 13:41:12.274 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (328 chars)
+2026-10-27 13:41:14.391 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.816 (kept 20/89)
+2026-10-27 13:41:14.672 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (328 chars)
+2026-10-27 13:41:16.750 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.816 (kept 20/89)
+2026-10-27 13:41:17.485 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (333 chars)
+2026-10-27 13:41:19.506 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.863 (kept 20/83)
+2026-10-27 13:41:19.756 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (333 chars)
+2026-10-27 13:41:21.682 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.863 (kept 20/83)
+2026-10-27 13:41:22.444 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (313 chars)
+2026-10-27 13:41:24.367 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.798 (kept 20/88)
+2026-10-27 13:41:24.654 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (313 chars)
+2026-10-27 13:41:26.600 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.798 (kept 20/88)
+2026-10-27 13:41:27.324 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (188 chars)
+2026-10-27 13:41:29.131 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.984 (kept 20/76)
+2026-10-27 13:41:29.389 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (188 chars)
+2026-10-27 13:41:31.281 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.984 (kept 20/76)
+2026-10-27 13:41:32.046 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (432 chars)
+2026-10-27 13:41:34.968 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.877 (kept 20/100)
+2026-10-27 13:41:35.241 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (432 chars)
+2026-10-27 13:41:38.268 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.877 (kept 20/100)
+2026-10-27 13:41:39.038 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (371 chars)
+2026-10-27 13:41:41.732 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.373 (kept 20/100)
+2026-10-27 13:41:41.999 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (371 chars)
+2026-10-27 13:41:44.807 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.373 (kept 20/100)
+2026-10-27 13:41:45.562 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (451 chars)
+2026-10-27 13:41:47.675 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.989 (kept 20/77)
+2026-10-27 13:41:47.952 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (451 chars)
+2026-10-27 13:41:50.024 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.989 (kept 20/77)
+2026-10-27 13:41:50.732 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (311 chars)
+2026-10-27 13:41:52.650 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.547 (kept 20/87)
+2026-10-27 13:41:52.905 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (311 chars)
+2026-10-27 13:41:54.804 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.547 (kept 20/87)
+2026-10-27 13:41:55.604 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (268 chars)
+2026-10-27 13:41:57.600 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.999 (kept 20/81)
+2026-10-27 13:41:57.869 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (268 chars)
+2026-10-27 13:41:59.855 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.999 (kept 20/81)
+2026-10-27 13:41:59.933 | INFO     | __main__:run:438 -   40/133
+2026-10-27 13:42:01.636 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['speed of light', 'speed of light in vacuum', 'Speed of Light in Air', 'Speed of Light in Water', 'speed of light in a medium', 'invariance of the speed of light', 'finite speed of light', 'behavior of light']
+2026-10-27 13:42:02.396 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.887 (kept 20/83)
+2026-10-27 13:42:03.801 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['speed of light', 'speed of light in vacuum', 'Speed of Light in Air', 'Speed of Light in Water', 'speed of light in a medium', 'invariance of the speed of light', 'finite speed of light', 'behavior of light']
+2026-10-27 13:42:04.562 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.887 (kept 20/83)
+2026-10-27 13:42:04.734 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['speed of light', 'speed of light in vacuum', 'Speed of Light in Air', 'Speed of Light in Water', 'speed of light in a medium', 'invariance of the speed of light', 'finite speed of light', 'behavior of light']
+2026-10-27 13:42:05.532 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (262 chars)
+2026-10-27 13:42:07.445 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.751 (kept 20/96)
+2026-10-27 13:42:07.707 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (262 chars)
+2026-10-27 13:42:09.787 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.751 (kept 20/96)
+2026-10-27 13:42:10.555 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (424 chars)
+2026-10-27 13:42:12.661 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.871 (kept 20/96)
+2026-10-27 13:42:12.906 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (424 chars)
+2026-10-27 13:42:15.216 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.871 (kept 20/96)
+2026-10-27 13:42:15.958 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (421 chars)
+2026-10-27 13:42:17.976 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.877 (kept 20/82)
+2026-10-27 13:42:18.221 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (421 chars)
+2026-10-27 13:42:20.346 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.877 (kept 20/82)
+2026-10-27 13:42:21.095 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (236 chars)
+2026-10-27 13:42:23.105 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.967 (kept 20/99)
+2026-10-27 13:42:23.370 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (236 chars)
+2026-10-27 13:42:25.455 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.967 (kept 20/99)
+2026-10-27 13:42:26.199 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (230 chars)
+2026-10-27 13:42:27.789 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.861 (kept 20/61)
+2026-10-27 13:42:28.046 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (230 chars)
+2026-10-27 13:42:29.757 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.861 (kept 20/61)
+2026-10-27 13:42:30.450 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (337 chars)
+2026-10-27 13:42:32.108 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.430 (kept 20/62)
+2026-10-27 13:42:32.374 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (337 chars)
+2026-10-27 13:42:34.133 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.430 (kept 20/62)
+2026-10-27 13:42:34.828 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (314 chars)
+2026-10-27 13:42:36.639 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.989 (kept 20/89)
+2026-10-27 13:42:36.903 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (314 chars)
+2026-10-27 13:42:38.794 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.989 (kept 20/89)
+2026-10-27 13:42:40.320 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Twelfth Root of Two', 'Hole Size', 'Equation (32.12)', 'Sum-to-Product Formula for Cosines', 'Sum Rule for Derivatives', 'invariance of the sum of squares', 'sum and difference frequency generation', 'Symmetry in coin toss outcomes']
+2026-10-27 13:42:40.921 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.992 (kept 20/77)
+2026-10-27 13:42:42.254 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Twelfth Root of Two', 'Hole Size', 'Equation (32.12)', 'Sum-to-Product Formula for Cosines', 'Sum Rule for Derivatives', 'invariance of the sum of squares', 'sum and difference frequency generation', 'Symmetry in coin toss outcomes']
+2026-10-27 13:42:42.863 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.992 (kept 20/77)
+2026-10-27 13:42:43.016 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Twelfth Root of Two', 'Hole Size', 'Equation (32.12)', 'Sum-to-Product Formula for Cosines', 'Sum Rule for Derivatives', 'invariance of the sum of squares', 'sum and difference frequency generation', 'Symmetry in coin toss outcomes']
+2026-10-27 13:42:43.680 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (354 chars)
+2026-10-27 13:42:45.626 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.801 (kept 20/100)
+2026-10-27 13:42:45.874 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (354 chars)
+2026-10-27 13:42:47.979 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.801 (kept 20/100)
+2026-10-27 13:42:49.606 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Electron Behavior in Quantum Mechanics', 'Quantum properties of matter', 'quantum mechanical explanation of atomic stability', 'electron behavior in atoms', 'properties of matter', 'particle nature of electrons', 'Electron Momentum', 'Atomic nature of matter']
+2026-10-27 13:42:50.413 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.996 (kept 20/89)
+2026-10-27 13:42:51.729 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Electron Behavior in Quantum Mechanics', 'Quantum properties of matter', 'quantum mechanical explanation of atomic stability', 'electron behavior in atoms', 'properties of matter', 'particle nature of electrons', 'Electron Momentum', 'Atomic nature of matter']
+2026-10-27 13:42:52.523 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.996 (kept 20/89)
+2026-10-27 13:42:52.667 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Electron Behavior in Quantum Mechanics', 'Quantum properties of matter', 'quantum mechanical explanation of atomic stability', 'electron behavior in atoms', 'properties of matter', 'particle nature of electrons', 'Electron Momentum', 'Atomic nature of matter']
+2026-10-27 13:42:53.356 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (416 chars)
+2026-10-27 13:42:55.462 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.944 (kept 20/92)
+2026-10-27 13:42:55.730 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (416 chars)
+2026-10-27 13:42:58.009 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.944 (kept 20/92)
+2026-10-27 13:42:59.605 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['total kinetic energy', 'Total Energy of a Particle', 'energy distribution in a gas', 'kinetic energy', 'kinetic theory of gases', 'Mean Kinetic Energy of a Molecule', 'kinetic energy formula', 'mean molecular kinetic energy']
+2026-10-27 13:43:00.469 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.925 (kept 20/87)
+2026-10-27 13:43:01.794 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['total kinetic energy', 'Total Energy of a Particle', 'energy distribution in a gas', 'kinetic energy', 'kinetic theory of gases', 'Mean Kinetic Energy of a Molecule', 'kinetic energy formula', 'mean molecular kinetic energy']
+2026-10-27 13:43:02.729 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.925 (kept 20/87)
+2026-10-27 13:43:02.869 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['total kinetic energy', 'Total Energy of a Particle', 'energy distribution in a gas', 'kinetic energy', 'kinetic theory of gases', 'Mean Kinetic Energy of a Molecule', 'kinetic energy formula', 'mean molecular kinetic energy']
+2026-10-27 13:43:03.590 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (391 chars)
+2026-10-27 13:43:05.690 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.920 (kept 20/94)
+2026-10-27 13:43:05.960 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (391 chars)
+2026-10-27 13:43:08.153 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.920 (kept 20/94)
+2026-10-27 13:43:08.930 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (334 chars)
+2026-10-27 13:43:10.921 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.992 (kept 20/84)
+2026-10-27 13:43:11.195 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (334 chars)
+2026-10-27 13:43:13.161 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.992 (kept 20/84)
+2026-10-27 13:43:15.006 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['number of atoms', 'surface of a liquid', 'Moment (physics)', 'mass distribution in atoms', 'number of atoms per unit area', 'location of atoms', 'energy levels of an atom', 'laws of motion at atomic scale']
+2026-10-27 13:43:16.031 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.867 (kept 20/84)
+2026-10-27 13:43:17.508 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['number of atoms', 'surface of a liquid', 'Moment (physics)', 'mass distribution in atoms', 'number of atoms per unit area', 'location of atoms', 'energy levels of an atom', 'laws of motion at atomic scale']
+2026-10-27 13:43:18.327 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.867 (kept 20/84)
+2026-10-27 13:43:18.464 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['number of atoms', 'surface of a liquid', 'Moment (physics)', 'mass distribution in atoms', 'number of atoms per unit area', 'location of atoms', 'energy levels of an atom', 'laws of motion at atomic scale']
+2026-10-27 13:43:19.241 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (200 chars)
+2026-10-27 13:43:21.150 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.639 (kept 20/87)
+2026-10-27 13:43:21.406 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (200 chars)
+2026-10-27 13:43:23.409 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.639 (kept 20/87)
+2026-10-27 13:43:25.145 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Special Molecules', 'flow of special molecules', 'molecule', 'asymmetric molecule', 'enzyme specificity', 'single-atom molecules', 'Chiral Molecules', 'Number of Molecules']
+2026-10-27 13:43:25.957 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.974 (kept 20/83)
+2026-10-27 13:43:27.325 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Special Molecules', 'flow of special molecules', 'molecule', 'asymmetric molecule', 'enzyme specificity', 'single-atom molecules', 'Chiral Molecules', 'Number of Molecules']
+2026-10-27 13:43:28.212 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.974 (kept 20/83)
+2026-10-27 13:43:28.349 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Special Molecules', 'flow of special molecules', 'molecule', 'asymmetric molecule', 'enzyme specificity', 'single-atom molecules', 'Chiral Molecules', 'Number of Molecules']
+2026-10-27 13:43:30.021 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Thermodynamic heating due to mechanical work', 'Heat delivered at standard temperature', 'Rate of Heat Transfer', 'Work Done by a Heat Engine', 'Thermodynamic heating', 'Net work in a thermodynamic cycle', 'Efficiency of Heat Engines', 'Heat Transfer']
+2026-10-27 13:43:30.617 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 1.000 (kept 20/60)
+2026-10-27 13:43:31.923 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Thermodynamic heating due to mechanical work', 'Heat delivered at standard temperature', 'Rate of Heat Transfer', 'Work Done by a Heat Engine', 'Thermodynamic heating', 'Net work in a thermodynamic cycle', 'Efficiency of Heat Engines', 'Heat Transfer']
+2026-10-27 13:43:32.524 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 1.000 (kept 20/60)
+2026-10-27 13:43:32.681 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Thermodynamic heating due to mechanical work', 'Heat delivered at standard temperature', 'Rate of Heat Transfer', 'Work Done by a Heat Engine', 'Thermodynamic heating', 'Net work in a thermodynamic cycle', 'Efficiency of Heat Engines', 'Heat Transfer']
+2026-10-27 13:43:33.422 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (194 chars)
+2026-10-27 13:43:35.073 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.976 (kept 20/62)
+2026-10-27 13:43:35.307 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (194 chars)
+2026-10-27 13:43:37.329 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.976 (kept 20/62)
+2026-10-27 13:43:37.403 | INFO     | __main__:run:438 -   60/133
+2026-10-27 13:43:38.071 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (376 chars)
+2026-10-27 13:43:39.780 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.921 (kept 20/55)
+2026-10-27 13:43:40.026 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (376 chars)
+2026-10-27 13:43:41.735 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.921 (kept 20/55)
+2026-10-27 13:43:44.208 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Second Law of Thermodynamics', "Newton's Second Law", "Kepler's Second Law", "Newton's Second Law of Motion", 'First Law of Thermodynamics', 'laws of thermodynamics', 'Zeroth Law of Thermodynamics', 'Third Law of Thermodynamics']
+2026-10-27 13:43:45.113 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.918 (kept 20/101)
+2026-10-27 13:43:47.364 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Second Law of Thermodynamics', "Newton's Second Law", "Kepler's Second Law", "Newton's Second Law of Motion", 'First Law of Thermodynamics', 'laws of thermodynamics', 'Zeroth Law of Thermodynamics', 'Third Law of Thermodynamics']
+2026-10-27 13:43:48.386 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.918 (kept 20/101)
+2026-10-27 13:43:48.520 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Second Law of Thermodynamics', "Newton's Second Law", "Kepler's Second Law", "Newton's Second Law of Motion", 'First Law of Thermodynamics', 'laws of thermodynamics', 'Zeroth Law of Thermodynamics', 'Third Law of Thermodynamics']
+2026-10-27 13:43:49.422 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (234 chars)
+2026-10-27 13:43:51.540 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.981 (kept 20/83)
+2026-10-27 13:43:51.784 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (234 chars)
+2026-10-27 13:43:53.961 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.981 (kept 20/83)
+2026-10-27 13:43:57.114 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['air movement', 'laws of motion', 'air particle velocity', 'motion of objects', 'Molecular motion in atmosphere', 'Motion of Particles', 'Motion of molecules of a gas', 'Speed of Light in Air']
+2026-10-27 13:43:58.112 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.906 (kept 20/105)
+2026-10-27 13:44:00.696 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['air movement', 'laws of motion', 'air particle velocity', 'motion of objects', 'Molecular motion in atmosphere', 'Motion of Particles', 'Motion of molecules of a gas', 'Speed of Light in Air']
+2026-10-27 13:44:01.589 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.906 (kept 20/105)
+2026-10-27 13:44:01.737 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['air movement', 'laws of motion', 'air particle velocity', 'motion of objects', 'Molecular motion in atmosphere', 'Motion of Particles', 'Motion of molecules of a gas', 'Speed of Light in Air']
+2026-10-27 13:44:02.534 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (377 chars)
+2026-10-27 13:44:04.657 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.969 (kept 20/75)
+2026-10-27 13:44:04.977 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (377 chars)
+2026-10-27 13:44:07.225 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.969 (kept 20/75)
+2026-10-27 13:44:09.286 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Propagation of Light Waves', 'wave equation for sound', 'Propagation of Sound Waves', 'wave behavior of light', 'sound wave', 'Phase of Light Waves', 'sound wave propagation', 'wave theory of light']
+2026-10-27 13:44:10.202 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/92)
+2026-10-27 13:44:11.822 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Propagation of Light Waves', 'wave equation for sound', 'Propagation of Sound Waves', 'wave behavior of light', 'sound wave', 'Phase of Light Waves', 'sound wave propagation', 'wave theory of light']
+2026-10-27 13:44:12.761 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/92)
+2026-10-27 13:44:12.889 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Propagation of Light Waves', 'wave equation for sound', 'Propagation of Sound Waves', 'wave behavior of light', 'sound wave', 'Phase of Light Waves', 'sound wave propagation', 'wave theory of light']
+2026-10-27 13:44:13.675 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (503 chars)
+2026-10-27 13:44:15.831 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.988 (kept 20/66)
+2026-10-27 13:44:16.147 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (503 chars)
+2026-10-27 13:44:18.263 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.988 (kept 20/66)
+2026-10-27 13:44:20.969 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['vowel recognition in speech', 'mouth shape', 'vowel sound quality', 'Vocal tract resonance', 'nonlinearities in human hearing', 'temperature change in sound waves', 'displacement of air due to sound wave', 'sound']
+2026-10-27 13:44:21.974 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.980 (kept 20/99)
+2026-10-27 13:44:24.609 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['vowel recognition in speech', 'mouth shape', 'vowel sound quality', 'Vocal tract resonance', 'nonlinearities in human hearing', 'temperature change in sound waves', 'displacement of air due to sound wave', 'sound']
+2026-10-27 13:44:25.560 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.980 (kept 20/99)
+2026-10-27 13:44:25.700 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['vowel recognition in speech', 'mouth shape', 'vowel sound quality', 'Vocal tract resonance', 'nonlinearities in human hearing', 'temperature change in sound waves', 'displacement of air due to sound wave', 'sound']
+2026-10-27 13:44:26.982 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (380 chars)
+2026-10-27 13:44:29.446 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.972 (kept 20/65)
+2026-10-27 13:44:29.705 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (380 chars)
+2026-10-27 13:44:31.903 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.972 (kept 20/65)
+2026-10-27 13:44:34.670 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Pressure in a Fluid at Depth', 'shock wave', 'deep-water waves', 'water wave propagation', 'depth-dependent wave speed', 'wave equation after passing through a material', 'temperature behind shock', 'water phase transition']
+2026-10-27 13:44:35.498 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.534 (kept 20/77)
+2026-10-27 13:44:37.715 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Pressure in a Fluid at Depth', 'shock wave', 'deep-water waves', 'water wave propagation', 'depth-dependent wave speed', 'wave equation after passing through a material', 'temperature behind shock', 'water phase transition']
+2026-10-27 13:44:38.558 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.534 (kept 20/77)
+2026-10-27 13:44:38.693 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Pressure in a Fluid at Depth', 'shock wave', 'deep-water waves', 'water wave propagation', 'depth-dependent wave speed', 'wave equation after passing through a material', 'temperature behind shock', 'water phase transition']
+2026-10-27 13:44:41.763 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['standard unit of time', 'Velocity as a Function of Time', 'time of fall', 'standard of time', 'unit of time', 'speed of the moving object', 'time rate of change of velocity', 'falling body motion']
+2026-10-27 13:44:42.416 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.812 (kept 20/75)
+2026-10-27 13:44:44.422 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['standard unit of time', 'Velocity as a Function of Time', 'time of fall', 'standard of time', 'unit of time', 'speed of the moving object', 'time rate of change of velocity', 'falling body motion']
+2026-10-27 13:44:45.134 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.812 (kept 20/75)
+2026-10-27 13:44:45.298 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['standard unit of time', 'Velocity as a Function of Time', 'time of fall', 'standard of time', 'unit of time', 'speed of the moving object', 'time rate of change of velocity', 'falling body motion']
+2026-10-27 13:44:48.329 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Quantum Mechanical Probability Density', 'classical theory of energy and velocity', 'classical particle velocity', 'Probability in Quantum Mechanics', 'Quantum Theory of Gravitation', 'momentum in quantum mechanics', 'classical statistical mechanics', 'Quantum Mechanical Laws']
+2026-10-27 13:44:49.215 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.520 (kept 20/97)
+2026-10-27 13:44:51.844 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Quantum Mechanical Probability Density', 'classical theory of energy and velocity', 'classical particle velocity', 'Probability in Quantum Mechanics', 'Quantum Theory of Gravitation', 'momentum in quantum mechanics', 'classical statistical mechanics', 'Quantum Mechanical Laws']
+2026-10-27 13:44:52.681 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.520 (kept 20/97)
+2026-10-27 13:44:52.803 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Quantum Mechanical Probability Density', 'classical theory of energy and velocity', 'classical particle velocity', 'Probability in Quantum Mechanics', 'Quantum Theory of Gravitation', 'momentum in quantum mechanics', 'classical statistical mechanics', 'Quantum Mechanical Laws']
+2026-10-27 13:44:56.341 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Coriolis force', 'centripetal acceleration', 'magnitude of Coriolis force', 'acceleration in relativistic motion', 'Centrifugal Force', 'Coriolis effect', 'acceleration of gravity', 'acceleration due to gravity']
+2026-10-27 13:44:57.138 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.428 (kept 20/80)
+2026-10-27 13:44:59.135 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Coriolis force', 'centripetal acceleration', 'magnitude of Coriolis force', 'acceleration in relativistic motion', 'Centrifugal Force', 'Coriolis effect', 'acceleration of gravity', 'acceleration due to gravity']
+2026-10-27 13:44:59.960 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.428 (kept 20/80)
+2026-10-27 13:45:00.094 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Coriolis force', 'centripetal acceleration', 'magnitude of Coriolis force', 'acceleration in relativistic motion', 'Centrifugal Force', 'Coriolis effect', 'acceleration of gravity', 'acceleration due to gravity']
+2026-10-27 13:45:02.520 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Ideal Gas Law', 'Pressure of an Ideal Gas', 'Ideal Gas Law for Photons', 'Adiabatic Equation for Ideal Gas', 'Centrifugal Force', 'Ideal Gas', 'atmosphere', 'Molecular motion in atmosphere']
+2026-10-27 13:45:03.451 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.134 (kept 20/102)
+2026-10-27 13:45:05.469 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Ideal Gas Law', 'Pressure of an Ideal Gas', 'Ideal Gas Law for Photons', 'Adiabatic Equation for Ideal Gas', 'Centrifugal Force', 'Ideal Gas', 'atmosphere', 'Molecular motion in atmosphere']
+2026-10-27 13:45:06.411 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.134 (kept 20/102)
+2026-10-27 13:45:06.545 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Ideal Gas Law', 'Pressure of an Ideal Gas', 'Ideal Gas Law for Photons', 'Adiabatic Equation for Ideal Gas', 'Centrifugal Force', 'Ideal Gas', 'atmosphere', 'Molecular motion in atmosphere']
+2026-10-27 13:45:09.972 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['compressibility of radiation', 'Foucault Pendulum', 'Rotating frame of reference', 'particle motion in rotating frame', 'Rotating Reference Frame', 'photon energy in moving frame', 'compressibility', 'inertial frame of reference']
+2026-10-27 13:45:10.846 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.087 (kept 20/101)
+2026-10-27 13:45:13.266 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['compressibility of radiation', 'Foucault Pendulum', 'Rotating frame of reference', 'particle motion in rotating frame', 'Rotating Reference Frame', 'photon energy in moving frame', 'compressibility', 'inertial frame of reference']
+2026-10-27 13:45:14.126 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.087 (kept 20/101)
+2026-10-27 13:45:14.273 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['compressibility of radiation', 'Foucault Pendulum', 'Rotating frame of reference', 'particle motion in rotating frame', 'Rotating Reference Frame', 'photon energy in moving frame', 'compressibility', 'inertial frame of reference']
+2026-10-27 13:45:16.583 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['quantum interference', 'Interference Experiment', 'slit experiment', 'Interference of Probability Amplitudes', 'interference phenomena', 'Wave Interference Experiment', 'Resonance Condition for Interference', 'interference condition for coherent sources']
+2026-10-27 13:45:17.455 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.353 (kept 20/83)
+2026-10-27 13:45:19.033 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['quantum interference', 'Interference Experiment', 'slit experiment', 'Interference of Probability Amplitudes', 'interference phenomena', 'Wave Interference Experiment', 'Resonance Condition for Interference', 'interference condition for coherent sources']
+2026-10-27 13:45:20.031 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.353 (kept 20/83)
+2026-10-27 13:45:20.168 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['quantum interference', 'Interference Experiment', 'slit experiment', 'Interference of Probability Amplitudes', 'interference phenomena', 'Wave Interference Experiment', 'Resonance Condition for Interference', 'interference condition for coherent sources']
+2026-10-27 13:45:22.388 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Derivative of Velocity with Respect to Time', "Newton's Analysis of the Moon's Motion", "Earth's Gravity", 'differential equation of motion', 'time derivative of kinetic energy', 'Derivative of Position with Respect to Time', 'gravitational potential energy formula', 'orbital radius']
+2026-10-27 13:45:23.312 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.606 (kept 20/101)
+2026-10-27 13:45:24.888 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Derivative of Velocity with Respect to Time', "Newton's Analysis of the Moon's Motion", "Earth's Gravity", 'differential equation of motion', 'time derivative of kinetic energy', 'Derivative of Position with Respect to Time', 'gravitational potential energy formula', 'orbital radius']
+2026-10-27 13:45:25.871 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.606 (kept 20/101)
+2026-10-27 13:45:26.006 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Derivative of Velocity with Respect to Time', "Newton's Analysis of the Moon's Motion", "Earth's Gravity", 'differential equation of motion', 'time derivative of kinetic energy', 'Derivative of Position with Respect to Time', 'gravitational potential energy formula', 'orbital radius']
+2026-10-27 13:45:28.029 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['differentiation of vectors with respect to time', 'Differentiation with respect to time', 'Polarization of Light', 'Differentiation of wave functions', 'polarized light', 'light scattering by electric charges', 'power rule for differentiation', 'Directional dependence of scattered light']
+2026-10-27 13:45:28.866 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.214 (kept 20/97)
+2026-10-27 13:45:30.337 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['differentiation of vectors with respect to time', 'Differentiation with respect to time', 'Polarization of Light', 'Differentiation of wave functions', 'polarized light', 'light scattering by electric charges', 'power rule for differentiation', 'Directional dependence of scattered light']
+2026-10-27 13:45:31.303 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.214 (kept 20/97)
+2026-10-27 13:45:31.452 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['differentiation of vectors with respect to time', 'Differentiation with respect to time', 'Polarization of Light', 'Differentiation of wave functions', 'polarized light', 'light scattering by electric charges', 'power rule for differentiation', 'Directional dependence of scattered light']
+2026-10-27 13:45:34.291 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Electric Potential Difference', 'proportionality between energy and electric field squared', 'Energy in an electromagnetic field', 'potential energy difference', 'Force in Terms of Potential Energy', 'electric field of light', 'photon energy', 'Electromagnetic Field Energy']
+2026-10-27 13:45:35.291 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.463 (kept 20/105)
+2026-10-27 13:45:37.639 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Electric Potential Difference', 'proportionality between energy and electric field squared', 'Energy in an electromagnetic field', 'potential energy difference', 'Force in Terms of Potential Energy', 'electric field of light', 'photon energy', 'Electromagnetic Field Energy']
+2026-10-27 13:45:38.591 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.463 (kept 20/105)
+2026-10-27 13:45:38.733 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Electric Potential Difference', 'proportionality between energy and electric field squared', 'Energy in an electromagnetic field', 'potential energy difference', 'Force in Terms of Potential Energy', 'electric field of light', 'photon energy', 'Electromagnetic Field Energy']
+2026-10-27 13:45:40.614 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Stefan-Boltzmann Law', 'Energy Loss per Radian', 'Stefan-Boltzmann Constant', "Boltzmann's law", 'energy loss', 'Energy-momentum relation', 'Radiative Flux', 'Equilibrium between Oscillator and Radiation']
+2026-10-27 13:45:41.542 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.660 (kept 20/89)
+2026-10-27 13:45:43.018 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Stefan-Boltzmann Law', 'Energy Loss per Radian', 'Stefan-Boltzmann Constant', "Boltzmann's law", 'energy loss', 'Energy-momentum relation', 'Radiative Flux', 'Equilibrium between Oscillator and Radiation']
+2026-10-27 13:45:43.890 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.660 (kept 20/89)
+2026-10-27 13:45:44.046 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Stefan-Boltzmann Law', 'Energy Loss per Radian', 'Stefan-Boltzmann Constant', "Boltzmann's law", 'energy loss', 'Energy-momentum relation', 'Radiative Flux', 'Equilibrium between Oscillator and Radiation']
+2026-10-27 13:45:44.124 | INFO     | __main__:run:438 -   80/133
+2026-10-27 13:45:46.090 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Conservation of Mechanical Energy', 'Principle of Conservation of Energy', 'conservation of kinetic energy', 'conservation of energy', 'Total Mechanical Energy Conservation', 'conservation of energy and momentum', 'Conservation of Energy Theorem', 'Law of Conservation of Energy']
+2026-10-27 13:45:46.822 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.357 (kept 20/83)
+2026-10-27 13:45:48.321 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Conservation of Mechanical Energy', 'Principle of Conservation of Energy', 'conservation of kinetic energy', 'conservation of energy', 'Total Mechanical Energy Conservation', 'conservation of energy and momentum', 'Conservation of Energy Theorem', 'Law of Conservation of Energy']
+2026-10-27 13:45:49.011 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.357 (kept 20/83)
+2026-10-27 13:45:49.138 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Conservation of Mechanical Energy', 'Principle of Conservation of Energy', 'conservation of kinetic energy', 'conservation of energy', 'Total Mechanical Energy Conservation', 'conservation of energy and momentum', 'Conservation of Energy Theorem', 'Law of Conservation of Energy']
+2026-10-27 13:45:50.985 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Ritz combination principle', 'wave phase velocity', 'Wave Formula for Phase Velocity', 'phase velocity', 'relationship between group velocity and phase velocity', 'surface tension', 'phase velocity of signals', 'wave velocity']
+2026-10-27 13:45:51.743 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.840 (kept 20/79)
+2026-10-27 13:45:53.109 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Ritz combination principle', 'wave phase velocity', 'Wave Formula for Phase Velocity', 'phase velocity', 'relationship between group velocity and phase velocity', 'surface tension', 'phase velocity of signals', 'wave velocity']
+2026-10-27 13:45:53.928 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.840 (kept 20/79)
+2026-10-27 13:45:54.059 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Ritz combination principle', 'wave phase velocity', 'Wave Formula for Phase Velocity', 'phase velocity', 'relationship between group velocity and phase velocity', 'surface tension', 'phase velocity of signals', 'wave velocity']
+2026-10-27 13:45:55.906 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Cobalt Atoms', 'direction of electric field due to accelerating charge', 'Acceleration of Electrons', 'Circular Motion of Charged Particles in Magnetic Fields', 'Magnetic Force on a Moving Charge', 'Force on Charged Particles', 'magnetic field effects', 'force on a charge in an electric field']
+2026-10-27 13:45:56.701 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.653 (kept 20/81)
+2026-10-27 13:45:58.183 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Cobalt Atoms', 'direction of electric field due to accelerating charge', 'Acceleration of Electrons', 'Circular Motion of Charged Particles in Magnetic Fields', 'Magnetic Force on a Moving Charge', 'Force on Charged Particles', 'magnetic field effects', 'force on a charge in an electric field']
+2026-10-27 13:45:58.955 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.653 (kept 20/81)
+2026-10-27 13:45:59.097 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Cobalt Atoms', 'direction of electric field due to accelerating charge', 'Acceleration of Electrons', 'Circular Motion of Charged Particles in Magnetic Fields', 'Magnetic Force on a Moving Charge', 'Force on Charged Particles', 'magnetic field effects', 'force on a charge in an electric field']
+2026-10-27 13:46:01.434 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['age of meteorites', 'Ratio of Age of Universe to Time for Light to Cross a Proton', 'Age of the Universe', 'change of laws of physics with time', 'age of the Earth', 'Quantum Theory of the World', 'quantum mechanics', 'quantum-mechanical phase']
+2026-10-27 13:46:02.214 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.175 (kept 20/86)
+2026-10-27 13:46:03.883 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['age of meteorites', 'Ratio of Age of Universe to Time for Light to Cross a Proton', 'Age of the Universe', 'change of laws of physics with time', 'age of the Earth', 'Quantum Theory of the World', 'quantum mechanics', 'quantum-mechanical phase']
+2026-10-27 13:46:35.324 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.175 (kept 20/86)
+2026-10-27 13:46:35.353 | WARNING  | src.pdf_ingestion.store:search_da:749 - DA search failed ([Errno 54] Connection reset by peer), skipping DA lane
+2026-10-27 13:46:35.480 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['age of meteorites', 'Ratio of Age of Universe to Time for Light to Cross a Proton', 'Age of the Universe', 'change of laws of physics with time', 'age of the Earth', 'Quantum Theory of the World', 'quantum mechanics', 'quantum-mechanical phase']
+2026-10-27 13:46:37.957 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Heisenberg Uncertainty Principle', "Heisenberg's Uncertainty Principle", 'Uncertainty Principle', 'Time Measurement Uncertainty', 'Time Uncertainty', 'Uncertainty in Momentum', 'Beta decay', 'precision of time measurements']
+2026-10-27 13:46:38.844 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.302 (kept 20/76)
+2026-10-27 13:46:41.018 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Heisenberg Uncertainty Principle', "Heisenberg's Uncertainty Principle", 'Uncertainty Principle', 'Time Measurement Uncertainty', 'Time Uncertainty', 'Uncertainty in Momentum', 'Beta decay', 'precision of time measurements']
+2026-10-27 13:46:41.974 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.302 (kept 20/76)
+2026-10-27 13:46:42.115 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Heisenberg Uncertainty Principle', "Heisenberg's Uncertainty Principle", 'Uncertainty Principle', 'Time Measurement Uncertainty', 'Time Uncertainty', 'Uncertainty in Momentum', 'Beta decay', 'precision of time measurements']
+2026-10-27 13:46:45.449 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['gravitational potential energy', 'gravitational potential', 'gravitational phenomena', 'gravitational potential energy formula', 'formation of the Earth from extraterrestrial material', "Earth's geological formation", 'gravitational origin', 'Celestial Mechanics']
+2026-10-27 13:46:46.173 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.181 (kept 20/76)
+2026-10-27 13:46:48.281 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['gravitational potential energy', 'gravitational potential', 'gravitational phenomena', 'gravitational potential energy formula', 'formation of the Earth from extraterrestrial material', "Earth's geological formation", 'gravitational origin', 'Celestial Mechanics']
+2026-10-27 13:46:48.980 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.181 (kept 20/76)
+2026-10-27 13:46:49.125 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['gravitational potential energy', 'gravitational potential', 'gravitational phenomena', 'gravitational potential energy formula', 'formation of the Earth from extraterrestrial material', "Earth's geological formation", 'gravitational origin', 'Celestial Mechanics']
+2026-10-27 13:46:51.710 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Energy-Time Uncertainty Relation', 'Mean Kinetic Energy of a Molecule', 'Time Uncertainty', 'mean molecular kinetic energy', 'energy distribution in a gas', "Heisenberg's Uncertainty Principle", 'kinetic theory of gases', 'Time Measurement Uncertainty']
+2026-10-27 13:46:52.659 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.736 (kept 20/86)
+2026-10-27 13:46:54.568 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Energy-Time Uncertainty Relation', 'Mean Kinetic Energy of a Molecule', 'Time Uncertainty', 'mean molecular kinetic energy', 'energy distribution in a gas', "Heisenberg's Uncertainty Principle", 'kinetic theory of gases', 'Time Measurement Uncertainty']
+2026-10-27 13:46:55.707 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.736 (kept 20/86)
+2026-10-27 13:46:56.065 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['Energy-Time Uncertainty Relation', 'Mean Kinetic Energy of a Molecule', 'Time Uncertainty', 'mean molecular kinetic energy', 'energy distribution in a gas', "Heisenberg's Uncertainty Principle", 'kinetic theory of gases', 'Time Measurement Uncertainty']
+2026-10-27 13:47:01.661 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['adiabatic expansion', 'temperature change during expansion', 'Reversible Adiabatic Expansion', 'area density of atoms', 'thermal expansion', 'energy distribution in a gas', 'Temperature Change During Adiabatic Compression', 'number of atoms per unit area']
+2026-10-27 13:47:02.596 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.888 (kept 20/81)
+2026-10-27 13:47:06.585 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['adiabatic expansion', 'temperature change during expansion', 'Reversible Adiabatic Expansion', 'area density of atoms', 'thermal expansion', 'energy distribution in a gas', 'Temperature Change During Adiabatic Compression', 'number of atoms per unit area']
+2026-10-27 13:47:07.475 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.888 (kept 20/81)
+2026-10-27 13:47:07.629 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['adiabatic expansion', 'temperature change during expansion', 'Reversible Adiabatic Expansion', 'area density of atoms', 'thermal expansion', 'energy distribution in a gas', 'Temperature Change During Adiabatic Compression', 'number of atoms per unit area']
+2026-10-27 13:47:09.867 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['evaporation', 'equilibrium condition for evaporation', 'Vector Analysis', 'Vector Equation', 'water molecules', 'net flow of molecules', 'heat required to evaporate the liquid', 'Equilibrium in evaporation and condensation']
+2026-10-27 13:47:10.543 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.026 (kept 20/81)
+2026-10-27 13:47:12.190 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['evaporation', 'equilibrium condition for evaporation', 'Vector Analysis', 'Vector Equation', 'water molecules', 'net flow of molecules', 'heat required to evaporate the liquid', 'Equilibrium in evaporation and condensation']
+2026-10-27 13:47:12.903 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.026 (kept 20/81)
+2026-10-27 13:47:13.073 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['evaporation', 'equilibrium condition for evaporation', 'Vector Analysis', 'Vector Equation', 'water molecules', 'net flow of molecules', 'heat required to evaporate the liquid', 'Equilibrium in evaporation and condensation']
+2026-10-27 13:47:15.236 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['time delay due to finite speed of light', 'molecular speed', 'radiation of energy by fast-moving charged particles', 'phase delay due to wave slowing in a medium', 'molecular speed distribution', 'time delay due to slower wave propagation', 'velocity of charges', 'Time Delay in Refraction']
+2026-10-27 13:47:16.247 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.616 (kept 20/100)
+2026-10-27 13:47:17.821 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['time delay due to finite speed of light', 'molecular speed', 'radiation of energy by fast-moving charged particles', 'phase delay due to wave slowing in a medium', 'molecular speed distribution', 'time delay due to slower wave propagation', 'velocity of charges', 'Time Delay in Refraction']
+2026-10-27 13:47:18.823 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.616 (kept 20/100)
+2026-10-27 13:47:18.953 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['time delay due to finite speed of light', 'molecular speed', 'radiation of energy by fast-moving charged particles', 'phase delay due to wave slowing in a medium', 'molecular speed distribution', 'time delay due to slower wave propagation', 'velocity of charges', 'Time Delay in Refraction']
+2026-10-27 13:47:20.930 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=["Newton's coordinate system", "Newton's Equations", 'forced solution', "Newton's calculation of pressure-density rate of change", "Newton's Laws of Motion", 'Equation of motion under external force', 'invariance of physical laws across coordinate systems', 'change of laws of physics with time']
+2026-10-27 14:03:01.270 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.373 (kept 20/100)
+2026-10-27 14:03:02.808 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=["Newton's coordinate system", "Newton's Equations", 'forced solution', "Newton's calculation of pressure-density rate of change", "Newton's Laws of Motion", 'Equation of motion under external force', 'invariance of physical laws across coordinate systems', 'change of laws of physics with time']
+2026-10-27 14:03:03.687 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.373 (kept 20/100)
+2026-10-27 14:03:03.818 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=["Newton's coordinate system", "Newton's Equations", 'forced solution', "Newton's calculation of pressure-density rate of change", "Newton's Laws of Motion", 'Equation of motion under external force', 'invariance of physical laws across coordinate systems', 'change of laws of physics with time']
+2026-10-27 14:03:06.415 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['invariance of the speed of light', 'relativity principle', 'invariant speed of light', 'Principle of Relativity', 'Consistency of Physical Laws', 'Equivalence of physical laws in different spatial locations', 'speed of light', 'consistency with experimental results']
+2026-10-27 14:03:07.483 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.275 (kept 20/102)
+2026-10-27 14:03:09.685 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['invariance of the speed of light', 'relativity principle', 'invariant speed of light', 'Principle of Relativity', 'Consistency of Physical Laws', 'Equivalence of physical laws in different spatial locations', 'speed of light', 'consistency with experimental results']
+2026-10-27 14:03:10.767 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.275 (kept 20/102)
+2026-10-27 14:03:10.918 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['invariance of the speed of light', 'relativity principle', 'invariant speed of light', 'Principle of Relativity', 'Consistency of Physical Laws', 'Equivalence of physical laws in different spatial locations', 'speed of light', 'consistency with experimental results']
+2026-10-27 14:03:12.876 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['quantum electrodynamics', 'Laws of Electrodynamics', 'Fundamental Laws of Electrodynamics', 'Quantum Mechanical Laws', 'practical indeterminacy in classical physics', 'quantum mechanics', 'Fundamental Laws of Quantum Mechanics', 'quantum indeterminacy']
+2026-10-27 14:03:13.844 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.436 (kept 20/95)
+2026-10-27 14:03:15.438 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['quantum electrodynamics', 'Laws of Electrodynamics', 'Fundamental Laws of Electrodynamics', 'Quantum Mechanical Laws', 'practical indeterminacy in classical physics', 'quantum mechanics', 'Fundamental Laws of Quantum Mechanics', 'quantum indeterminacy']
+2026-10-27 14:03:16.518 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.436 (kept 20/95)
+2026-10-27 14:03:16.948 | DEBUG    | src.pdf_ingestion.graph_builder:_find_concepts_scored:684 - Concept Qdrant search: top=['quantum electrodynamics', 'Laws of Electrodynamics', 'Fundamental Laws of Electrodynamics', 'Quantum Mechanical Laws', 'practical indeterminacy in classical physics', 'quantum mechanics', 'Fundamental Laws of Quantum Mechanics', 'quantum indeterminacy']
+2026-10-27 14:03:18.987 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (691 chars)
+2026-10-27 14:03:22.885 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.982 (kept 20/97)
+2026-10-27 14:03:23.324 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (691 chars)
+2026-10-27 14:03:27.801 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.982 (kept 20/97)
+2026-10-27 14:03:28.591 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1042 chars)
+2026-10-27 14:03:31.038 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/89)
+2026-10-27 14:03:31.287 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1042 chars)
+2026-10-27 14:03:33.899 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/89)
+2026-10-27 14:03:34.793 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (765 chars)
+2026-10-27 14:03:37.379 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.962 (kept 20/82)
+2026-10-27 14:03:37.624 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (765 chars)
+2026-10-27 14:03:40.076 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.962 (kept 20/82)
+2026-10-27 14:03:41.029 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (880 chars)
+2026-10-27 14:19:09.676 | WARNING  | __main__:_retry:245 - retry 1/3 after ResponseHandlingException: timed out
+2026-10-27 14:19:15.084 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (880 chars)
+2026-10-27 14:19:17.889 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/98)
+2026-10-27 14:19:18.226 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (880 chars)
+2026-10-27 14:19:20.691 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/98)
+2026-10-27 14:19:21.442 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1024 chars)
+2026-10-27 14:19:23.615 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.609 (kept 20/84)
+2026-10-27 14:19:23.863 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1024 chars)
+2026-10-27 14:19:26.039 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.609 (kept 20/84)
+2026-10-27 14:19:28.027 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (966 chars)
+2026-10-27 14:19:32.457 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.617 (kept 20/82)
+2026-10-27 14:19:32.897 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (966 chars)
+2026-10-27 14:19:39.769 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.617 (kept 20/82)
+2026-10-27 14:19:40.892 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (967 chars)
+2026-10-27 14:19:43.671 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.543 (kept 20/92)
+2026-10-27 14:19:43.923 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (967 chars)
+2026-10-27 14:19:46.586 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.543 (kept 20/92)
+2026-10-27 14:19:46.661 | INFO     | __main__:run:438 -   100/133
+2026-10-27 14:19:47.499 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (795 chars)
+2026-10-27 14:19:50.113 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.731 (kept 20/88)
+2026-10-27 14:19:50.396 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (795 chars)
+2026-10-27 14:19:53.094 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.731 (kept 20/88)
+2026-10-27 14:19:54.005 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (972 chars)
+2026-10-27 14:19:56.594 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.587 (kept 20/92)
+2026-10-27 14:19:56.868 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (972 chars)
+2026-10-27 14:19:59.433 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.587 (kept 20/92)
+2026-10-27 14:20:00.290 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (814 chars)
+2026-10-27 14:20:02.399 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.775 (kept 20/66)
+2026-10-27 14:20:02.644 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (814 chars)
+2026-10-27 14:20:04.753 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.775 (kept 20/66)
+2026-10-27 14:20:05.564 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (913 chars)
+2026-10-27 14:20:08.135 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.571 (kept 20/100)
+2026-10-27 14:20:08.366 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (913 chars)
+2026-10-27 14:20:11.102 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.571 (kept 20/100)
+2026-10-27 14:20:11.905 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (670 chars)
+2026-10-27 14:20:14.078 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.838 (kept 20/84)
+2026-10-27 14:20:14.310 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (670 chars)
+2026-10-27 14:20:17.706 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.838 (kept 20/84)
+2026-10-27 14:20:19.234 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (810 chars)
+2026-10-27 14:20:23.596 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.628 (kept 20/100)
+2026-10-27 14:20:23.820 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (810 chars)
+2026-10-27 14:20:27.986 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.628 (kept 20/100)
+2026-10-27 14:20:29.167 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (761 chars)
+2026-10-27 14:20:31.891 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.474 (kept 20/92)
+2026-10-27 14:20:32.131 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (761 chars)
+2026-10-27 14:20:34.617 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.474 (kept 20/92)
+2026-10-27 14:20:35.518 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (874 chars)
+2026-10-27 14:20:38.146 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.614 (kept 20/89)
+2026-10-27 14:20:38.389 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (874 chars)
+2026-10-27 14:20:40.882 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.614 (kept 20/89)
+2026-10-27 14:20:41.855 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (799 chars)
+2026-10-27 14:20:44.385 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/97)
+2026-10-27 14:20:44.632 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (799 chars)
+2026-10-27 14:20:47.150 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/97)
+2026-10-27 14:20:47.969 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (789 chars)
+2026-10-27 14:20:50.425 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.564 (kept 20/94)
+2026-10-27 14:20:50.670 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (789 chars)
+2026-10-27 14:20:53.190 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.564 (kept 20/94)
+2026-10-27 14:20:54.031 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (899 chars)
+2026-10-27 14:20:56.470 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.864 (kept 20/80)
+2026-10-27 14:20:56.712 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (899 chars)
+2026-10-27 14:20:59.025 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.864 (kept 20/80)
+2026-10-27 14:20:59.800 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (880 chars)
+2026-10-27 14:21:01.977 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.797 (kept 20/75)
+2026-10-27 14:21:02.218 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (880 chars)
+2026-10-27 14:21:04.664 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.797 (kept 20/75)
+2026-10-27 14:21:05.515 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (892 chars)
+2026-10-27 14:21:07.736 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.631 (kept 20/69)
+2026-10-27 14:21:07.977 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (892 chars)
+2026-10-27 14:21:10.110 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.631 (kept 20/69)
+2026-10-27 14:21:10.938 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (737 chars)
+2026-10-27 14:21:13.978 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.450 (kept 20/100)
+2026-10-27 14:21:14.211 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (737 chars)
+2026-10-27 14:21:17.459 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.450 (kept 20/100)
+2026-10-27 14:21:18.321 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (780 chars)
+2026-10-27 14:21:20.442 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.122 (kept 20/64)
+2026-10-27 14:21:20.686 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (780 chars)
+2026-10-27 14:21:22.895 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.122 (kept 20/64)
+2026-10-27 14:21:23.660 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (738 chars)
+2026-10-27 14:21:25.916 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.383 (kept 20/79)
+2026-10-27 14:21:26.165 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (738 chars)
+2026-10-27 14:21:28.519 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.383 (kept 20/79)
+2026-10-27 14:21:29.283 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (865 chars)
+2026-10-27 14:21:32.512 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.489 (kept 20/100)
+2026-10-27 14:21:32.751 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (865 chars)
+2026-10-27 14:21:36.098 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.489 (kept 20/100)
+2026-10-27 14:21:36.847 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (697 chars)
+2026-10-27 14:21:39.378 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.881 (kept 20/93)
+2026-10-27 14:21:39.632 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (697 chars)
+2026-10-27 14:21:42.348 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.881 (kept 20/93)
+2026-10-27 14:21:43.191 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (818 chars)
+2026-10-27 14:21:45.629 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.132 (kept 20/76)
+2026-10-27 14:21:45.928 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (818 chars)
+2026-10-27 14:21:48.493 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.132 (kept 20/76)
+2026-10-27 14:21:49.446 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (845 chars)
+2026-10-27 14:21:52.071 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.618 (kept 20/84)
+2026-10-27 14:21:52.336 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (845 chars)
+2026-10-27 14:21:54.837 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.618 (kept 20/84)
+2026-10-27 14:21:54.911 | INFO     | __main__:run:438 -   120/133
+2026-10-27 14:21:55.688 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (853 chars)
+2026-10-27 14:21:59.033 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.334 (kept 20/100)
+2026-10-27 14:21:59.265 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (853 chars)
+2026-10-27 14:22:02.618 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.334 (kept 20/100)
+2026-10-27 14:22:03.408 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (950 chars)
+2026-10-27 14:22:06.003 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.928 (kept 20/90)
+2026-10-27 14:22:06.244 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (950 chars)
+2026-10-27 14:22:09.070 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.928 (kept 20/90)
+2026-10-27 14:22:10.123 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (705 chars)
+2026-10-27 14:22:13.010 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.482 (kept 20/98)
+2026-10-27 14:22:13.269 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (705 chars)
+2026-10-27 14:22:16.245 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.482 (kept 20/98)
+2026-10-27 14:22:17.293 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (889 chars)
+2026-10-27 14:22:20.027 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.339 (kept 20/93)
+2026-10-27 14:22:20.275 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (889 chars)
+2026-10-27 14:22:23.612 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.339 (kept 20/93)
+2026-10-27 14:22:24.574 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (914 chars)
+2026-10-27 14:22:27.302 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.829 (kept 20/78)
+2026-10-27 14:22:27.538 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (914 chars)
+2026-10-27 14:22:30.474 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.829 (kept 20/78)
+2026-10-27 14:22:31.822 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (854 chars)
+2026-10-27 14:22:35.133 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.559 (kept 20/90)
+2026-10-27 14:22:35.375 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (854 chars)
+2026-10-27 14:22:39.380 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.559 (kept 20/90)
+2026-10-27 14:22:40.645 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (920 chars)
+2026-10-27 14:22:43.870 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.645 (kept 20/96)
+2026-10-27 14:22:44.108 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (920 chars)
+2026-10-27 14:22:47.018 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.645 (kept 20/96)
+2026-10-27 14:22:47.921 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1028 chars)
+2026-10-27 14:22:51.568 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.561 (kept 20/100)
+2026-10-27 14:22:51.810 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1028 chars)
+2026-10-27 14:22:55.878 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.561 (kept 20/100)
+2026-10-27 14:22:56.863 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (734 chars)
+2026-10-27 14:22:59.550 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.600 (kept 20/91)
+2026-10-27 14:22:59.862 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (734 chars)
+2026-10-27 14:23:02.626 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.600 (kept 20/91)
+2026-10-27 14:23:03.564 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (999 chars)
+2026-10-27 14:23:06.824 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.477 (kept 20/97)
+2026-10-27 14:23:07.060 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (999 chars)
+2026-10-27 14:23:10.521 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.477 (kept 20/97)
+2026-10-27 14:23:11.572 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (757 chars)
+2026-10-27 14:23:14.811 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.503 (kept 20/92)
+2026-10-27 14:23:15.067 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (757 chars)
+2026-10-27 14:23:19.561 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.503 (kept 20/92)
+2026-10-27 14:23:20.764 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1018 chars)
+2026-10-27 14:23:24.300 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.526 (kept 20/95)
+2026-10-27 14:23:24.559 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1018 chars)
+2026-10-27 14:23:27.818 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.526 (kept 20/95)
+2026-10-27 14:23:28.806 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (842 chars)
+2026-10-27 14:23:31.400 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.067 (kept 20/90)
+2026-10-27 14:23:31.647 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (842 chars)
+2026-10-27 14:23:34.165 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.067 (kept 20/90)
+{
+  "guards": {
+    "G1_config_resolved": true,
+    "G2_all_queries_scored": true,
+    "G3_reproduces_I89_arm_B_exact": true,
+    "G4_product_path_bit_exact_on_repeat": true,
+    "G5_reranked_metrics_valid": true,
+    "G6_lane_liveness": true,
+    "G7_sweep_monotone_non_increasing": true,
+    "G8_tau0_equals_scoop": true,
+    "G9_b5_is_a_cosine_scale": true,
+    "G10_b5_nonempty_and_overlap_recorded": true
+  },
+  "aggregate": {
+    "base": {
+      "overall": {
+        "coverage_reachable": 0.918953,
+        "recall_at_100": 0.897911,
+        "recall_at_20": 0.35484,
+        "hit_at_20": 0.887218,
+        "context_precision": 0.162406,
+        "mrr": 0.587526,
+        "ndcg_at_20": 0.393098,
+        "precision_at_20": 0.162406,
+        "precision_ceiling_at_20": 0.484586,
+        "f1_at_20": 0.133284,
+        "map": 0.231488,
+        "pool_size_mean": 86.466165
+      },
+      "by_type": {
+        "factual": {
+          "coverage_reachable": 0.951844,
+          "recall_at_100": 0.944926,
+          "recall_at_20": 0.477721,
+          "hit_at_20": 0.830189,
+          "context_precision": 0.09717,
+          "mrr": 0.652091,
+          "ndcg_at_20": 0.450213,
+          "precision_at_20": 0.09717,
+          "precision_ceiling_at_20": 0.3,
+          "f1_at_20": 0.123006,
+          "map": 0.341089,
+          "pool_size_mean": 85.075472,
+          "n": 53
+        },
+        "multihop": {
+          "coverage_reachable": 0.917447,
+          "recall_at_100": 0.877177,
+          "recall_at_20": 0.429167,
+          "hit_at_20": 0.85,
+          "context_precision": 0.075,
+          "mrr": 0.509528,
+          "ndcg_at_20": 0.36042,
+          "precision_at_20": 0.075,
+          "precision_ceiling_at_20": 0.21375,
+          "f1_at_20": 0.11645,
+          "map": 0.253525,
+          "pool_size_mean": 85.875,
+          "n": 40
+        },
+        "overview": {
+          "coverage_reachable": 0.87688,
+          "recall_at_100": 0.856348,
+          "recall_at_20": 0.117695,
+          "hit_at_20": 1.0,
+          "context_precision": 0.33625,
+          "mrr": 0.579978,
+          "ndcg_at_20": 0.3501,
+          "precision_at_20": 0.33625,
+          "precision_ceiling_at_20": 1.0,
+          "f1_at_20": 0.163738,
+          "map": 0.06423,
+          "pool_size_mean": 88.9,
+          "n": 40
+        }
+      }
+    },
+    "cut": {
+      "overall": {
+        "coverage_reachable": 0.838136,
+        "recall_at_100": 0.817747,
+        "recall_at_20": 0.42418,
+        "hit_at_20": 0.924812,
+        "context_precision": 0.204887,
+        "mrr": 0.724205,
+        "ndcg_at_20": 0.491858,
+        "precision_at_20": 0.204887,
+        "precision_ceiling_at_20": 0.484586,
+        "f1_at_20": 0.169855,
+        "map": 0.29254,
+        "pool_size_mean": 86.466165
+      },
+      "by_type": {
+        "factual": {
+          "coverage_reachable": 0.911614,
+          "recall_at_100": 0.904698,
+          "recall_at_20": 0.570328,
+          "hit_at_20": 0.886792,
+          "context_precision": 0.132075,
+          "mrr": 0.707311,
+          "ndcg_at_20": 0.529813,
+          "precision_at_20": 0.132075,
+          "precision_ceiling_at_20": 0.3,
+          "f1_at_20": 0.161181,
+          "map": 0.399238,
+          "pool_size_mean": 85.075472,
+          "n": 53
+        },
+        "multihop": {
+          "coverage_reachable": 0.818643,
+          "recall_at_100": 0.778375,
+          "recall_at_20": 0.505798,
+          "hit_at_20": 0.9,
+          "context_precision": 0.095,
+          "mrr": 0.64892,
+          "ndcg_at_20": 0.464335,
+          "precision_at_20": 0.095,
+          "precision_ceiling_at_20": 0.21375,
+          "f1_at_20": 0.14648,
+          "map": 0.344775,
+          "pool_size_mean": 85.875,
+          "n": 40
+        },
+        "overview": {
+          "coverage_reachable": 0.760271,
+          "recall_at_100": 0.74191,
+          "recall_at_20": 0.148915,
+          "hit_at_20": 1.0,
+          "context_precision": 0.41125,
+          "mrr": 0.821873,
+          "ndcg_at_20": 0.46909,
+          "precision_at_20": 0.41125,
+          "precision_ceiling_at_20": 1.0,
+          "f1_at_20": 0.204723,
+          "map": 0.09893,
+          "pool_size_mean": 88.9,
+          "n": 40
+        }
+      }
+    },
+    "fusion": {
+      "overall": {
+        "coverage_reachable": 0.684486,
+        "recall_at_100": 0.670575,
+        "recall_at_20": 0.449138,
+        "hit_at_20": 0.932331,
+        "context_precision": 0.244737,
+        "mrr": 0.768656,
+        "ndcg_at_20": 0.550629,
+        "precision_at_20": 0.244737,
+        "precision_ceiling_at_20": 0.484586,
+        "f1_at_20": 0.196773,
+        "map": 0.342068,
+        "pool_size_mean": 86.466165
+      },
+      "by_type": {
+        "factual": {
+          "coverage_reachable": 0.811507,
+          "recall_at_100": 0.810994,
+          "recall_at_20": 0.582991,
+          "hit_at_20": 0.90566,
+          "context_precision": 0.14434,
+          "mrr": 0.768981,
+          "ndcg_at_20": 0.588477,
+          "precision_at_20": 0.14434,
+          "precision_ceiling_at_20": 0.3,
+          "f1_at_20": 0.173258,
+          "map": 0.468894,
+          "pool_size_mean": 85.075472,
+          "n": 53
+        },
+        "multihop": {
+          "coverage_reachable": 0.678579,
+          "recall_at_100": 0.646645,
+          "recall_at_20": 0.510585,
+          "hit_at_20": 0.9,
+          "context_precision": 0.09125,
+          "mrr": 0.66458,
+          "ndcg_at_20": 0.476115,
+          "precision_at_20": 0.09125,
+          "precision_ceiling_at_20": 0.21375,
+          "f1_at_20": 0.143052,
+          "map": 0.360368,
+          "pool_size_mean": 85.875,
+          "n": 40
+        },
+        "overview": {
+          "coverage_reachable": 0.52209,
+          "recall_at_100": 0.50845,
+          "recall_at_20": 0.210335,
+          "hit_at_20": 1.0,
+          "context_precision": 0.53125,
+          "mrr": 0.872302,
+          "ndcg_at_20": 0.574995,
+          "precision_at_20": 0.53125,
+          "precision_ceiling_at_20": 1.0,
+          "f1_at_20": 0.28165,
+          "map": 0.155723,
+          "pool_size_mean": 88.9,
+          "n": 40
+        }
+      }
+    },
+    "ce": {
+      "overall": {
+        "coverage_reachable": 0.45533,
+        "recall_at_100": 0.444152,
+        "recall_at_20": 0.444152,
+        "hit_at_20": 0.917293,
+        "context_precision": 0.240127,
+        "mrr": 0.666825,
+        "ndcg_at_20": 0.494618,
+        "precision_at_20": 0.23985,
+        "precision_ceiling_at_20": 0.484586,
+        "f1_at_20": 0.191114,
+        "map": 0.278931,
+        "pool_size_mean": 86.466165
+      },
+      "by_type": {
+        "factual": {
+          "coverage_reachable": 0.557729,
+          "recall_at_100": 0.557402,
+          "recall_at_20": 0.557402,
+          "hit_at_20": 0.867925,
+          "context_precision": 0.135849,
+          "mrr": 0.517774,
+          "ndcg_at_20": 0.452406,
+          "precision_at_20": 0.135849,
+          "precision_ceiling_at_20": 0.3,
+          "f1_at_20": 0.163306,
+          "map": 0.320626,
+          "pool_size_mean": 85.075472,
+          "n": 53
+        },
+        "multihop": {
+          "coverage_reachable": 0.58125,
+          "recall_at_100": 0.550005,
+          "recall_at_20": 0.550005,
+          "hit_at_20": 0.9,
+          "context_precision": 0.105923,
+          "mrr": 0.729062,
+          "ndcg_at_20": 0.50725,
+          "precision_at_20": 0.105,
+          "precision_ceiling_at_20": 0.21375,
+          "f1_at_20": 0.1612,
+          "map": 0.376095,
+          "pool_size_mean": 85.875,
+          "n": 40
+        },
+        "overview": {
+          "coverage_reachable": 0.193733,
+          "recall_at_100": 0.188243,
+          "recall_at_20": 0.188243,
+          "hit_at_20": 1.0,
+          "context_precision": 0.5125,
+          "mrr": 0.80208,
+          "ndcg_at_20": 0.537917,
+          "precision_at_20": 0.5125,
+          "precision_ceiling_at_20": 1.0,
+          "f1_at_20": 0.257875,
+          "map": 0.12652,
+          "pool_size_mean": 88.9,
+          "n": 40
+        }
+      }
+    },
+    "b5": {
+      "overall": {
+        "coverage_reachable": 0.838136,
+        "recall_at_100": 0.817747,
+        "recall_at_20": 0.42418,
+        "hit_at_20": 0.924812,
+        "context_precision": 0.204887,
+        "mrr": 0.724205,
+        "ndcg_at_20": 0.491858,
+        "precision_at_20": 0.204887,
+        "precision_ceiling_at_20": 0.484586,
+        "f1_at_20": 0.169855,
+        "map": 0.29254,
+        "pool_size_mean": 86.466165
+      },
+      "by_type": {
+        "factual": {
+          "coverage_reachable": 0.911614,
+          "recall_at_100": 0.904698,
+          "recall_at_20": 0.570328,
+          "hit_at_20": 0.886792,
+          "context_precision": 0.132075,
+          "mrr": 0.707311,
+          "ndcg_at_20": 0.529813,
+          "precision_at_20": 0.132075,
+          "precision_ceiling_at_20": 0.3,
+          "f1_at_20": 0.161181,
+          "map": 0.399238,
+          "pool_size_mean": 85.075472,
+          "n": 53
+        },
+        "multihop": {
+          "coverage_reachable": 0.818643,
+          "recall_at_100": 0.778375,
+          "recall_at_20": 0.505798,
+          "hit_at_20": 0.9,
+          "context_precision": 0.095,
+          "mrr": 0.64892,
+          "ndcg_at_20": 0.464335,
+          "precision_at_20": 0.095,
+          "precision_ceiling_at_20": 0.21375,
+          "f1_at_20": 0.14648,
+          "map": 0.344775,
+          "pool_size_mean": 85.875,
+          "n": 40
+        },
+        "overview": {
+          "coverage_reachable": 0.760271,
+          "recall_at_100": 0.74191,
+          "recall_at_20": 0.148915,
+          "hit_at_20": 1.0,
+          "context_precision": 0.41125,
+          "mrr": 0.821873,
+          "ndcg_at_20": 0.46909,
+          "precision_at_20": 0.41125,
+          "precision_ceiling_at_20": 1.0,
+          "f1_at_20": 0.204723,
+          "map": 0.09893,
+          "pool_size_mean": 88.9,
+          "n": 40
+        }
+      }
+    }
+  },
+  "aperture_scoop": {
+    "base": 0.556258,
+    "cut": 0.609334,
+    "b5": 0.609334
+  }
+}
+
+artifact: logs/p1/step10/t0_baseline.json
+sha256: 9a5037308c71c02df10b699d44eb7917d2c06799141a9bc533c977b01dd0aa21
+wall: 2707.8s
+ALL GUARDS PASS
+===== VERIFIER (V1-V5) =====
+{
+  "artifact": "logs/p1/step10/t0_baseline.json",
+  "n_queries": 133,
+  "checks": [
+    {
+      "id": "V1_base_rederives_and_reproduces_I89",
+      "pass": true,
+      "detail": {
+        "n_bad": 0,
+        "bad": [],
+        "mean_cov_verifier": 0.918953439249752,
+        "mean_cov_harness": 0.918953,
+        "aggregate_agrees": true,
+        "anchor": 0.918953,
+        "anchor_gap": 4.3924975201559135e-07,
+        "anchor_tol": 0.002,
+        "anchor_ok": true
+      }
+    },
+    {
+      "id": "V2_cut_rederives_subset_of_base_and_reproduces_I89",
+      "pass": true,
+      "detail": {
+        "n_bad": 0,
+        "bad": [],
+        "not_subset_of_base": [],
+        "mean_cov_verifier": 0.838135948750377,
+        "mean_cov_harness": 0.838136,
+        "aggregate_agrees": true,
+        "anchor": 0.838136,
+        "anchor_gap": -5.124962298985736e-08,
+        "anchor_tol": 0.002,
+        "anchor_ok": true
+      }
+    },
+    {
+      "id": "V3_fusion_pool_and_lane_liveness",
+      "pass": false,
+      "detail": {
+        "n_bad": 0,
+        "bad": [],
+        "pool_over_cap": [],
+        "fusion_config_shipped": true,
+        "fusion_config": {
+          "mmr_variant": "RRF-score relevance + Jaccard diversity",
+          "mmr_lambda": 0.7,
+          "W": 100,
+          "threshold": 0.0,
+          "rrf_k": 1
+        },
+        "da_live_recorded": 132,
+        "da_live_expected": 133,
+        "graph_live_recorded": 40,
+        "multihop_queries": 40,
+        "liveness_consistent": false
+      }
+    },
+    {
+      "id": "V4_cross_encoder_metrics_valid_and_rederived",
+      "pass": false,
+      "detail": {
+        "n_bad": 1,
+        "bad": [
+          {
+            "id": "gold-033",
+            "metric": "map",
+            "verifier": 0.05625,
+            "harness": 0.0563
+          }
+        ],
+        "ce_over_top_k": [],
+        "reranked_metrics_valid": true,
+        "n_fallbacks": 0,
+        "top_k": 20,
+        "top_k_ok": true
+      }
+    },
+    {
+      "id": "V5_aperture_curve_rederives_monotone_and_auc",
+      "pass": true,
+      "detail": {
+        "n_bad": 0,
+        "bad": [],
+        "non_monotone": [],
+        "tau0_not_scoop": [],
+        "auc_bad": [],
+        "n_negative_cosines_in_topK": 0
+      }
+    },
+    {
+      "id": "V6_boundary5_rederives_scale_and_auc",
+      "pass": true,
+      "detail": {
+        "n_bad": 0,
+        "bad": [],
+        "non_monotone": [],
+        "tau0_not_scoop": [],
+        "not_cosine_scale": [],
+        "overlap_mismatch": [],
+        "auc_verifier": 0.025241728237214427,
+        "auc_harness": 0.025242,
+        "auc_ok": true
+      }
+    }
+  ],
+  "all_pass": false
+}
+
+extract: logs/p1/step10/t0_verifier_extract.json
+
+VERIFIER: FAILURE(S)

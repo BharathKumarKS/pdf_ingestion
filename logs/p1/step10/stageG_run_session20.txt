@@ -1,0 +1,658 @@
+===== ARM A (knowledge_base_v2 / Qwen/Qwen3-Embedding-0.6B / 1024d) =====
+2026-10-26 17:28:34.707 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-26 17:28:34.898 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-10-26 17:28:34.898 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'Qwen/Qwen3-Embedding-0.6B' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-26 17:28:34.898 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+2026-10-26 17:28:34.927 | INFO     | src.pdf_ingestion.hyde_cache:load:183 - HyDE cache loaded: 127 entries from 18ece9b9404688c8__openai_gpt-oss-20b__ab681b8e43855a46.json
+2026-10-26 17:28:34.931 | INFO     | __main__:run_arm:218 - ARM A — knowledge_base_v2 1024d low=dense_64(64) dense_lane=dense_1024 N=1000 L=500 queries=133
+2026-10-26 17:28:36.387 | INFO     | __main__:run_arm:225 - corpus: 3489 in-window content chunks / 888 distinct pages
+2026-10-26 17:28:44.725 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (152 chars)
+2026-10-26 17:28:44.746 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-10-26 17:28:44.816 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+2026-10-26 17:28:45.662 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.427 (kept 20/76)
+2026-10-26 17:28:45.782 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (241 chars)
+2026-10-26 17:28:47.644 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.933 (kept 20/78)
+2026-10-26 17:28:47.769 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (224 chars)
+2026-10-26 17:28:48.681 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.449 (kept 20/74)
+2026-10-26 17:28:49.793 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/77)
+2026-10-26 17:28:49.921 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (387 chars)
+2026-10-26 17:28:50.987 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.838 (kept 20/78)
+2026-10-26 17:28:51.115 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (368 chars)
+2026-10-26 17:28:52.149 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.914 (kept 20/68)
+2026-10-26 17:28:52.284 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (355 chars)
+2026-10-26 17:28:53.275 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.599 (kept 20/81)
+2026-10-26 17:28:54.206 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.893 (kept 20/82)
+2026-10-26 17:28:54.342 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (11 chars)
+2026-10-26 17:28:55.222 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.036 (kept 20/79)
+2026-10-26 17:28:55.349 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (423 chars)
+2026-10-26 17:28:56.346 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.941 (kept 20/70)
+2026-10-26 17:28:56.469 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (424 chars)
+2026-10-26 17:28:57.339 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.315 (kept 20/71)
+2026-10-26 17:28:57.469 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (385 chars)
+2026-10-26 17:28:58.497 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/63)
+2026-10-26 17:28:58.627 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (316 chars)
+2026-10-26 17:28:59.418 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.981 (kept 20/55)
+2026-10-26 17:28:59.550 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (475 chars)
+2026-10-26 17:29:00.649 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.939 (kept 20/79)
+2026-10-26 17:29:00.756 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (292 chars)
+2026-10-26 17:29:01.875 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.953 (kept 20/76)
+2026-10-26 17:29:02.009 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (342 chars)
+2026-10-26 17:29:03.002 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.916 (kept 20/70)
+2026-10-26 17:29:03.140 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (362 chars)
+2026-10-26 17:29:04.128 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.930 (kept 20/68)
+2026-10-26 17:29:04.256 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (463 chars)
+2026-10-26 17:29:05.359 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.863 (kept 20/72)
+2026-10-26 17:29:05.494 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (492 chars)
+2026-10-26 17:29:06.588 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.925 (kept 20/68)
+2026-10-26 17:29:07.816 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.971 (kept 20/87)
+2026-10-26 17:29:07.942 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (312 chars)
+2026-10-26 17:29:08.943 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.948 (kept 20/68)
+2026-10-26 17:29:09.080 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (118 chars)
+2026-10-26 17:29:10.075 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.768 (kept 20/81)
+2026-10-26 17:29:10.211 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (340 chars)
+2026-10-26 17:29:11.195 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/71)
+2026-10-26 17:29:11.320 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (319 chars)
+2026-10-26 17:29:12.373 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.985 (kept 20/77)
+2026-10-26 17:29:13.448 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.991 (kept 20/72)
+2026-10-26 17:29:13.582 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (199 chars)
+2026-10-26 17:29:14.539 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.698 (kept 20/73)
+2026-10-26 17:29:14.675 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (613 chars)
+2026-10-26 17:29:15.665 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.988 (kept 20/78)
+2026-10-26 17:29:15.800 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (198 chars)
+2026-10-26 17:29:16.616 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.881 (kept 20/54)
+2026-10-26 17:29:16.758 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (126 chars)
+2026-10-26 17:29:17.644 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.526 (kept 20/67)
+2026-10-26 17:29:17.775 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (476 chars)
+2026-10-26 17:29:18.718 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.932 (kept 20/70)
+2026-10-26 17:29:19.668 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.939 (kept 20/74)
+2026-10-26 17:29:19.799 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (328 chars)
+2026-10-26 17:29:20.712 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.816 (kept 20/70)
+2026-10-26 17:29:20.831 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (333 chars)
+2026-10-26 17:29:21.741 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.863 (kept 20/77)
+2026-10-26 17:29:21.897 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (313 chars)
+2026-10-26 17:29:22.809 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.798 (kept 20/75)
+2026-10-26 17:29:22.947 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (188 chars)
+2026-10-26 17:29:23.804 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/69)
+2026-10-26 17:29:23.940 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (432 chars)
+2026-10-26 17:29:25.017 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.877 (kept 20/83)
+2026-10-26 17:29:25.150 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (371 chars)
+2026-10-26 17:29:26.248 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.373 (kept 20/87)
+2026-10-26 17:29:26.380 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (451 chars)
+2026-10-26 17:29:27.478 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.989 (kept 20/66)
+2026-10-26 17:29:27.601 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (311 chars)
+2026-10-26 17:29:28.601 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.547 (kept 20/77)
+2026-10-26 17:29:28.733 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (268 chars)
+2026-10-26 17:29:29.625 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.999 (kept 20/68)
+2026-10-26 17:29:29.626 | INFO     | __main__:run_arm:269 -   40/133
+2026-10-26 17:29:30.562 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.887 (kept 20/73)
+2026-10-26 17:29:30.688 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (262 chars)
+2026-10-26 17:29:31.572 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.751 (kept 20/70)
+2026-10-26 17:29:31.702 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (424 chars)
+2026-10-26 17:29:32.758 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.871 (kept 20/75)
+2026-10-26 17:29:32.837 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (421 chars)
+2026-10-26 17:29:33.856 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.877 (kept 20/70)
+2026-10-26 17:29:33.968 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (236 chars)
+2026-10-26 17:29:34.951 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.967 (kept 20/82)
+2026-10-26 17:29:35.091 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (230 chars)
+2026-10-26 17:29:35.860 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.861 (kept 20/56)
+2026-10-26 17:29:36.001 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (337 chars)
+2026-10-26 17:29:36.839 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.430 (kept 20/59)
+2026-10-26 17:29:36.969 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (314 chars)
+2026-10-26 17:29:37.933 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.966 (kept 20/72)
+2026-10-26 17:29:38.816 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.992 (kept 20/71)
+2026-10-26 17:29:38.937 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (354 chars)
+2026-10-26 17:29:40.000 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.801 (kept 20/78)
+2026-10-26 17:29:41.123 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.685 (kept 20/83)
+2026-10-26 17:29:41.257 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (416 chars)
+2026-10-26 17:29:42.306 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.944 (kept 20/73)
+2026-10-26 17:29:43.450 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.925 (kept 20/74)
+2026-10-26 17:29:43.576 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (391 chars)
+2026-10-26 17:29:44.725 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.920 (kept 20/77)
+2026-10-26 17:29:44.855 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (334 chars)
+2026-10-26 17:29:45.866 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.992 (kept 20/76)
+2026-10-26 17:29:47.035 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.867 (kept 20/72)
+2026-10-26 17:29:47.165 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (200 chars)
+2026-10-26 17:29:48.163 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.639 (kept 20/69)
+2026-10-26 17:29:49.185 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.974 (kept 20/76)
+2026-10-26 17:29:50.209 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 1.000 (kept 20/59)
+2026-10-26 17:29:50.349 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (194 chars)
+2026-10-26 17:29:51.252 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.976 (kept 20/63)
+2026-10-26 17:29:51.385 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (376 chars)
+2026-10-26 17:29:52.361 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.921 (kept 20/55)
+2026-10-26 17:29:53.479 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.918 (kept 20/77)
+2026-10-26 17:29:53.607 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (234 chars)
+2026-10-26 17:29:54.612 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.981 (kept 20/78)
+2026-10-26 17:29:55.740 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.906 (kept 20/88)
+2026-10-26 17:29:55.869 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (377 chars)
+2026-10-26 17:29:56.969 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.969 (kept 20/65)
+2026-10-26 17:29:58.093 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/83)
+2026-10-26 17:29:58.227 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (503 chars)
+2026-10-26 17:29:59.296 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.988 (kept 20/67)
+2026-10-26 17:30:00.233 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.980 (kept 20/81)
+2026-10-26 17:30:00.347 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (380 chars)
+2026-10-26 17:30:01.267 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.972 (kept 20/63)
+2026-10-26 17:30:02.252 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.534 (kept 20/71)
+2026-10-26 17:30:03.213 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.812 (kept 20/64)
+2026-10-26 17:30:04.299 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.520 (kept 20/78)
+2026-10-26 17:30:05.341 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.428 (kept 20/73)
+2026-10-26 17:30:06.350 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.134 (kept 20/85)
+2026-10-26 17:30:07.353 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.087 (kept 20/81)
+2026-10-26 17:30:08.477 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.353 (kept 20/76)
+2026-10-26 17:30:09.665 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.606 (kept 20/76)
+2026-10-26 17:30:10.792 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.496 (kept 20/80)
+2026-10-26 17:30:12.020 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.463 (kept 20/83)
+2026-10-26 17:30:13.043 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.660 (kept 20/70)
+2026-10-26 17:30:13.044 | INFO     | __main__:run_arm:269 -   80/133
+2026-10-26 17:30:13.967 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.357 (kept 20/72)
+2026-10-26 17:30:14.989 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.840 (kept 20/75)
+2026-10-26 17:30:16.115 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.653 (kept 20/71)
+2026-10-26 17:30:17.040 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.175 (kept 20/75)
+2026-10-26 17:30:18.039 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.302 (kept 20/72)
+2026-10-26 17:30:19.025 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.181 (kept 20/65)
+2026-10-26 17:30:20.217 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.736 (kept 20/80)
+2026-10-26 17:30:21.322 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.888 (kept 20/75)
+2026-10-26 17:30:22.464 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.026 (kept 20/79)
+2026-10-26 17:30:23.625 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.616 (kept 20/76)
+2026-10-26 17:30:24.772 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.373 (kept 20/81)
+2026-10-26 17:30:25.926 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.275 (kept 20/89)
+2026-10-26 17:30:27.072 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.436 (kept 20/78)
+2026-10-26 17:30:27.200 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (691 chars)
+2026-10-26 17:30:28.261 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.982 (kept 20/78)
+2026-10-26 17:30:28.392 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1042 chars)
+2026-10-26 17:30:29.614 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/75)
+2026-10-26 17:30:29.740 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (765 chars)
+2026-10-26 17:30:30.763 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.962 (kept 20/67)
+2026-10-26 17:30:30.882 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (880 chars)
+2026-10-26 17:30:32.248 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/77)
+2026-10-26 17:30:32.355 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1024 chars)
+2026-10-26 17:30:33.605 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.609 (kept 20/69)
+2026-10-26 17:30:33.754 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (966 chars)
+2026-10-26 17:30:35.061 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.273 (kept 20/74)
+2026-10-26 17:30:35.176 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (967 chars)
+2026-10-26 17:30:36.286 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.543 (kept 20/69)
+2026-10-26 17:30:36.435 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (795 chars)
+2026-10-26 17:30:37.770 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.731 (kept 20/79)
+2026-10-26 17:30:37.911 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (972 chars)
+2026-10-26 17:30:39.000 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.587 (kept 20/68)
+2026-10-26 17:30:39.134 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (814 chars)
+2026-10-26 17:30:40.133 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.775 (kept 20/58)
+2026-10-26 17:30:40.232 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (913 chars)
+2026-10-26 17:30:41.431 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.571 (kept 20/75)
+2026-10-26 17:30:41.559 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (670 chars)
+2026-10-26 17:30:42.760 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.838 (kept 20/82)
+2026-10-26 17:30:42.894 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (810 chars)
+2026-10-26 17:30:44.117 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.560 (kept 20/85)
+2026-10-26 17:30:44.221 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (761 chars)
+2026-10-26 17:30:45.302 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.530 (kept 20/78)
+2026-10-26 17:30:45.436 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (874 chars)
+2026-10-26 17:30:46.446 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.579 (kept 20/67)
+2026-10-26 17:30:46.584 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (799 chars)
+2026-10-26 17:30:47.760 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.779 (kept 20/71)
+2026-10-26 17:30:47.894 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (789 chars)
+2026-10-26 17:30:49.088 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.564 (kept 20/75)
+2026-10-26 17:30:49.233 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (899 chars)
+2026-10-26 17:30:50.422 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.864 (kept 20/74)
+2026-10-26 17:30:50.565 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (880 chars)
+2026-10-26 17:30:51.854 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.797 (kept 20/69)
+2026-10-26 17:30:51.988 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (892 chars)
+2026-10-26 17:30:53.082 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.631 (kept 20/61)
+2026-10-26 17:30:53.225 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (737 chars)
+2026-10-26 17:30:54.414 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.424 (kept 20/72)
+2026-10-26 17:30:54.549 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (780 chars)
+2026-10-26 17:30:55.640 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.369 (kept 20/58)
+2026-10-26 17:30:55.778 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (738 chars)
+2026-10-26 17:30:57.075 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.383 (kept 20/75)
+2026-10-26 17:30:57.212 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (865 chars)
+2026-10-26 17:30:58.406 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.489 (kept 20/72)
+2026-10-26 17:30:58.525 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (697 chars)
+2026-10-26 17:30:59.841 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.881 (kept 20/74)
+2026-10-26 17:30:59.986 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (818 chars)
+2026-10-26 17:31:01.094 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.132 (kept 20/68)
+2026-10-26 17:31:01.230 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (845 chars)
+2026-10-26 17:31:02.283 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.779 (kept 20/63)
+2026-10-26 17:31:02.283 | INFO     | __main__:run_arm:269 -   120/133
+2026-10-26 17:31:02.408 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (853 chars)
+2026-10-26 17:31:03.732 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.313 (kept 20/80)
+2026-10-26 17:31:03.861 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (950 chars)
+2026-10-26 17:31:05.065 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.928 (kept 20/74)
+2026-10-26 17:31:05.188 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (705 chars)
+2026-10-26 17:31:06.364 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.482 (kept 20/75)
+2026-10-26 17:31:06.498 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (889 chars)
+2026-10-26 17:31:07.680 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.469 (kept 20/79)
+2026-10-26 17:31:07.814 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (914 chars)
+2026-10-26 17:31:08.803 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.829 (kept 20/60)
+2026-10-26 17:31:08.941 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (854 chars)
+2026-10-26 17:31:10.157 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.559 (kept 20/76)
+2026-10-26 17:31:10.290 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (920 chars)
+2026-10-26 17:31:11.499 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.638 (kept 20/76)
+2026-10-26 17:31:11.621 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1028 chars)
+2026-10-26 17:31:12.817 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.343 (kept 20/79)
+2026-10-26 17:31:12.922 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (734 chars)
+2026-10-26 17:31:13.971 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.374 (kept 20/64)
+2026-10-26 17:31:14.084 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (999 chars)
+2026-10-26 17:31:15.303 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.268 (kept 20/72)
+2026-10-26 17:31:15.433 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (757 chars)
+2026-10-26 17:31:16.637 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.503 (kept 20/75)
+2026-10-26 17:31:16.764 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1018 chars)
+2026-10-26 17:31:18.068 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.526 (kept 20/80)
+2026-10-26 17:31:18.194 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (842 chars)
+2026-10-26 17:31:19.404 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.067 (kept 20/79)
+2026-10-26 17:31:19.418 | INFO     | __main__:run_arm:310 - arm A → logs/p1/step10/stageG_arm_A.json (154.8s) sha256 afd9160e6228d42d
+ARM A: 133 queries, 0 errors, 154.8s → logs/p1/step10/stageG_arm_A.json
+  {
+    "cov_base": 0.815136,
+    "cov_cut": 0.747763,
+    "cov_fusion": 0.660452,
+    "cov_ce": 0.458824,
+    "raw_r100_fusion": 0.646897,
+    "raw_r20_ce": 0.447496,
+    "cov_fulldim_L100": 0.519204,
+    "cov_fulldim_L500": 0.828609,
+    "cov_fulldim_L1000": 0.926563,
+    "cov_fulldim_L2000": 0.977258
+  }
+  known-answer vs §I66: gaps {'stage0_base_N1000': 3.599999999992498e-05, 'stage1_cut_L500': -3.700000000006476e-05}  PASS
+===== ARM B (knowledge_base_v3 / nomic-ai/nomic-embed-text-v1.5 / 768d) =====
+2026-10-26 17:31:21.509 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-10-26 17:31:21.677 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-10-26 17:31:21.678 | INFO     | src.pdf_ingestion.cluster_embedder:get_cluster_embedder:370 - Dense embedder: SV cluster 'nomic-ai/nomic-embed-text-v1.5' at http://10.0.10.70:8123/embed-text/v1/embeddings
+2026-10-26 17:31:21.678 | INFO     | src.pdf_ingestion.reranker:__init__:86 - ClusterCrossEncoderReranker: BAAI/bge-reranker-v2-m3 @ http://10.0.10.70:8123/rerank/v1/rank
+2026-10-26 17:31:21.694 | INFO     | src.pdf_ingestion.hyde_cache:load:183 - HyDE cache loaded: 127 entries from 18ece9b9404688c8__openai_gpt-oss-20b__ab681b8e43855a46.json
+2026-10-26 17:31:21.696 | INFO     | __main__:run_arm:218 - ARM B — knowledge_base_v3 768d low=dense_64(64) dense_lane=dense_full N=1000 L=500 queries=133
+2026-10-26 17:31:23.139 | INFO     | __main__:run_arm:225 - corpus: 3489 in-window content chunks / 888 distinct pages
+2026-10-26 17:31:29.922 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (152 chars)
+2026-10-26 17:31:29.939 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:141 - SPLADE: using SV cluster at http://10.0.10.70:8123/embed-text/v1/sparse-embeddings
+2026-10-26 17:31:29.993 | INFO     | src.pdf_ingestion.colbert_embedder:get_colbert_embedder:158 - ColBERT: using SV cluster at http://10.0.10.70:8123/embed-text/v1/multivector-embeddings
+2026-10-26 17:31:30.867 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.427 (kept 20/75)
+2026-10-26 17:31:30.992 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (241 chars)
+2026-10-26 17:31:32.916 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.933 (kept 20/76)
+2026-10-26 17:31:33.032 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (224 chars)
+2026-10-26 17:31:34.042 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.449 (kept 20/78)
+2026-10-26 17:31:34.968 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/75)
+2026-10-26 17:31:35.081 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (387 chars)
+2026-10-26 17:31:36.192 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.838 (kept 20/79)
+2026-10-26 17:31:36.310 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (368 chars)
+2026-10-26 17:31:37.366 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.914 (kept 20/74)
+2026-10-26 17:31:37.483 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (355 chars)
+2026-10-26 17:31:38.525 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.579 (kept 20/81)
+2026-10-26 17:31:39.469 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.893 (kept 20/72)
+2026-10-26 17:31:39.566 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (11 chars)
+2026-10-26 17:31:40.495 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.041 (kept 20/80)
+2026-10-26 17:31:40.603 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (423 chars)
+2026-10-26 17:31:41.727 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.839 (kept 20/76)
+2026-10-26 17:31:41.838 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (424 chars)
+2026-10-26 17:31:42.848 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.315 (kept 20/75)
+2026-10-26 17:31:42.958 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (385 chars)
+2026-10-26 17:31:44.076 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.995 (kept 20/68)
+2026-10-26 17:31:44.189 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (316 chars)
+2026-10-26 17:31:45.100 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.981 (kept 20/64)
+2026-10-26 17:31:45.226 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (475 chars)
+2026-10-26 17:31:46.412 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.939 (kept 20/80)
+2026-10-26 17:31:46.511 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (292 chars)
+2026-10-26 17:31:47.726 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.953 (kept 20/83)
+2026-10-26 17:31:47.843 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (342 chars)
+2026-10-26 17:31:48.887 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.916 (kept 20/74)
+2026-10-26 17:31:48.997 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (362 chars)
+2026-10-26 17:31:49.990 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.930 (kept 20/72)
+2026-10-26 17:31:50.099 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (463 chars)
+2026-10-26 17:31:51.262 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.767 (kept 20/75)
+2026-10-26 17:31:51.376 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (492 chars)
+2026-10-26 17:31:52.545 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.925 (kept 20/73)
+2026-10-26 17:31:53.704 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.971 (kept 20/81)
+2026-10-26 17:31:53.815 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (312 chars)
+2026-10-26 17:31:54.756 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.948 (kept 20/72)
+2026-10-26 17:31:54.862 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (118 chars)
+2026-10-26 17:31:55.862 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.768 (kept 20/78)
+2026-10-26 17:31:55.977 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (340 chars)
+2026-10-26 17:31:57.081 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/74)
+2026-10-26 17:31:57.204 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (319 chars)
+2026-10-26 17:31:58.412 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.985 (kept 20/81)
+2026-10-26 17:31:59.437 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.991 (kept 20/72)
+2026-10-26 17:31:59.553 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (199 chars)
+2026-10-26 17:32:00.613 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.698 (kept 20/80)
+2026-10-26 17:32:00.724 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (613 chars)
+2026-10-26 17:32:01.747 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.988 (kept 20/81)
+2026-10-26 17:32:01.851 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (198 chars)
+2026-10-26 17:32:02.816 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.881 (kept 20/58)
+2026-10-26 17:32:02.925 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (126 chars)
+2026-10-26 17:32:03.841 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.621 (kept 20/53)
+2026-10-26 17:32:03.947 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (476 chars)
+2026-10-26 17:32:05.072 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.932 (kept 20/71)
+2026-10-26 17:32:06.093 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.939 (kept 20/72)
+2026-10-26 17:32:06.207 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (328 chars)
+2026-10-26 17:32:07.237 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.816 (kept 20/73)
+2026-10-26 17:32:07.349 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (333 chars)
+2026-10-26 17:32:08.342 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.863 (kept 20/80)
+2026-10-26 17:32:08.470 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (313 chars)
+2026-10-26 17:32:09.472 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.798 (kept 20/76)
+2026-10-26 17:32:09.598 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (188 chars)
+2026-10-26 17:32:10.599 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.984 (kept 20/72)
+2026-10-26 17:32:10.702 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (432 chars)
+2026-10-26 17:32:11.828 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.877 (kept 20/87)
+2026-10-26 17:32:11.948 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (371 chars)
+2026-10-26 17:32:13.057 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.373 (kept 20/88)
+2026-10-26 17:32:13.154 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (451 chars)
+2026-10-26 17:32:14.253 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.989 (kept 20/72)
+2026-10-26 17:32:14.370 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (311 chars)
+2026-10-26 17:32:15.359 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.547 (kept 20/77)
+2026-10-26 17:32:15.473 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (268 chars)
+2026-10-26 17:32:16.537 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.999 (kept 20/70)
+2026-10-26 17:32:16.538 | INFO     | __main__:run_arm:269 -   40/133
+2026-10-26 17:32:17.563 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.887 (kept 20/73)
+2026-10-26 17:32:17.665 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (262 chars)
+2026-10-26 17:32:18.682 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.751 (kept 20/73)
+2026-10-26 17:32:18.763 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (424 chars)
+2026-10-26 17:32:19.895 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.871 (kept 20/79)
+2026-10-26 17:32:19.992 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (421 chars)
+2026-10-26 17:32:21.248 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.877 (kept 20/77)
+2026-10-26 17:32:21.376 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (236 chars)
+2026-10-26 17:32:22.477 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.967 (kept 20/82)
+2026-10-26 17:32:22.586 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (230 chars)
+2026-10-26 17:32:23.408 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.861 (kept 20/60)
+2026-10-26 17:32:23.521 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (337 chars)
+2026-10-26 17:32:24.421 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.430 (kept 20/60)
+2026-10-26 17:32:24.528 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (314 chars)
+2026-10-26 17:32:25.548 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.989 (kept 20/78)
+2026-10-26 17:32:26.470 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.992 (kept 20/72)
+2026-10-26 17:32:26.587 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (354 chars)
+2026-10-26 17:32:27.698 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.801 (kept 20/78)
+2026-10-26 17:32:28.708 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.996 (kept 20/77)
+2026-10-26 17:32:28.828 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (416 chars)
+2026-10-26 17:32:30.063 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.944 (kept 20/75)
+2026-10-26 17:32:31.145 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.925 (kept 20/77)
+2026-10-26 17:32:31.266 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (391 chars)
+2026-10-26 17:32:32.411 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.920 (kept 20/78)
+2026-10-26 17:32:32.514 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (334 chars)
+2026-10-26 17:32:33.537 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.992 (kept 20/78)
+2026-10-26 17:32:34.517 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.867 (kept 20/68)
+2026-10-26 17:32:34.633 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (200 chars)
+2026-10-26 17:32:35.689 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.639 (kept 20/71)
+2026-10-26 17:32:36.711 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.974 (kept 20/67)
+2026-10-26 17:32:37.733 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 1.000 (kept 20/58)
+2026-10-26 17:32:37.839 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (194 chars)
+2026-10-26 17:32:38.779 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.976 (kept 20/61)
+2026-10-26 17:32:38.891 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (376 chars)
+2026-10-26 17:32:39.724 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.921 (kept 20/55)
+2026-10-26 17:32:40.806 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.918 (kept 20/87)
+2026-10-26 17:32:40.914 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (234 chars)
+2026-10-26 17:32:42.035 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.981 (kept 20/77)
+2026-10-26 17:32:43.184 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.906 (kept 20/88)
+2026-10-26 17:32:43.296 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (377 chars)
+2026-10-26 17:32:44.314 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.969 (kept 20/69)
+2026-10-26 17:32:45.355 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/71)
+2026-10-26 17:32:45.469 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (503 chars)
+2026-10-26 17:32:46.541 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.988 (kept 20/64)
+2026-10-26 17:32:47.525 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.980 (kept 20/72)
+2026-10-26 17:32:47.639 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (380 chars)
+2026-10-26 17:32:48.460 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.972 (kept 20/64)
+2026-10-26 17:32:49.357 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.534 (kept 20/66)
+2026-10-26 17:32:50.430 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.812 (kept 20/71)
+2026-10-26 17:32:51.561 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.520 (kept 20/77)
+2026-10-26 17:32:52.586 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.428 (kept 20/74)
+2026-10-26 17:32:53.710 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.134 (kept 20/80)
+2026-10-26 17:32:54.837 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.087 (kept 20/84)
+2026-10-26 17:32:55.990 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.353 (kept 20/74)
+2026-10-26 17:32:57.090 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.606 (kept 20/81)
+2026-10-26 17:32:58.216 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.214 (kept 20/79)
+2026-10-26 17:32:59.446 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.463 (kept 20/84)
+2026-10-26 17:33:00.572 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.660 (kept 20/72)
+2026-10-26 17:33:00.573 | INFO     | __main__:run_arm:269 -   80/133
+2026-10-26 17:33:01.514 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.357 (kept 20/72)
+2026-10-26 17:33:02.529 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.840 (kept 20/72)
+2026-10-26 17:33:03.747 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.653 (kept 20/75)
+2026-10-26 17:33:04.670 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.175 (kept 20/71)
+2026-10-26 17:33:05.794 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.302 (kept 20/70)
+2026-10-26 17:33:06.805 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.181 (kept 20/65)
+2026-10-26 17:33:08.047 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.736 (kept 20/77)
+2026-10-26 17:33:09.175 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.888 (kept 20/71)
+2026-10-26 17:33:10.195 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.026 (kept 20/71)
+2026-10-26 17:33:11.528 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.616 (kept 20/81)
+2026-10-26 17:33:12.758 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.373 (kept 20/81)
+2026-10-26 17:33:13.985 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.275 (kept 20/86)
+2026-10-26 17:33:15.215 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.436 (kept 20/83)
+2026-10-26 17:33:15.332 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (691 chars)
+2026-10-26 17:33:16.553 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.982 (kept 20/80)
+2026-10-26 17:33:16.675 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1042 chars)
+2026-10-26 17:33:17.984 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.961 (kept 20/76)
+2026-10-26 17:33:18.098 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (765 chars)
+2026-10-26 17:33:19.241 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.962 (kept 20/70)
+2026-10-26 17:33:19.356 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (880 chars)
+2026-10-26 17:33:20.656 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/79)
+2026-10-26 17:33:20.775 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1024 chars)
+2026-10-26 17:33:22.179 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.609 (kept 20/76)
+2026-10-26 17:33:22.294 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (966 chars)
+2026-10-26 17:33:23.715 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.617 (kept 20/76)
+2026-10-26 17:33:23.835 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (967 chars)
+2026-10-26 17:33:25.069 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.543 (kept 20/75)
+2026-10-26 17:33:25.154 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (795 chars)
+2026-10-26 17:33:26.420 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.731 (kept 20/79)
+2026-10-26 17:33:26.538 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (972 chars)
+2026-10-26 17:33:27.808 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.587 (kept 20/72)
+2026-10-26 17:33:27.925 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (814 chars)
+2026-10-26 17:33:29.043 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.775 (kept 20/63)
+2026-10-26 17:33:29.172 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (913 chars)
+2026-10-26 17:33:30.486 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.571 (kept 20/76)
+2026-10-26 17:33:30.601 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (670 chars)
+2026-10-26 17:33:31.903 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.838 (kept 20/79)
+2026-10-26 17:33:32.015 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (810 chars)
+2026-10-26 17:33:33.158 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.560 (kept 20/84)
+2026-10-26 17:33:33.283 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (761 chars)
+2026-10-26 17:33:34.464 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.474 (kept 20/77)
+2026-10-26 17:33:34.579 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (874 chars)
+2026-10-26 17:33:35.695 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.614 (kept 20/74)
+2026-10-26 17:33:35.809 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (799 chars)
+2026-10-26 17:33:37.024 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.831 (kept 20/76)
+2026-10-26 17:33:37.144 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (789 chars)
+2026-10-26 17:33:38.397 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.564 (kept 20/77)
+2026-10-26 17:33:38.506 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (899 chars)
+2026-10-26 17:33:39.790 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.864 (kept 20/75)
+2026-10-26 17:33:39.904 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (880 chars)
+2026-10-26 17:33:41.121 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.797 (kept 20/71)
+2026-10-26 17:33:41.242 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (892 chars)
+2026-10-26 17:33:42.553 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.631 (kept 20/67)
+2026-10-26 17:33:42.659 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (737 chars)
+2026-10-26 17:33:43.990 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.424 (kept 20/80)
+2026-10-26 17:33:44.111 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (780 chars)
+2026-10-26 17:33:45.317 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.122 (kept 20/63)
+2026-10-26 17:33:45.432 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (738 chars)
+2026-10-26 17:33:46.654 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.383 (kept 20/71)
+2026-10-26 17:33:46.746 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (865 chars)
+2026-10-26 17:33:48.056 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.489 (kept 20/83)
+2026-10-26 17:33:48.170 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (697 chars)
+2026-10-26 17:33:49.517 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.881 (kept 20/82)
+2026-10-26 17:33:49.618 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (818 chars)
+2026-10-26 17:33:50.744 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.132 (kept 20/66)
+2026-10-26 17:33:50.855 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (845 chars)
+2026-10-26 17:33:51.916 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.618 (kept 20/63)
+2026-10-26 17:33:51.917 | INFO     | __main__:run_arm:269 -   120/133
+2026-10-26 17:33:52.030 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (853 chars)
+2026-10-26 17:33:53.409 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.334 (kept 20/80)
+2026-10-26 17:33:53.511 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (950 chars)
+2026-10-26 17:33:54.818 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.928 (kept 20/74)
+2026-10-26 17:33:54.936 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (705 chars)
+2026-10-26 17:33:56.172 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.482 (kept 20/79)
+2026-10-26 17:33:56.288 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (889 chars)
+2026-10-26 17:33:57.540 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.339 (kept 20/77)
+2026-10-26 17:33:57.646 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (914 chars)
+2026-10-26 17:33:58.666 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.829 (kept 20/68)
+2026-10-26 17:33:58.788 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (854 chars)
+2026-10-26 17:34:00.169 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.559 (kept 20/75)
+2026-10-26 17:34:00.286 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (920 chars)
+2026-10-26 17:34:01.703 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.645 (kept 20/81)
+2026-10-26 17:34:01.816 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1028 chars)
+2026-10-26 17:34:03.241 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.561 (kept 20/85)
+2026-10-26 17:34:03.362 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (734 chars)
+2026-10-26 17:34:04.490 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.329 (kept 20/72)
+2026-10-26 17:34:04.606 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (999 chars)
+2026-10-26 17:34:05.901 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.268 (kept 20/76)
+2026-10-26 17:34:06.016 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (757 chars)
+2026-10-26 17:34:07.232 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.503 (kept 20/75)
+2026-10-26 17:34:07.344 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (1018 chars)
+2026-10-26 17:34:08.707 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.526 (kept 20/82)
+2026-10-26 17:34:08.819 | DEBUG    | evaluate_rag:run_retrieval:207 - HyDE: generated hypothetical (842 chars)
+2026-10-26 17:34:10.099 | DEBUG    | src.pdf_ingestion.reranker:rerank:151 - Cluster reranker: top score 0.067 (kept 20/75)
+2026-10-26 17:34:10.110 | INFO     | __main__:run_arm:310 - arm B → logs/p1/step10/stageG_arm_B.json (160.3s) sha256 f50348dd71456569
+ARM B: 133 queries, 0 errors, 160.3s → logs/p1/step10/stageG_arm_B.json
+  {
+    "cov_base": 0.918953,
+    "cov_cut": 0.838136,
+    "cov_fusion": 0.641322,
+    "cov_ce": 0.462533,
+    "raw_r100_fusion": 0.627939,
+    "raw_r20_ce": 0.451298,
+    "cov_fulldim_L100": 0.591316,
+    "cov_fulldim_L500": 0.843325,
+    "cov_fulldim_L1000": 0.933638,
+    "cov_fulldim_L2000": 0.978649
+  }
+===== COMBINE =====
+{
+  "guards": {
+    "G1_A_config": true,
+    "G2_B_config": true,
+    "G3_A_known_answer_I66": true,
+    "G4_133_both_arms": true,
+    "G5_same_corpus": true,
+    "G6_A_fulldim_known_answer_I66": true,
+    "G7_B_fulldim_reproduces_I87_pooled": true,
+    "G8_A_reproduces_I86_exactly": true
+  },
+  "decomposition": {
+    "base (64d lane @N=1000)": {
+      "A_v2_qwen3": 0.815136,
+      "B_v3_nomic": 0.918953
+    },
+    "after full-dim cut L=500": {
+      "A_v2_qwen3": 0.747763,
+      "B_v3_nomic": 0.838136
+    },
+    "after fusion (pool=100)": {
+      "A_v2_qwen3": 0.660452,
+      "B_v3_nomic": 0.641322
+    },
+    "after cross-encoder (top-20)": {
+      "A_v2_qwen3": 0.458824,
+      "B_v3_nomic": 0.462533
+    }
+  },
+  "deltas_B_minus_A": {
+    "base (64d lane @N=1000)": {
+      "mean_delta_B_minus_A": 0.103817,
+      "ci95": [
+        0.068905,
+        0.138729
+      ],
+      "resolved": true,
+      "n": 133,
+      "wins": 67,
+      "losses": 8,
+      "ties": 58
+    },
+    "after full-dim cut L=500": {
+      "mean_delta_B_minus_A": 0.090373,
+      "ci95": [
+        0.047857,
+        0.13289
+      ],
+      "resolved": true,
+      "n": 133,
+      "wins": 60,
+      "losses": 19,
+      "ties": 54
+    },
+    "after fusion (pool=100)": {
+      "mean_delta_B_minus_A": -0.019129,
+      "ci95": [
+        -0.037147,
+        -0.001111
+      ],
+      "resolved": true,
+      "n": 133,
+      "wins": 17,
+      "losses": 38,
+      "ties": 78
+    },
+    "after cross-encoder (top-20)": {
+      "mean_delta_B_minus_A": 0.003709,
+      "ci95": [
+        -0.020619,
+        0.028038
+      ],
+      "resolved": false,
+      "n": 133,
+      "wins": 24,
+      "losses": 22,
+      "ties": 87
+    }
+  },
+  "fulldim_no_prefilter": {
+    "L100": {
+      "A_v2_qwen3": 0.519204,
+      "B_v3_nomic": 0.591316,
+      "mean_delta_B_minus_A": 0.072112,
+      "ci95": [
+        0.024933,
+        0.119292
+      ],
+      "resolved": true,
+      "wins": 48,
+      "losses": 33
+    },
+    "L500": {
+      "A_v2_qwen3": 0.828609,
+      "B_v3_nomic": 0.843325,
+      "mean_delta_B_minus_A": 0.014716,
+      "ci95": [
+        -0.014478,
+        0.043909
+      ],
+      "resolved": false,
+      "wins": 37,
+      "losses": 33
+    },
+    "L1000": {
+      "A_v2_qwen3": 0.926563,
+      "B_v3_nomic": 0.933638,
+      "mean_delta_B_minus_A": 0.007076,
+      "ci95": [
+        -0.014768,
+        0.028919
+      ],
+      "resolved": false,
+      "wins": 24,
+      "losses": 26
+    },
+    "L2000": {
+      "A_v2_qwen3": 0.977258,
+      "B_v3_nomic": 0.978649,
+      "mean_delta_B_minus_A": 0.001391,
+      "ci95": [
+        -0.012555,
+        0.015337
+      ],
+      "resolved": false,
+      "wins": 14,
+      "losses": 17
+    }
+  },
+  "i66_fulldim_cross_check": {
+    "target_I66_N3489_L500": 0.8286,
+    "measured_A_L500": 0.828609,
+    "gap": 9.000000000036756e-06,
+    "pass": true
+  },
+  "raw_product_metrics": {
+    "raw_r100_fusion": {
+      "A_v2_qwen3": 0.646897,
+      "B_v3_nomic": 0.627939
+    },
+    "raw_r20_ce": {
+      "A_v2_qwen3": 0.447496,
+      "B_v3_nomic": 0.451298
+    }
+  }
+}
+
+artifact: logs/p1/step10/stageG_decomposition.json
+sha256: 8a2fd64b317f2d22118d87a79a43a43140cdf09eddfdacf37fab5d78585d3329
+ALL GUARDS PASS

@@ -197,7 +197,12 @@ def run_retrieval(
     * a RAPTOR candidate carries **no `page_number`**, so at the page-level unit it can only
       DISPLACE a page, never add coverage. Its effect is measurable only as displacement.
     """
+    from src.core import query_trace
+    _tr = query_trace.Tracer(query_text, intent=query_type,
+                             lanes=list(lanes) if lanes else ["dense", "da"],
+                             k=cfg.reranker_top_k).start()
     q_vec = np.array(embedder.embed_query(query_text), dtype=np.float32)
+    _tr.mark("embed")
 
     # HyDE: generate a hypothetical passage and embed it — better matches Feynman's phrasing
     search_vec = q_vec
@@ -291,6 +296,7 @@ def run_retrieval(
             raptor_vector=search_vec,
         )
 
+    _tr.mark("search")
     hits_above = [h for h in hits if h.get("score", 1.0) >= threshold]
 
     # §I55 — the cluster reranker SWALLOWS its failures and returns the pool UNRANKED while the
@@ -305,6 +311,8 @@ def run_retrieval(
     else:
         reranked = hits[: cfg.reranker_top_k]
 
+    _tr.mark("rerank")
+    _tr.finish(top1=(reranked[0].get("score") if reranked else None), n_hits=len(hits))
     return {
         "q_vec": q_vec,
         "hits": hits,
@@ -658,11 +666,35 @@ def _looks_like_abstention(answer: str, top_chunks: list[dict], cfg) -> bool:
     return bool(top_chunks) and float(top_chunks[0].get("score", 1.0)) < thr
 
 
-def compute_citation_accuracy(answer: str, chunks: list[dict]) -> float:
-    """Fraction of [Page N] citations in the answer that appear in retrieved chunks."""
-    cited = {int(m) for m in re.findall(r"\[Page (\d+)\]", answer, re.IGNORECASE)}
+# A page citation in ANY form the generator actually emits: ``[Page 141]``, the CJK bracket
+# ``【Page 141】``, or ``(page 141)`` — with ANY whitespace between the word and the number (the
+# model emits U+202F narrow-no-break and U+00A0 no-break spaces, which a literal ASCII space does
+# NOT match). The old ``r"\[Page (\d+)\]"`` matched none of them, so the metric read a vacuous
+# 1.000 on every answer (IMPROVEMENTS.md §I115).
+_CITATION_RE = re.compile(r"[\[【(]\s*[Pp]age\s*(\d+)\s*[\]】)]")
+
+
+def _cited_page_numbers(answer: str) -> set[int]:
+    """Page numbers cited by the answer, in any of the formats above."""
+    return {int(m) for m in _CITATION_RE.findall(answer or "")}
+
+
+def compute_citation_coverage(answer: str) -> float:
+    """1.0 if the answer cites at least one page, else 0.0 — the coverage half of §I115."""
+    return 1.0 if _cited_page_numbers(answer) else 0.0
+
+
+def compute_citation_accuracy(answer: str, chunks: list[dict]) -> float | None:
+    """Fraction of the answer's page citations that appear in the retrieved chunks.
+
+    Returns **None** when the answer cites nothing: "no citations" and "every citation valid"
+    are different facts, and the previous ``return 1.0  # no citations — not penalised`` made the
+    aggregate read a vacuous 1.000 (IMPROVEMENTS.md §I115). Read the paired ``citation_coverage``
+    to tell an uncited answer from a valid one.
+    """
+    cited = _cited_page_numbers(answer)
     if not cited:
-        return 1.0  # no citations — not penalised (no false claims)
+        return None
     retrieved_pages = {c.get("page_number") for c in chunks}
     return round(len(cited & retrieved_pages) / len(cited), 4)
 
@@ -900,6 +932,9 @@ def evaluate_query(query: dict, store, embedder, reranker, cfg, judge_fn, args) 
             result["generation"]["citation_accuracy"] = compute_citation_accuracy(
                 answer, retrieval["reranked"]
             )
+            # §I115 — the coverage half: a `citation_accuracy` of None (no citations) is only
+            # legible beside whether the answer cited anything at all.
+            result["generation"]["citation_coverage"] = compute_citation_coverage(answer)
             # Optional: RAGAS-style judged context precision (one judge call per
             # chunk). Off by default — it is the only generation metric that needs
             # no gold labels, so it is also the one that can cover visual queries.
@@ -959,6 +994,7 @@ def aggregate_metrics(results: list[dict], cfg) -> dict:
             "faithfulness":      _avg([i["generation"].get("faithfulness")      for i in items]),
             "answer_relevance":  _avg([i["generation"].get("answer_relevance")  for i in items]),
             "citation_accuracy": _avg([i["generation"].get("citation_accuracy") for i in items]),
+            "citation_coverage": _avg([i["generation"].get("citation_coverage") for i in items]),
             "context_precision_judged": _avg(
                 [i["generation"].get("context_precision_judged") for i in items]
             ),
@@ -1008,7 +1044,7 @@ def build_summary_table(aggregated: dict, cfg) -> str:
         "Scope",
         f"Recall@{cfg.reranker_fetch_k}", f"Recall@{cfg.reranker_top_k}",
         f"Hit@{cfg.reranker_top_k}", "Ctx.Prec", "MRR", f"NDCG@{cfg.reranker_top_k}",
-        "Faithfulness", "Ans.Relevance", "Citation Acc.",
+        "Faithfulness", "Ans.Relevance", "Citation Acc.", "Cit.Cov.",
         *(["Ctx.Prec(J)"] if has_judged else []),
         "n / cal",
     ]
@@ -1021,7 +1057,7 @@ def build_summary_table(aggregated: dict, cfg) -> str:
             _fmt(m.get(recall_k)), _fmt(m.get(recall_top)), _fmt(m.get(hit_k)),
             _fmt(m.get("context_precision")), _fmt(m.get("mrr")), _fmt(m.get(ndcg_k)),
             _fmt(m.get("faithfulness")), _fmt(m.get("answer_relevance")),
-            _fmt(m.get("citation_accuracy")),
+            _fmt(m.get("citation_accuracy")), _fmt(m.get("citation_coverage")),
             *([_fmt(m.get("context_precision_judged"))] if has_judged else []),
             f"{n}/{nc}",
         ]
@@ -1101,6 +1137,7 @@ def print_report(aggregated: dict, cfg):
     table.add_column("Faithfulness",     justify="right")
     table.add_column("Ans.Relevance",    justify="right")
     table.add_column("Citation Acc.",    justify="right")
+    table.add_column("Cit.Cov.",         justify="right")
     table.add_column("n / calibrated",   justify="right")
 
     def _row(label, m):
@@ -1117,6 +1154,7 @@ def print_report(aggregated: dict, cfg):
             _fmt(m.get("faithfulness")),
             _fmt(m.get("answer_relevance")),
             _fmt(m.get("citation_accuracy")),
+            _fmt(m.get("citation_coverage")),
             f"{n} / {nc}",
         )
 

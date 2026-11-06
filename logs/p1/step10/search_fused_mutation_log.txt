@@ -1,0 +1,26 @@
+=== S4 mutation proof (search_fused) — tests/test_search_fused.py ===
+store.py sha256 051032dac9f0fefff58cb155365a3bc38842c779001bf97a049e5dc094dd4e5d
+baseline: all green [8 passed, 1 warning in 1.21s]
+  [ok] MVA `_rrf_merge` ignores the per-lane weights
+        must redden: test_a_large_weight_promotes_that_lanes_candidates -> RED
+        reddened: ['test_a_large_weight_promotes_that_lanes_candidates']  [1 failed, 7 passed, 1 warning in 1.20s]
+  [ok] MVB a zero-weight lane is kept instead of removed
+        must redden: test_zero_weight_removes_the_lane -> RED
+        reddened: ['test_zero_weight_removes_the_lane']  [1 failed, 7 passed, 1 warning in 1.21s]
+  [ok] MVC the weight/lane length-mismatch guard is removed
+        must redden: test_weights_length_mismatch_raises -> RED
+        reddened: ['test_weights_length_mismatch_raises']  [1 failed, 7 passed, 1 warning in 1.24s]
+  [ok] MVD `search_fused` APPENDS the lanes instead of fusing them
+        must redden: test_every_candidate_carries_an_rrf_score -> RED
+        reddened: ['test_a_large_weight_promotes_that_lanes_candidates', 'test_every_candidate_carries_an_rrf_score', 'test_rrf_score_decreases_with_rank_within_a_lane']  [3 failed, 5 passed, 1 warning in 1.22s]
+  [ok] MVE `_rrf_merge` ignores a candidate's RANK within its lane
+        must redden: test_rrf_score_decreases_with_rank_within_a_lane -> RED
+        reddened: ['test_rrf_score_decreases_with_rank_within_a_lane']  [1 failed, 7 passed, 1 warning in 1.22s]
+  [ok] MVF `_rrf_merge` sorts by candidate id, not by fused score
+        must redden: test_fused_rank_depends_on_the_lane_rank -> RED
+        reddened: ['test_a_large_weight_promotes_that_lanes_candidates', 'test_fused_rank_depends_on_the_lane_rank']  [2 failed, 6 passed, 1 warning in 1.21s]
+
+tests reddened by at least one mutation: ['test_a_large_weight_promotes_that_lanes_candidates', 'test_every_candidate_carries_an_rrf_score', 'test_fused_rank_depends_on_the_lane_rank', 'test_rrf_score_decreases_with_rank_within_a_lane', 'test_weights_length_mismatch_raises', 'test_zero_weight_removes_the_lane']
+source restored byte-identical
+
+ALL MUTATIONS DISCRIMINATE

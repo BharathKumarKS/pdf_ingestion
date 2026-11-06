@@ -1,0 +1,21 @@
+wrote /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/logs/p1/step10/policy_ab.json
+
+=== GUARDS ===
+  [PASS] G1_composition_wired_exactly: 133/133 rows select the right arm's metrics
+  [PASS] G2_multihop_policy_equals_C: 40 multihop rows, all metrics identical to C
+  [PASS] G3a_pool_identical_per_query: pool size + sha equal across C / P_gold / P_router on every row
+  [PASS] G3b_policy_equals_C_where_unchanged: 80 overview+multihop rows identical to C
+  [PASS] G4_router_arm_uses_router_output: every router-arm selection reproduces the router's own predicted class
+  [PASS] G5_arm_query_texts_match_the_code: C.rerank_query='product' Q.rerank_query='raw'
+  [PASS] G6_133_rows_0_errors_both_arms: 133 rows, 0 errors
+  [PASS] G7_router_not_degenerate: router classes over gold: {'factual': 29, 'multihop': 58, 'overview': 31, 'visual': 15}
+
+ALL GUARDS PASS
+
+=== the headline (paired vs C) ===
+  P_gold_minus_C
+    overall  nDCG +0.0557 [np.float64(0.024805), np.float64(0.086556)] R | MAP +0.0617 | MRR@20 +0.1049
+    factual  nDCG +0.1397 [np.float64(0.067581), np.float64(0.211871)] R | MAP +0.1548 | MRR@20 +0.2631
+  P_router_minus_C
+    overall  nDCG +0.0219 [np.float64(0.004626), np.float64(0.039193)] R | MAP +0.0217 | MRR@20 +0.0415
+    factual  nDCG +0.0550 [np.float64(0.012927), np.float64(0.097036)] R | MAP +0.0545 | MRR@20 +0.1040

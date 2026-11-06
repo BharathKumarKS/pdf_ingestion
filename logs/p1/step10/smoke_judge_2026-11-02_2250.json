@@ -1,0 +1,358 @@
+{
+  "aggregated": {
+    "abstention": {
+      "abstention_rate": null,
+      "n_abstained": 0,
+      "n_negatives": 0
+    },
+    "by_type": {
+      "factual": {
+        "answer_relevance": 1.0,
+        "citation_accuracy": 1.0,
+        "context_precision": 0.05,
+        "context_precision_judged": null,
+        "faithfulness": 0.5,
+        "hit_at_20": 1.0,
+        "mrr": 1.0,
+        "n_calibrated": 1,
+        "n_queries": 1,
+        "ndcg_at_20": 1.0,
+        "recall_at_100": 1.0,
+        "recall_at_20": 1.0
+      },
+      "overview": {
+        "answer_relevance": 1.0,
+        "citation_accuracy": 1.0,
+        "context_precision": 0.45,
+        "context_precision_judged": null,
+        "faithfulness": 0.8333,
+        "hit_at_20": 1.0,
+        "mrr": 1.0,
+        "n_calibrated": 1,
+        "n_queries": 1,
+        "ndcg_at_20": 0.5028,
+        "recall_at_100": 0.3478,
+        "recall_at_20": 0.0783
+      }
+    },
+    "overall": {
+      "answer_relevance": 1.0,
+      "citation_accuracy": 1.0,
+      "context_precision": 0.25,
+      "context_precision_judged": null,
+      "faithfulness": 0.6666,
+      "hit_at_20": 1.0,
+      "mrr": 1.0,
+      "n_calibrated": 2,
+      "n_queries": 2,
+      "ndcg_at_20": 0.7514,
+      "recall_at_100": 0.6739,
+      "recall_at_20": 0.5392
+    }
+  },
+  "config_snapshot": {
+    "chunking": {
+      "chunk_overlap": 64,
+      "chunk_size": 512
+    },
+    "colbert": {
+      "active": true,
+      "enabled": true
+    },
+    "derivative_artifacts": {
+      "card_types": [
+        "summary",
+        "definition",
+        "example",
+        "misconception",
+        "question",
+        "objective",
+        "formula",
+        "factoid"
+      ],
+      "collection": "derivative_artifacts",
+      "enabled": true
+    },
+    "embedding": {
+      "dim": 768,
+      "model": "nomic-ai/nomic-embed-text-v1.5"
+    },
+    "intent_router": {
+      "classifier_path": "data/models/intent_classifier.pkl",
+      "enabled": true,
+      "mode": "trained_classifier"
+    },
+    "llm_generator": {
+      "backend": "openai",
+      "model": "openai/gpt-oss-20b"
+    },
+    "mmr": {
+      "candidates": 100,
+      "enabled": true,
+      "lambda": 0.7
+    },
+    "raptor": {
+      "max_levels": 3,
+      "min_cluster_size": 2
+    },
+    "reranker": {
+      "enabled": true,
+      "fallbacks": 0,
+      "last_error": null,
+      "model": "BAAI/bge-reranker-v2-m3",
+      "queries_with_fallback": [],
+      "reranked_metrics_valid": true,
+      "top_k": 20
+    },
+    "retriever": {
+      "collection": "knowledge_base_v3",
+      "fetch_k": 100,
+      "splade_enabled": true,
+      "type": "hybrid (SPLADE+dense RRF)"
+    },
+    "score_threshold": 0.0,
+    "tenant_id": "global"
+  },
+  "elapsed_s": 546.6,
+  "integrity": {
+    "faithfulness_computed": 2,
+    "judge_calls": 65,
+    "judge_enabled": true,
+    "judge_failures": 0,
+    "judge_last_error": "",
+    "reranked_metrics_valid": true,
+    "reranker_fallback_ids": [],
+    "reranker_fallbacks": 0,
+    "retrieval_only": false,
+    "synthesis_failed": 0,
+    "synthesis_ok": 2
+  },
+  "n_queries": 3,
+  "query_file": "logs/p1/step10/smoke_queries.json",
+  "results": [
+    {
+      "answerable": true,
+      "calibrated": true,
+      "generation": {
+        "answer": "The section titled \u201cThermionic emission\u201d is section **42\u20112**\u3010Page\u202f34\u3011.",
+        "answer_relevance": 1.0,
+        "citation_accuracy": 1.0,
+        "faithfulness": 0.5
+      },
+      "id": "gold-003",
+      "metrics": {
+        "context_precision": 0.05,
+        "f1_at_20": 0.0952,
+        "hit_at_20": 1.0,
+        "map": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_20": 1.0,
+        "precision_at_20": 0.05,
+        "precision_ceiling_at_20": 0.05,
+        "recall_at_100": 1.0,
+        "recall_at_20": 1.0
+      },
+      "query": "Which section number is titled 'Thermionic emission'?",
+      "query_type": "factual",
+      "relevant_pages": [
+        34
+      ],
+      "reranker_fallback": false,
+      "top_chunks": [
+        {
+          "page": 34,
+          "score": 1.3333,
+          "text": "42-2 Thermionic emission . . . ., 1 = . . . . . . . . . . . . . . . . . . . . . . . . . .."
+        },
+        {
+          "page": 818,
+          "score": 0.0543,
+          "text": "We will now make a cycle out of the two isothermal lines by connecting them (say by adiabatic lines) at both ends of the upper flat section, as shown "
+        },
+        {
+          "page": 958,
+          "score": 0.7608,
+          "text": "Surface, 1 = of a gas, 43-16 f Thermal equilibrium, ff. Equipotential \u223c s, II-4-20 ff, 1 = 41-5 Thermal ionization, 42-8 ff. Isothermal \u223c s, II-2-5, 1"
+        }
+      ]
+    },
+    {
+      "answerable": true,
+      "calibrated": true,
+      "generation": {
+        "answer": "Feynman repeatedly uses the same statement\u2014**the total energy of an isolated system is constant**\u2014to show that the same bookkeeping rule applies whether the system is a falling mass, a vibrating string, or a heat\u2011engine cycle.  The passages below illustrate how he moves from one domain to the next and how the unifying principle clarifies the structure of physical law.\n\n| Domain | How Feynman applies the conservation law | Passage |\n|--------|------------------------------------------|---------|\n| **Mechanical systems** | He begins with the simplest example of a vertically falling object, writing that the sum of kinetic energy \\(T\\) and gravitational potential energy \\(U=mgh\\) is constant.  He then extends the argument to a sliding block that loses kinetic energy to friction, and to a pendulum in which the force is always downward but the energy remains constant in the absence of friction. | [Page\u202f251], [Page\u202f255] |\n| | He stresses that the conservation law can be derived without invoking Newton\u2019s laws, but that it is nevertheless consistent with them. | [Page\u202f251] |\n| | He reminds the reader that even when energy \u201cappears to be lost\u201d (e.g., in a frictional process) one must account for all forms of energy, including the heat that is generated. | [Page\u202f277] |\n| **Wave phenomena** | Feynman applies the same bookkeeping to sound waves.  He notes that in a \u201cbore problem\u201d the energy is not perfectly conserved when the height difference is large, because the shock is irreversible and energy is lost to heat.  He therefore treats the conservation of internal energy (rather than entropy) as the relevant statement for waves. | [Page\u202f905] |\n| **Thermodynamic processes** | He introduces the first law in the form \u201cheat \\(Q\\) put into a system + work \\(W\\) done on the system = increase in internal energy \\(U\\)\u201d.  This is the same conservation statement applied to a system that exchanges heat and does work. | [Page\u202f786], [Page\u202f811] |\n| | He then shows how the second law limits the conversion of heat into work, but the first law still guarantees that the total energy (including the internal energy that becomes heat) is conserved. | [Page\u202f806] |\n| | He discusses how the internal energy changes with volume and temperature, again using the same energy\u2011balance equation. | [Page\u202f811] |\n| | He points out that the laws of thermodynamics can be derived from the atomic viewpoint, again relying on the conservation of energy as the starting point. | [Page\u202f694] |\n\n### How the synthesis illuminates physical laws\n\n1. **Universality of energy conservation** \u2013 By applying the same energy\u2011balance equation to a falling mass, a vibrating string, and a heat engine, Feynman shows that the principle is not tied to a particular type of interaction but to the totality of all energy forms.  This is evident in the mechanical examples ([Page\u202f251], [Page\u202f255]), the wave example ([Page\u202f905]), and the thermodynamic example ([Page\u202f786], [Page\u202f811]).\n\n2. **Interconversion of energy forms** \u2013 The passages on friction ([Page\u202f255]) and on heat in thermodynamics ([Page\u202f98], [Page\u202f786]) demonstrate that mechanical energy can be converted into heat, and that heat can be converted back into work.  The same bookkeeping rule tracks these conversions.\n\n3. **Role of hidden or \u201cirreversible\u201d energy** \u2013 Feynman notes that in some processes (e.g., friction, shocks in sound waves) energy seems to disappear because it is hidden in heat or entropy.  Recognizing these hidden forms preserves the conservation law ([Page\u202f277], [Page\u202f905]).\n\n4. **Connection to deeper symmetries** \u2013 While the passages do not explicitly derive Noether\u2019s theorem, the repeated emphasis that \u201cconservation of energy is a consequence of the symmetry of time\u201d (implicit in the discussion of the first law) hints at the deeper link between symmetries and conservation laws.  The final remarks about quantum\u2011mechanical phase and charge conservation ([Page\u202f922]) echo this theme.\n\nIn sum, Feynman uses the conservation of energy as a single, unifying bookkeeping rule that applies across mechanical, wave, and thermodynamic contexts.  By repeatedly re\u2011deriving the same balance equation in different settings, he shows that the broader understanding of physical laws rests on the idea that energy is neither created nor destroyed, only transformed, and that this principle underlies the consistency of all physical phenomena.",
+        "answer_relevance": 1.0,
+        "citation_accuracy": 1.0,
+        "faithfulness": 0.8333
+      },
+      "id": "ovw-001",
+      "metrics": {
+        "context_precision": 0.45,
+        "f1_at_20": 0.1333,
+        "hit_at_20": 1.0,
+        "map": 0.0504,
+        "mrr": 1.0,
+        "ndcg_at_20": 0.5028,
+        "precision_at_20": 0.45,
+        "precision_ceiling_at_20": 1.0,
+        "recall_at_100": 0.3478,
+        "recall_at_20": 0.0783
+      },
+      "query": "In what ways does Feynman use the principle of conservation of energy to bridge the examination of mechanical systems, wave phenomena, and thermodynamic processes in Volume\u202f1 of *The Feynman Lectures on Physics*, and how does this synthesis illuminate the broader understanding of physical laws?",
+      "query_type": "overview",
+      "relevant_pages": [
+        31,
+        40,
+        43,
+        46,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        93,
+        95,
+        96,
+        97,
+        207,
+        252,
+        253,
+        254,
+        255,
+        256,
+        257,
+        259,
+        260,
+        261,
+        262,
+        270,
+        272,
+        273,
+        274,
+        275,
+        276,
+        277,
+        280,
+        282,
+        300,
+        316,
+        317,
+        330,
+        331,
+        358,
+        386,
+        415,
+        426,
+        427,
+        428,
+        429,
+        447,
+        448,
+        500,
+        549,
+        550,
+        551,
+        554,
+        555,
+        557,
+        559,
+        582,
+        595,
+        608,
+        696,
+        698,
+        699,
+        700,
+        701,
+        702,
+        704,
+        705,
+        706,
+        707,
+        709,
+        710,
+        713,
+        715,
+        716,
+        718,
+        719,
+        720,
+        724,
+        731,
+        732,
+        733,
+        734,
+        735,
+        742,
+        747,
+        749,
+        759,
+        765,
+        783,
+        785,
+        786,
+        787,
+        788,
+        789,
+        794,
+        796,
+        797,
+        798,
+        799,
+        800,
+        801,
+        813,
+        820,
+        824,
+        825,
+        826,
+        827,
+        829,
+        831,
+        849,
+        894,
+        905,
+        906,
+        907
+      ],
+      "reranker_fallback": false,
+      "top_chunks": [
+        {
+          "page": 277,
+          "score": 0.1307,
+          "text": "Of course if we disregard the heat energy, then the conservation of energy theorem will appear to be false.\nWhen we study matter in the finest detail "
+        },
+        {
+          "page": 278,
+          "score": 0.1425,
+          "text": "Naturally, the conservation of energy theorem will appear not to be true if something is interacting with something else on the outside and we neglect"
+        },
+        {
+          "page": 251,
+          "score": 0.2655,
+          "text": "In Chapter 4 we discussed the conservation of energy. In that discussion, we did not use Newton's laws, but it is, of course, of great interest to see"
+        }
+      ]
+    },
+    {
+      "answerable": true,
+      "calibrated": true,
+      "error": "timed out",
+      "generation": {},
+      "id": "gold-008",
+      "metrics": {},
+      "query": "How did astronomers discover that stars are made of atoms of the same kind as those on Earth?",
+      "query_type": "multihop",
+      "relevant_pages": [
+        79
+      ],
+      "reranker_fallback": false,
+      "top_chunks": []
+    }
+  ],
+  "run_name": "smoke_judge",
+  "tenant": "global",
+  "timestamp": "2026-11-02T22:50:52+00:00"
+}

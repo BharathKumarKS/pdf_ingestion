@@ -154,3 +154,46 @@ class TestHybridIngest:
             query_text="What is Newton's second law?",
         )
         assert isinstance(results, list)
+
+
+class TestClusterSpladeModel:
+    """§I117 — the CLUSTER sparse model id is `sv_sparse_model`, preferred when non-empty."""
+
+    @staticmethod
+    def _settings(**over):
+        from src.core.config import Settings
+        base = dict(
+            sv_sparse_url="http://cluster.invalid/embed-text/v1/sparse-embeddings",
+            splade_model="prithivida/Splade_PP_en_v1",
+            qdrant_in_memory=True,
+            sqlite_url="sqlite:///./data/test_synapse.db",
+        )
+        base.update(over)
+        return Settings(**base)
+
+    def test_sv_sparse_model_overrides_the_local_one_when_set(self, monkeypatch):
+        import httpx
+        from src.pdf_ingestion.splade_embedder import ClusterSpladeEmbedder
+
+        sent: list[dict] = []
+
+        class FakeResp:
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return {"data": [{"embedding": {"indices": [1], "values": [0.5]}, "index": 0}]}
+
+        def fake_post(url, **kw):
+            sent.append(kw.get("json", {}))
+            return FakeResp()
+
+        monkeypatch.setattr(httpx, "post", fake_post)
+
+        ClusterSpladeEmbedder(self._settings()).encode_sparse("x")   # sv_sparse_model empty
+        assert sent[0]["model"] == "prithivida/Splade_PP_en_v1"
+
+        ClusterSpladeEmbedder(
+            self._settings(sv_sparse_model="Qdrant/bm42-all-minilm-l6-v2-attentions")
+        ).encode_sparse("x")
+        assert sent[1]["model"] == "Qdrant/bm42-all-minilm-l6-v2-attentions"
