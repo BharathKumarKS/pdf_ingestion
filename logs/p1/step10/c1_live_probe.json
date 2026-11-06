@@ -1,0 +1,51 @@
+{
+  "model": "cross-encoder/nli-deberta-v3-base",
+  "similarity_model": "all-MiniLM-L6-v2",
+  "asserted": {
+    "A1_entailment_index": 1,
+    "A1_ok": true,
+    "A2_support_prob": 0.992400050163269,
+    "A2_ok": true,
+    "A4_contradict_prob": 0.10578940808773041,
+    "A4_ok": true,
+    "A5_kept_docs": [
+      0
+    ],
+    "A5_ok": true,
+    "A6_score": 0.5,
+    "A6_isolated": [
+      "The proton mass is 1.67e-27 kg."
+    ],
+    "A6_ok": true
+  },
+  "reported": {
+    "head_id2label": {
+      "0": "contradiction",
+      "1": "entailment",
+      "2": "neutral"
+    },
+    "R1_unrelated_prob": 0.9947595000267029,
+    "R1_unrelated_below_bar": false,
+    "R2_head_reads": {
+      "support": [
+        0.000217,
+        0.9924,
+        0.007383
+      ],
+      "unrelated": [
+        0.001685,
+        0.99476,
+        0.003555
+      ],
+      "contradict": [
+        0.07296,
+        0.105789,
+        0.821251
+      ]
+    },
+    "R3_unrelated_clears_bar_up_to_tau": 0.99476,
+    "R3_separation_gap": -0.002359
+  },
+  "wall_s": 12.0,
+  "all_asserted_pass": true
+}

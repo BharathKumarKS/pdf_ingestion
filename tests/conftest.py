@@ -18,8 +18,22 @@ os.environ.setdefault("USE_STUB_GRAPH",    "true")
 os.environ.setdefault("USE_STUB_SPLADE",   "true")
 os.environ.setdefault("USE_STUB_RERANKER", "true")
 os.environ.setdefault("USE_STUB_COLBERT",  "true")
+os.environ.setdefault("USE_STUB_NLI",      "true")
 os.environ.setdefault("QDRANT_IN_MEMORY",  "true")
 os.environ.setdefault("SQLITE_URL", "sqlite:///./data/test_synapse.db")
+
+# ── §I119: keep the DENSE lane hermetic from the developer's `.env` ─────────────
+# `.env` carries the DEPLOYED dense lane (nomic-768) because config.py's default is deliberately
+# neutral (Qwen-1024), and several tests model that 768/1024 split and construct `Settings()`
+# directly. A real env var outranks `.env`, so the neutral default is pinned here: the suite must
+# not depend on what a developer put in `.env`. Tests needing the deployed world override locally.
+os.environ.setdefault("DENSE_MODEL", "Qwen/Qwen3-Embedding-0.6B")
+os.environ.setdefault("DENSE_DIM", "1024")
+os.environ.setdefault(
+    "QUERY_INSTRUCTION",
+    "Instruct: Given a physics question, retrieve textbook passages that answer it\nQuery: ",
+)
+os.environ.setdefault("DOCUMENT_PREFIX", "")
 
 
 @pytest.fixture(autouse=True)

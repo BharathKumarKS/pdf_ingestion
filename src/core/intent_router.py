@@ -35,6 +35,11 @@ class Intent(str, Enum):
     MULTIHOP = "multihop"
     VISUAL   = "visual"
     MIXED    = "mixed"
+    # R5 (§I114) — the domain gate's reject class. NOT a retrieval route: an off-scope query's
+    # correct action is a clean refusal, not a search. It is in the enum so the classifier can be
+    # TRAINED to predict it; until the retrain adds the class, it is never predicted, so adding it
+    # is behaviour-neutral on the current model.
+    OUT_OF_SCOPE = "out_of_scope"
 
 
 @dataclass
@@ -52,7 +57,29 @@ ROUTE_MAP: dict[Intent, RouteConfig] = {
     Intent.MULTIHOP: RouteConfig(use_vector=True,  use_raptor=False, use_graph=True,  use_colpali=False),
     Intent.VISUAL:   RouteConfig(use_vector=False, use_raptor=False, use_graph=False, use_colpali=True),
     Intent.MIXED:    RouteConfig(use_vector=True,  use_raptor=True,  use_graph=True,  use_colpali=False),
+    # The refusal route: no lane fires. A caller sees all-False and returns a refusal (the
+    # grounding/security door, Act III) rather than running an empty search.
+    Intent.OUT_OF_SCOPE: RouteConfig(use_vector=False, use_raptor=False, use_graph=False, use_colpali=False),
 }
+
+
+def is_refusal(route: RouteConfig) -> bool:
+    """True when a route activates NO lane — the out-of-scope refusal (Act III's security door)."""
+    return not (route.use_vector or route.use_raptor or route.use_graph or route.use_colpali)
+
+
+@dataclass
+class GateDecision:
+    """The three-band domain-gate decision (the lesson plan's "cheap first gate").
+
+    ``band`` is ``"in"`` (confidently in domain — admit), ``"out"`` (confidently off domain —
+    reject) or ``"ambiguous"`` (the uncertainty band — escalate to the next stage). ``confidence``
+    is ``P(out_of_scope)`` from the classifier (NaN in prototype mode, which has no probabilities).
+    """
+    intent: Intent
+    band: str
+    confidence: float
+    refuse: bool
 
 
 # ── Prototype queries per intent ──────────────────────────────────────────────
@@ -102,6 +129,26 @@ _PROTOTYPES: dict[Intent, list[str]] = {
         "Find the figure explaining the photoelectric effect",
         "Which page has the circuit diagram?",
         "Show me the picture of the pendulum setup",
+    ],
+    # R5 (§I114) — the off-domain class. The corpus is physics (Feynman Vol 1); these are the
+    # queries the book cannot address. ⚠️ The classifier is only as good as its NEGATIVE class, so
+    # these are curated deliberately (the lesson plan: "curate out-of-domain examples with the same
+    # care you brought to the retrieval corpus"). ⚠️ §I114 measured the CEILING: an off-domain
+    # signal targets the 12 `neg-out` queries only; the 22 in-domain negatives need the response-side
+    # grounding floor, not this gate.
+    Intent.OUT_OF_SCOPE: [
+        "What is the capital of France?",
+        "Who won the last World Cup?",
+        "Give me a recipe for chocolate cake",
+        "What is the best stock to buy this year?",
+        "Tell me a joke about programmers",
+        "How do I write a cover letter?",
+        "What is the weather in London tomorrow?",
+        "Summarize the plot of Hamlet",
+        "What is the latest smartphone model?",
+        "How do I fix a leaking tap?",
+        "What are the symptoms of the flu?",
+        "Who is the current prime minister?",
     ],
 }
 
@@ -233,6 +280,42 @@ class IntentRouter:
     def route(self, query_vector: np.ndarray) -> RouteConfig:
         intent = self.classify(query_vector)
         return ROUTE_MAP[intent]
+
+    def gate(self, query_vector: np.ndarray) -> GateDecision:
+        """R5 — the three-band domain gate. Reads the classifier's PROBABILITY, not just its label.
+
+        "Let the cheap model's own uncertainty route the escalation": confidently in domain →
+        admit; confidently off domain → reject; between the two thresholds → escalate (band
+        ``"ambiguous"``). Cost then scales with the width of the confusion band, not with traffic.
+
+        ⚠️ Behaviour-neutral until the classifier is RE-TRAINED with ``out_of_scope``: a model with
+        no such class yields ``P(out)=0`` → band ``"in"``, never a refusal. The retrain is a run.
+        """
+        intent = self.classify(query_vector)
+
+        # Prototype mode (or a model with no probabilities): only an explicit out_of_scope label
+        # refuses. There is no probability to band on.
+        if self._clf is None or not hasattr(self._clf, "predict_proba"):
+            refuse = intent is Intent.OUT_OF_SCOPE
+            return GateDecision(intent, "out" if refuse else "in", float("nan"), refuse)
+
+        classes = list(getattr(self._clf, "classes_", []))
+        if Intent.OUT_OF_SCOPE.value not in classes:
+            return GateDecision(intent, "in", 0.0, False)
+
+        q = np.array(query_vector, dtype=np.float32)
+        try:
+            probs = self._clf.predict_proba([q])[0]
+        except Exception as exc:  # noqa: BLE001 — a gate must not crash the request path
+            logger.warning("IntentRouter.gate: predict_proba failed ({}); admitting", exc)
+            return GateDecision(intent, "in", float("nan"), False)
+
+        p_out = float(probs[classes.index(Intent.OUT_OF_SCOPE.value)])
+        if p_out >= self._cfg.guard_domain_out_conf:
+            return GateDecision(intent, "out", p_out, True)
+        if p_out <= self._cfg.guard_domain_in_conf:
+            return GateDecision(intent, "in", p_out, False)
+        return GateDecision(intent, "ambiguous", p_out, False)
 
 
 # ── Singleton ─────────────────────────────────────────────────────────────────

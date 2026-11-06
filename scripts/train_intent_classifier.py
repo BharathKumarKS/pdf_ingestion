@@ -50,7 +50,7 @@ console = Console()
 
 # ── Intent definitions ────────────────────────────────────────────────────
 
-INTENTS = ["factual", "overview", "multihop", "visual"]
+INTENTS = ["factual", "overview", "multihop", "visual", "out_of_scope"]
 
 # Generation prompts — one per intent, designed for physics education
 GENERATION_PROMPTS = {
@@ -107,6 +107,22 @@ phase diagrams, experimental setups, sinusoidal waves, energy level diagrams
 
 Return ONLY a JSON array of strings, no other text:
 ["question 1", "question 2", ...]""",
+
+    "out_of_scope": """\
+Generate {n} diverse, realistic questions that a student might type into a PHYSICS TEXTBOOK \
+assistant but which the physics corpus CANNOT answer — questions that are off-domain (not about \
+physics at all).
+Each question should:
+- Be entirely outside physics: current events, geography, cooking, finance, coding, medicine, \
+entertainment, personal advice, chit-chat
+- Be the kind of thing a user types by mistake, or to test the system, or because they think it \
+is a general assistant
+- NOT be a physics question the book happens to omit (that is in-domain-but-uncovered, a different \
+class); it must be OFF-DOMAIN
+- Vary widely: recipes, sports results, travel, health, law, pop culture, general knowledge
+
+Return ONLY a JSON array of strings, no other text:
+["question 1", "question 2", ...]""",
 }
 
 # Judge validation prompt
@@ -121,6 +137,9 @@ Intent definitions:
   or tracing causal/relational chains.
 - visual: asks to find a specific diagram, figure, graph, table, or illustration \
   in a textbook.
+- out_of_scope: is NOT about physics at all — off-domain (geography, cooking, finance, \
+  medicine, current events, chit-chat). The physics corpus cannot address it. ⚠️ This is \
+  distinct from an in-domain physics question the book merely fails to cover.
 
 Query: "{query}"
 Assigned intent: "{intent}"

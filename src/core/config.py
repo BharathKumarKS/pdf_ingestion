@@ -69,6 +69,12 @@ class Settings(BaseSettings):
     # explicit, tested step rather than a config edit.
     # Qwen3-Embedding-0.6B is MRL-capable (32-1024); the endpoint IGNORES a `dimensions` param,
     # so the 64d view is sliced client-side and re-normalised.
+    # ⚠️ §I119 — the CODE default is deliberately NEUTRAL; `.env` carries the environment. Do NOT
+    # "fix" it to nomic here: two documented invariants pin these (tests/test_config_invariants.py),
+    # and a run without the override is now caught by the read-path width guard (store), which
+    # RAISES on a model/collection mismatch instead of 400ing silently. The deployed values
+    # (DENSE_MODEL=nomic-ai/nomic-embed-text-v1.5, DENSE_DIM=768, QUERY_INSTRUCTION="search_query: ",
+    # DOCUMENT_PREFIX="search_document: ") live in `.env`.
     dense_model: str = "Qwen/Qwen3-Embedding-0.6B"
     dense_dim: int = 1024                # native dim of dense_model; also the intent classifier's width
     dense_dim_low: int = 64              # MRL truncation for the fast ANN first stage — the
@@ -105,9 +111,18 @@ class Settings(BaseSettings):
     # the model and the fallback width, and a disagreement RAISES rather than guessing.
     derived_dense_model: str = "nomic-ai/nomic-embed-text-v1.5"
     derived_dense_dim: int = 768
+    # ⚠️ The DERIVED lanes must not inherit the ARM's query instruction. `query_instruction` above is
+    # the arm's (Qwen's `Instruct: …` by default, nomic's `search_query: ` in a nomic run); the
+    # derived collections are nomic-768, so a Qwen instruction applied to a nomic model is the wrong
+    # convention. `get_derived_embedder` used to copy only the model+dim and INHERIT the arm's
+    # instruction, so the derived lane silently sent a Qwen instruction to nomic whenever the arm's
+    # width differed from the collection's (and the env override was absent). This pins the derived
+    # query side to the convention the derived collections were BUILT with (nomic `search_query: `).
+    derived_query_instruction: str = "search_query: "
     # Qwen3 is instruction-aware: the model card measures a ~1-5% retrieval drop without a
     # query-side instruction. Documents need none. The query path must match the index, so this
     # is applied in store.search / evaluate_rag / funnel_boundary_recall alike.
+    # ⚠️ §I119 — NEUTRAL code default; the deployed nomic instruction (`search_query: `) lives in `.env`.
     query_instruction: str = (
         "Instruct: Given a physics question, retrieve textbook passages that answer it\nQuery: "
     )
@@ -117,14 +132,21 @@ class Settings(BaseSettings):
     # which is what the re-ingest actually uses — applied the query instruction only ("Documents
     # carry no instruction"), so nomic would have been used OUT OF DISTRIBUTION. §I62 measured the
     # size of getting this wrong: unprefixed cosine 0.949 against 1.000000 prefixed. Qwen3 needs no
-    # document prefix, so the default is empty; `.env` sets it for nomic. ⚠️ It is applied by
+    # document prefix, so the code default is empty; `.env` sets it for nomic (⚠️ §I119: the deployed
+    # embedder IS nomic, so `.env` MUST set DOCUMENT_PREFIX="search_document: "). It is applied by
     # `ClusterDenseEmbedder`'s passage paths AND by `LateChunkEmbedder`'s tokenization — the two
     # must agree, or every child's span shifts by the prefix's token count with no warning
     # (ARCHITECTURE.md §8; IMPROVEMENTS §I78).
     document_prefix: str = ""
-    # Cluster-served models for the ColBERT + sparse lanes (§I1 upgrades).
-    sv_colbert_model: str = "lightonai/GTE-ModernColBERT-v1"
-    sv_sparse_model: str = "Qdrant/bm42-all-minilm-l6-v2-attentions"
+    # Cluster-served models for the ColBERT + sparse lanes (§I1 upgrades, §I117).
+    # ⚠️ These are the CLUSTER path's model ids — preferred over colbert_model/splade_model when
+    # NON-EMPTY. Leave EMPTY to keep the current models. Setting one IS the migration, and it must
+    # be done TOGETHER with a re-embed of that lane: the stored lane vectors are model-specific, so
+    # a query-side model change ALONE silently mismatches the index (§I117). Candidates probed
+    # 2026-11-05: ColBERT `lightonai/GTE-ModernColBERT-v1` (128d, drop-in), sparse
+    # `Qdrant/bm42-all-minilm-l6-v2-attentions` (or `Qdrant/bm25`).
+    sv_colbert_model: str = ""
+    sv_sparse_model: str = ""
 
     # Re-ingest chunking (E1/E2/E3)
     late_chunk_enabled: bool = True      # embed children with parent context (cluster per-token)
@@ -257,6 +279,48 @@ class Settings(BaseSettings):
 
     # Phase 3 — Concept embeddings (Qdrant collection for fast GraphRAG lookup)
     concept_collection: str = "concept_embeddings"
+    # §G5/§I2 — traversal depth for the graph lane, in RELATES_TO hops from the query's seed
+    # concepts. 1 = the shipped behaviour (seed concepts only; a chunk that mentions a seed is
+    # reached, and `hop_distance` is 0 because nothing is traversed). 2 or 3 expands the seed set
+    # along RELATES_TO edges so a chunk that mentions a NEIGHBOUR of a seed becomes reachable, and
+    # `hop_distance` reports the real minimum edge count. ⚠️ Default 1 is deliberate: the expansion
+    # is a new treatment and must not change the shipped lane until its ablation runs (§G1's rule).
+    graph_max_hops: int = 1
+
+    # -- Guardrails (Week-6, "The Two Gates of the Gatehouse") — request side --------------
+    # ⚠️ The lesson plan's budget table: these are the CHEAPEST gates, so they run first. Length
+    # and complexity are syntactic (a comparison), near-free, and they protect gates that have not
+    # run yet. Token counts are approximated by whitespace word count (no tokenizer dependency);
+    # the course's own numbers (median 8–15 tokens, p95 < 50, "500 tokens is a document") are for
+    # real subword tokens, so the word-count proxy is deliberately conservative.
+    guard_hard_max_tokens: int = 500     # reject outright above this (the Trojan-paragraph antidote)
+    guard_soft_warn_tokens: int = 100    # raise scrutiny above this; never blocks on its own
+    # Gibberish rung 3 — per-character (unigram) Shannon entropy. MEASURED on this corpus
+    # 2026-11-05: real physics queries ≈ 3.9–4.0 bits/char, base64 ≈ 4.7, hex ≈ 3.1, keyboard
+    # smashes ≈ 2.6–3.3. So a HIGH floor flags an encoded payload ("almost for free, before you
+    # have spent a cent on any model"); smashes are caught by rungs 1–2, not by entropy.
+    guard_entropy_floor: float = 4.5
+    # R5 — the three-band domain gate (the lesson plan's "read the classifier's probability, not
+    # just its label"). P(out_of_scope) >= out_conf → REJECT; <= in_conf → ADMIT; between →
+    # ESCALATE (the uncertainty band). Cost then scales with the width of the confusion band.
+    # ⚠️ Behaviour-neutral until the classifier is re-trained with an `out_of_scope` class.
+    guard_domain_out_conf: float = 0.50   # reject above this
+    guard_domain_in_conf: float = 0.20    # admit at or below this
+
+    # -- Guardrails — response side (Act II, "the conscience") -----------------------------
+    # C1 — the assertion–evidence bipartite graph. Two model stages run under the LLM-free
+    # path: a MiniLM similarity pre-filter (drops claim–evidence pairs before the expensive
+    # NLI) and a DeBERTa cross-encoder NLI read (does the evidence ENTAIL the claim?). Both
+    # thresholds are the lab's; the models download on first use (CPU, no cluster).
+    # ⚠️ `use_stub_nli` swaps both for deterministic offline stand-ins so the fast suite
+    # never downloads a model — the repo's `USE_STUB_*` convention.
+    use_stub_nli: bool = False
+    guard_similarity_model: str = "all-MiniLM-L6-v2"           # C1 pre-filter encoder
+    guard_nli_model: str = "cross-encoder/nli-deberta-v3-base"  # C1 entailment cross-encoder
+    guard_similarity_threshold: float = 0.5   # keep a claim–evidence pair only above this
+    guard_nli_threshold: float = 0.55         # entailment probability that counts as grounded
+    guard_max_claims: int = 12                # cap claims per answer (cost = O(claims × evidence))
+    guard_max_evidence: int = 8               # cap evidence passages per answer
 
     # Phase 3 — MinIO (active when image_store_backend="minio")
     minio_endpoint: str = "http://localhost:9000"
