@@ -1,12 +1,12 @@
 {
-  "probed_at_utc": "2026-11-06T01:58:18Z",
+  "probed_at_utc": "2026-11-06T05:44:12Z",
   "base": "http://10.0.10.70:8123",
   "timeout_s": 35.0,
   "lanes": {
     "dense": {
       "url": "http://10.0.10.70:8123/embed-text/v1/embeddings",
       "status": 200,
-      "latency_s": 0.19,
+      "latency_s": 0.15,
       "bytes": 30446,
       "shape": [
         "object",
@@ -20,7 +20,7 @@
     "colbert": {
       "url": "http://10.0.10.70:8123/embed-text/v1/multivector-embeddings",
       "status": 200,
-      "latency_s": 0.13,
+      "latency_s": 0.12,
       "bytes": 37357,
       "shape": [
         "object",
@@ -36,7 +36,7 @@
     "sparse": {
       "url": "http://10.0.10.70:8123/embed-text/v1/sparse-embeddings",
       "status": null,
-      "latency_s": 35.04,
+      "latency_s": 35.03,
       "bytes": 0,
       "shape": null,
       "error": "TimeoutError: timed out"
