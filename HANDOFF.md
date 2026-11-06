@@ -6,8 +6,311 @@
 > was chosen and **why not** the others, with the backing number (for defence and later recall).
 > Keep this file short — it loads into every session.
 >
-> **Last updated: 2026-11-01, session 31 (✅ **4A RAN — SCORE FUSION IS NOT A LEVER: unresolved everywhere overall, a small RESOLVED HARM on multihop (S1 −0.0112, S2 −0.0212 nDCG@20). Rank RRF is earning its place.** ✅ **§A LANDED — THE PER-SPACE QUERY-VECTOR FIX: a 1024-dim arm's DA/graph lanes go 0 → 5 hits; a 768-dim arm is a BIT-EXACT no-op.** Read `IMPROVEMENTS.md` §I103 and §I104.)**
-> Session 30's note follows, still true: (✅ **4B RAN (read-only) — THE ENDPOINT CUT AS nDCG@k: the cut is MONOTONE and CANNOT change the top-20; it adds RECALL only; the apparent nDCG gain (+0.0233) is a CONSTRUCTION artifact.** Verifier 33/33, mutation 31/33 checks, no inert check.)
+> **Last updated: 2026-11-05, session 38 — see the SESSION 38 block below. One line: ▶ C1 (the response-side assertion–evidence grounding graph) and C4 (ALCE citation faithfulness) are BUILT + VERIFIED (tests + stdlib verifier + mutation + cross-family reviewer); the lab's NLI model is MEASURED to not separate unrelated from entailing text (§I121); the three session-37 steps that were MISSING a reviewer (P0/R8/C2) are now retro-verified; and a DETERMINISTIC completeness gate (`scripts/verify_plan_coverage.py` + a test) now makes a missing reviewer impossible to miss. Nothing committed. ⚠️ the cluster's sparse + rerank are STILL DOWN.**
+>
+> ## ▶ SESSION 38 — ▶ START HERE (2026-11-05). **C1/C4 SHIPPED AND VERIFIED; THE VERIFICATION GAP IS NOW MECHANICAL.**
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 38, then `.hermes/plans/2026-11-05-p1-guardrails-course-aligned-SESSIONS.md` — its **status table is the resume point**, and its **§9.5 is the new completeness gate you must keep green**. Continue the cheap-first core: **R10** (the funnel + tournament table — needs `data/guardrail_eval.jsonl`, not yet built), then **R4/R6/R9**. ⚠️ **Before any response-side gate is trusted, read §I121**: the lab's NLI model (`cross-encoder/nli-deberta-v3-base`) calls an UNRELATED passage entailment at **0.9948**, above a supporting passage's **0.9924** — so C1/C4's grounding floor cannot separate near-domain negatives as §I114 planned. ⚠️ Every step: acceptance + independent reviewer + stdlib verifier + mutation proof, then `python scripts/verify_plan_coverage.py` (0 gaps). Nothing is committed."*
+>
+> **1. ✅ C1 — THE ASSERTION–EVIDENCE BIPARTITE GRAPH IS BUILT (§I121).** `src/core/guardrails/response.py` now carries the lab's five response-grounding modules ported from `Labs/Week_6/response_grounding/src/response_grounding/*.py`: `ClaimExtractor` (+ the lab's sentence-split fallback, and its COSTAR prompt copied to `src/core/guardrails/prompts/claim_extractor_system_prompt.md`), `ClaimDocumentMatrixBuilder`, `SemanticSimilarityFilter` (MiniLM cosine, τ 0.5), `NLIEntailmentChecker` (DeBERTa cross-encoder, entailment = the softmax prob of the model's entailment head, τ 0.55) and `GroundednessEvaluator` (grounded iff ≥1 retained edge entails; an **isolated left node** is the hallucination signature). Deviations from the lab: **only** `call_llm` replaces `instructor`+`OpenAI`, and the encoder/checker are **injectable** so `USE_STUB_NLI` stands in offline. New config: `use_stub_nli`, `guard_similarity_model`, `guard_nli_model`, `guard_similarity_threshold`, `guard_nli_threshold`, `guard_max_claims`, `guard_max_evidence`.
+>
+> **2. ✅ C4 — ALCE CITATION FAITHFULNESS.** `compute_citation_faithfulness` reads the same NLI graph at the citation level: **citation recall** = the fraction of ALL statements with ≥1 entailing citation; **citation precision** = the fraction of ALL citations that entail; **both None when the answer cites nothing** (the §I115 lesson). Citations are stripped from the statement before the NLI read.
+>
+> **3. ⚠️ §I121's FINDING — the MODEL, not the port.** `logs/p1/step10/c1_live_probe.py` → `.json`, three passages against one claim: supporting **0.9924** entailment, **unrelated ("The cat sat on the mat…") 0.9948**, contradicting 0.1058. **The unrelated passage OUTSCORES the supporting one** (separation gap **−0.002359**): no τ separates them. The real head order is `{0: contradiction, 1: entailment, 2: neutral}` (verified live; the stub now mirrors it). ⇒ **§I114's plan to hand the 22 near-domain negatives to this grounding floor is undercut** — the floor's entailment read calls an unrelated passage entailment. Needs its own measured decision (a stronger NLI model, or a two-stage read).
+>
+> **4. ✅ THE VERIFICATION GAP IS NOW MECHANICAL — this is the session's process fix.** An audit against the files (not the plan's prose) found the session-37 table marked **P0, R8 and C2 ✅ with no independent reviewer** — a *consistent* omission, i.e. a forgotten ritual, not a judgment call. Two things were done: **(a)** the three steps were **retro-verified** — `p0_config_guard_verifier.py` **14/14**, the R7R8 mutation **7/7**, the C2 mutation **4/4**, and an independent cross-family reviewer (`openai/gpt-oss-20b` on the cluster router, vs the author's deepseek) **13/13 CONFIRMED** over P0+R8+C2 (`logs/p1/step10/guardrails_p0_r8_c2_review.json`). **(b)** A **deterministic completeness gate** — `scripts/verify_plan_coverage.py` + `tests/test_plan_verification_coverage.py` — now asserts that every `✅ DONE` row in the plan's §8 has a non-empty verifier, a non-empty mutation proof, a **resolvable** reviewer (a `deleg_*` id or an existing `…review…` artifact) and only existing backticked paths. **It is a test**, so it cannot be forgotten; being deterministic, it needs no verifier of its own. Demonstrated: run against the pre-fix table it names **exactly P0, R8, C2**.
+>
+> **5. ✅ VERIFICATION, ALL FOUR PARTS, FOR C1/C4.** Acceptance `tests/test_guardrails_response_c1.py` 23/23 + `tests/test_guardrails_citation_c4.py` 10/10; live probe asserted checks A1/A2/A4/A5/A6 pass; stdlib verifier `logs/p1/step10/guardrails_c1c4_verifier.py` **14/14** (PART 1 re-derives every probe flag from the raw probabilities; PART 2 re-derives ALCE with its own splitter/regex/arithmetic over a hand-set oracle); mutation `guardrails_c1c4_mutation.py` **13/13 reddened, no inert** (⚠️ **M9 was INERT on the first run** — the object-form test was rescued by the bracket-slice fallback; a stronger fixture was added and M9 now reddens — recorded, not hidden); independent cross-family reviewer **9/9 CONFIRMED** (`logs/p1/step10/guardrails_c1c4_review.json`).
+>
+> **6. ⚠️ SUITE.** `4 failed / 868 passed / 9 skipped` (scrubbed env, `-m "not slow"`) — the 4 are the **documented pre-existing** `tests/data/sample_physics.pdf` failures (`test_phase1::test_hybrid_search_includes_global`, `test_phase2::test_search_still_works_after_phase2`, `test_splade` ×2), **0 new**. (770 session-37 baseline + 61 session-37 guardrail tests + 33 C1/C4 + 4 gate tests = 868.)
+>
+> **7. ⚠️ WORKING TREE.** **Nothing committed this session.** New: `src/core/guardrails/prompts/`, `tests/test_guardrails_response_c1.py`, `tests/test_guardrails_citation_c4.py`, `tests/test_plan_verification_coverage.py`, `scripts/verify_plan_coverage.py`, and `logs/p1/step10/{c1_live_probe.py,.json, guardrails_c1c4_verifier.py, guardrails_c1c4_mutation.py, guardrails_c1c4_review.py,.json, guardrails_p0_r8_c2_review.py,.json}`. Modified: `src/core/guardrails/response.py`, `src/core/config.py`, `tests/conftest.py`, `IMPROVEMENTS.md` (§I121), the plan. ⚠️ **Sessions 13–37 remain uncommitted; the branch is ahead of origin and NOTHING is pushed — owner decision, outstanding.**
+>
+> **8. ▶ NEXT (owner-ordered 2026-11-05).** **(a)** The rest of the cheap-first core: **R10** (the funnel + tournament — ⚠️ needs `data/guardrail_eval.jsonl`, not yet built), then **R4/R6/R9**. **(b)** ⚠️ **The §I121 NLI decision** — the grounding floor's separation must be fixed or explicitly bounded before C5/H* depend on it. **(c) The R5 retrain** — a separate, pre-registerable run. **(d)** Re-probe the cluster (`python3 logs/p1/step10/cluster_probe.py`) — if sparse + rerank return, run #2 and the §G5 ablation. **(e)** ⚠️ **Remind the owner to supply the OLD architecture diagram (guardrails + observability).**
+>
+> ## ▶ SESSION 37 — ▶ START HERE (2026-11-05). **THE GUARDRAILS BUILD (course-aligned). Two review documents written; the owner approved the package + the cheap-first core + P0.**
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 37, then `.hermes/plans/2026-11-05-p1-guardrails-course-aligned-SESSIONS.md` — its **status table is the resume point** — and `.hermes/plans/2026-11-05-p1-architecture-v3-coverage-gap.md`. Continue the cheap-first core: **C1** (assertion–evidence bipartite graph, port the lab's `nli_entailment_checker.py`/`semantic_similarity_filter.py`/`groundedness_evaluator.py`), **C4** (ALCE citation faithfulness), **R10** (the funnel + tournament table), then **R4/R6/R9**. ⚠️ **The R5 retrain is a separate, pre-registerable run** (it embeds training queries via the cluster dense lane and overwrites `data/models/intent_classifier.pkl`). ⚠️ Every step: acceptance + independent reviewer + stdlib verifier + mutation proof. Nothing is committed."*
+>
+> **1. ✅ WHAT WAS BUILT (all in `src/core/guardrails/`, code FROM the Week-6 lab materials).** Owner decisions (2026-11-05): the **package** `src/core/guardrails/`; the **cheap-first core** R1,R2,R3,R5,R7,R8,C1,C2,C4; **R5 retrains the live `IntentRouter`**; **P0** as the plan recommended.
+> * **P0** — `config.py`'s four dense defaults REVERTED to the neutral values (Qwen-1024); the deployed nomic-768 values moved to `.env`; a **read-path width guard** (`store._assert_query_width`) now RAISES on a model/collection mismatch instead of 400ing; `tests/conftest.py` pins the dense env so the suite is hermetic from `.env`. Verifier `logs/p1/step10/p0_config_guard_verifier.py` **14/14**; suite back to the documented **4 failed** baseline.
+> * **R1** `sanitize.py` (lab `guradrails_req_side.py` + decode/script layers) — 13 tests, mutation 6/6, reviewer **7/7**.
+> * **R2/R3** `request.py` — length/complexity bounds + the gibberish ladder (entropy floor **4.5**, MEASURED: English ≈3.9–4.0, base64 ≈4.7). 15 tests, mutation 8/8, reviewer **4 CONFIRMED / 2 REFUTED** (C5 = the author's test count was 15 not 14 — corrected; C1 = a wording misread).
+> * **R5** (CODE) — `Intent.OUT_OF_SCOPE` + a refusal route + `is_refusal` + the three-band `gate()` (`guard_domain_out_conf` 0.50 / `guard_domain_in_conf` 0.20) + `train_intent_classifier.py` extended. 9 tests, mutation 7/7, reviewer **7/7**. ⚠️ **Behaviour-neutral until retrained** (a model with no `out_of_scope` class never refuses).
+> * **R7** `pii.py` (lab `pii_guardrail.py` + Luhn/AKIA/ghp_) — 9 tests, mutation 7/7 (shared with R8), reviewer **6/6**.
+> * **R8** `request.py` — `check_injection` (pattern pass) + `spotlight` (datamasking, U+2063). 5 tests.
+> * **C2** `response.py` — citation validity + numbers-in-evidence (tier-1, stdlib). 10 tests, mutation 4/4.
+>
+> **2. ⚠️ §I114's CEILING STANDS.** The domain gate (R5) targets the **12 `neg-out`** queries only; the **22 in-domain negatives** (`neg-in` 12 + `neg-nea` 10) are the response-side grounding floor's job (C1/C4). The old plan's **G1 is SUPERSEDED** by R5 + the C-workstream; G1's score-floor variant is deliberately not shipped.
+>
+> **3. ⚠️ TWO THINGS ARE NOT DONE, stated so they are not mistaken for done.** (a) **The R5 retrain** — a run (cluster dense lane + `data/models/intent_classifier.pkl` write); pre-register it and commit the pre-registration ALONE first (D6.1/D6.5). (b) **C1/C3/C4/C5** — the response-side NLI graph needs the cross-encoder model download (`cross-encoder/nli-deberta-v3-base`) on first use.
+>
+> **4. ⚠️ WORKING TREE.** **Nothing committed this session.** New: `src/core/guardrails/` (6 files), 6 new test files, 5 new `logs/p1/step10/*_mutation.py` + `p0_config_guard_verifier.py`, the two plan docs. Modified: `config.py`, `store.py`, `intent_router.py`, `scripts/train_intent_classifier.py`, `.env` (gitignored), `tests/conftest.py`, `tests/test_lane_resolution.py`, `tests/test_phase_a.py`. ⚠️ Sessions 13–36 remain uncommitted; the branch is ahead of origin and **nothing is pushed** — owner decision, outstanding.
+>
+> **5. ⚠️ THE CLUSTER — sparse + rerank STILL DOWN** (re-probed session 37: dense 200, ColBERT 200, sparse timeout, rerank timeout). Blocks #2 and the §G5 ablation; the guardrails work is cluster-free.
+>
+> ## ▶ SESSION 36 — ▶ START HERE (2026-11-05). **⚠️ STILL BLOCKED ON THE CLUSTER (sparse + rerank hang, re-probed). §I118: the sparse lane's silent dropout is now COUNTED — §I96's class closed for the fourth lane.**
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 36, then `IMPROVEMENTS.md` §I118 and §I113–§I117. ⚠️ FIRST re-probe the cluster: `python3 logs/p1/step10/cluster_probe.py` (sparse + rerank were still hanging on 2026-11-05; the 8123 HTTP front answers unknown paths 404 in 0.08 s, so the handlers hang — NOT a moved endpoint, NOT a dead host). If they are back, run #2 (`logs/p1/step10/router_in_loop.py` → `_verifier.py` → `_mutation.py`). If not: the graph work (G3/G2/G5 — needs only Memgraph + `concept_embeddings` + the dense embedder, which is UP) or the HANDOFF hygiene."*
+>
+> **1. ⛔ THE BLOCKER — RE-PROBED, STILL DOWN.** `logs/p1/step10/cluster_probe.py` → `cluster_probe.json`: **dense 200 (0.19 s) · ColBERT 200 (0.12 s) · sparse timeout (35 s) · rerank timeout (35 s)** — reproduces session 35 exactly. `cluster_probe_alternates.py` excludes the competing hypotheses: `10.0.10.70:8123` answers unknown paths with a **404 in 0.08 s** (front ALIVE) and the same timeout recurs on `:8000` ⇒ the **sparse/rerank handlers hang** (a service-level hang, not network/port/route). Verifier `cluster_probe_verifier.py` **7/7 PASS** + mutation proof. ⇒ **#2 and the demo's retrieval path stay BLOCKED; the owner cannot restart the services.**
+>
+> **2. ✅ §I118 — THE SPARSE LANE'S SILENT DROPOUT IS NOW COUNTED.** §I96's counters existed for ColBERT/DA/RAPTOR/GRAPH; the **sparse** lane's `except` in `store._qdrant_search` only logged. It now increments `self.sparse_dropouts` / `self.last_sparse_dropout`, byte-for-byte the ColBERT shape — **13 lines, behaviour-neutral on success, query-time only, no re-ingest.** Tests `test_lane_dropout_counters.py` **15/15**; mutation `sparse_dropout_mutation.py` (M1/M2/M3, no inert check); independent reviewer **gpt-oss-20b (deleg_1b9df948)** — **5/5 claims CONFIRMED** (⚠️ its cited test line numbers were wrong; the identifiers resolve and C5 was re-derived by the author, so the substance holds — §I118 records this).
+>
+> **3. ⚠️ PRE-EXISTING TEST FAILURES (NOT this session's — verified by stashing the change).** 4 fail on HEAD too: `test_phase1::test_hybrid_search_includes_global`, `test_phase2::test_search_still_works_after_phase2`, and `test_splade` ×2 — all `FileNotFoundError: tests/data/sample_physics.pdf` (a missing generated fixture), unrelated to the retrieval path. **Not fixed here (out of scope).**
+>
+> **4. ⚠️ WORKING TREE / VERIFICATION.** Uncommitted: `src/pdf_ingestion/store.py` (+13), `tests/test_lane_dropout_counters.py` (+100), §I118 in `IMPROVEMENTS.md`, this HANDOFF block, and the four new `cluster_probe*` + `sparse_dropout_mutation` scripts/artifacts under `logs/p1/step10/`. ✅ **The independent reviewer's verdict LANDED: 5/5 claims CONFIRMED** (gpt-oss-20b, `deleg_1b9df948`, read-only) — so §I118 is verified and **ready to commit**; it is left **uncommitted** (the owner has an outstanding branch/push decision and did not ask for a commit). Sessions 13–35 remain uncommitted; the branch is ahead of origin and **nothing is pushed**.
+>
+> **5. ✅ §G5/§I2 — GENUINE MULTI-HOP BUILT, DEFAULT-OFF, VERIFIED.** New setting `cfg.graph_max_hops` (default **1** = shipped) + a branched `graph_search`: `== 1` keeps the legacy Cypher byte-identical; `>= 2` traverses `RELATES_TO` and reports a real `hop_distance`. **Live probe** (8 multihop queries): hop-1 all 0; hop-2 `{0,1,2}` and **+388…+492 new chunks/query (8/8)**, ~2.1 s. ⚠️ Live-only findings: **Memgraph has no `length()` on paths** (use `size(relationships(p))`); **3-hop = 66.5 s** so the bound is clamped to **2**; the expansion's tail is invisible at the shipped hop-first ranking. Tests 6/6; mutation 6/6 reddened, none inert; verifier **7/7 CONFIRMED** (`deleg_fa7bdec1`). ⚠️ **§I2 only PARTLY closed** — it ships OFF until its **ablation** runs, which is BLOCKED on the cluster. See `IMPROVEMENTS.md` "G5 outcome".
+>
+> **6. ✅ §G3 — THE SENSITIVE RE-MEASUREMENT: still UNRESOLVED, but DIRECTIONAL.** Pre-registered a sensitive endpoint (per-query ≥2-concept chunk count, paired, n=200) over the two 2026-10-22 artifacts. **138 → 158** (reproduces §I51 exactly); mean delta 0.10, CI [−0.013, +0.213] ⇒ **UNRESOLVED**; **11 W / 1 L / 188 ties**. ⇒ unresolved, **NOT** negative — underpowered on this endpoint, and it does not license "entity resolution doesn't help retrieval". Verifier 9/9 + mutation 9/9 no inert; independent verifier **7/7 CONFIRMED** (`deleg_7ed32af1`). See IMPROVEMENTS "G3 outcome".
+>
+> **7. ✅ §I119 — THE DERIVED LANE'S QWEN-INSTRUCTION LEAK, FIXED.** `get_derived_embedder` copied the model+width but **not the instruction**, so the derived (nomic-768) embedder carried the **arm's** `query_instruction` — Qwen's `Instruct: … Query: ` under the default config (`step10_env.sh` masks it). New `derived_query_instruction = "search_query: "`, copied in ⇒ the derived lane is nomic end-to-end. Tests 5/5, mutation 5/5 no inert, verifier **5/5 CONFIRMED** (`deleg_ed3b2cce`). ⚠️ **Adjacent latent trap recorded, not fixed:** the config defaults are the retired Qwen/v2 world (`dense_model` 1024) while the deployed `knowledge_base_v3` is **768** — a run without the `DENSE_MODEL` override 400s the main dense lane (measured).
+>
+> **8. ⚠️ §I120 — THE LAB COMPARISON + THE CO-OCCURRENCE FLOOD.** The course lab (`Labs/Week_5/week5.2/memgraphrag_concepts`, MemGraphRAG) uses a **three-layer memory (Schema/Fact/Passage) → heterogeneous typed graph → PPR with per-layer resets + applied hub suppression**, PPR as **the retrieval**. **We match the PPR iteration, not the architecture** (no schema layer, co-occurrence edges, single reset, hub suppression only reported, PPR as a re-ranker). ⇒ **§G1's null is about PPR over a dense untyped graph, not about the lab's method.** Measured density: the pool is **15 pages shipped → 296 (1-hop) → 802 (2-hop)** of ~906 — **the hop expansion is a FLOOD**, so a page-level PPR ablation on it is saturated. Also: the `*0..2` path-enumeration Cypher is pathologically slow; use level-by-level DISTINCT neighbours (0.2–0.4 s).
+>
+> **9. ▶ NEXT (owner-ordered 2026-11-05).** **(a) The full guardrails plan + implementation — input AND output — NEXT.** **(b) THEN the lab-aligned graph plan** (scope already written: `.hermes/plans/2026-11-05-p1-lab-aligned-graph-SCOPE.md`) — build the MemGraphRAG substrate (typed triples / three-layer memory / per-layer PPR resets / applied hub suppression) so a PPR test is a fair test of the lab's method; ⚠️ a capability build, not a metric win (§I98/§I100 bound it). **(c) Re-probe the cluster** (`python3 logs/p1/step10/cluster_probe.py`) — if sparse + rerank return, run **#2** and the §G5 ablation. **(d) The deck** rework (external for Mr. Asif + internal ablation register). **(e)** ⚠️ **Remind the owner to supply the OLD architecture diagram (guardrails + observability).**
+>
+> **10. ⚠️ IN-FLIGHT — DO NOT LOSE: the §I119 DEFAULT-TRAP fix is APPLIED but NOT verified, and the SUITE REVEALS IT FIGHTS A DOCUMENTED DESIGN.** `src/core/config.py` defaults were aligned to **nomic-768** (`dense_model`, `dense_dim=768`, `query_instruction="search_query: "`, `document_prefix="search_document: "`). ⚠️ **Fast suite: 17 failed / 754 passed** — 4 pre-existing (the missing `tests/data/sample_physics.pdf`) + **13 from this change**, and **two of them are DELIBERATE, documented invariants**:
+> - `test_config_invariants::test_dense_lane_dim_defaults` **pins `dense_model == "Qwen/Qwen3-Embedding-0.6B"` and `dense_dim == 1024`**.
+> - `test_config_invariants::test_document_prefix_defaults_empty_and_is_the_query_instruction_twin` **asserts the code default MUST be empty**, docstring: *"a non-empty default would silently prefix every passage for a model that does not want it. `.env` is the whole mechanism."*
+>
+> ⇒ **The code default is INTENTIONALLY neutral; `.env` carries the environment.** So the code-default edit fights the design. **RECOMMENDED DIRECTION (owner call):** **revert** the `config.py` default change and instead **(a)** set the deployed values in `.env` (`DENSE_MODEL`, `DENSE_DIM`, `QUERY_INSTRUCTION`, `DOCUMENT_PREFIX` — the intended mechanism; ⚠️ `.env` currently sets `QDRANT_COLLECTION=knowledge_base` (768) but NOT `DENSE_MODEL`, which is exactly why the trap bites) and **(b)** add the **read-path width guard** on the main dense lane (a model/collection mismatch must RAISE, not 400 silently — the §A guard covers the derived lanes only). The other 11 failures are tests encoding the old convention (`test_cluster_embedder::test_no_document_prefix_sends_the_text_verbatim`, `test_late_chunk_embedder` ×4, `test_dense_lane`, `test_lane_resolution::test_v2_is_queried_at_its_own_64d_width`, `test_dense_prefetch_limit`, `test_colbert_lane_dropout::test_file_backed_qdrant_is_not_a_dropout`, `test_chunking_pipeline`, `test_config_invariants::test_intent_router_rejects_a_legacy_dim_classifier`). Re-run: `unset PYTHONPATH && .venv/bin/python -m pytest tests/ -q -m "not slow" -rf`. ⚠️ **Behaviour-affecting — do NOT commit unverified.**
+>
+> ## ▶ SESSION 35 (2026-11-05). **⚠️ BLOCKED ON THE CLUSTER (sparse + rerank down). The citation metric was vacuous and is fixed; the eval bypasses the router.**
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 35, then `IMPROVEMENTS.md` §I113–§I117. ⚠️ FIRST probe the cluster: on 2026-11-05 the sparse and rerank POSTs to `10.0.10.70:8123` timed out (only dense + ColBERT answered), which blocks every retrieval run, #2 and the demo. If they are back, run #2 (`logs/p1/step10/router_in_loop.py` → `_verifier.py` → `_mutation.py`). If not: §I96's dropout counter, the graph work (G3/G2/G5), or the HANDOFF hygiene."*
+>
+> **1. ⛔ THE BLOCKER — the cluster is degraded.** `10.0.10.70:8123`: dense embeddings **200**, ColBERT **200** (`lightonai/GTE-ModernColBERT-v1` and the repo's `colbert-ir/colbertv2.0`, both 128-dim, via the custom-override field); **sparse → timeout**, **rerank → timeout** (≥30 s). `run_retrieval` then SILENTLY drops the sparse lane and returns the CE UNRANKED (§I96's class) — so **no retrieval run is measurable** and the demo's retrieval path is degraded. **The owner cannot restart the services.**
+>
+> **2. ✅ §I113 CLOSED — RAPTOR as generator context: a NULL, and FLAGGED.** 40 overview queries, 0 errors, wall 5,976 s. Paired faithfulness **−0.0320, CI [−0.1009, +0.0368], UNRESOLVED** (point estimate negative); answer_relevance/citation bit-identical. Verifier **24/24**, mutation **24/24**. ⚠️ **G6 FAILS** — arm A (0.4551) missed the §I108 anchor (0.5097); **diagnosed: the harness's arm-A system prompt ≠ the product's `_SYNTH_SYSTEM`**, so arm A is not the product path. Owner decision pending.
+>
+> **3. ✅ §I114 — the G1 pre-flight diagnostic (read-only).** The input guardrail **cannot** be built from the cheap signals: the 34 negatives are THREE problems (12 off-domain / 12 in-domain-not-covered / 10 book-lacks-the-value); a top-1 score floor is weak (AUC 0.774; best F1 0.50 at a 0.40 false-refusal rate); an off-domain signal tops out at **12/34**. ⇒ **G1 narrows to off-domain; the 22 near-domain negatives belong to G2's grounding floor.**
+>
+> **4. ✅ §I115 — the citation metric was VACUOUS and is FIXED.** It matched `[Page <ascii-space>N]`; the generator emits `Page`+**U+202F** or **`【Page N】`**, so it found **zero** citations in all 166 answers and returned **1.000 by its own "no citations — not penalised" rule**. Real: **85 % of answers cite a page; 65 % of cited pages were retrieved** (53/166 cite nothing). **Fixed:** the metric (both brackets + any Unicode space; returns **None** when uncited; + a `Cit.Cov.` column) and `_cited_pages` in **both** frontends. Verifier **14/14**, mutation **14/14**, **cross-family reviewer 7/7 CONFIRMED**. ⚠️ **Do NOT quote citation 1.000.** The generator's citation FORMAT is still inconsistent — a prompt fix is open (needs its own run).
+>
+> **5. ✅ §I116 — the eval BYPASSES the intent router.** `evaluate_rag.evaluate_query:817` uses the **gold** `query_type`; both frontends route with `IntentRouter.classify()` (**agreement 0.5714**), gating **HyDE, lane selection AND the rerank query**. §I97 measured the CE-query mis-set at **factual nDCG −0.136**. ⇒ **every published number is an ORACLE-ROUTING upper bound.** Pre-registered and **committed ALONE (`1729344`)**; the harness + verifier (12 checks) + mutation (12/12 on a synthetic fixture) are **written and ready** — it needs only the cluster.
+>
+> **6. ⚠️ §I117 — the cluster's embedder models moved, and the repo's upgrade fields were DEAD CONFIG.** ColBERT now lists **only** `lightonai/GTE-ModernColBERT-v1`; sparse lists `Qdrant/bm42-…`, `Qdrant/bm25`, `prithivida/Splade_PP_en_v1`. `config.py` **declared** `sv_colbert_model`/`sv_sparse_model` but **nothing read them** — now **wired** (prefer the cluster id when non-empty; **defaults are EMPTY** so nothing switches by accident; verifier **8/8**, mutation **8/8**). ⚠️ A model switch needs the lane **re-embedded** — a query-side change alone silently mismatches the stored vectors.
+>
+> **7. ✅ THE DECK IS REBUILT (17 pages/slides) with the corrected numbers.** The false citation 1.000 lived in **three** files (`make_demo_deck.py`, `make_demo_deck_pdf.py` — its own copy — and the hand-written `demo_deck.md`); all corrected, rebuilt, and **read back to verify**. Added: **Cite % + Validity** in the generator table, the §I112/§I113/§I115/§I116 rows in the levers ledger, and an explicit **ORACLE ROUTING — upper bound** caveat on the retrieval slide.
+>
+> **8. ⚠️ WORKING TREE.** Committed this session: **ONE** — the #2 pre-registration ALONE (`1729344`, D6.1). Everything else is uncommitted (**241 changed/untracked**): §I113–§I117, the citation fix + its verifier/mutation/artifact, the router harness + verifier + mutation, the config wiring + its verifier/mutation, the two embedder edits, the tests, and the deck (3 formats + 2 generators). ⚠️ **Sessions 13–34 remain uncommitted; the branch is ahead 132 of origin and NOTHING is pushed — owner decision, outstanding.**
+>
+> **9. ⚠️ NEXT, IN ORDER.** **(a) Probe the cluster** — if sparse + rerank are back, run #2 (the artifact files are the interface). **(b) §I96's dropout counter** — cluster-free, and we just got bitten by exactly that silent failure. **(c) The graph work** (needs only Memgraph + `concept_embeddings` + the dense embedder): **G3's sensitive re-measurement** (read-only, closes the one open graph null), **G2 community detection** (the Leiden gate passes), **G5/§I2 real multi-hop** (`hop_distance` is a constant 0). ⚠️ Caveat: the graph lane as wired is a measured content HARM (§I98) — capability + closing nulls, not a metric win. **(d) NG-P5/NG-P6** (NiceGUI upload / role gating). **(e) ⚠️ HANDOFF hygiene** — this file is **3,474 lines** and loads into every session; archive all but the recent blocks into `HANDOFF_ARCHIVE.md` (grep the durable files for anything dropped FIRST — a trim is a migration).
+>
+> **10. ✅ ENV NOTE (corrected 2026-11-05 — the first reading was WRONG).** The `*curl*|*sh*` deny glob in `~/.hermes/config.yaml` is a **literal-glob `curl … | sh` RCE guard**, not an "or": the `|` is a character, not alternation. **Verified live: `echo sh` passes**, so it does **NOT** block `source .hermes/step10_env.sh` or `bash …` — an earlier note in this session claimed it did and was wrong. It fires only when a command pipes a `curl`/`wget` **and** later contains `sh` (it caught one probe that had `curl … | python3 …` plus a later `…env.sh`). **No action needed; cluster runs and build scripts are unaffected.**
+>
+> ## ▶ SESSION 34 (2026-11-04). **ITEM 10 EXECUTED: the QUERY-side retrieval-signal lever is CLOSED (§I112, a clean null); RAPTOR-as-generator-context (§I113) is IN FLIGHT; and the first guardrails/observability step shipped (O1).**
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 34, then `.hermes/plans/2026-11-04-p1-guardrails-observability-SESSIONS.md` (the guardrails + observability plan — O1 done, O2→G1→G2 next) and `IMPROVEMENTS.md` §I112. The artifact files are the interface. Continue the ordered plan; the frontend workstream resumes at NG-P4."*
+>
+> **1. ✅ §I112 — THE QUERY-SIDE SIGNAL LEVER IS CLOSED (NULL).** `overview_signal_probe.py` (40 overview queries, dense lane alone, read-only; prereg `f93b9e6`). Artifact `logs/p1/step10/overview_signal_probe.json` (sha256 `a72d5256…`), **all 7 guards pass**, verifier **10/10**, mutation **10/10**. Arms (R@20): **A** single HyDE hypothetical **0.2128** (reproduces §I111 to the digit) · **B** raw query **0.1489** · **C** multi-hyp max N=5 **0.2150** · **D** mean **0.2140**. Paired vs A: **C−A +0.0021, D−A +0.0012 — both UNRESOLVED**; **B−A −0.0639 RESOLVED NEGATIVE** (the control). ⇒ **no query representation beats the shipped single hypothetical**; per the prereg's falsification clause the **query side is closed** — the signal lever left is the **DOCUMENT side** (embedder / re-ingest). ⚠️ **The first full run was VOID** — G4 caught a harness dedup defect (`_dense_lane` kept raw chunk hits; `store.search` does NOT page-dedup) that faked a "C/D RESOLVED POSITIVE +0.027"; fixed, addendum §9 written, void artifacts preserved (`overview_signal_probe_VOID_run1.json`). Registered **§I112**; folded into the deck.
+>
+> **2. ⏳ §I113 — RAPTOR AS GENERATOR CONTEXT (in flight).** Full run launched 2026-11-04 (`background`, `persist_on_release`), logging to `logs/p1/step10/raptor_context_run.txt`, ETA ~21:40; artifact `logs/p1/step10/raptor_context.json` is the interface (it currently still holds the 2-query DRY-RUN). Dry-run PASSED (G1/G6 fail only because n=2). **verifier `raptor_context_verifier.py` (24/24) + mutation `raptor_context_mutation.py` (17 mutations, 24/24 reddened, no inert) are WRITTEN AND PROVEN.** ⚠️ **When it lands:** run the verifier + mutation, register **§I113**, fold into the deck (`bash logs/p1/step10/build_deck.sh`). Arms: A CE top-20 pages · B pages + top-2 RAPTOR summaries in the prompt.
+>
+> **3. ✅ O1 (§I4) — PHOENIX NOW TRACES THE LLM STAGE.** Manual `llm.call` spans added in `src/core/llm.py` (`_call_openai`/`_call_ollama`, BELOW the monkeypatch point, no-op when Phoenix off). Verifier `logs/p1/step10/llm_span_verifier.py` **9/9**; mutation `llm_span_mutation.py` **9/9 reddened, no inert**.
+>
+> **4. ▶ NEXT, IN ORDER (the guardrails + observability plan).** Read `.hermes/plans/2026-11-04-p1-guardrails-observability-SESSIONS.md` — its status table is the resume point. **O1 ✅ DONE** (§I4: manual `llm.call` spans in `src/core/llm.py`; verifier 9/9, mutation 9/9) **→ O2 ✅ DONE** (per-query route/latency trace: new `src/core/query_trace.py` + wired into `run_retrieval` + a "Recent queries" Status surface; verifier 12/12, mutation 12/12) **→ ⬜ G1 NEXT** (input guardrail: off-topic/abstention, measured on the **34 negatives** in `data/eval_queries_v2.json` — ids `neg-*`, `answerable:false`, `relevant_pages:[]`. ⚠️ The router is a trained sklearn classifier with a `dense_dim` schema check, so an `out_of_scope` class needs a RETRAIN; the cheaper path is a score-floor gate, and `scripts/evaluate_rag.py` already has an abstention guardrail to reuse) **→ ⬜ G2** (output guardrail: grounding floor + citation validity, decisions counted). Each step: acceptance + independent verifier + mutation proof.
+>
+> **5. ⚠️ WORKING TREE.** Committed this session: **NONE**. Uncommitted: `src/core/llm.py` (O1), new `src/core/query_trace.py` + `scripts/evaluate_rag.py` + `src/frontend/streamlit_app.py` (O2), the three new verifier+mutation pairs (`llm_span_*`, `query_trace_*`, `raptor_context_*`), the fixed `overview_signal_probe.py`, §I112 in `IMPROVEMENTS.md`, the prereg addendum, the deck (rebuilt), the guardrails/observability plan, and a scratch `logs/p1/step10/_diag_d100.py`. Sessions 13–32 remain uncommitted; **nothing pushed** — owner decision, outstanding.
+
+> ## ▶ SESSION 33 — ▶ START HERE (2026-11-04). **THE MEASUREMENT PROGRAMME IS ESSENTIALLY CLOSED ON THE RETRIEVAL SIDE; THE OPEN LEVER IS THE LANES' OWN SCORING.**
+>
+> **▶ NEXT SESSION'S OPENING PROMPT:** *"Read HANDOFF.md session 33, then `IMPROVEMENTS.md` §I111 (the
+> pool-order attribution) and §I110 (the overview k=50 run). The ordering loss is NOT the fusion — the
+> fused order equals dense-only — it is the LANES' scoring: 60.5% of the pooled gold sits at ranks
+> 21–100. Continue with the ordered list below; pre-register each run and commit the pre-registration
+> ALONE first (D6.1). The frontend workstream resumes at NG-P4."*
+>
+> **1. ✅ THE ARCHITECTURE IS BUILT AND VERIFIED.** `Docs/synapse_architecture_v2.html` + `.pdf`
+> (2 SVG diagrams: **ingestion** Phases 1·2·3, **retrieval** steps 1–7), replacing the stale Sep-1
+> reference (940 pages, `knowledge_base`, Llama 3.2). **Verified twice:** a mechanical verifier
+> (`logs/p1/step10/arch_v2_verifier.py`, **48/48 PASS** — every claim re-derived from `config.py` /
+> `store.py` / `evaluate_rag.py` / the live Qdrant) and an **independent cross-family reviewer**
+> (`gpt-oss-20b`, read-only): **11/12 confirmed**. ⚠️ **Its one refutation is INVALID** — it read
+> `config.py`'s *default* (`meta-llama/Llama-3.2-8B-Instruct`); `.env` overrides it and the *resolved*
+> `openai_model` is `openai/gpt-oss-20b`. Two checks now pin the resolved value.
+>
+> **2. ✅ THE GENERATOR IS MEASURED (§I108).** `v3_judged_full` (200 queries, cross-family judge):
+> overall **faithfulness 0.636 · answer_relevance 0.857 · citation 1.000**; per type faithful/ans.rel —
+> factual **0.683/0.855** · multihop **0.702/0.742** · overview **0.510/0.975**. Closes the "generator
+> unmeasured" gap. ⚠️ Judge score, one run, no independent verifier.
+>
+> **3. ✅ T3 RAN — FLAGGED (§I109).** `t3_lane_complete.json`; 11/12 guards pass, **G8 FAILS**.
+> **DIAGNOSED: the anchor is STALE, not the harness** — §I85's rows predate (a) the per-type
+> rerank-query policy (`e0f1616`, which changes arm A's CE top-20 on exactly the 39/53 FACTUAL queries
+> while its pool stays bit-identical) and (b) v3's pooled re-embed (which changes arm B's pool on
+> 133/133). Per its own §8 the run reports nothing; **needs an owner decision** (re-register the anchor
+> or re-run). ⚠️ T3 has no verifier and no mutation proof.
+>
+> **4. ✅ THE OVERVIEW k=50 GENERATOR RUN — NO BENEFIT (§I110).** Pre-registration committed ALONE
+> (`d297da4`). Paired vs k=20 (n=33): **faithfulness 0.5278 → 0.4773, Δ −0.0505, CI [−0.1373, +0.0362],
+> UNRESOLVED** (point estimate NEGATIVE); context_precision **−0.1085 RESOLVED NEGATIVE**.
+> ⇒ **§I105/§I106's open reading is CLOSED: wider k does NOT pay on the answer side.**
+>
+> **5. ✅ THE POOL-ORDER ATTRIBUTION (§I111, read-only).** Over `fusion_attribution.json`, 133 queries:
+> **FUSED@20 ≈ dense-only@20** (all +0.0222, unresolved; overview −0.0025) ⇒ **the fusion is NOT the
+> culprit**; cap-500 ≈ fused (the cap appends, never reorders). **39.5 % of the pooled gold is in the
+> top-20; 60.5 % sits at ranks 21–100.** ⇒ **the gold is ranked low by the LANES themselves.**
+> ⚠️ **And the ceiling is arithmetic:** `R-ceil@20` for overview = `20 × mean(1/n_rel)` = **0.3992**
+> exactly (label sets: min 22 / median 56.5 / mean 73.8) — **no retriever can beat ~0.35 there**.
+>
+> **6. ✅ THE DECK IS COMPLETE (17 pages/slides).** `logs/p1/step10/demo_deck.{pdf,pptx,md}` — complete
+> retrieval metrics (coverage/R@20/R-ceil/P@20/P-ceil/nDCG/MAP/MRR/Hit), generator metrics, the per-type
+> k table, **the §I99 loss decomposition** and **the §I111 attribution**, the levers ledger, and the
+> architecture appendix (p16–17). **Rebuild with `bash logs/p1/step10/build_deck.sh`** (it merges the
+> architecture pages idempotently — do NOT regenerate the deck PDF alone).
+>
+> **7. ▶ NEXT, IN ORDER (cost vs benefit).** **(a) A CE score-prior/blend** — so the CE cannot demote a
+> strong-pool page (cheap; targets §I97's mechanism; ceiling = `waste_ce` 0.022 for overview).
+> **(b) A stronger/other cross-encoder** (untried). **(c) The RAPTOR lane re-placed as an APPEND** for
+> overview (its lane is off the eval path and *displaces* when fused, §I98). **(d) The CE fine-tune**
+> (priced: 0.026 factual / 0.022 overview / nothing multihop; signoff 6 open). **(e) A better retrieval
+> SIGNAL for overview** — the only class of fix the attribution leaves standing. ⚠️ **CLOSED — do not
+> re-open:** the fusion's order (§I100/§I111), the cut (§I102/§I110), score fusion (§I103), lane
+> inclusion (§I98), wider k (§I105/§I106/§I110), MMR (§I92), the cap (§I92).
+>
+> **8. ▶ FRONTEND WORKSTREAM — RESUME AT NG-P4.** Read
+> `.hermes/plans/2026-11-02-p1-nicegui-and-visual-lane-SESSIONS.md`; its status table is the resume
+> point. **NG-P1/P2/P3 are DONE** (skeleton 8504; Ask-a-Question; read-only Status/Cards/RAPTOR).
+> **⬜ NEXT: NG-P4 — the Visual + Graph tabs** (page images render; graph nodes match
+> `get_graph_builder(cfg)`), then NG-P5 (upload), NG-P6 (role gating), then VL-L1/L2/L3. ⚠️ Streamlit
+> stays primary on 8503; NiceGUI is an ADDITION. ⚠️ Run pytest with a **scrubbed env** (§1b).
+>
+> **9. ⚠️ WORKING TREE.** Committed this session: **ONE** — the k=50 pre-registration ALONE (`d297da4`,
+> D6.1). Everything else is uncommitted (~194 changed/untracked): §I108–§I111, the architecture
+> html/pdf + verifier, the deck (3 formats + generators + `build_deck.sh`), the k=50 harness/artifact,
+> the attribution script, the deck appendix images, `data/eval_queries_overview.json`. ⚠️ **Sessions
+> 13–32 remain uncommitted; the branch is ahead of origin and NOTHING is pushed — owner decision,
+> outstanding.**
+>
+> **10. ⏳ TWO RUNS ARE PRE-REGISTERED AND CODE-COMPLETE — DRY-RUN, THEN LAUNCH (NOT YET RUN).**
+> Both pre-registrations are committed ALONE (`f93b9e6`). Neither full run has been launched — the owner
+> asked to re-dry-run in the next session first (context was ~50%). **Do this, in order:**
+>
+>   **(a) TASK 1 — the overview retrieval-signal probe (§I112).** Question: does a different QUERY
+>   REPRESENTATION make the dense lane rank the overview gold higher? Arms **A** single HyDE hypothetical
+>   · **B** raw query · **C** multi-hypothetical max (N=5) · **D** mean. Read-only, dense lane alone,
+>   40 overview queries.
+>   * prereg `.hermes/plans/2026-11-04-p1-overview-signal-probe-preregistration.md`
+>   * harness `logs/p1/step10/overview_signal_probe.py` · verifier `..._verifier.py` · mutation `..._mutation.py`
+>   * **dry-run PASSED 2026-11-04** (`--limit 2`; G1/G4 fail only because it is 2 queries). It wrote a
+>     **2-query hypotheses cache** (`overview_signal_hypotheses.json`) — ⚠️ the cache is MERGED, so the
+>     full run fills the other 38 (do NOT delete the cache; it is the frozen-hypotheses record).
+>   * run: `.venv/bin/python logs/p1/step10/overview_signal_probe.py` then
+>     `.venv/bin/python logs/p1/step10/overview_signal_probe_verifier.py` then
+>     `.venv/bin/python logs/p1/step10/overview_signal_probe_mutation.py`
+>
+>   **(b) TASK 2 — RAPTOR as generator context (§I113).** Question: do RAPTOR summaries given to the
+>   GENERATOR (never the ranked list) improve overview faithfulness? Arms **A** CE top-20 pages · **B**
+>   pages + top-2 RAPTOR summaries in the prompt. 40 overview queries, cross-family judge.
+>   * prereg `.hermes/plans/2026-11-04-p1-raptor-generator-context-preregistration.md`
+>   * **dry-run PASSED 2026-11-04** (`--limit 2`, after fixing a guard key bug: G4 read `page_list`
+>     instead of `page_list_A`). It wrote `logs/p1/step10/raptor_context.json` (2 queries). **verifier +
+>     mutation still NOT written** — write them from the artifact's field inventory (the repo's rule:
+>     every check reddened by ≥1 mutation, no inert check) before the full launch.
+>   * run: `.venv/bin/python logs/p1/step10/raptor_context_eval.py`
+>
+>   **Env for both** (unset PYTHONPATH first): `QDRANT_HOST=10.0.10.65 QDRANT_COLLECTION=knowledge_base_v3
+>   DENSE_MODEL="nomic-ai/nomic-embed-text-v1.5" DENSE_DIM=768 DENSE_DIM_LOW=64
+>   DOCUMENT_PREFIX="search_document: " QUERY_INSTRUCTION="search_query: " DA_ENABLED=true`.
+>   **Launch with `background=true, persist_on_release=true`** so they survive `/new`; the **artifact
+>   files** are the interface, not the process ids.
+>   ⚠️ **Shape facts already probed:** `store.search()` returns **flat** hits (no nested `payload`) —
+>   `page_number` is a top-level key; `search_raptor` carries the summary in **`text`**, `raptor_level`,
+>   `source_type='raptor_summary'`, and has **no `page_number`**. `call_llm` has **no temperature knob**
+>   (diversity comes from the prompt).
+>
+> ## ▶ SESSION 32 — ▶ START HERE (2026-11-02). **A NEW RESUMABLE WORKSTREAM: the NiceGUI frontend + the visual-lane levers. Read `.hermes/plans/2026-11-02-p1-nicegui-and-visual-lane-SESSIONS.md` — its status table is the resume point.**
+>
+> **1. ✅ NG-P1 DONE — the NiceGUI skeleton.** `src/frontend/nicegui_app.py` runs on **port 8504**
+> (`/healthz` → 200; `/` → 200; `resolved_config()` == the exported env, 0 mismatches). ⚠️ **Streamlit
+> is UNTOUCHED and still the primary frontend on 8503** (`/healthz` ok) — this is an ADDITION, per the
+> owner's correction. The plan is `logs/p1/step10/nicegui_migration_plan.md`; phases NG-P2…NG-P6 pending.
+>
+> **2. ✅ THE VISUAL-LANE VALIDATION RAN — read `IMPROVEMENTS.md` §I107.** ⚠️ **The ColPali aperture
+> CANNOT separate in-domain from near-domain**: a near-domain image (H 2p orbital, top-1 cosine
+> **0.5609**) outscores the weakest in-domain concept (**0.4936**); the floor is high (noise **0.4578**,
+> a logo **0.4355**); **`separating: NONE`**. V1 passes **12/12** but at **cos 1.0000 — a self-match
+> signature, not cross-render proof**. ⇒ the lane has **neither a labelled retrieval metric NOR a usable
+> confidence gate**. The fix path (levers 1–3) is Part B of the session brief.
+>
+> **3. ✅ THE PHASE-3 VISUAL WRITE COMPLETED (2026-11-02).** 968 ColPali page vectors written for the
+> **current** doc `7ba61432` (13/13 checks PASS); `visual_knowledge_base` = **968 new + 1,033 old =
+> 2,001**. The demo runbook's "visual lane has no data for the current doc" caveat is **RESOLVED**.
+>
+> **4. ✅ BOTH "IN-FLIGHT" JOBS HAVE LANDED (recorded 2026-11-02, session 32 — they finished AFTER this block was written).**
+> **(a) ✅ THE GENERATOR EVAL RAN — read `IMPROVEMENTS.md` §I108.** `data/eval_results/v3_judged_full_2026-11-03_0115.{json,md}`.
+> Cross-family judge (`Qwen/Qwen3-VL-8B-Instruct` vs generator `gpt-oss-20b`). Synthesis **167/200**,
+> 5,057 judge calls 0 failed. **Overall faithfulness 0.636 · answer_relevance 0.857 · citation acc 1.000**;
+> per type faithful/ans.rel — factual **0.683/0.855** · multihop **0.702/0.742** · overview **0.510/0.975**.
+> Abstention 22/34. ⇒ **the "generator unmeasured" gap is CLOSED**; faithfulness is moderate and tracks
+> the retrieval weakness (overview lowest). ⚠️ Judge score, single run — no verifier/mutation yet.
+>
+> **(b) ⚠️ T3 RAN BUT IS FLAGGED — read `IMPROVEMENTS.md` §I109.** `logs/p1/step10/t3_lane_complete.json`
+> (sha256 `f7153581657092d8…`), 6 arms, 133 queries, 0 errors, HyDE frozen, read-only. **11 of 12 guards
+> PASS** (incl. **G5 — arm A's DA lane live 133/133, so §A holds inside the full funnel**); **G8 FAILS.**
+> It self-reports P1 cR@20 **+0.0104 RESOLVED → "ships"**, overview +0.0194 RESOLVED, and **A_on−A_off
+> −0.0181 RESOLVED NEGATIVE** (DA+graph hurt arm A) — **but per its own pre-registration §8, G8's failure
+> means the run reports nothing.** ⚠️ **DIAGNOSED: G8's anchor is STALE, not the harness.** §I85's rows
+> predate TWO documented changes: (1) the **per-type rerank-query policy** (§I97/T4) shipped in `e0f1616`
+> — `rerank_query` is now `hyp if overview else query_text`, which changes arm A's CE top-20 on **exactly
+> the 39/53 FACTUAL queries** (0/40 overview, 0/40 multihop) while its **pool stays bit-identical**;
+> (2) **v3 was re-embedded POOLED** (session 21, §I89) after Stage F measured it late-chunked, which
+> changes **arm B's pool on 133/133** (arm A's pool bit-identical ⇒ the pool code path is unchanged).
+> ⇒ **G9's "single-variable" claim was wrong; T3's verdict needs an owner decision** (re-register the
+> anchor against the current `_off` config, or re-run). ⚠️ **T3 has NO verifier and NO mutation proof**
+> (prereg §7 required `t3_verifier.py`/`t3_mutation.py` — neither exists).
+>
+> **5. ✅ NG-P2 DONE (2026-11-02) — the Ask-a-Question tab; ⬜ NEXT is NG-P3.** The tab is in
+> `src/frontend/nicegui_app.py` (`run_ask` mirrors the Streamlit ask path; `run.io_bound` + spinner +
+> timeout/error banners; Streamlit and the backend untouched). ⚠️ **The literal acceptance — "cited
+> pages match Streamlit" — is REFUTED as a stable test: the generator SAMPLES** (the same NiceGUI path
+> cited `[]` then `[180,195,197,224]` on the factual query across two reps). **The restated
+> deterministic claim HOLDS:** the two frontends RETRIEVE the same page set — overview 20/20, factual
+> 19/20 with only the lowest-ranked page varying (the **§I103 lane-tail nondeterminism**). UI wiring
+> proved headlessly (`tests/nicegui/test_nicegui_ask_tab.py`; mutation reddens the thread assertion).
+> Verifier `deleg_0ee79bf9` (read-only) confirmed all 5 claims — ⚠️ **with one arithmetic slip I caught
+> by re-deriving it myself (`common_pages` 18 → the correct 19)**. Suite `4 failed / 745 passed /
+> 7 skipped`, 0 new. Full write-up in the session brief's **§1a**. **NEXT:** **NG-P3** (Status/Cards/
+> RAPTOR read-only tabs), then NG-P4, NG-P5, NG-P6, then **VL-L1** (calibrate the visual statistic).
+>
+> **5b. ✅ NG-P3 DONE (2026-11-02) — read-only Status / Cards / RAPTOR tabs; ⬜ NEXT is NG-P4.** Three read-only
+> tabs added (Status / Cards / RAPTOR); the Streamlit Delete section is deliberately **not** ported.
+> Acceptance harness `logs/p1/step10/ng_p3_acceptance.py` → **36/36 PASS**, every count re-derived
+> against a direct `DocumentStore` call (2 docs; chunks 8,844 · cards 157,826 · RAPTOR 157 · visual
+> 968; RAPTOR L1 72 / L2 9 / L3 3). ⚠️ **Its first draft keyed on FILENAME and produced 4 false
+> failures — the SQLite file holds TWO documents with the SAME filename** (old + current ingest,
+> 0 vs 968 page images); fixed to key on the id, and the Status table gained a **Doc ID** column.
+> UI wiring proved headlessly (`tests/nicegui/test_nicegui_readonly_tabs.py`, mutation-proof).
+> ⚠️ **NEW TEST TRAP:** running the suite with the **demo env exported** makes **11 extra tests fail**
+> (`test_late_chunk_embedder` ×5 …) — **run pytest with a scrubbed env** (`env -u DENSE_MODEL -u
+> DENSE_DIM -u DENSE_DIM_LOW -u DOCUMENT_PREFIX -u QUERY_INSTRUCTION -u QDRANT_HOST
+> -u QDRANT_COLLECTION -u DA_ENABLED -u PYTHONPATH .venv/bin/python -m pytest …`). Suite (scrubbed):
+> `4 failed / 745 passed / 8 skipped`, 0 new. **Verifier `deleg_04ed319a` (read-only): all 5 claims
+> CONFIRMED**, its independently-recomputed per-document counts matching the artifact exactly.
+> **NEXT:** **NG-P4** (Visual + Graph tabs), then NG-P5, NG-P6, then **VL-L1**.
+>
+> **5c. ✅ NG-P4 DONE (2026-11-02) — Visual + Graph tabs; ⬜ NEXT is NG-P5.** Acceptance
+> `logs/p1/step10/ng_p4_acceptance.py` → **18/18 PASS**. Graph counts (independently decomposed):
+> documents 1 · chunks 3,533 · pages 907 · concepts 6,065 · **edges 47,209** (RELATES_TO 21,670 +
+> MENTIONS 14,405 + PART_OF 4,440 + ON_PAGE 3,533 + PREREQUISITE_OF 3,161 — ⚠️ **the runbook's
+> "21,670 edges" is RELATES_TO only**). Two store-state findings, both surfaced by the acceptance
+> and both **not** tab defects: (a) the visual index returns pages across BOTH documents but
+> `data/page_images/` holds PNGs for the **current** doc only, so **2 of 3 cards show "image
+> unavailable"**; (b) Memgraph holds **3,533** Chunk nodes vs SQLite's **3,796** (**−263**), with
+> `is_content=0` only **5** — the documented recompute-vs-stored-column split. UI wiring proved
+> headlessly (`tests/nicegui/test_nicegui_visual_graph_tabs.py`, mutation-proof). ⚠️ **The verifier
+> `deleg_bb8ae828` was dispatched with an empty `output_schema`, which collapsed its answer to `{}`** —
+> its verdict was read from the transcript (claims 1/2/3/5 CONFIRMED; claim 4 UNVERIFIABLE because it
+> could not find the Memgraph container; claim 6 unread). Claim 4 was closed by the author's own
+> edge-type decomposition. **Do not pass `output_schema: {}`.** Suite (scrubbed env):
+> `4 failed / 745 passed / 9 skipped`, 0 new. **NEXT:** **NG-P5** (Upload, admin), then NG-P6, then
+> **VL-L1**.
+>
+> **6. ⚠️ WORKING TREE.** Nothing in this session is committed; the branch is ahead of origin and
+> **nothing is pushed** — owner decision, outstanding.
 >
 > ## ▶ SESSION 31 — ▶ START HERE. **4A RAN (§I103) and §A LANDED (§I104).**
 >

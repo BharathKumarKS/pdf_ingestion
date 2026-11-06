@@ -25,7 +25,7 @@ PDF → Docling → Chonkie               Student uploads PDF
 
 Phase 2 artifacts (LLM via config.yaml):   Query flow (Phase 4B — Nomic+ColBERT):
   • 8 pedagogical cards/chunk              1. Nomic embed → dense_64 top-500
-      summary, definition, example,           → dense_768 rescore top-250
+      summary, definition, example,           → dense_full rescore top-250
       misconception, question, objective,     → ColBERT MaxSim top-100
       formula, factoid (COSTAR prompts)    2. SPLADE sparse lane → RRF (GPU only)
   • RAPTOR L1/L2/L3 summaries             3. MMR diversity on dense hits
@@ -43,16 +43,20 @@ Phase 3 artifacts:                         5. RAPTOR cluster summaries (overview
                                          colpali → diagram / figure / table queries
 ```
 
-### Qdrant 4-Vector Schema (`knowledge_base`)
+### Qdrant 4-Vector Schema (`knowledge_base_v3` — the product collection)
 
 | Vector name | Dim | Purpose |
 |---|---|---|
-| `dense_64` | 64d | Fast first-stage ANN (Nomic MRL truncation) |
-| `dense_768` | 768d | Full-precision dense rescore (second stage) |
+| `dense_64` | 64d | Fast first-stage ANN (MRL truncation of the dense model) |
+| `dense_full` | 768d | Full-precision dense rescore (second stage) |
 | `colbert` | 128d × L | Late-interaction MaxSim (third stage, per-token) |
 | `sparse` | — | SPLADE hybrid lane (GPU deployments only) |
 
-**Nested prefetch pipeline:** `dense_64(top-500) → dense_768(top-250) → colbert MaxSim(top-100)`
+**Nested prefetch pipeline:** `dense_64(top-500) → dense_full(top-250) → colbert MaxSim(top-100)`
+
+> ⚠️ `dense_full` is the **width-free** lane name a new collection declares, so a later embedder change
+> does not repeat the lane rename. The product collection is **`knowledge_base_v3`** (nomic-embed-text-v1.5,
+> 768d). `knowledge_base_v2` (Qwen3-Embedding-0.6B, 1024d) is the incumbent arm and stays queryable.
 
 ---
 
@@ -74,7 +78,7 @@ Phase 3 artifacts:                         5. RAPTOR cluster summaries (overview
 | Structured outputs | instructor + Pydantic schemas (guaranteed JSON conformance) |
 | Intent routing | Embedding similarity against prototype queries |
 | API | FastAPI |
-| Frontend | Streamlit |
+| Frontend | Streamlit (primary) + NiceGUI (being added) |
 | Package manager | uv |
 
 ---
@@ -200,7 +204,9 @@ uv run python scripts/run_phase3.py --tenant global --force
 uv run streamlit run src/frontend/streamlit_app.py
 ```
 
-Open **http://localhost:8501**
+Open **http://localhost:8501** (Streamlit's default). ⚠️ **On this machine the app is run on port
+8503** (`.venv/bin/streamlit run … --server.port 8503`) — ports 8501/8502 belong to another project,
+and `uv run streamlit` hits a conda shim. A second frontend (NiceGUI) is being added on **8504**.
 
 ---
 
@@ -262,7 +268,7 @@ uv run python scripts/index_derivative_artifacts.py --tenant global
 uv run python scripts/run_phase3.py --tenant global
 ```
 
-### Speed breakdown (968 pages, 5,051 chunks)
+### Speed breakdown (968 pages, ~3,800 chunks)
 
 | Stage | CPU laptop | GPU VM (estimated) |
 |---|---|---|
@@ -276,13 +282,15 @@ uv run python scripts/run_phase3.py --tenant global
 | Concept graph (Memgraph) | ~2 hours | ~30 min |
 | **Total** | **~47 hours** | **~5 hours** |
 
-> **Re-ingest required** when upgrading from Jina v3 — the Qdrant collection schema changed from single-vector to 4-vector (`dense_64`, `dense_768`, `colbert`, `sparse`).
+> **Re-ingest required** when the embedder or the collection schema changes — the product collection is
+> now **`knowledge_base_v3`** (nomic-embed-text-v1.5, 768d, **pooled**); `knowledge_base_v2`
+> (Qwen3-Embedding-0.6B, 1024d) stays queryable as the incumbent arm.
 
 ---
 
 ## Portal Tabs
 
-### Student view (default — http://localhost:8501)
+### Student view (default — http://localhost:8503)
 
 | Tab | What it does |
 |---|---|
@@ -295,7 +303,7 @@ uv run python scripts/run_phase3.py --tenant global
 - Key Facts panel surfaces relevant definition and factoid cards from matched chunks
 - After uploading a PDF, visual embeddings + concept graph are built in the background
 
-### Admin / Teacher view (http://localhost:8501?admin=true)
+### Admin / Teacher view (http://localhost:8503?admin=true)
 
 All student tabs **plus**:
 
@@ -327,28 +335,53 @@ Queries are classified by the intent router and routed across retrieval mechanis
 
 **MMR (Maximal Marginal Relevance)** — applied to dense results first (λ=0.7) to diversify retrieved chunks before DA expansion.
 
-See `data/eval_queries.json` for curated evaluation queries across all four routes.
+See `data/eval_queries_v2.json` for the calibrated gold query set (133 labelled queries + 34 negatives).
 
 ---
 
 ## Evaluation
 
 ```bash
-# Run RAG evaluation against calibrated query set
-uv run python scripts/evaluate_rag.py
+# Run RAG evaluation against the calibrated gold query set
+uv run python scripts/evaluate_rag.py --query-file data/eval_queries_v2.json
 
 # Calibrate page annotations after manual review
 uv run python scripts/calibrate_eval_pages.py
 ```
 
-Results are saved to `data/eval_results/`. Current metrics on Feynman corpus (Phase 4):
+Results are saved to `data/eval_results/`. The **gold set is `data/eval_queries_v2.json`** — 133 labelled
+queries (factual 53 / overview 40 / multihop 40) plus 34 negatives, over Feynman Vol. 1.
 
-| Metric | Baseline | Phase A v2 |
-|---|---|---|
-| Recall@20 | 0.315 | 0.384 |
-| MRR | 0.598 | 0.684 |
-| Precision@6 | 0.360 | 0.404 |
-| NDCG@6 | 0.429 | 0.505 |
+**Current retrieval metrics** (product `knowledge_base_v3` / nomic-768 / cross-encoder top-20). Source
+`logs/p1/step10/levers_report.md` §2 (`lane_inclusion.json` arm F0); `R-ceil` / `P-ceil` are the course's
+ceilings (W7 §3.3):
+
+| type | n | coverage | R@20 | R-ceil@20 | P@20 | P-ceil@20 | nDCG@20 | MAP | MRR@20 | Hit@20 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| factual | 53 | 0.588 | 0.588 | 0.949 | 0.129 | 0.300 | 0.592 | 0.475 | 0.781 | 0.906 |
+| overview | 40 | 0.194 | 0.188 | 0.399 | 0.512 | 1.000 | 0.538 | 0.127 | 0.802 | 1.000 |
+| multihop | 40 | 0.581 | 0.550 | 0.956 | 0.105 | 0.214 | 0.507 | 0.376 | 0.729 | 0.900 |
+| all 133 | 133 | 0.468 | 0.456 | 0.786 | 0.237 | 0.485 | 0.550 | 0.341 | 0.772 | 0.932 |
+
+**Current generator metrics** (cross-family judge `Qwen/Qwen3-VL-8B-Instruct` vs the `gpt-oss-20b`
+generator). Source `data/eval_results/v3_judged_full_2026-11-03_0115.md`:
+
+| type | n | Faithfulness | Answer relevance | Citation accuracy |
+|---|---|---|---|---|
+| factual | 53 | 0.683 | 0.855 | 1.000 |
+| multihop | 40 | 0.702 | 0.742 | 1.000 |
+| overview | 40 | 0.510 | 0.975 | 1.000 |
+| all 133 | 133 | 0.636 | 0.857 | 1.000 |
+
+**Abstention (negatives):** 22/34 = 0.647. Full detail, the funnel decomposition, and what is *not*
+measured: `HANDOFF.md`, `IMPROVEMENTS.md` §I108, and `logs/p1/step10/levers_report.md`.
+
+> **⚠️ On a wider cut per query type.** `k` is fixed at **20** here (the product's setting). Widening it
+> was measured per type (§I105/§I106): it raises **recall and coverage — most for overview** (R@20 0.188
+> → R@47 0.370, ~2×) — but does **not** raise ranked quality; in the comparable regime it is a small
+> **resolved harm** for overview, and the apparent *capture* gain was a ceiling artifact. So a per-type
+> `k` is a **context-budget knob, not a ranking lever**. The one open reading — does the extra overview
+> context help the *answer* — is now measurable (the generator eval ran at k=20).
 
 ---
 
@@ -365,10 +398,13 @@ uv run pytest tests/test_phase1.py tests/test_phase2.py tests/test_phase3.py tes
 uv run pytest tests/test_integration_real.py -v -s
 ```
 
-**745 tests pass / 4 fail / 6 skip** (`uv run pytest tests/ -q -m "not slow"`, ~5 min, measured
-2026-11-01). The 4 are **pre-existing and documented** in `HANDOFF.md` — not regressions. Do not
-quote a test count in this file without re-running the suite: an earlier revision of this line said
-"135 tests pass" and had been wrong for many sessions.
+**745 tests pass / 4 fail / 8 skip** (`uv run pytest tests/ -q -m "not slow"`, ~5 min, measured
+2026-11-02). The 4 are **pre-existing and documented** in `HANDOFF.md` — not regressions. ⚠️ **Run the
+suite with a scrubbed env** — the demo env exports (`DENSE_MODEL`, `DENSE_DIM`, `DENSE_DIM_LOW`,
+`DOCUMENT_PREFIX`, `QUERY_INSTRUCTION`, `QDRANT_HOST`, `QDRANT_COLLECTION`, `DA_ENABLED`, `PYTHONPATH`)
+override the config the stubs assume and make 11 extra tests fail. Do not quote a test count in this
+file without re-running the suite: an earlier revision of this line said "135 tests pass" and had been
+wrong for many sessions.
 
 ### Verifier at every step — a standing rule
 
@@ -421,7 +457,7 @@ pdf_ingestion/
 ├── .env.example                        # environment variable template
 ├── docker-compose.yml                  # Memgraph + MinIO (Phase 3)
 ├── data/
-│   ├── eval_queries.json               # curated evaluation queries (vector/raptor/graph/colpali)
+│   ├── eval_queries_v2.json            # the calibrated gold set (133 labelled queries + 34 negatives)
 │   └── eval_results/                   # evaluation output JSONs (gitignored)
 │
 ├── src/

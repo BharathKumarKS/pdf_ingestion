@@ -141,3 +141,9 @@ logs/p1/step7/probe.db
 .hermes/*
 !.hermes/plans/
 !.hermes/plans/**
+
+# Mutation-proof WORKING COPIES: each run writes N mutated copies of the source, reddens the
+# tests, then restores the source byte-identical. Throwaway by construction — the mutation
+# SCRIPT and its log ARE the evidence, and are tracked.
+logs/p1/step10/__llm_mutants__/
+logs/p1/step10/__qt_mutants__/

@@ -34,6 +34,28 @@ if it is substantive**; a cheap verdict (few API calls, seconds, or citations th
 reviewers that "confirmed" 7/7 while citing line numbers that do not exist. **The substantive half is
 the author's mechanical evidence** — the measurement, the mutation proofs, the suite.
 
+**D0.4 — Verification completeness is enforced by a DETERMINISTIC gate with a MECHANICAL trigger, not
+by prose.** Every step carries four parts (acceptance · independent reviewer · stdlib verifier ·
+mutation proof), and **"a step with no verdict is not done"**. That rule lived only as prose in a plan,
+so it was silently skipped: measured 2026-11-05, **P0, R8 and C2 were all marked ✅ with no reviewer** —
+a *consistent* omission nothing caught, because a hand-written status table cannot distinguish "no
+reviewer" from "recorded elsewhere".
+* **Chosen:** `scripts/verify_plan_coverage.py` — **deterministic** (no model, no judgment): for every
+  `✅ DONE` row it asserts the verifier cell is non-empty, the mutation cell is non-empty, an independent
+  reviewer **resolves** (a `deleg_*` id, or a `…review…` artifact that exists on disk), and every
+  backticked `path/like/this` exists. Bound to the suite by `tests/test_plan_verification_coverage.py`
+  so it **cannot itself be skipped**, with its own negative tests (it must redden on a missing reviewer
+  and on a missing artifact). Demonstrated: run against the pre-fix table it names **exactly P0, R8, C2**.
+* **Why not a "verifier of the verifier" (a second model reading the table):** that is a **judgment**
+  check, so it fails for the same reason the first one did — it fires only if someone remembers to run
+  it, and then you need a trigger for the trigger. A **deterministic** gate needs no verifier of its own.
+* **The residual judgment, stated:** whether a reviewer's verdict is **substantive** cannot be gated —
+  it stays under **D0.3** (*a partial verdict is no verdict*), plus recording the reviewer's model id.
+* **Reversibility:** cheap — the gate is ~90 lines and its rules are per-plan; a plan whose table has a
+  different shape needs its own parser, not a new doctrine. **What would reopen it:** a step type that
+  legitimately has no reviewer (then the rule is amended *in the gate*, visibly, not by leaving a cell
+  blank).
+
 ---
 
 ## 1. The embedder / index
