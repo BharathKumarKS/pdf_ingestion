@@ -9058,3 +9058,17 @@ Best F1 is **0.500** (τ 0.76: recall 0.853, but a **0.398 false-refusal rate** 
 **Demonstrated.** Run against the pre-fix table it names **exactly P0, R8, C2**. The three steps were then **retro-verified**: `p0_config_guard_verifier.py` 14/14, the R7R8 mutation 7/7, the C2 mutation 4/4, and an independent cross-family reviewer (`openai/gpt-oss-20b` on the cluster router vs the author's deepseek) **13/13 CONFIRMED** (`logs/p1/step10/guardrails_p0_r8_c2_review.json`).
 
 **Register against:** the plan §9 (the contract this enforces) and §9.5, `HANDOFF.md` session 38, §I121 (the same session's other verification work).
+
+#### I123. ⚠️ THE VISUAL LANE'S APERTURE IS STILL AN UNJUSTIFIED RAW-COSINE THRESHOLD, AND THE CONFIG COMMENT'S JUSTIFICATION IS CONTRADICTED BY §I107's OWN MEASUREMENT.
+
+**The state, checked 2026-11-05 (this is a correction of the record, not a new run).** `cfg.visual_score_threshold = 0.58` is applied in the product path (`store.py:1927`, and `evaluate_rag.py:358` for the eval) — a **raw mean-best-cosine** bar on the ColPali lane. The NG plan's status table shows **VL-L1, VL-L2 and VL-L3 all ⬜ (never started)**, so the calibration that was supposed to replace the raw threshold has not run.
+
+**⚠️ THE CONTRADICTION.** `config.py:269-278` justifies 0.58 with: *"an in-domain page scores 0.94-1.00 whether the query is the native page or a downscale/upscale of it, while out-of-domain images (noise, blank, unrelated text) score 0.43-0.46. 0.58 sits in the gap."* **§I107 measured the opposite for real figures**: the weakest in-domain concept scored **0.4936**, a near-domain image (H 2p orbital) scored **0.5609** — i.e. a near-domain image OUTSCORES the weakest in-domain one — with noise at **0.4578** and a logo at **0.4355**; verdict **`separating: NONE`**. The comment's 0.94–1.00 band describes the **self-match regime** (V1 passed 12/12 at cosine **1.0000**, a self-match signature, not cross-render proof), not real in-domain figures.
+
+**⇒ The 0.58 threshold is not a calibrated aperture.** With real figures it sits ABOVE the near-domain maximum (0.5609) — so it happens to exclude that instance — but it is also above genuine in-domain figures scoring 0.49–0.56, which it would **reject**. It excludes by luck of where the bar was placed, not by separation of the two distributions.
+
+**What is NOT claimed:** that the threshold is harmful in the demo (no labelled visual metric exists, so its effect is unmeasured — §I107's other half). What IS claimed: the comment asserts a separation the measurement does not support, and the number is unjustified.
+
+**The fix already scoped (never run):** **VL-L1** — calibrate a *statistic* (margin / z-score over the query's own patch scores) rather than a raw cosine, with the pre-registered outcome *"a statistic separates in/near/far where raw cosine did not; **else recorded as no-separation**"*; then **VL-L2** (a labelled set built from REAL figure crops, not synthetic plots) and **VL-L3** (rank it with `compute_retrieval_metrics`). ⚠️ **VL-L1 can legitimately conclude "no separation" — that is an allowed, reportable outcome, not a failure.**
+
+**Register against:** §I107 (the measurement this corrects the *justification* of), the NG plan `.hermes/plans/2026-11-02-p1-nicegui-and-visual-lane-SESSIONS.md` (VL-L1/L2/L3, all ⬜), ARCHITECTURE.md §2 (the visual lane has no labelled metric).
