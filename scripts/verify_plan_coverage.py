@@ -30,6 +30,12 @@ _CODE_SPAN = re.compile(r"`([^`]*)`")                # a single backticked code 
 _DELEG_ID = re.compile(r"deleg_[0-9a-f]{6,}")
 _EMPTY = ("", "⬜")
 
+# The status table is located by its HEADER ROW, not by a section number — so a plan may number its
+# sections freely and more than one plan can be policed by the same gate.
+_TABLE_HEADER = re.compile(
+    r"^\|\s*id\s*\|.*\bstatus\b.*\bverifier\b.*\bmutation\b", re.IGNORECASE | re.MULTILINE
+)
+
 
 def _is_path(token: str) -> bool:
     """True when a code span names a FILE path (has a '/' AND an extension in its last segment).
@@ -48,25 +54,25 @@ def _path_tokens(text: str) -> list[str]:
 
 
 def _status_rows(text: str) -> list[list[str]]:
-    """The rows of the status table under '## 8. Status table' (5+ cells), as cell lists.
+    """The rows of the plan's status table (5+ cells), located by its header row.
 
-    The scan stops at the next '## ' heading, so a table in a later section is never mistaken for
-    a status row.
+    Stops at the first non-table line after the table, so a later table is never mistaken for a
+    status row.
     """
-    start = text.find("## 8. Status table")
-    if start == -1:
-        raise ValueError("no '## 8. Status table' section found")
-    body = text[start:]
-    nxt = body.find("\n## ", 1)
-    if nxt != -1:
-        body = body[:nxt]
+    header = _TABLE_HEADER.search(text)
+    if header is None:
+        raise ValueError(
+            "no status table found (expected a header row '| id | step | status | verifier | mutation |')"
+        )
     rows: list[list[str]] = []
-    for line in body.splitlines():
+    for line in text[header.end():].splitlines():
         if not line.startswith("|"):
+            if rows:
+                break            # the table ended
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) >= 5 and set("".join(cells)) <= set("-: "):
-            continue  # the separator row
+            continue             # the separator row
         if len(cells) >= 5 and cells[0] not in ("id",):
             rows.append(cells)
     return rows
