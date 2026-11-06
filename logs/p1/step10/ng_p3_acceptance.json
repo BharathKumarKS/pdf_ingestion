@@ -1,0 +1,223 @@
+{
+  "verdict": "PASS",
+  "n_checks": 36,
+  "n_fail": 0,
+  "checks": [
+    {
+      "check": "status.row_ids_unique",
+      "ui": 2,
+      "store": 2,
+      "ok": true
+    },
+    {
+      "check": "status[6d55c52b].cards",
+      "ui": 82164,
+      "store": 82164,
+      "ok": true
+    },
+    {
+      "check": "status[6d55c52b].raptor",
+      "ui": 84,
+      "store": 84,
+      "ok": true
+    },
+    {
+      "check": "status[6d55c52b].visual",
+      "ui": 0,
+      "store": 0,
+      "ok": true
+    },
+    {
+      "check": "status[6d55c52b].chunks",
+      "ui": 5048,
+      "store": 5048,
+      "ok": true
+    },
+    {
+      "check": "status[6d55c52b].pages",
+      "ui": 968,
+      "store": 968,
+      "ok": true
+    },
+    {
+      "check": "status[7ba61432].cards",
+      "ui": 75662,
+      "store": 75662,
+      "ok": true
+    },
+    {
+      "check": "status[7ba61432].raptor",
+      "ui": 73,
+      "store": 73,
+      "ok": true
+    },
+    {
+      "check": "status[7ba61432].visual",
+      "ui": 968,
+      "store": 968,
+      "ok": true
+    },
+    {
+      "check": "status[7ba61432].chunks",
+      "ui": 3796,
+      "store": 3796,
+      "ok": true
+    },
+    {
+      "check": "status[7ba61432].pages",
+      "ui": 968,
+      "store": 968,
+      "ok": true
+    },
+    {
+      "check": "status.n_base",
+      "ui": 2,
+      "store": 2,
+      "ok": true
+    },
+    {
+      "check": "status.n_user",
+      "ui": 0,
+      "store": 0,
+      "ok": true
+    },
+    {
+      "check": "status.total_chunks",
+      "ui": 8844,
+      "store": 8844,
+      "ok": true
+    },
+    {
+      "check": "status.total_cards",
+      "ui": 157826,
+      "store": 157826,
+      "ok": true
+    },
+    {
+      "check": "status.total_raptor",
+      "ui": 157,
+      "store": 157,
+      "ok": true
+    },
+    {
+      "check": "status.total_visual",
+      "ui": 968,
+      "store": 968,
+      "ok": true
+    },
+    {
+      "check": "status.n_rows",
+      "ui": 2,
+      "store": 2,
+      "ok": true
+    },
+    {
+      "check": "documents[6d55c52b].has_raptor",
+      "ui": true,
+      "store": true,
+      "ok": true
+    },
+    {
+      "check": "documents[7ba61432].has_raptor",
+      "ui": true,
+      "store": true,
+      "ok": true
+    },
+    {
+      "check": "cards[formula].total",
+      "ui": 1526,
+      "store": 1526,
+      "ok": true
+    },
+    {
+      "check": "cards[formula].shown<=cap",
+      "ui": true,
+      "store": true,
+      "ok": true
+    },
+    {
+      "check": "cards[definition].total",
+      "ui": 2584,
+      "store": 2584,
+      "ok": true
+    },
+    {
+      "check": "cards[definition].shown<=cap",
+      "ui": true,
+      "store": true,
+      "ok": true
+    },
+    {
+      "check": "cards[question].total",
+      "ui": 32002,
+      "store": 32002,
+      "ok": true
+    },
+    {
+      "check": "cards[question].shown<=cap",
+      "ui": true,
+      "store": true,
+      "ok": true
+    },
+    {
+      "check": "cards[misconception].total",
+      "ui": 4340,
+      "store": 4340,
+      "ok": true
+    },
+    {
+      "check": "cards[misconception].shown<=cap",
+      "ui": true,
+      "store": true,
+      "ok": true
+    },
+    {
+      "check": "cards[example].total",
+      "ui": 1457,
+      "store": 1457,
+      "ok": true
+    },
+    {
+      "check": "cards[example].shown<=cap",
+      "ui": true,
+      "store": true,
+      "ok": true
+    },
+    {
+      "check": "raptor.total",
+      "ui": 84,
+      "store": 84,
+      "ok": true
+    },
+    {
+      "check": "raptor.n_l1",
+      "ui": 72,
+      "store": 72,
+      "ok": true
+    },
+    {
+      "check": "raptor.n_l2",
+      "ui": 9,
+      "store": 9,
+      "ok": true
+    },
+    {
+      "check": "raptor.n_l3",
+      "ui": 3,
+      "store": 3,
+      "ok": true
+    },
+    {
+      "check": "raptor.split_sums",
+      "ui": 84,
+      "store": 84,
+      "ok": true
+    },
+    {
+      "check": "raptor.n_l1_rendered",
+      "ui": 72,
+      "store": 72,
+      "ok": true
+    }
+  ]
+}

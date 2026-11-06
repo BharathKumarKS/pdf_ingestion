@@ -1,0 +1,51 @@
+{
+  "side": "streamlit",
+  "qidx": 0,
+  "records": [
+    {
+      "side": "streamlit",
+      "label": "factual",
+      "query": "What is Newton's second law?",
+      "wall_s": 185.8,
+      "source_caption": "\ud83d\udcc4 Sources cited: The Feynman Lectures on Physics, Volume I  \u2014  p. 179, p. 180, p. 195, p. 197, p. 224",
+      "cited_pages": [
+        179,
+        180,
+        195,
+        197,
+        224
+      ],
+      "cited_pages_from_answer": [
+        179,
+        180,
+        195,
+        197,
+        224
+      ],
+      "retrieved_pages": [
+        143,
+        145,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        195,
+        197,
+        198,
+        199,
+        224,
+        232,
+        251,
+        252,
+        284,
+        805,
+        806,
+        831
+      ],
+      "answer_chars": 1527,
+      "answer_head": "Newton\u2019s second law is the quantitative statement that a force acting on a body produces a change in that body\u2019s motion, and that the change is proportional to the force and occurs in the same direction as the force. In modern notation the law is written as \n\n$$\\mathbf{F}=m\\,\\mathbf{a},$$\n\nwhere $m$ is the mass of the body, $\\mathbf{a}=d\\mathbf{v}/dt$ is its acceleration, and $\\mathbf{F}$ is the r"
+    }
+  ]
+}

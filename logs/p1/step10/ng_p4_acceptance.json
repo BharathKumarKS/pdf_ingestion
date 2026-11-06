@@ -1,0 +1,163 @@
+{
+  "verdict": "PASS",
+  "n_checks": 18,
+  "n_fail": 0,
+  "visual_query": "the diagram of a pendulum",
+  "graph_query": "Why does a satellite stay in orbit?",
+  "graph_stats": {
+    "documents": 1,
+    "chunks": 3533,
+    "pages": 907,
+    "concepts": 6065,
+    "edges": 47209
+  },
+  "n_visual_results": 3,
+  "n_graph_results": 6,
+  "visual_images_resolved": 1,
+  "visual_images_missing": [
+    "6d55c52b-47ae-45ff-bee0-a3ca01ac93ce/page_0094.png",
+    "6d55c52b-47ae-45ff-bee0-a3ca01ac93ce/page_0446.png"
+  ],
+  "graph_chunks_current_doc": 3533,
+  "sqlite_chunks_current_doc": 3796,
+  "checks": [
+    {
+      "check": "visual.n_vectors",
+      "tab": 2001,
+      "reference": 2001,
+      "ok": true
+    },
+    {
+      "check": "visual.empty_query_no_results",
+      "tab": [],
+      "reference": [],
+      "ok": true
+    },
+    {
+      "check": "visual.n_results",
+      "tab": 3,
+      "reference": 3,
+      "ok": true
+    },
+    {
+      "check": "visual.pages",
+      "tab": [
+        94,
+        102,
+        446
+      ],
+      "reference": [
+        94,
+        102,
+        446
+      ],
+      "ok": true
+    },
+    {
+      "check": "visual.image_keys",
+      "tab": [
+        "6d55c52b-47ae-45ff-bee0-a3ca01ac93ce/page_0094.png",
+        "7ba61432-c5e0-416d-aecf-25a232523481/page_0102.png",
+        "6d55c52b-47ae-45ff-bee0-a3ca01ac93ce/page_0446.png"
+      ],
+      "reference": [
+        "6d55c52b-47ae-45ff-bee0-a3ca01ac93ce/page_0094.png",
+        "7ba61432-c5e0-416d-aecf-25a232523481/page_0102.png",
+        "6d55c52b-47ae-45ff-bee0-a3ca01ac93ce/page_0446.png"
+      ],
+      "ok": true
+    },
+    {
+      "check": "visual.some_images_resolved",
+      "tab": true,
+      "reference": true,
+      "ok": true
+    },
+    {
+      "check": "visual.resolved_are_png",
+      "tab": true,
+      "reference": true,
+      "ok": true
+    },
+    {
+      "check": "visual.missing_marked_with_error",
+      "tab": true,
+      "reference": true,
+      "ok": true
+    },
+    {
+      "check": "graph_stats.documents",
+      "tab": 1,
+      "reference": 1,
+      "ok": true
+    },
+    {
+      "check": "graph_stats.chunks",
+      "tab": 3533,
+      "reference": 3533,
+      "ok": true
+    },
+    {
+      "check": "graph_stats.pages",
+      "tab": 907,
+      "reference": 907,
+      "ok": true
+    },
+    {
+      "check": "graph_stats.concepts",
+      "tab": 6065,
+      "reference": 6065,
+      "ok": true
+    },
+    {
+      "check": "graph_stats.edges",
+      "tab": 47209,
+      "reference": 47209,
+      "ok": true
+    },
+    {
+      "check": "graph.chunks_not_more_than_sqlite",
+      "tab": true,
+      "reference": true,
+      "ok": true
+    },
+    {
+      "check": "graph.chunks_positive",
+      "tab": true,
+      "reference": true,
+      "ok": true
+    },
+    {
+      "check": "graph_search.n_results",
+      "tab": 6,
+      "reference": 6,
+      "ok": true
+    },
+    {
+      "check": "graph_search.chunk_ids",
+      "tab": [
+        "cecf9b7e-9b97-437c-ac29-c007f88176fd",
+        "faf75be6-5b5d-49ca-9377-fa90b58c7f91",
+        "fa1b4193-5f12-4357-8325-b2d257171ad0",
+        "2eca0d5e-f02a-40fb-98b2-28ab0b2ab5de",
+        "29575681-b546-4cae-91cc-df7ad3ba158b",
+        "5c0b3314-f5c2-49a2-9a2d-4f5addca1da0"
+      ],
+      "reference": [
+        "cecf9b7e-9b97-437c-ac29-c007f88176fd",
+        "faf75be6-5b5d-49ca-9377-fa90b58c7f91",
+        "fa1b4193-5f12-4357-8325-b2d257171ad0",
+        "2eca0d5e-f02a-40fb-98b2-28ab0b2ab5de",
+        "29575681-b546-4cae-91cc-df7ad3ba158b",
+        "5c0b3314-f5c2-49a2-9a2d-4f5addca1da0"
+      ],
+      "ok": true
+    },
+    {
+      "check": "graph_search.has_concepts",
+      "tab": true,
+      "reference": true,
+      "ok": true
+    }
+  ]
+}

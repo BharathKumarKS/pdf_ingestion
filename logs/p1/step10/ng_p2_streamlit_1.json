@@ -1,0 +1,65 @@
+{
+  "side": "streamlit",
+  "qidx": 1,
+  "records": [
+    {
+      "side": "streamlit",
+      "label": "overview",
+      "query": "How does Feynman develop the concept of conservation of energy across mechanics, waves and thermodynamics?",
+      "wall_s": 215.2,
+      "source_caption": "\ud83d\udcc4 Sources cited: The Feynman Lectures on Physics, Volume I  \u2014  p. 94, p. 98, p. 155, p. 209, p. 251, p. 253, p. 277, p. 316, p. 551, p. 582, p. 804, p. 905",
+      "cited_pages": [
+        94,
+        98,
+        155,
+        209,
+        251,
+        253,
+        277,
+        316,
+        551,
+        582,
+        804,
+        905
+      ],
+      "cited_pages_from_answer": [
+        94,
+        98,
+        155,
+        209,
+        251,
+        253,
+        277,
+        316,
+        551,
+        582,
+        804,
+        905
+      ],
+      "retrieved_pages": [
+        85,
+        91,
+        94,
+        97,
+        98,
+        155,
+        209,
+        251,
+        253,
+        255,
+        277,
+        278,
+        316,
+        551,
+        582,
+        687,
+        786,
+        804,
+        905,
+        921
+      ],
+      "answer_chars": 3060,
+      "answer_head": "Feynman\u2019s treatment of energy conservation begins in the familiar setting of classical mechanics, where the simplest illustration is a body falling under gravity. He writes that the kinetic energy $T$ and the gravitational potential energy $U=mgh$ add to a constant, $T+U=\\text{const}$, and that this constancy follows from the equations of motion without any appeal to a deeper mechanism (page\u202f251)."
+    }
+  ]
+}

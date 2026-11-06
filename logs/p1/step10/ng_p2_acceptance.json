@@ -1,0 +1,91 @@
+{
+  "rows": [
+    {
+      "label": "factual",
+      "nicegui_cited_reps": [
+        [],
+        [
+          180,
+          195,
+          197,
+          224
+        ]
+      ],
+      "nicegui_cited_stable_across_reps": false,
+      "streamlit_cited": [
+        179,
+        180,
+        195,
+        197,
+        224
+      ],
+      "cited_sets_equal": false,
+      "nicegui_retrieved_n": 20,
+      "streamlit_retrieved_n": 20,
+      "retrieved_sets_equal": false,
+      "retrieved_stable_across_reps": false,
+      "only_nicegui_retrieved": [
+        285
+      ],
+      "only_streamlit_retrieved": [
+        143
+      ],
+      "nicegui_intent": "factual"
+    },
+    {
+      "label": "overview",
+      "nicegui_cited_reps": [
+        [
+          94,
+          98,
+          155,
+          251,
+          277,
+          316,
+          551,
+          582,
+          786,
+          804,
+          905,
+          921
+        ],
+        [
+          94,
+          97,
+          98,
+          251,
+          253,
+          277,
+          316,
+          551,
+          786,
+          905,
+          921
+        ]
+      ],
+      "nicegui_cited_stable_across_reps": false,
+      "streamlit_cited": [
+        94,
+        98,
+        155,
+        209,
+        251,
+        253,
+        277,
+        316,
+        551,
+        582,
+        804,
+        905
+      ],
+      "cited_sets_equal": false,
+      "nicegui_retrieved_n": 20,
+      "streamlit_retrieved_n": 20,
+      "retrieved_sets_equal": true,
+      "retrieved_stable_across_reps": true,
+      "only_nicegui_retrieved": [],
+      "only_streamlit_retrieved": [],
+      "nicegui_intent": "multihop"
+    }
+  ]
+}
