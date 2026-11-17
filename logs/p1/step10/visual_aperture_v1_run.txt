@@ -1,0 +1,21 @@
+2026-11-05 22:23:30.876 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-11-05 22:23:31.780 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-11-05 22:23:31.781 | INFO     | __main__:main:73 - colpali = ColPaliEmbedder
+2026-11-05 22:23:31.839 | INFO     | __main__:main:76 - visual index points_before = 2001
+2026-11-05 22:23:34.422 | INFO     | src.pdf_ingestion.colpali_embedder:_load:88 - Loading ColPali model 'vidore/colpali-v1.2' on cpu
+Fetching 2 files:   0%|          | 0/2 [00:00<?, ?it/s]Fetching 2 files: 100%|██████████| 2/2 [00:00<00:00, 833.69it/s]
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:10<00:10, 10.67s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:12<00:00,  5.66s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:12<00:00,  6.41s/it]
+Using a slow image processor as `use_fast` is unset and a slow processor was saved with this model. `use_fast=True` will be the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.
+2026-11-05 22:27:07.002 | INFO     | __main__:main:177 - wrote logs/p1/step10/visual_aperture_v1.json (70 rows, 0 errors, 216.2s)
+
+rows=70 (image 29, text 41)  errors=0
+median patches: image=1031 text=37
+score range: [0.1888, 1.0000]  rows with a score < 0.58: 70/70
+visual index points: before=2001 after=2001
+  PASS  G1_population
+  PASS  G2_zero_errors
+  PASS  G3_threshold0_honoured
+  PASS  G4_read_only_point_count
+  PASS  G5_patch_counts_differ
+  PASS  G6_two_modalities_separate
+EXIT=0
