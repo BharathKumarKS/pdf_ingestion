@@ -1,0 +1,53 @@
+2026-11-05 22:29:17.999 | INFO     | src.pdf_ingestion.splade_embedder:get_splade_embedder:145 - SPLADE: using fastembed (local ONNX)
+2026-11-05 22:29:18.186 | INFO     | src.pdf_ingestion.splade_embedder:_load:105 - Loading SPLADE 'prithivida/Splade_PP_en_v1' via fastembed (ONNX)…
+2026-11-05 22:29:18.380 | INFO     | src.pdf_ingestion.splade_embedder:_load:110 - SPLADE (fastembed) ready
+2026-11-05 22:29:22.479 | INFO     | src.pdf_ingestion.reranker:__init__:33 - Loading cross-encoder model: BAAI/bge-reranker-v2-m3
+2026-11-05 22:29:27.518 | INFO     | src.pdf_ingestion.reranker:__init__:35 - Cross-encoder ready
+2026-11-05 22:29:27.678 | DEBUG    | src.pdf_ingestion.reranker:rerank:43 - Re-ranker: top score 1.000, bottom score 0.000 (kept 2/2)
+2026-11-05 22:29:27.678 | INFO     | src.pdf_ingestion.embedder:_load:130 - Loading Nomic embed v1.5 'nomic-ai/nomic-embed-text-v1.5' on device=cpu...
+<All keys matched successfully>
+2026-11-05 22:29:33.248 | INFO     | src.pdf_ingestion.embedder:_load:144 - Nomic embed loaded — device=cpu, full_dim=768, low_dim=64
+2026-11-05 22:29:35.727 | DEBUG    | src.pdf_ingestion.reranker:rerank:43 - Re-ranker: top score 0.996, bottom score 0.013 (kept 5/30)
+{
+  "note": "local fallback for the two DOWN lanes (sparse + rerank); query-time only, no re-ingest",
+  "splade_model": "prithivida/Splade_PP_en_v1",
+  "reranker_model": "BAAI/bge-reranker-v2-m3",
+  "collection": "knowledge_base_v3",
+  "checks": {
+    "A1_splade_nnz": 20,
+    "A1_splade_load_s": 0.4,
+    "A1_ok": true,
+    "A2_n_hits": 5,
+    "A2_top_score": 22.0035,
+    "A2_top_pages": [
+      195,
+      232,
+      182,
+      199,
+      251
+    ],
+    "A2_ok": true,
+    "A3_reranker_load_s": 8.7,
+    "A3_order": [
+      2,
+      1
+    ],
+    "A3_ok": true,
+    "A4_pool": 30,
+    "A4_top5_pages": [
+      null,
+      195,
+      null,
+      197,
+      251
+    ],
+    "A4_rerank_s": 4.1,
+    "A4_scores_n": 30,
+    "A4_score_spread": 0.9838,
+    "A4_reordered": true,
+    "A4_ok": true,
+    "wall_s": 19.6
+  },
+  "all_pass": true
+}
+EXIT=0

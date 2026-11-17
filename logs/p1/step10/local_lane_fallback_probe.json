@@ -1,0 +1,42 @@
+{
+  "note": "local fallback for the two DOWN lanes (sparse + rerank); query-time only, no re-ingest",
+  "splade_model": "prithivida/Splade_PP_en_v1",
+  "reranker_model": "BAAI/bge-reranker-v2-m3",
+  "collection": "knowledge_base_v3",
+  "checks": {
+    "A1_splade_nnz": 20,
+    "A1_splade_load_s": 0.4,
+    "A1_ok": true,
+    "A2_n_hits": 5,
+    "A2_top_score": 22.0035,
+    "A2_top_pages": [
+      195,
+      232,
+      182,
+      199,
+      251
+    ],
+    "A2_ok": true,
+    "A3_reranker_load_s": 8.7,
+    "A3_order": [
+      2,
+      1
+    ],
+    "A3_ok": true,
+    "A4_pool": 30,
+    "A4_top5_pages": [
+      null,
+      195,
+      null,
+      197,
+      251
+    ],
+    "A4_rerank_s": 4.1,
+    "A4_scores_n": 30,
+    "A4_score_spread": 0.9838,
+    "A4_reordered": true,
+    "A4_ok": true,
+    "wall_s": 19.6
+  },
+  "all_pass": true
+}

@@ -98,11 +98,18 @@ def main() -> int:
              "page_number": (p.payload or {}).get("page_number")} for p in dense]
     t = time.time()
     top = reranker.rerank(QUERY, pool, top_k=5)
+    # rerank() returns the chunk dicts WITHOUT a score key, so an assertion on "ce_score" can never
+    # pass (the original A4 was inert-by-construction — a check on a field the tool never emits).
+    # Independent evidence the CE actually scored the real pool: call the model directly.
+    scores = reranker._model.predict([(QUERY, c.get("text", "")) for c in pool])
     checks["A4_pool"] = len(pool)
     checks["A4_top5_pages"] = [c["page_number"] for c in top]
     checks["A4_rerank_s"] = round(time.time() - t, 1)
-    checks["A4_ok"] = len(top) == min(5, len(pool)) and all(
-        c.get("ce_score") is not None for c in top)
+    checks["A4_scores_n"] = len(scores)
+    checks["A4_score_spread"] = round(float(max(scores) - min(scores)), 4)
+    checks["A4_reordered"] = bool(top) and top[0] is not pool[0]
+    checks["A4_ok"] = (len(top) == min(5, len(pool)) and len(scores) == len(pool)
+                       and float(max(scores) - min(scores)) > 0)
 
     checks["wall_s"] = round(time.time() - t0, 1)
     result = {
