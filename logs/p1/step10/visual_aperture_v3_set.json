@@ -1,0 +1,1841 @@
+{
+ "meta": {
+  "feynman": "data/base_textbooks/feynman-lectures-on-physics-volume1.pdf",
+  "ck12": "data/base_textbooks/test_book.pdf",
+  "vis_queries": "data/eval_queries_v2_visual.json",
+  "crop_dpi": 200,
+  "locator": {
+   "gap": 14.0,
+   "min_strokes": 3,
+   "min_frac": 0.01,
+   "max_frac": 0.3
+  },
+  "n_images": 57,
+  "n_texts": 33,
+  "by_group": {
+   "far_domain": 9,
+   "in_domain": 36,
+   "near_domain": 12
+  },
+  "split_by_group": {
+   "far_domain": {
+    "calibration": 5,
+    "heldout": 4
+   },
+   "in_domain": {
+    "calibration": 18,
+    "heldout": 18
+   },
+   "near_domain": {
+    "calibration": 6,
+    "heldout": 6
+   }
+  }
+ },
+ "images": [
+  {
+   "id": "far_domain_logo-poster",
+   "group": "far_domain",
+   "modality": "image",
+   "source": "sv_ray_cluster_access/docs/images/logo-poster.png",
+   "why": "far: a brand logo",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/far_domain_logo-poster.png",
+   "sha256": "f6f0e0e93d579a7b",
+   "written_wh": [
+    6600,
+    3000
+   ]
+  },
+  {
+   "id": "far_domain_logo-poster-transparent",
+   "group": "far_domain",
+   "modality": "image",
+   "source": "sv_ray_cluster_access/docs/images/logo-poster-transparent.png",
+   "why": "far: a brand logo",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/far_domain_logo-poster-transparent.png",
+   "sha256": "f6f26dfd7ed40374",
+   "written_wh": [
+    6600,
+    3000
+   ]
+  },
+  {
+   "id": "far_domain_noise_00",
+   "group": "far_domain",
+   "modality": "image",
+   "source": "synthetic",
+   "why": "far: uniform noise (seeded, reproducible)",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/far_domain_noise_00.png",
+   "sha256": "9be96595259c1a1d",
+   "written_wh": [
+    256,
+    256
+   ]
+  },
+  {
+   "id": "far_domain_noise_01",
+   "group": "far_domain",
+   "modality": "image",
+   "source": "synthetic",
+   "why": "far: uniform noise (seeded, reproducible)",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/far_domain_noise_01.png",
+   "sha256": "70f833178a0f6608",
+   "written_wh": [
+    256,
+    256
+   ]
+  },
+  {
+   "id": "far_domain_noise_02",
+   "group": "far_domain",
+   "modality": "image",
+   "source": "synthetic",
+   "why": "far: uniform noise (seeded, reproducible)",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/far_domain_noise_02.png",
+   "sha256": "fe34e07b042ef0a3",
+   "written_wh": [
+    256,
+    256
+   ]
+  },
+  {
+   "id": "far_domain_noise_03",
+   "group": "far_domain",
+   "modality": "image",
+   "source": "synthetic",
+   "why": "far: uniform noise (seeded, reproducible)",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/far_domain_noise_03.png",
+   "sha256": "3f46b2257eddb349",
+   "written_wh": [
+    256,
+    256
+   ]
+  },
+  {
+   "id": "far_domain_noise_04",
+   "group": "far_domain",
+   "modality": "image",
+   "source": "synthetic",
+   "why": "far: uniform noise (seeded, reproducible)",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/far_domain_noise_04.png",
+   "sha256": "eea636dfa5771c61",
+   "written_wh": [
+    256,
+    256
+   ]
+  },
+  {
+   "id": "far_domain_noise_05",
+   "group": "far_domain",
+   "modality": "image",
+   "source": "synthetic",
+   "why": "far: uniform noise (seeded, reproducible)",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/far_domain_noise_05.png",
+   "sha256": "58315a2e92a7a6a6",
+   "written_wh": [
+    256,
+    256
+   ]
+  },
+  {
+   "id": "far_domain_overlapping_logo",
+   "group": "far_domain",
+   "modality": "image",
+   "source": "sv_ray_cluster_access/docs/images/overlapping_logo.png",
+   "why": "far: a brand logo",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/far_domain_overlapping_logo.png",
+   "sha256": "135f0c91ff2fee56",
+   "written_wh": [
+    267,
+    259
+   ]
+  },
+  {
+   "id": "in_domain_p0037",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 37,
+   "bbox": [
+    139.6,
+    33.4,
+    276.4,
+    127.8
+   ],
+   "n_strokes": 62,
+   "area_frac": 0.05,
+   "source_query_ids": [
+    "vis-001"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0037.png",
+   "sha256": "e00b0e8a562dc801",
+   "written_wh": [
+    381,
+    264
+   ]
+  },
+  {
+   "id": "in_domain_p0077",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 77,
+   "bbox": [
+    225.1,
+    50.4,
+    260.8,
+    304.2
+   ],
+   "n_strokes": 17,
+   "area_frac": 0.0318,
+   "source_query_ids": [
+    "vis-002"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0077.png",
+   "sha256": "eee000441c19107e",
+   "written_wh": [
+    100,
+    706
+   ]
+  },
+  {
+   "id": "in_domain_p0094",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 94,
+   "bbox": [
+    161.8,
+    243.5,
+    254.9,
+    313.9
+   ],
+   "n_strokes": 8,
+   "area_frac": 0.0243,
+   "source_query_ids": [
+    "vis-003"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0094.png",
+   "sha256": "a09259998afd595b",
+   "written_wh": [
+    259,
+    197
+   ]
+  },
+  {
+   "id": "in_domain_p0130",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 130,
+   "bbox": [
+    119.0,
+    33.0,
+    342.6,
+    132.6
+   ],
+   "n_strokes": 9,
+   "area_frac": 0.0879,
+   "source_query_ids": [
+    "vis-005"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0130.png",
+   "sha256": "cadc2763a58a68bc",
+   "written_wh": [
+    622,
+    278
+   ]
+  },
+  {
+   "id": "in_domain_p0144",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 144,
+   "bbox": [
+    131.1,
+    349.3,
+    288.6,
+    414.1
+   ],
+   "n_strokes": 11,
+   "area_frac": 0.0385,
+   "source_query_ids": [
+    "vis-006"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0144.png",
+   "sha256": "4c8c32de94cb70ab",
+   "written_wh": [
+    438,
+    181
+   ]
+  },
+  {
+   "id": "in_domain_p0154",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 154,
+   "bbox": [
+    146.2,
+    282.4,
+    249.8,
+    366.3
+   ],
+   "n_strokes": 25,
+   "area_frac": 0.0328,
+   "source_query_ids": [
+    "vis-007"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0154.png",
+   "sha256": "0eb9e9d1c8e165dc",
+   "written_wh": [
+    288,
+    234
+   ]
+  },
+  {
+   "id": "in_domain_p0176",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 176,
+   "bbox": [
+    149.8,
+    191.7,
+    267.1,
+    268.0
+   ],
+   "n_strokes": 6,
+   "area_frac": 0.0338,
+   "source_query_ids": [
+    "vis-008"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0176.png",
+   "sha256": "07ed5ffbf12689b2",
+   "written_wh": [
+    326,
+    213
+   ]
+  },
+  {
+   "id": "in_domain_p0214",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 214,
+   "bbox": [
+    142.3,
+    33.1,
+    267.9,
+    123.3
+   ],
+   "n_strokes": 6,
+   "area_frac": 0.0435,
+   "source_query_ids": [
+    "vis-012"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0214.png",
+   "sha256": "1a98a63621e1e093",
+   "written_wh": [
+    350,
+    252
+   ]
+  },
+  {
+   "id": "in_domain_p0217",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 217,
+   "bbox": [
+    130.7,
+    41.0,
+    284.9,
+    130.1
+   ],
+   "n_strokes": 18,
+   "area_frac": 0.0532,
+   "source_query_ids": [
+    "vis-012",
+    "vis-014"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0217.png",
+   "sha256": "762e32d1b64a55db",
+   "written_wh": [
+    429,
+    248
+   ]
+  },
+  {
+   "id": "in_domain_p0218",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 218,
+   "bbox": [
+    130.9,
+    43.7,
+    272.9,
+    131.0
+   ],
+   "n_strokes": 15,
+   "area_frac": 0.0478,
+   "source_query_ids": [
+    "vis-012",
+    "vis-014"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0218.png",
+   "sha256": "48a2fd457577ed68",
+   "written_wh": [
+    396,
+    243
+   ]
+  },
+  {
+   "id": "in_domain_p0222",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 222,
+   "bbox": [
+    128.9,
+    355.9,
+    286.4,
+    457.5
+   ],
+   "n_strokes": 13,
+   "area_frac": 0.0625,
+   "source_query_ids": [
+    "vis-010"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0222.png",
+   "sha256": "87c675c6fca554fb",
+   "written_wh": [
+    438,
+    283
+   ]
+  },
+  {
+   "id": "in_domain_p0257",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 257,
+   "bbox": [
+    164.5,
+    213.1,
+    274.7,
+    265.1
+   ],
+   "n_strokes": 9,
+   "area_frac": 0.0207,
+   "source_query_ids": [
+    "vis-011"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0257.png",
+   "sha256": "5d88a9698c3bec13",
+   "written_wh": [
+    308,
+    145
+   ]
+  },
+  {
+   "id": "in_domain_p0339",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 339,
+   "bbox": [
+    144.5,
+    402.2,
+    275.7,
+    451.8
+   ],
+   "n_strokes": 8,
+   "area_frac": 0.0236,
+   "source_query_ids": [
+    "vis-013"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0339.png",
+   "sha256": "77ed866fd976bdd9",
+   "written_wh": [
+    365,
+    138
+   ]
+  },
+  {
+   "id": "in_domain_p0370",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 370,
+   "bbox": [
+    223.8,
+    185.5,
+    287.9,
+    322.7
+   ],
+   "n_strokes": 57,
+   "area_frac": 0.033,
+   "source_query_ids": [
+    "vis-006"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0370.png",
+   "sha256": "f4ca0ef5996f97b7",
+   "written_wh": [
+    179,
+    382
+   ]
+  },
+  {
+   "id": "in_domain_p0374",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 374,
+   "bbox": [
+    122.8,
+    95.8,
+    293.8,
+    202.7
+   ],
+   "n_strokes": 25,
+   "area_frac": 0.0719,
+   "source_query_ids": [
+    "vis-006",
+    "vis-015"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0374.png",
+   "sha256": "e70ecbc7515bbd6c",
+   "written_wh": [
+    476,
+    297
+   ]
+  },
+  {
+   "id": "in_domain_p0454",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 454,
+   "bbox": [
+    157.2,
+    391.8,
+    259.4,
+    458.2
+   ],
+   "n_strokes": 6,
+   "area_frac": 0.0251,
+   "source_query_ids": [
+    "vis-018"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0454.png",
+   "sha256": "3eb483b71b66dcf5",
+   "written_wh": [
+    285,
+    185
+   ]
+  },
+  {
+   "id": "in_domain_p0457",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 457,
+   "bbox": [
+    157.6,
+    41.0,
+    260.0,
+    137.7
+   ],
+   "n_strokes": 6,
+   "area_frac": 0.0377,
+   "source_query_ids": [
+    "vis-018"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0457.png",
+   "sha256": "09679a4bf6568a8b",
+   "written_wh": [
+    286,
+    270
+   ]
+  },
+  {
+   "id": "in_domain_p0464",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 464,
+   "bbox": [
+    139.2,
+    33.2,
+    275.5,
+    126.4
+   ],
+   "n_strokes": 25,
+   "area_frac": 0.0491,
+   "source_query_ids": [
+    "vis-019"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0464.png",
+   "sha256": "1098d68ccb84e720",
+   "written_wh": [
+    380,
+    260
+   ]
+  },
+  {
+   "id": "in_domain_p0477",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 477,
+   "bbox": [
+    123.5,
+    367.7,
+    294.1,
+    457.5
+   ],
+   "n_strokes": 5,
+   "area_frac": 0.0596,
+   "source_query_ids": [
+    "vis-020"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0477.png",
+   "sha256": "a681fe0c9d5248ed",
+   "written_wh": [
+    475,
+    250
+   ]
+  },
+  {
+   "id": "in_domain_p0506",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 506,
+   "bbox": [
+    224.4,
+    34.8,
+    286.8,
+    137.3
+   ],
+   "n_strokes": 3,
+   "area_frac": 0.0235,
+   "source_query_ids": [
+    "vis-022"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0506.png",
+   "sha256": "27d92ebb22fe6327",
+   "written_wh": [
+    174,
+    286
+   ]
+  },
+  {
+   "id": "in_domain_p0515",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 515,
+   "bbox": [
+    120.8,
+    133.8,
+    247.8,
+    230.3
+   ],
+   "n_strokes": 10,
+   "area_frac": 0.0473,
+   "source_query_ids": [
+    "vis-022"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0515.png",
+   "sha256": "014a31d0037676ec",
+   "written_wh": [
+    354,
+    269
+   ]
+  },
+  {
+   "id": "in_domain_p0593",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 593,
+   "bbox": [
+    136.0,
+    349.7,
+    177.7,
+    447.3
+   ],
+   "n_strokes": 10,
+   "area_frac": 0.0141,
+   "source_query_ids": [
+    "vis-026"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0593.png",
+   "sha256": "b21283926c268701",
+   "written_wh": [
+    117,
+    272
+   ]
+  },
+  {
+   "id": "in_domain_p0604",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 604,
+   "bbox": [
+    134.2,
+    34.0,
+    281.8,
+    156.3
+   ],
+   "n_strokes": 15,
+   "area_frac": 0.0712,
+   "source_query_ids": [
+    "vis-027"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0604.png",
+   "sha256": "9e0ce86d95c7b6ed",
+   "written_wh": [
+    411,
+    341
+   ]
+  },
+  {
+   "id": "in_domain_p0614",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 614,
+   "bbox": [
+    102.7,
+    32.7,
+    325.7,
+    183.2
+   ],
+   "n_strokes": 31,
+   "area_frac": 0.1354,
+   "source_query_ids": [
+    "vis-028"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0614.png",
+   "sha256": "25657c6c0d68c7a3",
+   "written_wh": [
+    620,
+    419
+   ]
+  },
+  {
+   "id": "in_domain_p0632",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 632,
+   "bbox": [
+    156.1,
+    53.2,
+    255.6,
+    125.1
+   ],
+   "n_strokes": 15,
+   "area_frac": 0.0266,
+   "source_query_ids": [
+    "vis-029"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0632.png",
+   "sha256": "c1808a8931e1f206",
+   "written_wh": [
+    277,
+    201
+   ]
+  },
+  {
+   "id": "in_domain_p0635",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 635,
+   "bbox": [
+    138.1,
+    281.8,
+    282.8,
+    449.9
+   ],
+   "n_strokes": 867,
+   "area_frac": 0.0971,
+   "source_query_ids": [
+    "vis-029"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0635.png",
+   "sha256": "194ffbb544df67ff",
+   "written_wh": [
+    403,
+    468
+   ]
+  },
+  {
+   "id": "in_domain_p0649",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 649,
+   "bbox": [
+    111.9,
+    119.3,
+    324.1,
+    183.8
+   ],
+   "n_strokes": 44,
+   "area_frac": 0.0521,
+   "source_query_ids": [
+    "vis-030"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0649.png",
+   "sha256": "6800cbbefed96904",
+   "written_wh": [
+    591,
+    180
+   ]
+  },
+  {
+   "id": "in_domain_p0676",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 676,
+   "bbox": [
+    154.8,
+    220.2,
+    270.4,
+    309.9
+   ],
+   "n_strokes": 9,
+   "area_frac": 0.0396,
+   "source_query_ids": [
+    "vis-031"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0676.png",
+   "sha256": "7584e827d05dc789",
+   "written_wh": [
+    322,
+    250
+   ]
+  },
+  {
+   "id": "in_domain_p0695",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 695,
+   "bbox": [
+    165.1,
+    57.7,
+    357.2,
+    210.8
+   ],
+   "n_strokes": 20,
+   "area_frac": 0.1183,
+   "source_query_ids": [
+    "vis-032"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0695.png",
+   "sha256": "1b2c76c214a0d218",
+   "written_wh": [
+    535,
+    426
+   ]
+  },
+  {
+   "id": "in_domain_p0721",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 721,
+   "bbox": [
+    120.3,
+    45.8,
+    295.8,
+    146.5
+   ],
+   "n_strokes": 54,
+   "area_frac": 0.0694,
+   "source_query_ids": [
+    "vis-033"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0721.png",
+   "sha256": "263699c18d06fd96",
+   "written_wh": [
+    488,
+    280
+   ]
+  },
+  {
+   "id": "in_domain_p0744",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 744,
+   "bbox": [
+    137.2,
+    34.1,
+    274.5,
+    83.3
+   ],
+   "n_strokes": 3,
+   "area_frac": 0.0245,
+   "source_query_ids": [
+    "vis-034"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0744.png",
+   "sha256": "36b549f860e7af30",
+   "written_wh": [
+    382,
+    138
+   ]
+  },
+  {
+   "id": "in_domain_p0802",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 802,
+   "bbox": [
+    139.2,
+    336.5,
+    284.9,
+    451.9
+   ],
+   "n_strokes": 37,
+   "area_frac": 0.066,
+   "source_query_ids": [
+    "vis-036"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0802.png",
+   "sha256": "ec636e8bf9cd5801",
+   "written_wh": [
+    406,
+    322
+   ]
+  },
+  {
+   "id": "in_domain_p0803",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 803,
+   "bbox": [
+    139.3,
+    336.7,
+    284.4,
+    451.6
+   ],
+   "n_strokes": 13,
+   "area_frac": 0.0654,
+   "source_query_ids": [
+    "vis-036"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0803.png",
+   "sha256": "0f5d71cc2e91d700",
+   "written_wh": [
+    404,
+    320
+   ]
+  },
+  {
+   "id": "in_domain_p0839",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 839,
+   "bbox": [
+    126.6,
+    325.6,
+    289.6,
+    435.8
+   ],
+   "n_strokes": 8,
+   "area_frac": 0.0707,
+   "source_query_ids": [
+    "vis-037"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0839.png",
+   "sha256": "a723fadd3c63a3f9",
+   "written_wh": [
+    454,
+    307
+   ]
+  },
+  {
+   "id": "in_domain_p0856",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 856,
+   "bbox": [
+    125.7,
+    364.3,
+    294.1,
+    440.9
+   ],
+   "n_strokes": 3,
+   "area_frac": 0.0495,
+   "source_query_ids": [
+    "vis-038"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/in_domain_p0856.png",
+   "sha256": "02f2da970d6a1b9c",
+   "written_wh": [
+    468,
+    214
+   ]
+  },
+  {
+   "id": "in_domain_p0914",
+   "group": "in_domain",
+   "modality": "image",
+   "source": "feynman",
+   "source_page": 914,
+   "bbox": [
+    139.8,
+    297.5,
+    295.1,
+    442.3
+   ],
+   "n_strokes": 12,
+   "area_frac": 0.0895,
+   "source_query_ids": [
+    "vis-040"
+   ],
+   "why": "real figure crop from the Feynman volume",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/in_domain_p0914.png",
+   "sha256": "ca34b2252c4493c6",
+   "written_wh": [
+    432,
+    403
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p01_x25",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 1,
+   "xref": 25,
+   "native_wh": [
+    1880,
+    900
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/near_domain_ck12_p01_x25.png",
+   "sha256": "4943b4a6d3457826",
+   "written_wh": [
+    1880,
+    900
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p06_x74",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 6,
+   "xref": 74,
+   "native_wh": [
+    1933,
+    3439
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/near_domain_ck12_p06_x74.png",
+   "sha256": "18973f4697c9c6d6",
+   "written_wh": [
+    1933,
+    3439
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p07_x100",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 7,
+   "xref": 100,
+   "native_wh": [
+    800,
+    640
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/near_domain_ck12_p07_x100.png",
+   "sha256": "b586769825c63270",
+   "written_wh": [
+    800,
+    640
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p09_x127",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 9,
+   "xref": 127,
+   "native_wh": [
+    800,
+    240
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/near_domain_ck12_p09_x127.png",
+   "sha256": "4c6729174e26c4d5",
+   "written_wh": [
+    800,
+    240
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p10_x172",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 10,
+   "xref": 172,
+   "native_wh": [
+    3383,
+    1196
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/near_domain_ck12_p10_x172.png",
+   "sha256": "49d6875cfc56d6e2",
+   "written_wh": [
+    3383,
+    1196
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p12_x184",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 12,
+   "xref": 184,
+   "native_wh": [
+    1737,
+    1201
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/near_domain_ck12_p12_x184.png",
+   "sha256": "6d6c3d81773dc748",
+   "written_wh": [
+    1737,
+    1201
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p13_x189",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 13,
+   "xref": 189,
+   "native_wh": [
+    3204,
+    1304
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/near_domain_ck12_p13_x189.png",
+   "sha256": "32399e84f2202bcc",
+   "written_wh": [
+    3204,
+    1304
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p13_x191",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 13,
+   "xref": 191,
+   "native_wh": [
+    2083,
+    3472
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/near_domain_ck12_p13_x191.png",
+   "sha256": "01fe33099e963690",
+   "written_wh": [
+    2083,
+    3472
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p14_x199",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 14,
+   "xref": 199,
+   "native_wh": [
+    3512,
+    1218
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/near_domain_ck12_p14_x199.png",
+   "sha256": "a96da8d443514537",
+   "written_wh": [
+    3512,
+    1218
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p14_x201",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 14,
+   "xref": 201,
+   "native_wh": [
+    3472,
+    2083
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/near_domain_ck12_p14_x201.png",
+   "sha256": "4c1d556b746543bd",
+   "written_wh": [
+    3472,
+    2083
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p16_x212",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 16,
+   "xref": 212,
+   "native_wh": [
+    583,
+    1024
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "calibration",
+   "file": "logs/p1/step10/visual_aperture_set/calibration/near_domain_ck12_p16_x212.png",
+   "sha256": "bf957aed518e32bd",
+   "written_wh": [
+    583,
+    1024
+   ]
+  },
+  {
+   "id": "near_domain_ck12_p17_x230",
+   "group": "near_domain",
+   "modality": "image",
+   "source": "ck12_test_book",
+   "source_page": 17,
+   "xref": 230,
+   "native_wh": [
+    2775,
+    3573
+   ],
+   "why": "figure from a DIFFERENT physics book (near-domain)",
+   "split": "heldout",
+   "file": "logs/p1/step10/visual_aperture_set/heldout/near_domain_ck12_p17_x230.png",
+   "sha256": "8455bf57f1deebd7",
+   "written_wh": [
+    2775,
+    3573
+   ]
+  }
+ ],
+ "texts": [
+  {
+   "id": "text_vis-001",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the figure that displays water magnified one billion times.",
+   "source_page": 37,
+   "relevant_pages": [
+    37
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-002",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the schematic diagram of DNA from Fig. 3-2.",
+   "source_page": 76,
+   "relevant_pages": [
+    77
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-003",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of a pendulum (Fig.\u202f4\u20117) that displays the bob, string, and the angle of swing.",
+   "source_page": 94,
+   "relevant_pages": [
+    94
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-005",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the graph that plots the fraction of heads versus the number of tosses N for a particular sequence of penny tosses.",
+   "source_page": 129,
+   "relevant_pages": [
+    130
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-006",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of the apparatus that demonstrates the independence of vertical and horizontal motions.",
+   "source_page": 145,
+   "relevant_pages": [
+    144,
+    370,
+    374
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-007",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Locate the figure that illustrates the Cavendish torsion balance apparatus, showing the horizontal rod with two small masses suspended by a wire, and the two large masses positioned nearby to create the gravitational attraction for measuring G.",
+   "source_page": 155,
+   "relevant_pages": [
+    154
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-008",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of a parabolic trajectory of a falling body launched with an initial horizontal velocity, including axes labeled \\(x\\) and \\(y\\) and the parabola curve (Fig. 8\u20114).",
+   "source_page": 176,
+   "relevant_pages": [
+    176
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-010",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Find the figure that illustrates the addition of vectors by placing the tail of one vector at the head of the other, forming a parallelogram.",
+   "source_page": 223,
+   "relevant_pages": [
+    222
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-011",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of the closed path in a gravitational field from Fig. 13-3.",
+   "source_page": 257,
+   "relevant_pages": [
+    257
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-012",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show the diagram that illustrates the coordinate transformation between the stationary system and the moving system (the primed and unprimed coordinate axes) used to demonstrate that Newton\u2019s laws retain the same form in both frames.",
+   "source_page": 286,
+   "relevant_pages": [
+    214,
+    217,
+    218,
+    285
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-013",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show the diagram of the torque produced by a force, including the force vector, the point of application, the lever arm, and the angle between the force direction and the lever arm.",
+   "source_page": 339,
+   "relevant_pages": [
+    339
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-014",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram illustrating the two coordinate systems where the z- and z\u2032-axes coincide and one system is rotated by a fixed angle \u03b8 relative to the other.",
+   "source_page": 364,
+   "relevant_pages": [
+    217,
+    218
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-015",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the figure of the actual motion of the tip of the axis of the gyroscope under gravity after the axis was released.",
+   "source_page": 374,
+   "relevant_pages": [
+    374
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-018",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the figure of a light ray reflecting off a surface where the angle of incidence equals the angle of reflection.",
+   "source_page": 454,
+   "relevant_pages": [
+    454,
+    457
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-019",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of the paraboloidal mirror, including its focal point and axis of symmetry.",
+   "source_page": 464,
+   "relevant_pages": [
+    464
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-020",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of a thin lens with two positive radii, including the labels for the lens surfaces and the two positive radii of curvature.",
+   "source_page": 478,
+   "relevant_pages": [
+    477
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-021",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of the two-antenna system (Fig. 29\u20116) that illustrates the amplitude pattern with the N antenna one\u2011quarter wavelength apart from the S antenna and one\u2011fourth period behind it, indicating that the W direction has amplitude 2 and the S direction has amplitude 0.",
+   "source_page": 504,
+   "relevant_pages": [
+    504
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-022",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Find the figure that shows a linear array of n equal oscillators driven with phases s = s.",
+   "source_page": 515,
+   "relevant_pages": [
+    506,
+    515
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-026",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of a charged particle moving in a circular (or helical) path in a uniform magnetic field, including the velocity vector, magnetic field direction, and radius of curvature.",
+   "source_page": 594,
+   "relevant_pages": [
+    593
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-027",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of the wavefronts of a wave traveling at an angle to the coordinate axes, as illustrated in Fig. 34-11.",
+   "source_page": 604,
+   "relevant_pages": [
+    604
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-028",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Locate the figure that shows the spectral sensitivity of the eye, with a dashed curve for rods and a solid curve for cones, as plotted in Fig.\u202f35\u20113.",
+   "source_page": 614,
+   "relevant_pages": [
+    613,
+    614
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-029",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of the neural connections from the eyes to the visual cortex.",
+   "source_page": 636,
+   "relevant_pages": [
+    632,
+    635,
+    636
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-030",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the graph that displays the response to light of the nerve fibers of the horseshoe crab's eye, as presented in Fig. 36-12.",
+   "source_page": 649,
+   "relevant_pages": [
+    649
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-031",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me Fig. 38-2, the diagram of the single-slit experiment illustrating the relationship between particle position and vertical momentum components.",
+   "source_page": 676,
+   "relevant_pages": [
+    676,
+    677
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-032",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of the gas box with a piston, labeled V, as depicted in Fig. 39-1.",
+   "source_page": 695,
+   "relevant_pages": [
+    695
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-033",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of the velocity distribution function (Fig. 40\u20115) that displays the shaded area labeled f(u) du.",
+   "source_page": 720,
+   "relevant_pages": [
+    720,
+    721
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-034",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the diagram of the 36\u2011step random walk of step length l, starting at point B and ending at S36, as illustrated in Figure 41\u20116.",
+   "source_page": 743,
+   "relevant_pages": [
+    744
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-035",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the figure of the heated rubber band (Fig. 44-1).",
+   "source_page": 782,
+   "relevant_pages": [
+    784
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-036",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the figure that illustrates the change in entropy during a reversible transformation.",
+   "source_page": 803,
+   "relevant_pages": [
+    802,
+    803
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-037",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the figure that displays the electric field as a function of position with a solid curve for one instant and a dashed curve for a later instant.",
+   "source_page": 839,
+   "relevant_pages": [
+    839
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-038",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the frequency spectrum diagram of a carrier wave modulated by a single cosine wave, including the sideband frequencies \u03c9c\u202f\u00b1\u202f\u03c9m.",
+   "source_page": 857,
+   "relevant_pages": [
+    856
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  },
+  {
+   "id": "text_vis-039",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the schematic diagram (Fig.\u00a050-2) that depicts a periodic function f(t) as a sum of simple harmonic functions, including the amplitudes a\u2099 and b\u2099.",
+   "source_page": 886,
+   "relevant_pages": [
+    886
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "heldout"
+  },
+  {
+   "id": "text_vis-040",
+   "group": "text_vis_query",
+   "modality": "text",
+   "text": "Show me the graph of phase velocity versus wavelength for water.",
+   "source_page": 915,
+   "relevant_pages": [
+    914
+   ],
+   "why": "labelled visual query (text description of a real figure)",
+   "split": "calibration"
+  }
+ ],
+ "checks": [
+  {
+   "id": "V-0.1 feynman_pdf",
+   "pass": true,
+   "detail": "data/base_textbooks/feynman-lectures-on-physics-volume1.pdf"
+  },
+  {
+   "id": "V-0.2 ck12_pdf",
+   "pass": true,
+   "detail": "data/base_textbooks/test_book.pdf"
+  },
+  {
+   "id": "V-0.3 vis_queries",
+   "pass": true,
+   "detail": "data/eval_queries_v2_visual.json"
+  },
+  {
+   "id": "V-0.4 logo_dir",
+   "pass": true,
+   "detail": "sv_ray_cluster_access/docs/images"
+  },
+  {
+   "id": "V-0.5 figure_pages_found",
+   "pass": true,
+   "detail": "44 pages from relevant_pages"
+  },
+  {
+   "id": "V-A1 crops_built",
+   "pass": true,
+   "detail": "36 crops (dropped 8 of 44 pages)"
+  },
+  {
+   "id": "V-A2 crops_nonempty",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "id": "V-A3 bbox_within_page",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "id": "V-A4 area_frac_in_range",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "id": "V-B1 near_figures_built",
+   "pass": true,
+   "detail": "12 CK-12 figures (min dim 200)"
+  },
+  {
+   "id": "V-B2 near_readable",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "id": "V-C1 far_items_built",
+   "pass": true,
+   "detail": "9 far items"
+  },
+  {
+   "id": "V-C2 far_readable",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "id": "V-D1 split_disjoint",
+   "pass": true,
+   "detail": "same image in both splits: 0"
+  },
+  {
+   "id": "V-D2 both_splits_nonempty",
+   "pass": true,
+   "detail": "cal=29 held=28"
+  },
+  {
+   "id": "V-D3 each_group_both_splits",
+   "pass": true,
+   "detail": "{'far_domain': {'calibration': 5, 'heldout': 4}, 'in_domain': {'calibration': 18, 'heldout': 18}, 'near_domain': {'calibration': 6, 'heldout': 6}}"
+  },
+  {
+   "id": "V-D4 files_on_disk",
+   "pass": true,
+   "detail": ""
+  }
+ ]
+}
