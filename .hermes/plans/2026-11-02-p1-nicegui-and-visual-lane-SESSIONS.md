@@ -208,12 +208,14 @@ then drops into the same per-type table as the text lane. This is the only route
 
 ## 3. What "verified" means here
 
-Every step: (a) its **acceptance check** run by the author and its raw output read; (b) an
-**independent reviewer** — a **different model family** from the author, read-only, given the diff and
-the numbered claims, told to re-derive rather than agree; (c) for any **measurement**, an independent
-stdlib **verifier** that re-derives every cell from the raw per-item array, plus a **mutation proof**
-where every check is reddened by ≥1 mutation and no check is inert. A step with no verdict is **not
-done** and is **not committed**. Record the outcome where the next reader looks (this file + HANDOFF).
+Every step: (a) its **acceptance check** run by the author and its raw output read; (b) a
+**DETERMINISTIC verifier** for **every** step — a **stdlib program** (not a judge) that re-derives every
+reported cell from the raw per-item array, so its evaluation needs no model and is reproducible;
+(c) an **independent reviewer** — a **different model family** from the author, read-only, given the
+diff and the numbered claims, told to re-derive rather than agree — this is the SECOND check, never the
+first; (d) a **mutation proof** where every check is reddened by ≥1 mutation and no check is inert.
+A step with no verdict is **not** done and is **not committed**. Record the outcome where the next
+reader looks (this file + HANDOFF).
 
 ---
 

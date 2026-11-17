@@ -8,8 +8,9 @@
 >   ladder, language ID, domain gate, injection, session-level, refusal doors, conformal abstention).
 >
 > **Resumable:** read this file, find the first ⬜, continue. **Every step carries its own acceptance
-> check + independent (different-family) reviewer + stdlib verifier + mutation proof.** Nothing is
-> "done" without a verdict; nothing is committed without a verdict.
+> check + a DETERMINISTIC stdlib verifier (a program that re-derives every reported cell from the raw
+> per-item array; the independent different-family reviewer is the SECOND check, never the first) +
+> a mutation proof.** Nothing is "done" without a verdict; nothing is committed without a verdict.
 > **Owner approved the direction 2026-11-05; implement only after approval of this plan.**
 
 ---
@@ -133,7 +134,7 @@ lab is ~8 modules and a flat file would be 1,500+ lines. (Owner call.)
 | R7 | PII detect-and-redact | ✅ **DONE 2026-11-05** | ✅ `tests/test_guardrails_pii.py` 9/9; `logs/p1/step10/guardrails_r7r8_mutation.py` **7/7 reddened, no inert**; independent reviewer **6/6 CONFIRMED** (`deleg_17b55979`) (port of the lab `pii_guardrail.py` + Luhn/AKIA/ghp_) | ✅ |
 | R8 | injection + spotlighting | ✅ **DONE 2026-11-05** | ✅ `tests/test_guardrails_injection.py` 5/5 (pattern pass + datamarking, lossless); independent cross-family reviewer `openai/gpt-oss-20b` **13/13 CONFIRMED** (`logs/p1/step10/guardrails_p0_r8_c2_review.json`) | ✅ `logs/p1/step10/guardrails_r7r8_mutation.py` **7/7 reddened, no inert** (shared with R7) |
 | R9 | session-level (rate/near-dup/multi-turn) | ⬜ optional | ⬜ | ⬜ |
-| R10 | integration + tournament | ⬜ | ⬜ | ⬜ |
+| R10 | integration + tournament | ⬜ — ⚠️ its blocker is CLEARED 2026-11-05: the eval dataset is BUILT (`data/guardrail_eval.jsonl`, 51 rows, 8 categories; validator `scripts/validate_guardrail_eval.py`, test `tests/test_guardrail_eval_dataset.py` passes). The funnel + tournament are **not** run | ⬜ | ⬜ |
 | C1 | bipartite grounding graph | ✅ **DONE 2026-11-05** (5 lab modules ported; live-model probe run) — ⚠️ the lab's NLI model does NOT separate unrelated from entailing text (§I121) | ✅ `tests/test_guardrails_response_c1.py` 23/23 + live probe `logs/p1/step10/c1_live_probe.py` (asserted A1/A2/A4/A5/A6 pass); stdlib verifier `guardrails_c1c4_verifier.py` **14/14**; independent cross-family reviewer **`openai/gpt-oss-20b` 9/9 CONFIRMED** (`logs/p1/step10/guardrails_c1c4_review.json`) | ✅ `logs/p1/step10/guardrails_c1c4_mutation.py` **13/13 reddened, no inert** (M9 initially inert — fixture strengthened) |
 | C2 | cheap-heuristics tier | ✅ **DONE 2026-11-05** | ✅ `tests/test_guardrails_response_c2.py` 10/10; `logs/p1/step10/guardrails_c2_mutation.py` **4/4 reddened, no inert**; independent cross-family reviewer `openai/gpt-oss-20b` **13/13 CONFIRMED** (`logs/p1/step10/guardrails_p0_r8_c2_review.json`) | ✅ |
 | C3 | two-verifier cascade | ⬜ | ⬜ | ⬜ |

@@ -1,9 +1,11 @@
 # Guardrails + Observability — resumable plan (2026-11-04)
 
 > **Written 2026-11-04** (session 33→34), before any code. Resumable in any new session: read this
-> file, find the first ⬜, continue. **Every step carries its own acceptance check + independent
-> verifier + mutation proof** (this repo's rule: one verifier per step, not one at the end — see the
-> NiceGUI brief §3). Nothing here is measured until its artifact exists.
+> file, find the first ⬜, continue. **Every step carries its own acceptance check + DETERMINISTIC
+> verifier + mutation proof** (this repo's rule: one verifier per step, not one at the end; the
+> verifier is a **stdlib program** that re-derives every reported cell from the raw per-item array —
+> an LLM reviewer is the SECOND check, never the first — see the NiceGUI brief §3). Nothing here is
+> measured until its artifact exists.
 
 ---
 
