@@ -206,9 +206,9 @@ state plainly that you did not — a screenshot proves what rendered, not what w
 
 | id | step | status | verifier | mutation |
 |---|---|---|---|---|
-| V1 | capture the full per-query score distribution (BOTH modalities) | ⬜ | ⬜ | ⬜ |
-| V2 | top1 / margin / z-score separation test, per modality | ⬜ | ⬜ | ⬜ |
-| V3 | the REAL labelled set, split calibration + held-out, image + text | ⬜ | ⬜ | ⬜ |
+| V1 | capture the full per-query score distribution (BOTH modalities) | ✅ **DONE 2026-11-05** — 70 rows (29 image, 41 text), read-only (index 2001 before=after), median patches image 1031 / text 37, 6/6 guards pass ⚠️ **measured on the 2,001-point index, which NO LONGER EXISTS — re-capture on the rebuilt 968 index is required (session 43)** | ✅ `logs/p1/step10/visual_aperture_v1.py` → `logs/p1/step10/visual_aperture_v1.json`; stdlib verifier `logs/p1/step10/visual_aperture_v1v2_verifier.py` **11/11 PASS**; independent reviewer `openai/gpt-oss-20b` **S1-V1..V5 CONFIRMED** (`logs/p1/step10/session39_review.json`) | ✅ `logs/p1/step10/visual_aperture_v1v2_mutation.py` **11/11 reddened, no inert** |
+| V2 | top1 / margin / z-score separation test, per modality | ✅ **DONE 2026-11-05** — image: **no-separation on ALL THREE** (top1 gap −0.067, margin −0.048, z −1.95); text: `bounded_no_out_group`; self-match settled (12/12 book pages at cos 1.0) ⚠️ **measured on the 2,001-point index, which NO LONGER EXISTS — re-capture on the rebuilt 968 index is required (session 43)** | ✅ `logs/p1/step10/visual_aperture_v2.py` → `logs/p1/step10/visual_aperture_v2.json`; stdlib verifier `logs/p1/step10/visual_aperture_v1v2_verifier.py` **11/11 PASS**; independent reviewer `openai/gpt-oss-20b` (`logs/p1/step10/session39_review.json`) | ✅ `logs/p1/step10/visual_aperture_v1v2_mutation.py` **11/11 reddened, no inert** |
+| V3 | the REAL labelled set, split calibration + held-out, image + text | ✅ **DONE 2026-11-16** — 36 Feynman figure crops + 12 CK-12 near-domain + 9 far-domain + 33 texts; disjoint cal/held-out (29/28) | ✅ `logs/p1/step10/visual_aperture_v3_set.py` → `logs/p1/step10/visual_aperture_v3_set.json`; `--verify-only` **6/6**; independent reviewer `openai/gpt-oss-20b` (`deleg_b7a97997`) **C1..C7 CONFIRMED** | ✅ `logs/p1/step10/visual_aperture_v3_mutation.py` **6/6 reddened, no inert** |
 | V4 | derive TWO apertures (image, text) on calibration, validate on held-out | ⬜ | ⬜ | ⬜ |
 | V5 | rank the lane with labels (VL-L3) | ⬜ | ⬜ | ⬜ |
 | V6 | frontend end-to-end with HELD-OUT inputs, both modalities | ⬜ | ⬜ | ⬜ |

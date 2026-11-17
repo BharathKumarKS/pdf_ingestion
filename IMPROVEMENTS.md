@@ -4,7 +4,7 @@ Everything known-but-not-yet-done, in one place so it can be taken in a single p
 Each entry says **what**, **why it matters**, and **the evidence** — so nothing has to be
 re-derived later. Add to this file rather than leaving a note in a commit message.
 
-Last updated: 2026-10-20
+Last updated: 2026-11-16 (session 43)
 
 ---
 
@@ -9072,3 +9072,40 @@ Best F1 is **0.500** (τ 0.76: recall 0.853, but a **0.398 false-refusal rate** 
 **The fix already scoped (never run):** **VL-L1** — calibrate a *statistic* (margin / z-score over the query's own patch scores) rather than a raw cosine, with the pre-registered outcome *"a statistic separates in/near/far where raw cosine did not; **else recorded as no-separation**"*; then **VL-L2** (a labelled set built from REAL figure crops, not synthetic plots) and **VL-L3** (rank it with `compute_retrieval_metrics`). ⚠️ **VL-L1 can legitimately conclude "no separation" — that is an allowed, reportable outcome, not a failure.**
 
 **Register against:** §I107 (the measurement this corrects the *justification* of), §B4e (**the text-side twin** — the text path is ungated at `score_threshold=0.0` because the patch-count normalisation puts it on a different scale; both modalities need their OWN aperture, and both are scoped in the V-plan), the NG plan `.hermes/plans/2026-11-02-p1-nicegui-and-visual-lane-SESSIONS.md` (VL-L1/L2/L3, all ⬜), the V-plan `.hermes/plans/2026-11-06-p1-visual-lane-aperture-SESSIONS.md` (V1–V6), ARCHITECTURE.md §2 (the visual lane has no labelled metric).
+
+#### I124. ✅ THE VISUAL-LANE APERTURE V1/V2 RAN — for the **image** modality **no statistic separates** in/near/far (a REDIRECT, not a closure); the **LOCAL FALLBACK** for the two DOWN lanes WORKS; R10's dataset is BUILT.
+
+**What ran (session 39, 2026-11-05; read-only).** Three independent things, none committed.
+
+**1. Visual V1/V2 — `logs/p1/step10/visual_aperture_v1.py` → `.json`, `visual_aperture_v2.py` → `.json`.** V1 captured the full per-query score distribution for **both modalities** (called at threshold 0 / large limit, since `visual_search` filters at the threshold and caps at `limit`): **70 rows (29 image, 41 text)**, read-only (visual index **2001 before = 2001 after**), **6/6 guards pass**; median query patches **image 1031 / text 37** — the two modalities sit on **different score scales** (§B4e's patch-count normalisation, now measured), so they must not be pooled. V2 derived three statistics per query — `top1`, `margin = top1 − top2`, `z = (top1 − μ_query)/σ_query` — and tested each for separation **per modality**:
+
+| modality | statistic | verdict | min_in | max_out | gap |
+|---|---|---|---|---|---|
+| image | top1 | **no-separation** | 0.4936 | 0.5609 | −0.0673 |
+| image | margin | **no-separation** | 0.0022 | 0.0499 | −0.0477 |
+| image | z | **no-separation** | 3.80 | 5.75 | −1.95 |
+| text | top1 / margin / z | `bounded_no_out_group` | — | — | — |
+
+⇒ **the image modality's three statistics all fail to separate** — the same §I107 result, now reproduced on a full distribution with a per-modality split. **The self-match question is settled:** the 12 book-page queries return `top1_cos` **exactly 1.0** — a self-match signature (the query image is the stored one), not cross-render proof. **⚠️ Per the plan's rule this is a REDIRECT, not a closure** — the workstream moves to the next statistic (a per-patch maximum, a two-stage read) and, if the statistic space is exhausted, to a **feature** change (a wider patch dimension → a re-embed) as an explicit product decision.
+
+**2. Local fallback for the two DOWN lanes — `logs/p1/step10/local_lane_fallback_probe.py` → `.json` + `_run.txt`.** Forcing `sv_sparse_url=""` / `sv_rerank_url=""` sends both lanes to their **already-existing local paths** (`FastembedSpladeEmbedder`, `CrossEncoderReranker`). All four checks pass: **A1** local SPLADE encodes (nnz 20); **A2** the local sparse lane **queries the real `knowledge_base_v3` index** (5 hits, top 22.0035); **A3** the local CE orders relevant > irrelevant ([2,1]); **A4** it reranks a real 30-page `dense_full` pool (reordered, spread 0.9838). Wall **19.6 s**. ⇒ **query-time only, drop-in, no re-ingest** (the local models are the ones the index was built with). It stays a **switchable override** (`export SV_SPARSE_URL= SV_RERANK_URL=`), not a new `.env` default — the cluster path is the GPU path.
+
+**3. R10's dataset — `data/guardrail_eval.jsonl`, 51 rows, 8 categories** (benign_in_domain 22 · off_domain 12 · benign_edge 5 · obfuscated 3 · jailbreak 3 · gibberish 2 · in_domain_malice 2 · loaded_question 2), with validator `scripts/validate_guardrail_eval.py` and test `tests/test_guardrail_eval_dataset.py`. This clears R10's blocker; **R10 itself (the funnel + tournament) has not run.**
+
+**Evidence.** Stdlib verifier `logs/p1/step10/visual_aperture_v1v2_verifier.py` **11/11 PASS** (every reported cell re-derived from the raw per-row array); mutation `logs/p1/step10/visual_aperture_v1v2_mutation.py` **11/11 reddened, no inert**; independent cross-family reviewer `openai/gpt-oss-20b` (`logs/p1/step10/session39_review.json`) **S1-V1..V5 CONFIRMED, S3-A1..A4 CONFIRMED, S2-D1 CONFIRMED, S2-D2 REFUTED**.
+
+**Register against:** §I107 (the measurement V1/V2 reproduce and extend to a per-modality split), §I123 (the aperture justification this now has a measured basis for), §B4e (the two-threshold requirement, now confirmed by the measured patch-count gap), the V-plan `.hermes/plans/2026-11-06-p1-visual-lane-aperture-SESSIONS.md` (V1/V2 rows; V3 is next), HANDOFF session 39, the guardrails plan `.hermes/plans/2026-11-05-p1-guardrails-course-aligned-SESSIONS.md` (R10 row).
+
+---
+
+#### I125. ⚠️ THE VISUAL LANE'S DATA WAS **DROPPED** FROM THE DEPLOYED QDRANT — `10.0.10.65`'s `visual_knowledge_base` held **2,001** ColPali vectors (built 2026-11-02, MEASURED 2026-11-05) and is now **0 with NO snapshot**; the current document's 968 vectors are gone. (2026-11-15, read-only.)
+
+**What / why it matters.** The Streamlit app is pointed at the remote Qdrant **`10.0.10.65`** (the demo runbook env). Its `visual_knowledge_base` **was populated and measured**: `logs/p1/step10/phase3_visual_write_run_2026-11-02.txt` (2026-11-02) logged `Qdrant: server at 10.0.10.65:6333` and **`total=2001`** = old doc `6d55c52b` **1,033** + current doc `7ba61432` **968**; `logs/p1/step10/visual_aperture_v1_run.txt` (2026-11-05) logged the same host and **`visual index points_before = 2001 … after = 2001`** (read-only). **⇒ the aperture numbers on the slide (0.5609 / 0.4936) are REAL — measured on that index.** TODAY the collection is **0 points with NO snapshot** (`/collections/visual_knowledge_base/snapshots` → `[]`) ⇒ **deleted after 2026-11-05** ⇒ the **"Find a Figure" tab has nothing to search**. The app only *creates* the collection — `src/` has no `delete_collection`; only `scripts/reset_derived_collections.py:122` / `scripts/reset_for_reingest.py:87` delete — and `.65` is a **shared** Qdrant (it holds other teams' collections), so an external drop is the cause. The local file Qdrant (`data/qdrant`) holds a *separate* lineage (**2,835 = 945×3 for doc `b2d9fb56…`**, §B4b) — NOT the deployed set. `colpali_status='ready'` for `7ba61432` is stale (§I15). The rest of the app is fine on `.65`: `knowledge_base_v3` 3,869 · `concept_embeddings` 6,065 · `derivative_artifacts` 73,406.
+
+**Fix (PLAN B).** Re-embed `7ba61432`'s 968 stored PNGs into `10.0.10.65`'s `visual_knowledge_base` with ColPali — **CPU-only** (no cluster path in `colpali_embedder.py`; model cached) ⇒ tens of minutes. **Write the checkpointed/resumable script first.** *Interim:* copy the local set's deduped 945 vectors into `.65`, rewriting `document_id`→`7ba61432` and `image_key`→`7ba61432/page_NNNN.png` (same PDF, page numbers coincide) — defensible but must be disclosed.
+
+**✅ DONE 2026-11-16 23:36 (session 43).** `logs/p1/step10/visual_reingest_planb.py` re-embedded all **968** page PNGs — final `=== 22 / 22 checks PASS ===`, `colpali_status -> ready`; `10.0.10.65`'s `visual_knowledge_base` now holds **968** points for doc `7ba61432` (V-C2 coverage 968 unique, pages 1..968; V-C5 text query 10/10 hits; V-B4 shape (1031,128); V-C4 old doc `6d55c52b` untouched 0→0). ~51 min wall, CPU-only, ~13 s per 4-page batch. Evidence: `logs/p1/step10/visual_reingest_planb_result.json` (**22/22**), `_checkpoint.json` (**968**), `_run.txt`. ⚠️ **The shipped collection is 968, not the pre-loss 2,001** (the old doc's 1,033 vectors are not rebuilt) ⇒ **§I107/§I123's V1/V2 numbers (0.5609 / 0.4936) must be re-captured on the rebuilt index** before the aperture is fit or the slide quotes them.
+
+**Evidence.** local `data/qdrant` `visual_knowledge_base` = **2,835** (all `b2d9fb56`); remote `10.0.10.65` `visual_knowledge_base` = **0**; `data/page_images/7ba61432…/` = 968 PNGs; SQLite `documents` = {`6d55c52b`, `7ba61432`}; app log `Created Qdrant ColPali collection 'visual_knowledge_base'`. Model cache: `data/models/models--vidore--colpali-v1.2` + `~/.cache/huggingface/hub/models--vidore--colpaligemma-3b-pt-448-base` (5.5 GB).
+
+**Register against:** §B4b (the 3× accumulation), §I15 (status flag ≠ artifact), §I42 (the ColPali stage needs only `page_number` + `image_bytes`), §I107 / §I123 / §I124 (the visual lane's *unvalidated aperture* — a separate, downstream concern; this is the upstream "the lane is empty" defect), HANDOFF session 41.
