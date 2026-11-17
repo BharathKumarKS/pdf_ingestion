@@ -100,6 +100,29 @@ uv run python scripts/run_phase3.py --tenant global
 uv run python scripts/run_phase3.py --doc-id <uuid> --graph-only   # rebuild graph only
 ```
 
+### Context discipline (token hygiene)
+
+- **Never let verbose command/job output land in the context window.** Redirect it to a log
+  file and print ONE summary line; read back only the summary block you need. A single tool
+  result under 100,000 chars rides in *every* later turn of the session — Hermes only spills
+  the ones above that to disk.
+
+  ```bash
+  LOG=logs/run_$(date +%Y%m%d_%H%M%S).log
+  { echo "start $(date '+%F %T')"; uv run python scripts/run_phase2.py --tenant global; rc=$?; echo "end rc=$rc"; } >> "$LOG" 2>&1
+  echo "DONE rc=$rc log=$LOG"
+  ```
+
+  Braces (not a subshell) keep `rc` in the same shell — a `... | tee ...; echo rc=$?` reports
+  the *pipeline's* status, not the job's.
+
+- **Filter large JSON in `execute_code`** and print only the fields you need, rather than
+  pulling a whole artifact into context with `read_file` / `cat`.
+
+- Automatic safety nets (do NOT rely on them instead of the above): a tool result over
+  100,000 chars spills to `$HERMES_HOME/cache/spillover/` (full text kept, preview in context);
+  terminal output over 50,000 chars is truncated to first-40% + last-60% (the middle is lost).
+
 ### Key architecture
 
 - **Phase 1** — Docling parser → Chonkie chunker → Nomic MRL embedder → Qdrant `knowledge_base`
