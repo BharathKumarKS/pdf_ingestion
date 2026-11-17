@@ -1,0 +1,86 @@
+{
+ "meta": {
+  "question": "does the product's real routing cost at the endpoint?",
+  "prereg": ".hermes/plans/2026-11-05-p1-router-in-the-loop-preregistration.md",
+  "arms": {
+   "A": "gold query_type",
+   "B": "IntentRouter.classify"
+  },
+  "collection": "knowledge_base_v3",
+  "wall_seconds": 13.9,
+  "n_queries": 0,
+  "router_agreement": null,
+  "router_prediction_distribution": {},
+  "confusion_gold_to_router": {},
+  "n_hyde_misses": 0,
+  "expected_hyde_miss": 0
+ },
+ "aggregates": {
+  "A_recall_at_20": null,
+  "A_ndcg_at_20": null,
+  "A_map": null,
+  "A_mrr": null,
+  "A_hit_at_20": null,
+  "A_coverage_reachable": null,
+  "B_recall_at_20": null,
+  "B_ndcg_at_20": null,
+  "B_map": null,
+  "B_mrr": null,
+  "B_hit_at_20": null,
+  "B_coverage_reachable": null
+ },
+ "deltas": {
+  "recall_at_20": {
+   "n": 0,
+   "mean": null,
+   "ci": null,
+   "resolved": false
+  },
+  "ndcg_at_20": {
+   "n": 0,
+   "mean": null,
+   "ci": null,
+   "resolved": false
+  },
+  "map": {
+   "n": 0,
+   "mean": null,
+   "ci": null,
+   "resolved": false
+  },
+  "mrr": {
+   "n": 0,
+   "mean": null,
+   "ci": null,
+   "resolved": false
+  },
+  "hit_at_20": {
+   "n": 0,
+   "mean": null,
+   "ci": null,
+   "resolved": false
+  },
+  "coverage_reachable": {
+   "n": 0,
+   "mean": null,
+   "ci": null,
+   "resolved": false
+  }
+ },
+ "guards": {
+  "G1_population_133": true,
+  "G2_zero_errors": false,
+  "G3_router_differs_from_gold": false,
+  "G4_armA_reproduces_F0": false,
+  "G5_determinism": true,
+  "G6_router_distribution_recorded": false,
+  "G7_hyde_misses_are_the_expected_set": true
+ },
+ "errors": [
+  {
+   "id": "gold-003",
+   "error": "ConnectError: [Errno 61] Connection refused"
+  }
+ ],
+ "per_query": []
+}
