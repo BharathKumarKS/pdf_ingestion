@@ -1,0 +1,300 @@
+2026-11-16 22:45:34.892 | INFO     | src.core.database:get_qdrant:233 - Qdrant: server at 10.0.10.65:6333
+2026-11-16 22:45:35.049 | INFO     | src.core.database:get_engine:196 - SQLite engine ready: sqlite:///./data/synapse.db
+2026-11-16 22:45:35.049 | INFO     | __main__:main:167 - === resolved config ===
+2026-11-16 22:45:35.049 | INFO     | __main__:main:175 -   QDRANT_HOST           = '10.0.10.65'
+2026-11-16 22:45:35.049 | INFO     | __main__:main:175 -   QDRANT_COLLECTION     = 'knowledge_base_v3'
+2026-11-16 22:45:35.049 | INFO     | __main__:main:175 -   colpali_collection    = 'visual_knowledge_base'
+2026-11-16 22:45:35.049 | INFO     | __main__:main:175 -   colpali_model         = 'vidore/colpali-v1.2'
+2026-11-16 22:45:35.049 | INFO     | __main__:main:175 -   colpali_patch_dim     = 128
+2026-11-16 22:45:35.049 | INFO     | __main__:main:175 -   colpali_page_batch_size= 4
+2026-11-16 22:45:35.049 | INFO     | __main__:main:175 -   use_stub_colpali      = False
+2026-11-16 22:45:35.049 | INFO     | __main__:main:175 -   page_images_dir       = './data/page_images'
+2026-11-16 22:45:35.049 | INFO     | __main__:main:175 -   sqlite_url            = 'sqlite:///./data/synapse.db'
+2026-11-16 22:45:35.049 | INFO     | __main__:main:178 - === Stage 0 — pre-flight ===
+2026-11-16 22:45:35.049 | INFO     | __main__:check:78 -   PASS  V-0.1 qdrant_host_is_remote  host='10.0.10.65' — empty means the LOCAL file store, the WRONG target
+2026-11-16 22:45:35.049 | INFO     | __main__:check:78 -   PASS  V-0.2 not_stub_embedder  USE_STUB_COLPALI would write 32-patch garbage
+2026-11-16 22:45:35.049 | INFO     | __main__:check:78 -   PASS  V-0.3 collection_name  visual_knowledge_base
+2026-11-16 22:45:35.055 | INFO     | __main__:check:78 -   PASS  V-0.4 doc_exists  doc=7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:45:35.055 | INFO     | __main__:check:78 -   PASS  V-0.5 pdf_exists  /Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/data/base_textbooks/feynman-lectures-on-physics-volume1.pdf
+2026-11-16 22:45:35.055 | INFO     | __main__:check:78 -   PASS  V-0.6 page_count  doc.page_count=968
+2026-11-16 22:45:35.064 | INFO     | __main__:check:78 -   PASS  V-0.7 collection_dim  live=128 expected=128
+2026-11-16 22:45:35.074 | INFO     | __main__:check:78 -   PASS  V-0.8 current_doc_state  doc 7ba61432-c5e0-416d-aecf-25a232523481 points_before=8 | old doc 6d55c52b-47ae-45ff-bee0-a3ca01ac93ce points=0
+2026-11-16 22:45:35.074 | INFO     | __main__:main:214 - target doc 7ba61432-c5e0-416d-aecf-25a232523481 status=ready pages=968 tenant=global source_type=base_textbook
+2026-11-16 22:45:35.074 | INFO     | __main__:main:218 - === Stage A — page-image records ===
+2026-11-16 22:45:35.087 | INFO     | __main__:main:228 - reusing 968 existing page-image records
+2026-11-16 22:45:35.087 | INFO     | __main__:check:78 -   PASS  V-A1 record_count  records=968 pages=968
+2026-11-16 22:45:35.087 | INFO     | __main__:check:78 -   PASS  V-A2 all_have_image_key  
+2026-11-16 22:45:35.087 | INFO     | __main__:check:78 -   PASS  V-A3 all_active  
+2026-11-16 22:45:35.088 | INFO     | __main__:check:78 -   PASS  V-A4 page_coverage  min=1 max=968 unique=968
+2026-11-16 22:45:35.413 | INFO     | __main__:check:78 -   PASS  V-A5 pngs_on_disk  missing/empty: []
+2026-11-16 22:45:35.414 | INFO     | __main__:main:251 - === Stage B — ColPali embed, batches of 4 ===
+2026-11-16 22:45:35.414 | INFO     | __main__:main:268 - resume state: 8 pages already done (target 968)
+2026-11-16 22:45:35.415 | INFO     | __main__:main:272 - 240 batches to run (960 pages)
+2026-11-16 22:45:39.043 | INFO     | src.pdf_ingestion.colpali_embedder:_load:88 - Loading ColPali model 'vidore/colpali-v1.2' on cpu
+Fetching 2 files:   0%|          | 0/2 [00:00<?, ?it/s]Fetching 2 files: 100%|██████████| 2/2 [00:00<00:00, 784.94it/s]
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:05<00:05,  5.01s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:06<00:00,  3.09s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:06<00:00,  3.38s/it]
+Using a slow image processor as `use_fast` is unset and a slow processor was saved with this model. `use_fast=True` will be the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.
+2026-11-16 22:46:06.550 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:46:18.951 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:46:31.237 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:46:43.577 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:46:56.008 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:47:07.815 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:47:19.732 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:47:31.603 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:47:43.761 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:47:56.046 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:48:07.926 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:48:20.403 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:48:32.808 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:48:44.936 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:48:57.146 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:49:08.958 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:49:20.725 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:49:32.797 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:49:45.254 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:49:57.324 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:49:57.342 | INFO     | __main__:main:302 -   batch 20/240  done=88/968  written=80  elapsed=262s  ETA=2619s
+2026-11-16 22:50:09.424 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:50:21.447 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:50:33.667 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:50:46.153 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:50:58.209 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:51:10.480 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:51:23.736 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:51:36.882 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:51:49.004 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:52:01.131 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:52:13.300 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:52:25.695 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:52:38.316 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:52:50.844 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:53:03.760 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:53:16.397 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:53:29.600 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:53:43.319 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:53:55.561 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:54:08.178 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:54:08.187 | INFO     | __main__:main:302 -   batch 40/240  done=168/968  written=160  elapsed=513s  ETA=2442s
+2026-11-16 22:54:21.035 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:54:34.318 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:54:47.757 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:55:00.337 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:55:13.612 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:55:26.654 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:55:39.425 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:55:52.679 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:56:05.434 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:56:18.170 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:56:37.969 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:56:54.263 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:57:11.657 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:57:26.091 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:57:41.296 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:57:58.684 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:58:17.521 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:58:30.923 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:58:46.537 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:58:59.278 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:58:59.283 | INFO     | __main__:main:302 -   batch 60/240  done=248/968  written=240  elapsed=804s  ETA=2334s
+2026-11-16 22:59:11.994 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:59:27.464 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:59:42.420 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 22:59:56.820 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:00:13.212 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:00:27.811 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:00:40.650 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:00:53.333 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:01:05.291 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:01:17.545 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:01:29.907 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:01:42.319 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:01:54.612 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:02:06.950 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:02:19.175 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:02:31.410 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:02:43.821 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:02:56.782 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:03:09.351 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:03:21.560 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:03:21.569 | INFO     | __main__:main:302 -   batch 80/240  done=328/968  written=320  elapsed=1066s  ETA=2080s
+2026-11-16 23:03:33.681 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:03:46.390 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:03:58.469 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:04:10.539 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:04:22.629 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:04:35.065 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:04:47.452 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:04:59.649 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:05:11.767 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:05:23.924 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:05:36.114 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:05:48.443 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:06:00.864 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:06:12.874 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:06:25.218 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:06:37.548 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:06:49.777 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:07:01.864 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:07:14.165 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:07:26.431 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:07:26.443 | INFO     | __main__:main:302 -   batch 100/240  done=408/968  written=400  elapsed=1311s  ETA=1799s
+2026-11-16 23:07:39.032 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:07:51.076 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:08:03.311 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:08:15.283 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:08:27.648 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:08:40.276 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:08:52.576 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:09:04.847 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:09:17.017 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:09:29.091 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:09:41.452 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:09:53.707 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:10:06.067 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:10:18.573 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:10:31.684 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:10:45.056 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:10:57.343 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:11:09.748 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:11:22.772 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:11:35.978 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:11:35.982 | INFO     | __main__:main:302 -   batch 120/240  done=488/968  written=480  elapsed=1561s  ETA=1535s
+2026-11-16 23:11:49.057 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:12:01.415 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:12:13.618 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:12:26.017 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:12:38.573 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:12:51.096 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:13:03.453 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:13:15.795 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:13:28.095 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:13:41.450 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:13:54.359 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:14:06.793 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:14:18.951 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:14:31.468 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:14:44.046 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:14:56.113 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:15:08.415 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:15:20.697 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:15:32.979 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:15:45.806 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:15:45.815 | INFO     | __main__:main:302 -   batch 140/240  done=568/968  written=560  elapsed=1810s  ETA=1275s
+2026-11-16 23:15:58.127 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:16:10.282 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:16:22.586 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:16:35.340 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:16:47.665 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:16:59.848 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:17:12.197 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:17:24.526 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:17:37.022 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:17:49.618 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:18:01.804 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:18:14.100 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:18:26.336 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:18:39.223 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:18:51.410 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:19:03.873 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:19:16.758 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:19:30.143 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:19:42.729 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:19:55.563 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:19:55.574 | INFO     | __main__:main:302 -   batch 160/240  done=648/968  written=640  elapsed=2060s  ETA=1017s
+2026-11-16 23:20:08.333 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:20:21.929 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:20:36.351 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:20:50.059 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:21:02.384 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:21:15.172 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:21:28.423 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:21:41.700 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:21:53.928 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:22:07.220 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:22:19.087 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:22:31.287 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:22:43.889 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:22:55.763 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:23:09.611 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:23:21.492 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:23:35.218 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:23:48.225 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:24:01.405 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:24:13.553 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:24:13.557 | INFO     | __main__:main:302 -   batch 180/240  done=728/968  written=720  elapsed=2318s  ETA=764s
+2026-11-16 23:24:25.632 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:24:38.423 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:24:51.149 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:25:03.704 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:25:15.982 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:25:28.141 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:25:40.485 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:25:52.474 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:26:04.539 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:26:16.733 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:26:29.900 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:26:42.673 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:26:54.821 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:27:07.074 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:27:19.179 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:27:31.858 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:27:43.980 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:27:56.106 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:28:08.264 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:28:20.305 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:28:20.316 | INFO     | __main__:main:302 -   batch 200/240  done=808/968  written=800  elapsed=2565s  ETA=508s
+2026-11-16 23:28:33.405 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:28:47.072 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:28:58.915 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:29:10.976 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:29:22.804 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:29:34.937 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:29:47.564 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:29:59.614 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:30:11.995 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:30:23.727 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:30:36.248 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:30:48.465 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:31:00.490 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:31:12.537 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:31:24.666 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:31:37.989 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:31:50.029 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:32:02.263 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:32:14.444 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:32:26.782 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:32:26.794 | INFO     | __main__:main:302 -   batch 220/240  done=888/968  written=880  elapsed=2811s  ETA=253s
+2026-11-16 23:32:39.549 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:32:51.657 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:33:06.290 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:33:19.474 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:33:32.988 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:33:47.427 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:33:59.460 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:34:11.341 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:34:23.293 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:34:35.578 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:34:48.459 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:35:00.555 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:35:13.281 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:35:26.303 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:35:39.300 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:35:52.086 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:36:04.675 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:36:17.146 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:36:29.991 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:36:42.888 | INFO     | src.pdf_ingestion.store:save_colpali_embeddings:1841 - Upserted 4 ColPali vectors for doc 7ba61432-c5e0-416d-aecf-25a232523481
+2026-11-16 23:36:42.897 | INFO     | __main__:main:302 -   batch 240/240  done=968/968  written=960  elapsed=3067s  ETA=0s
+2026-11-16 23:36:42.901 | INFO     | __main__:check:78 -   PASS  V-B1 all_target_pages_done  968/968
+2026-11-16 23:36:42.906 | INFO     | __main__:check:78 -   PASS  V-B2 qdrant_points_for_doc  qdrant=968 expected=968
+2026-11-16 23:36:42.907 | INFO     | __main__:check:78 -   PASS  V-B3 reference_patch_count  patches/page=1031
+2026-11-16 23:36:46.306 | INFO     | __main__:check:78 -   PASS  V-B4 patch_dim  shape=(1031, 128)
+2026-11-16 23:36:46.306 | INFO     | __main__:_stage_c:332 - === Stage C — read-back ===
+2026-11-16 23:36:46.316 | INFO     | __main__:check:78 -   PASS  V-C1 doc_point_count  qdrant=968 expected=968
+2026-11-16 23:36:46.335 | INFO     | __main__:check:78 -   PASS  V-C2 page_coverage_exact  n=968 unique=968 min=1 max=968
+2026-11-16 23:36:46.340 | INFO     | __main__:check:78 -   PASS  V-C3 payload_sample  tenant=global source_type=page_image image_key=True
+2026-11-16 23:36:46.344 | INFO     | __main__:check:78 -   PASS  V-C4 old_doc_untouched  before=0 after=0
+2026-11-16 23:36:46.869 | INFO     | __main__:check:78 -   PASS  V-C5 text_query_returns_doc  10/10 hits
+2026-11-16 23:36:46.876 | INFO     | __main__:_stage_c:369 - colpali_status -> ready (artifact verified)
+2026-11-16 23:36:46.877 | INFO     | __main__:_finish:375 - === 22 / 22 checks PASS ===

@@ -1,0 +1,117 @@
+{
+ "n_pages": 968,
+ "checks": [
+  {
+   "id": "V-0.1 qdrant_host_is_remote",
+   "pass": true,
+   "detail": "host='10.0.10.65' \u2014 empty means the LOCAL file store, the WRONG target"
+  },
+  {
+   "id": "V-0.2 not_stub_embedder",
+   "pass": true,
+   "detail": "USE_STUB_COLPALI would write 32-patch garbage"
+  },
+  {
+   "id": "V-0.3 collection_name",
+   "pass": true,
+   "detail": "visual_knowledge_base"
+  },
+  {
+   "id": "V-0.4 doc_exists",
+   "pass": true,
+   "detail": "doc=7ba61432-c5e0-416d-aecf-25a232523481"
+  },
+  {
+   "id": "V-0.5 pdf_exists",
+   "pass": true,
+   "detail": "/Users/bharathkumar/repo/Support_Vectors/Beyond_RAG_Advanced_Agentic_Knowledge_Architectures/Project/Team_Project/pdf_ingestion/data/base_textbooks/feynman-lectures-on-physics-volume1.pdf"
+  },
+  {
+   "id": "V-0.6 page_count",
+   "pass": true,
+   "detail": "doc.page_count=968"
+  },
+  {
+   "id": "V-0.7 collection_dim",
+   "pass": true,
+   "detail": "live=128 expected=128"
+  },
+  {
+   "id": "V-0.8 current_doc_state",
+   "pass": true,
+   "detail": "doc 7ba61432-c5e0-416d-aecf-25a232523481 points_before=8 | old doc 6d55c52b-47ae-45ff-bee0-a3ca01ac93ce points=0"
+  },
+  {
+   "id": "V-A1 record_count",
+   "pass": true,
+   "detail": "records=968 pages=968"
+  },
+  {
+   "id": "V-A2 all_have_image_key",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "id": "V-A3 all_active",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "id": "V-A4 page_coverage",
+   "pass": true,
+   "detail": "min=1 max=968 unique=968"
+  },
+  {
+   "id": "V-A5 pngs_on_disk",
+   "pass": true,
+   "detail": "missing/empty: []"
+  },
+  {
+   "id": "V-B1 all_target_pages_done",
+   "pass": true,
+   "detail": "968/968"
+  },
+  {
+   "id": "V-B2 qdrant_points_for_doc",
+   "pass": true,
+   "detail": "qdrant=968 expected=968"
+  },
+  {
+   "id": "V-B3 reference_patch_count",
+   "pass": true,
+   "detail": "patches/page=1031"
+  },
+  {
+   "id": "V-B4 patch_dim",
+   "pass": true,
+   "detail": "shape=(1031, 128)"
+  },
+  {
+   "id": "V-C1 doc_point_count",
+   "pass": true,
+   "detail": "qdrant=968 expected=968"
+  },
+  {
+   "id": "V-C2 page_coverage_exact",
+   "pass": true,
+   "detail": "n=968 unique=968 min=1 max=968"
+  },
+  {
+   "id": "V-C3 payload_sample",
+   "pass": true,
+   "detail": "tenant=global source_type=page_image image_key=True"
+  },
+  {
+   "id": "V-C4 old_doc_untouched",
+   "pass": true,
+   "detail": "before=0 after=0"
+  },
+  {
+   "id": "V-C5 text_query_returns_doc",
+   "pass": true,
+   "detail": "10/10 hits"
+  }
+ ],
+ "n_pass": 22,
+ "n_total": 22
+}
